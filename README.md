@@ -35,3 +35,15 @@ hard moments at home, links to Challenges / Atlas of Sparks / Lantern Stacks, th
 and who to ask. Static, no sign-in. Unlisted: `noindex`, and not linked from any student page. Keep it that way.
 Content lives in `families/data.js`; sources are the Lower and Upper Campus Parent Handbooks, the Parent Partnership
 Guide, the Parent Education Night packet and `challenges/parents.html`. Choices families make are stored in their browser only.
+
+## Behavior Trail Guide (`/behavior/`, added Nov 17, 2026)
+Staff-only guide to Wilderland's behavior standards (tiers, Peace Talks, send-home, Freedom Levels), the discretionary toolkit,
+neurodivergence support, composite scenarios, research cards, training badges and an AI coach (same relay as the Field Guide).
+Not linked from the landing page. Same staff list as the Field Guide; school accounts only (no board guests).
+- Content and the living-document lists (open questions, change log) are in `behavior/data.js`. Edit there, then add a CHANGELOG line.
+- Scenarios are composites. Never put real student names in `data.js`: it is a public file.
+- Firestore: `flStudents/{id}` (+ `/history`) for Freedom Levels, visible to all staff; Nature Walk Level 4 needs a second guide to confirm.
+  `townhall` holds students' Town Hall items (private to the student and staff); `townhallAgenda` holds staff-written public titles.
+  `behaviorProgress/{uid}` holds training badges (admins see the roster); `behaviorProposals` holds proposed changes.
+- `/suggest/` now has a Town Hall mode: students send agenda items, see their own items' status and the upcoming agenda.
+- `firestore.rules` has the new rules; paste the file into the Firebase console to publish them.
