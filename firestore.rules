@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function school() { return request.auth != null && request.auth.token.email.lower().matches('.*@wilderland[.]academy$'); }
+    function isAdmin() { return school() && request.auth.token.email.lower() in [
+      'alex@wilderland.academy', 'sarah@wilderland.academy', 'shanan@wilderland.academy',
+      'april@wilderland.academy', 'scott@wilderland.academy'
+    ]; }
+
+    // Each student's saved things from the Explore sites (shelf, Life List, challenge plan, sparks, store list).
+    match /students/{uid}/{doc=**} {
+      allow read, write: if school() && request.auth.uid == uid;
+    }
+
+    // The Suggestion Box.
+    match /suggestions/{id} {
+      // Anyone can read open and accepted ideas; only admins can read archived ones.
+      allow read: if resource.data.status in ['open', 'accepted'] || isAdmin();
+      // Students post in their own name, open, with exactly these fields.
+      allow create: if school()
+        && request.resource.data.keys().hasOnly(['text', 'by', 'name', 'email', 'status', 'votes', 'flags', 'created'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 12 && request.resource.data.text.size() <= 280
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40
+        && request.resource.data.status == 'open'
+        && request.resource.data.votes == [request.auth.uid]
+        && request.resource.data.flags == []
+        && request.resource.data.created == request.time;
+      // Students may only add or remove their own uid in votes and flags; nothing else changes.
+      allow update: if school() && !isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'flags'])
+        && request.resource.data.votes.toSet().difference(resource.data.votes.toSet()).hasOnly([request.auth.uid])
+        && resource.data.votes.toSet().difference(request.resource.data.votes.toSet()).hasOnly([request.auth.uid])
+        && request.resource.data.flags.toSet().difference(resource.data.flags.toSet()).hasOnly([request.auth.uid])
+        && resource.data.flags.toSet().difference(request.resource.data.flags.toSet()).hasOnly([request.auth.uid]);
+      // Admins can accept, archive, restore, reply, clear flags.
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'note', 'flags'])
+        && request.resource.data.status in ['open', 'accepted', 'archived']
+        && (!('note' in request.resource.data) || (request.resource.data.note is string && request.resource.data.note.size() <= 300));
+      // A student can delete their own open idea; admins can delete any.
+      allow delete: if isAdmin() || (school() && resource.data.by == request.auth.uid && resource.data.status == 'open');
+    }
+  }
+}

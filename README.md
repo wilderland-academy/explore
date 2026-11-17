@@ -13,3 +13,8 @@ Student sites for Wilderland Academy, served at https://explore.wilderland.acade
 Every page links `/wl.css` in its `<head>` and starts `<body>` with the same `.wlbar` markup: the Wilderland logo (links to this home page), the Books / Challenges / Projects tabs, and the sign-in slot (`data-wl-auth`). Mark the current site's tab with `aria-current="page"`. Give each site's own name the `wl-title` class so the names match. Keep one `data-wl-auth` per page, inside the bar.
 
 `projects/index.html` is built from the Atlas source (`build.js`), which adds the bar itself.
+
+## Pages added Nov 16, 2026
+- `/` landing page: image cards for Books, Challenges, Projects, Treebeard Library, Basecamp, Camp Store and the Suggestion Box (`img/`).
+- `/store/`: Camp Store. 100 products in `store/products.js` (price in dollars; blazes = price × 2). Wishlist and blaze count live in localStorage key `wl-store` and sync through `auth.js`.
+- `/suggest/`: Suggestion Box on Firestore collection `suggestions`. Rules are in `firestore.rules` (paste into Firebase console → Firestore → Rules). Admin emails are listed in both `firestore.rules` and `suggest/index.html`.

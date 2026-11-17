@@ -9,11 +9,12 @@
 .wlbar .wlbar-home{padding:0;margin:0;display:flex;align-items:center;flex:none;color:#fff;text-decoration:none;border-radius:6px}
 .wlbar .wlbar-home svg{display:block;height:22px;width:auto}
 .wlbar .wlbar-home .wlbar-mark{display:none}
-.wlbar .wlbar-sites{display:flex;flex-wrap:nowrap;align-items:center;gap:2px;margin:0 0 0 8px;padding:0;background:none;border:0;position:static}
+.wlbar .wlbar-sites{display:flex;flex-wrap:nowrap;align-items:center;gap:2px;margin:0 0 0 8px;padding:0;background:none;border:0;position:static;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.wlbar .wlbar-sites::-webkit-scrollbar{display:none}
 .wlbar .wlbar-sites a{display:inline-flex;margin:0;border:0;box-shadow:none;font-weight:600;font-size:15px;line-height:1;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;color:rgba(255,255,255,.8);text-decoration:none;white-space:nowrap}
 .wlbar .wlbar-sites a:hover{color:#fff;background:rgba(255,255,255,.08)}
 .wlbar .wlbar-sites a[aria-current="page"]{color:#0b2b20;background:#d5f367}
-.wlbar .wlbar-auth{margin-left:auto;display:flex;align-items:center}
+.wlbar .wlbar-auth{margin-left:auto;display:flex;align-items:center;flex:none}
 .wlbar a:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 /* The site's own name in its header, the same on every site. */
 .wl-title{font:700 22px/1.1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;letter-spacing:-.02em;color:#fff;text-decoration:none;white-space:nowrap}

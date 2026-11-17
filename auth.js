@@ -19,7 +19,7 @@ const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["Projects"
 const me = document.querySelector('script[src$="auth.js"]');
 const SITE = (me && me.dataset.site) || "";
 // What each site keeps in the browser. Add a line here when a new site joins.
-const ALLKEYS = { books: ["lantern-stacks"], challenges: ["wl-picks", "wl-band"], projects: ["atlas-sparks", "atlas-me"] };
+const ALLKEYS = { books: ["lantern-stacks"], challenges: ["wl-picks", "wl-band"], projects: ["atlas-sparks", "atlas-me"], store: ["wl-store"] };
 const KEYS = ALLKEYS[SITE] || [];
 // Clear every site's saved things from this Chromebook (on sign-out, here or on another site).
 function forgetDevice() { applying = true; Object.entries(ALLKEYS).forEach(([s, ks]) => { ks.forEach(k => origRemove.call(localStorage, k)); origRemove.call(localStorage, "wl-linked-" + s); }); applying = false; }
@@ -27,6 +27,9 @@ const DOC = uid => `https://firestore.googleapis.com/v1/projects/${CONFIG.projec
 
 const app = initializeApp(CONFIG);
 const auth = getAuth(app);
+// Other scripts on the page (the Suggestion Box) reuse this app and sign-in instead of starting their own.
+window.wlFirebase = { app, auth, config: CONFIG };
+const announce = u => document.dispatchEvent(new CustomEvent("wl-auth", { detail: u }));
 let user = null, pushTimer = null, applying = false;
 
 // ---------- reading and writing this site's keys ----------
@@ -154,10 +157,11 @@ if (document.readyState === "loading") document.addEventListener("DOMContentLoad
 
 onAuthStateChanged(auth, async u => {
   if (u && !(u.email || "").toLowerCase().endsWith("@" + DOMAIN)) {
-    await signOut(auth); msg("Please sign in with your @" + DOMAIN + " school account."); user = null; render(); return;
+    await signOut(auth); msg("Please sign in with your @" + DOMAIN + " school account."); user = null; render(); announce(null); return;
   }
   // Signed out (maybe on another site): don't leave the last student's things for the next person.
   if (!u && Object.keys(ALLKEYS).some(k => localStorage.getItem("wl-linked-" + k))) { forgetDevice(); location.reload(); return; }
   const was = user; user = u; render();
+  announce(u);
   if (u && !was) syncOnSignIn();
 });
