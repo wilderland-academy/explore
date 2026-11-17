@@ -171,6 +171,9 @@ main{max-width:1180px;margin:0 auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
 .words dl{margin:14px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
 .words dt{font-weight:700;font-size:20px;color:var(--ink);letter-spacing:-.015em}
 .words dd{margin:4px 0 0;font-size:16px}
+.ladder{display:flex;flex-direction:column;gap:12px}
+.ladder>p{max-width:820px;margin:0}
+.ladder>.trails{margin-top:8px}
 .trails{display:grid;grid-template-columns:1fr 1fr;gap:28px}
 .trail table{width:100%;border-collapse:separate;border-spacing:0;margin-top:12px;background:var(--card);border-radius:16px;overflow:hidden;font-variant-numeric:tabular-nums}
 .trail th,.trail td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--line);font-size:16px}
