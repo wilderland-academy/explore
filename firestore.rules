@@ -43,5 +43,30 @@ service cloud.firestore {
       // A student can delete their own open idea; admins can delete any.
       allow delete: if isAdmin() || (school() && resource.data.by == request.auth.uid && resource.data.status == 'open');
     }
+
+    // ---- Mentor Mindset Field Guide (staff only, /fieldguide/) ----
+    // Staff = the admins above plus anyone an admin has added to the staff collection (document id = their email).
+    function isStaff() { return isAdmin() || (school() && exists(/databases/$(database)/documents/staff/$(request.auth.token.email.lower()))); }
+    match /staff/{email} {
+      allow get: if isAdmin() || (school() && request.auth.token.email.lower() == email);
+      allow list, write: if isAdmin();
+    }
+    // Site settings (the AI relay address).
+    match /mentorConfig/{id} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+    // Each guide's own students and coaching sessions. Nobody else, admins included, can read them.
+    match /mentor/{uid}/{doc=**} {
+      allow read, write: if isStaff() && request.auth.uid == uid;
+    }
+    // Stories guides share with all staff.
+    match /mentorStories/{id} {
+      allow read: if isStaff();
+      allow create: if isStaff() && request.resource.data.by == request.auth.uid
+        && request.resource.data.title is string && request.resource.data.title.size() <= 90
+        && request.resource.data.body is string && request.resource.data.body.size() <= 1200;
+      allow delete: if isAdmin() || (isStaff() && resource.data.by == request.auth.uid);
+    }
   }
 }
