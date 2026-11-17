@@ -28,3 +28,10 @@ Add `data-gated class="wl-pending"` to `<body>`, put the page in an element with
 - Content is in `fieldguide/data.js`, logic in `fieldguide/app.js`. Each guide's students and session records live in Firestore under `mentor/{uid}/…` and are readable only by that guide.
 - AI features go through the Cloudflare Worker in `relay/` (setup in `relay/README.md`). The Worker address is saved in Firestore `mentorConfig/main`, not in code.
 - `firestore.rules` has new rules for all of the above; paste the file into the Firebase console to publish them.
+
+## Wilderland at Home (`/families/`)
+Parent site: daily routine by grade band and schedule, reading and math at home, the Mentor Mindset for parents,
+hard moments at home, links to Challenges / Atlas of Sparks / Lantern Stacks, the twelve Partnership Guide practices,
+and who to ask. Static, no sign-in. Unlisted: `noindex`, and not linked from any student page. Keep it that way.
+Content lives in `families/data.js`; sources are the Lower and Upper Campus Parent Handbooks, the Parent Partnership
+Guide, the Parent Education Night packet and `challenges/parents.html`. Choices families make are stored in their browser only.
