@@ -2,6 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function school() { return request.auth != null && request.auth.token.email.lower().matches('.*@wilderland[.]academy$'); }
+    // Outside guests: allowed in the staff Field Guide only. Student data above and below still requires school().
+    function guest() { return request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower() in ['ian@silverlineventures.com', 'online@bodyform.com']; }
     function isAdmin() { return school() && request.auth.token.email.lower() in [
       'alex@wilderland.academy', 'sarah@wilderland.academy', 'shanan@wilderland.academy',
       'april@wilderland.academy', 'scott@wilderland.academy'
@@ -46,7 +48,7 @@ service cloud.firestore {
 
     // ---- Mentor Mindset Field Guide (staff only, /fieldguide/) ----
     // Staff = the admins above plus anyone an admin has added to the staff collection (document id = their email).
-    function isStaff() { return isAdmin() || (school() && exists(/databases/$(database)/documents/staff/$(request.auth.token.email.lower()))); }
+    function isStaff() { return isAdmin() || guest() || (school() && exists(/databases/$(database)/documents/staff/$(request.auth.token.email.lower()))); }
     match /staff/{email} {
       allow get: if isAdmin() || (school() && request.auth.token.email.lower() == email);
       allow list, write: if isAdmin();

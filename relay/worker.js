@@ -5,6 +5,7 @@
 const PROJECT = "wilderland-df15e";                       // Firebase project that signs staff in
 const ORIGINS = ["https://explore.wilderland.academy"];   // sites allowed to call this relay
 const DOMAIN = "@wilderland.academy";
+const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com"];   // outside guests allowed to use the relay
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const MODELS = { quick: "claude-haiku-5-5", deep: "claude-sonnet-5-5" };
 const MAX_OUT = 1500;        // most tokens Claude may write per call
@@ -34,12 +35,12 @@ async function verify(token) {
   const now = Date.now() / 1000;
   if (!ok || pay.aud !== PROJECT || pay.iss !== "https://securetoken.google.com/" + PROJECT || pay.exp < now || !pay.sub) throw new Error("invalid token");
   const email = (pay.email || "").toLowerCase();
-  if (!pay.email_verified || !email.endsWith(DOMAIN)) throw new Error("not a school account");
+  if (!pay.email_verified || !(email.endsWith(DOMAIN) || GUESTS.includes(email))) throw new Error("not a school account");
   return email;
 }
 // Staff = an admin, or listed in the Firestore "staff" collection (read with the caller's own token).
 async function isStaff(email, token) {
-  if (ADMINS.includes(email)) return true;
+  if (ADMINS.includes(email) || GUESTS.includes(email)) return true;
   const r = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/staff/${encodeURIComponent(email)}`, { headers: { Authorization: "Bearer " + token } });
   return r.ok;
 }

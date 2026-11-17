@@ -14,6 +14,8 @@ const CONFIG = {
   appId: "1:310046559783:web:66af8f02d96d315ab14802"
 };
 const DOMAIN = "wilderland.academy";
+// Outside guests who may open the staff Field Guide only (no other Explore site). Keep in step with worker.js, firestore.rules and fieldguide/app.js.
+const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com"];
 const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["Projects", "/projects/"]];
 
 const me = document.querySelector('script[src$="auth.js"]');
@@ -143,7 +145,7 @@ host.addEventListener("click", async e => {
   if (b.dataset.wla === "in") wlSignIn();
 });
 async function wlSignIn() {
-  const p = new GoogleAuthProvider(); p.setCustomParameters({ hd: DOMAIN, prompt: "select_account" });
+  const p = new GoogleAuthProvider(); p.setCustomParameters(SITE === "fieldguide" ? { prompt: "select_account" } : { hd: DOMAIN, prompt: "select_account" });
   try { await signInWithPopup(auth, p); }
   catch (err) { if (err && err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") msg("Sign-in didn't work. Make sure pop-ups are allowed, and use your @" + DOMAIN + " account."); }
 }
@@ -166,7 +168,7 @@ function mount() {
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount); else mount();
 
 onAuthStateChanged(auth, async u => {
-  if (u && !(u.email || "").toLowerCase().endsWith("@" + DOMAIN)) {
+  if (u && !((u.email || "").toLowerCase().endsWith("@" + DOMAIN) || (SITE === "fieldguide" && u.emailVerified && GUESTS.includes((u.email || "").toLowerCase())))) {
     await signOut(auth); msg("Please sign in with your @" + DOMAIN + " school account."); user = null; render(); gate(null); announce(null); return;
   }
   // Signed out (maybe on another site): don't leave the last student's things for the next person.

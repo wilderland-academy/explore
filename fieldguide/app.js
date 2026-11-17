@@ -3,6 +3,7 @@
 import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import * as D from "./data.js";
 
+const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com"];
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -19,7 +20,7 @@ async function onAuth(u) {
   if (!u) return gate("Sign in with your Wilderland account, top right, to open the field guide.");
   if (startedFor === u.uid) return;
   const email = (u.email || "").toLowerCase(); isAdmin = ADMINS.includes(email);
-  let ok = isAdmin;
+  let ok = isAdmin || GUESTS.includes(email);
   if (!ok) { try { ok = (await getDoc(doc(db, "staff", email))).exists(); } catch (e) { ok = false; } }
   if (seq !== authSeq) return;
   if (!ok) return gate("This area is for Wilderland guides and staff. If that's you, ask Alex to add your account.");
@@ -338,7 +339,7 @@ VIEWS.admin = async sec => {
   const url = h("input", { type: "url", id: "rUrl", placeholder: "https://mentor-relay.YOURNAME.workers.dev" }), note = h("p", { class: "small" }); url.value = relay;
   sec.appendChild(card("", [h("h3", { text: "AI relay" }), h("p", { class: "small", text: "Paste the address of the Cloudflare Worker (setup steps are in /relay/README.md in the site's repository). Until this is set, scoring, the coach, live tips and session reviews stay off." }), h("label", { for: "rUrl" }, ["Relay address", url]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Save", onclick: async () => { try { await setDoc(doc(db, "mentorConfig", "main"), { relay: url.value.trim() }); relay = url.value.trim(); note.textContent = "Saved."; } catch (e) { note.textContent = "Couldn't save. Update the database rules first."; } } }), h("button", { class: "btn ghost", text: "Test", onclick: async () => { relay = url.value.trim(); note.textContent = "Testing…"; try { note.textContent = "Relay answered: " + (await ai([{ role: "user", content: "Reply with the single word: ready" }], { tier: "quick", max: 20 })); } catch (e) { note.textContent = "No luck (" + (e.code || "network") + "). " + (e.message || ""); } } })]), note]));
   const list = h("div"), em = h("input", { type: "email", id: "stE", placeholder: "name@wilderland.academy" }), n2 = h("p", { class: "small" });
-  const load = async () => { list.innerHTML = ""; list.appendChild(ul(ADMINS.map(a => a + " (admin)"))); try { const snap = await getDocs(collection(db, "staff")); snap.forEach(d => list.appendChild(h("div", { class: "row", style: "padding:6px 0" }, [h("span", { text: d.id }), h("button", { class: "chip", text: "Remove", onclick: async () => { await deleteDoc(doc(db, "staff", d.id)); load(); } })]))); } catch (e) { n2.textContent = "Update the database rules to manage the staff list."; } };
+  const load = async () => { list.innerHTML = ""; list.appendChild(ul(ADMINS.map(a => a + " (admin)").concat(GUESTS.map(g => g + " (guest)")))); try { const snap = await getDocs(collection(db, "staff")); snap.forEach(d => list.appendChild(h("div", { class: "row", style: "padding:6px 0" }, [h("span", { text: d.id }), h("button", { class: "chip", text: "Remove", onclick: async () => { await deleteDoc(doc(db, "staff", d.id)); load(); } })]))); } catch (e) { n2.textContent = "Update the database rules to manage the staff list."; } };
   sec.appendChild(card("", [h("h3", { text: "Who can open this site" }), list, h("label", { for: "stE" }, ["Add a staff account", em]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Add", onclick: async () => { const e = em.value.trim().toLowerCase(); if (!e.endsWith("@wilderland.academy")) { n2.textContent = "Use a @wilderland.academy address."; return; } try { await setDoc(doc(db, "staff", e), { added: Date.now(), by: user.email }); em.value = ""; n2.textContent = "Added."; load(); } catch (err) { n2.textContent = "Couldn't add. Update the database rules first."; } } })]), n2])); load();
   sec.appendChild(card("", [h("h3", { text: "What admins can and can't see" }), ul(["Admins manage the staff list and the relay address.", "Admins cannot open any guide's students, transcripts or feedback from this site.", "The page's text and scripts are public files, like the rest of Explore. Student data is what sign-in protects."])]));
 };
