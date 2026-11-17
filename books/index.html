@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Lantern Stacks</title>
 <link rel="icon" href="f/icon.png"><link rel="apple-touch-icon" href="f/icon-180.png"><meta name="theme-color" content="#015640">
-<meta name="description" content="A late-night bookstore for readers 7 to 16. Name a book you loved and find the next one.">
+<meta name="description" content="An interactive reading exhibit for readers 7 to 16. Name a book you loved and find the next one.">
 
 <style>
 @font-face{font-family:"Uncut Sans";src:url(f/us-400.woff2) format("woff2");font-weight:400;font-display:swap}
@@ -50,6 +50,7 @@ details.reader summary{cursor:pointer;padding:8px 0;color:#bcd3c5;font:400 13px/
 details.reader summary::-webkit-details-marker{display:none}
 details.reader summary b{color:var(--lamp);font-weight:600}
 .rform{display:flex;gap:14px 26px;flex-wrap:wrap;align-items:end;padding:6px 0 16px}
+.rform .rmsg{display:block;font-size:12.5px;color:#a9bbb0;margin-top:4px;min-height:1em}
 .rform label{display:grid;gap:5px;font-size:13px;color:var(--dim)}
 .rform select,.rform input[type=number]{font:inherit;color:var(--paper);background:var(--shelf2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:150px}
 .rform .ck{display:flex;gap:8px;align-items:center;color:var(--paper)}
@@ -278,11 +279,11 @@ footer details{max-width:76ch} footer summary{cursor:pointer;color:var(--paper);
   <nav aria-label="Sections"><a href="#home">Home</a><a href="#nonfiction">Nonfiction</a><a href="#uncharted">Uncharted</a><a href="#moments">Moments</a><a href="#new-ground">New ground</a><a href="#life">Life list</a><a href="#my-shelf">My shelf<span id="count"></span></a></nav></div>
   <details class="reader"><summary>Reader settings: <b id="rsum"></b> (tap to change)</summary>
     <div class="rform">
-      <label for="r-age">Your age<select id="r-age"><option value="">Not set</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option></select></label>
-      <label for="r-lex">Your Lexile, if you know it<input id="r-lex" type="number" min="100" max="1700" step="10" placeholder="e.g. 780"></label>
+      <label for="r-age">Your age<input id="r-age" type="text" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="e.g. 11"><small class="rmsg" id="r-age-msg" aria-live="polite"></small></label>
+      <label for="r-lex">Your Lexile, if you know it<input id="r-lex" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" placeholder="e.g. 780L"><small class="rmsg" id="r-lex-msg" aria-live="polite"></small></label>
       <label class="ck" for="r-up"><input id="r-up" type="checkbox" checked> Only books at my level or higher</label>
       <label class="ck" for="r-older"><input id="r-older" type="checkbox"> Also show books rated older than me</label>
-      <p class="fine">Do not know your Lexile? Leave it blank. Save two or more books you read comfortably and the Stacks will estimate it. These settings stay on this device.</p>
+      <p class="fine">Type your Lexile any way it was given to you: 780, 780L, or BR100L. A range like 700–800L works too. Do not know it? Leave it blank. Save two or more books you read comfortably and the Stacks will estimate it. These settings stay on this device.</p>
     </div></details>
 </div></header>
 <main class="wrap" id="view"></main>
@@ -997,7 +998,7 @@ const SHELVES = [
  ["True stories that read like thrillers","Nonfiction you will not want to put down. <a href=\"#nonfiction\">Explore the nonfiction universe</a>",b=>isNF(b)&&b.f.includes("thrill")],
  ["Teenagers made these","Written, lived or built by people under eighteen.",b=>["eragon","outsiders","annefrank","malala","boywind","frankenstein"].includes(b.id)],
  ["Adults are reading these too","Books your parents' friends argue about. You can handle them.",b=>["phm","martian","rpo","hitch","ender","bookthief","princess","rocket","mockingbird","hobbit","bomb","piranesi","sophie","labgirl"].includes(b.id)],
- ["For very strong readers","The hardest sentences in the store, 1100L and up.",b=>b.L>=1100],
+ ["For very strong readers","The hardest sentences in the Stacks, 1100L and up.",b=>b.L>=1100],
  ["Middle school and up","Bigger ideas, higher stakes. Rated 11 and 12.",b=>b.age>=11&&b.age<=12&&b.pop>=2],
  ["Early high school","Books that do not go easy on you. Rated 13 and up.",b=>b.age>=13&&b.pop>=2],
  ["Cannot stop turning pages","Every chapter ends on a cliff.",b=>!isNF(b)&&b.f.includes("thrill")&&b.pop>=2],
@@ -1010,7 +1011,7 @@ function forMe(b){const L=readerLex();if(!ageOK(b))return false;
  if(L)return b.L>=L-50&&b.L<=L+250;
  return S.age?b.age>=S.age-2:false}
 const byFor=(a,b)=>(b.pop+b.gw*.6)-(a.pop+a.gw*.6)||((a.L||0)-(b.L||0));
-function readerDesc(){const L=readerLex();return [S.age?"age "+S.age:"",L?(S.lex?"":"about ")+L+"L":""].filter(Boolean).join(", ")}
+function readerDesc(){const L=readerLex();return [S.age?"age "+S.age:"",L?(S.lex?"":"about ")+fmtL(L):""].filter(Boolean).join(", ")}
 function forYou(){const L=readerLex();
  if(!S.age&&!L)return `<section class="foryou empty"><div><h2>Find books at your level or higher</h2><p>Tell the Stacks your age and your Lexile measure. This shelf will fill with books that stretch you without going past what is right for your age.</p></div><button class="save" data-open-reader>Set my age and level</button></section>`;
  const l=BOOKS.filter(forMe).sort(byFor),fic=l.filter(b=>!isNF(b)),nf=l.filter(isNF);
@@ -1255,8 +1256,17 @@ function route(){const h=location.hash.slice(1)||"home";let html,tab="home";
  mountMaps();
  return h}
 function go(){const h=route();const t=h.startsWith("moment-")?$("#picked"):h==="map"?$("#atlas"):h==="nonfiction-map"?$("#nfmap"):h==="want"?$("#want"):h.startsWith("life-")?$("#li-"+h.slice(5)):null;if(t)t.scrollIntoView({block:"start"});else window.scrollTo(0,0)}
-function reader(){const L=readerLex();$("#rsum").textContent=(S.age?"Age "+S.age:"Age not set")+" · "+(L?(S.lex?"":"about ")+L+"L":"reading level not set")+(L&&S.up?" · my level or higher":"");
- $("#r-age").value=S.age||"";$("#r-lex").value=S.lex||"";$("#r-older").checked=!!S.older;$("#r-up").checked=!!S.up}
+function fmtL(L){return L<0?"BR"+(L<-1?(-L)+"L":""):L+"L"}
+function parseLex(t){t=String(t||"").toUpperCase().replace(/LEXILE|LEVEL|[\s,]/g,"");if(!t)return{ok:true,v:0,msg:""};
+ let m=t.match(/^BR(\d{0,4})L?$/);if(m){const n=+m[1]||0;return{ok:true,v:-Math.max(n,1),msg:"Got it: beginning reader ("+fmtL(-Math.max(n,1))+"). Most books here make great read-alouds for now."}}
+ m=t.match(/^(\d{1,4})L?(?:(?:-|–|—|TO)(\d{1,4})L?)?$/);if(m){const a=+m[1],b=m[2]?+m[2]:a,v=Math.round((a+b)/20)*10;if(v>=0&&v<=2000&&a<=2000&&b<=2000)return{ok:true,v:v||-1,msg:m[2]?"Got it: about "+fmtL(v)+", the middle of that range.":"Got it: "+fmtL(v||-1)+"."}}
+ return{ok:false,msg:"That doesn't look like a Lexile yet. Try 780, 780L, or BR100L."}}
+function parseAge(t){t=String(t||"").trim();if(!t)return{ok:true,v:0,msg:""};const m=t.match(/\d{1,2}/);const v=m?+m[0]:0;
+ if(v>=4&&v<=99)return{ok:true,v,msg:""};return{ok:false,msg:"Type your age as a number, like 11."}}
+function setMsg(id,t){const e=document.getElementById(id);if(e)e.textContent=t||""}
+function rsumOnly(){const L=readerLex();$("#rsum").textContent=(S.age?"Age "+S.age:"Age not set")+" · "+(L?(S.lex?"":"about ")+fmtL(L):"reading level not set")+(L&&S.up?" · my level or higher":"");keepScroll(route)}
+function reader(){const L=readerLex();$("#rsum").textContent=(S.age?"Age "+S.age:"Age not set")+" · "+(L?(S.lex?"":"about ")+fmtL(L):"reading level not set")+(L&&S.up?" · my level or higher":"");
+ $("#r-age").value=S.age||"";$("#r-lex").value=S.lexTxt||(S.lex?fmtL(S.lex):"");$("#r-older").checked=!!S.older;$("#r-up").checked=!!S.up}
 function keepScroll(fn){const y=window.scrollY;fn();window.scrollTo(0,y)}
 
 document.addEventListener("click",e=>{
@@ -1282,8 +1292,8 @@ document.addEventListener("input",e=>{
   const hit=BOOKS.filter(b=>(b.t+" "+b.a).toLowerCase().includes(q)).slice(0,6);
   box.innerHTML=hit.length?hit.map(b=>`<li><button data-claim="${k}|${b.id}"><b>${esc(b.t)}</b><span>${esc(b.a)}</span></button></li>`).join(""):`<li class="none">Not in the Stacks. Add it yourself below.</li>`;box.hidden=false}
  if(e.target.id==="ln"){const k=e.target.dataset.k;if(S.life[k]){const v=e.target.value.trim().slice(0,160);if(v)S.life[k].n=v;else delete S.life[k].n;store()}}
- if(e.target.id==="r-age"){S.age=+e.target.value||0;store();reader();keepScroll(route)}
- if(e.target.id==="r-lex"){const v=+e.target.value;S.lex=v>=100&&v<=1700?v:0;store();reader();keepScroll(route)}
+ if(e.target.id==="r-age"){const r=parseAge(e.target.value);setMsg("r-age-msg",r.msg);if(r.ok){S.age=r.v;store();rsumOnly()}}
+ if(e.target.id==="r-lex"){const r=parseLex(e.target.value);setMsg("r-lex-msg",r.msg);if(r.ok){S.lex=r.v;S.lexTxt=r.v?e.target.value.trim():"";store();rsumOnly()}}
  if(e.target.id==="r-older"){S.older=e.target.checked;store();keepScroll(route)}
  if(e.target.id==="r-up"){S.up=e.target.checked;store();reader();keepScroll(route)}
 });

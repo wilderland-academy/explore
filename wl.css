@@ -29,3 +29,15 @@
 }
 @media (max-width:360px){.wlbar .wlbar-sites a{padding:0 7px;font-size:13.5px}}
 @media print{.wlbar{display:none}}
+/* Sign-in gate: <body data-gated class="wl-pending">, content in .wl-gated, panel in .wl-gate */
+body[data-gated]:not(.wl-in) .wl-gated{display:none!important}
+.wl-gate,.wl-wait{display:none}
+body[data-gated].wl-out .wl-gate{display:block}
+body[data-gated].wl-pending .wl-wait{display:block}
+.wl-gate{max-width:520px;margin:48px auto;box-sizing:border-box;width:calc(100% - 32px);padding:28px 26px;border-radius:18px;background:#0f231c;border:1px solid #28493d;color:#f6f8ea;text-align:center;font:400 16px/1.5 Inter,system-ui,sans-serif}
+.wl-gate h2{font:700 26px/1.15 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;margin:6px 0 8px;letter-spacing:-.01em}
+.wl-gate p{color:#a9bbb0;margin:0 0 18px}
+.wl-gate .wl-lock{font-size:34px}
+.wl-gate button{font:600 16px/1 Inter,system-ui,sans-serif;border:0;border-radius:999px;padding:13px 20px;background:#d5f367;color:#0b2b20;cursor:pointer}
+.wl-gate small{display:block;margin-top:14px;color:#7f978b;font-size:13px}
+.wl-wait{text-align:center;color:#a9bbb0;padding:60px 20px;font:400 15px Inter,system-ui,sans-serif}

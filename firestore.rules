@@ -14,8 +14,8 @@ service cloud.firestore {
 
     // The Suggestion Box.
     match /suggestions/{id} {
-      // Anyone can read open and accepted ideas; only admins can read archived ones.
-      allow read: if resource.data.status in ['open', 'accepted'] || isAdmin();
+      // Signed-in school accounts can read open and accepted ideas; only admins can read archived ones.
+      allow read: if isAdmin() || (school() && resource.data.status in ['open', 'accepted']);
       // Students post in their own name, open, with exactly these fields.
       allow create: if school()
         && request.resource.data.keys().hasOnly(['text', 'by', 'name', 'email', 'status', 'votes', 'flags', 'created'])

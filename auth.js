@@ -140,12 +140,22 @@ host.addEventListener("click", async e => {
     forgetDevice();
     location.reload(); return;
   }
-  if (b.dataset.wla === "in") {
-    const p = new GoogleAuthProvider(); p.setCustomParameters({ hd: DOMAIN, prompt: "select_account" });
-    try { await signInWithPopup(auth, p); }
-    catch (err) { if (err && err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") msg("Sign-in didn't work. Make sure pop-ups are allowed, and use your @" + DOMAIN + " account."); }
-  }
+  if (b.dataset.wla === "in") wlSignIn();
 });
+async function wlSignIn() {
+  const p = new GoogleAuthProvider(); p.setCustomParameters({ hd: DOMAIN, prompt: "select_account" });
+  try { await signInWithPopup(auth, p); }
+  catch (err) { if (err && err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") msg("Sign-in didn't work. Make sure pop-ups are allowed, and use your @" + DOMAIN + " account."); }
+}
+window.wlSignIn = wlSignIn;
+// Pages marked <body data-gated> show their content only to signed-in school accounts.
+window.wlAuthState = { ready: false, user: null };
+function gate(u) {
+  window.wlAuthState = { ready: true, user: u };
+  const b = document.body; if (!b) return;
+  b.classList.remove("wl-pending"); b.classList.toggle("wl-in", !!u); b.classList.toggle("wl-out", !u);
+}
+document.addEventListener("click", e => { if (e.target.closest("[data-wl-signin]")) { e.preventDefault(); wlSignIn(); } });
 document.addEventListener("click", e => { if (open && !host.contains(e.target)) { open = false; render(); } });
 
 function mount() {
@@ -157,11 +167,11 @@ if (document.readyState === "loading") document.addEventListener("DOMContentLoad
 
 onAuthStateChanged(auth, async u => {
   if (u && !(u.email || "").toLowerCase().endsWith("@" + DOMAIN)) {
-    await signOut(auth); msg("Please sign in with your @" + DOMAIN + " school account."); user = null; render(); announce(null); return;
+    await signOut(auth); msg("Please sign in with your @" + DOMAIN + " school account."); user = null; render(); gate(null); announce(null); return;
   }
   // Signed out (maybe on another site): don't leave the last student's things for the next person.
   if (!u && Object.keys(ALLKEYS).some(k => localStorage.getItem("wl-linked-" + k))) { forgetDevice(); location.reload(); return; }
   const was = user; user = u; render();
-  announce(u);
+  gate(u); announce(u);
   if (u && !was) syncOnSignIn();
 });
