@@ -62,6 +62,58 @@ service cloud.firestore {
     match /mentor/{uid}/{doc=**} {
       allow read, write: if isStaff() && request.auth.uid == uid;
     }
+    // ---- Behavior Trail Guide (staff only, /behavior/) ----
+    // Student data needs a school account: board guests can read the Field Guide but not these.
+    function staffSchool() { return school() && isStaff(); }
+    // Freedom Levels: every guide sees every student so levels stay consistent across guides.
+    match /flStudents/{id} {
+      allow read, create, update: if staffSchool();
+      allow delete: if isAdmin();
+      match /history/{h} {
+        allow read, create: if staffSchool();
+        allow update, delete: if isAdmin();
+      }
+    }
+    // Town Hall items students send from the Suggestion Box. Private: the student who sent it and staff.
+    match /townhall/{id} {
+      allow read: if staffSchool() || (school() && resource.data.by == request.auth.uid);
+      allow create: if school()
+        && request.resource.data.keys().hasOnly(['text', 'kind', 'band', 'by', 'name', 'email', 'status', 'created'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 12 && request.resource.data.text.size() <= 400
+        && request.resource.data.kind in ['problem', 'rule', 'idea', 'people']
+        && request.resource.data.band in ['K-1', '2-4', '5-8']
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40
+        && request.resource.data.status == 'new'
+        && request.resource.data.created == request.time;
+      allow update: if staffSchool()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'meeting', 'agendaId', 'note', 'outcome', 'reviewedBy', 'reviewedAt'])
+        && request.resource.data.status in ['new', 'agenda', 'discussed', 'declined'];
+      allow delete: if isAdmin() || (school() && resource.data.by == request.auth.uid && resource.data.status == 'new');
+    }
+    // The public agenda: titles written by staff (no names). Every school account can read it.
+    match /townhallAgenda/{id} {
+      allow read: if school();
+      allow write: if staffSchool();
+    }
+    // Training badges: each guide writes their own; admins can read the roster.
+    match /behaviorProgress/{uid} {
+      allow read: if isAdmin() || (school() && request.auth.uid == uid);
+      allow write: if staffSchool() && request.auth.uid == uid;
+    }
+    // Proposals to change the guide.
+    match /behaviorProposals/{id} {
+      allow read: if staffSchool();
+      allow create: if staffSchool() && request.resource.data.by == request.auth.uid
+        && request.resource.data.title is string && request.resource.data.title.size() <= 120
+        && request.resource.data.body is string && request.resource.data.body.size() <= 1500
+        && request.resource.data.status == 'open';
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reply']);
+      allow delete: if isAdmin() || (staffSchool() && resource.data.by == request.auth.uid);
+    }
+
     // Stories guides share with all staff.
     match /mentorStories/{id} {
       allow read: if isStaff();

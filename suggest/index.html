@@ -60,6 +60,18 @@ textarea:focus{outline:2px solid var(--lamp);outline-offset:1px;border-color:tra
 .empty{color:var(--dim);padding:20px;text-align:center}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(92vw,460px);background:var(--shelf);color:var(--paper);border:1px solid var(--lamp);border-radius:12px;padding:12px 14px;font-size:14px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 .fine{color:#7f978b;font-size:13px;max-width:70ch;padding-bottom:40px}
+.mode{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}
+.mode button{font:600 13.5px/1 Inter,sans-serif;color:var(--dim);background:var(--ink);border:1px solid var(--line);border-radius:999px;padding:9px 13px;cursor:pointer}
+.mode button.on{color:#0b2b20;background:var(--lamp);border-color:var(--lamp)}
+.thf{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.thf label{display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:var(--dim)}
+.thf select{font:inherit;font-size:15px;color:var(--paper);background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
+.thl{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.thl li{padding:11px 13px;background:var(--ink);border:1px solid var(--line);border-radius:12px;font-size:15px}
+.thl .st{font:600 11px/1 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);margin-right:6px}
+.thl .st.agenda{color:#0b2b20;background:var(--lamp);border-color:var(--lamp)}
+.thl .st.discussed{color:var(--neon);border-color:var(--neon)}
+@media (max-width:640px){.thf{grid-template-columns:1fr}}
 @media (max-width:640px){.sg{gap:10px;padding:12px}.vote{min-width:48px;font-size:16px}}
 </style>
 </head>
@@ -70,16 +82,25 @@ textarea:focus{outline:2px solid var(--lamp);outline-offset:1px;border-color:tra
 <section class="wl-gate" aria-live="polite"><div class="wl-lock" aria-hidden="true">🔒</div><h2>Sign in to use the Suggestion Box</h2><p>Ideas are shared only with other Wilderland students and guides. Sign in to read them, vote, and add your own.</p><button type="button" data-wl-signin>Sign in with your school account</button><small>Use your @wilderland.academy Google account.</small></section>
 <main class="in wl-gated">
 <section class="hero"><h1>What would make Wilderland <span>better?</span></h1>
-<p>A rule, a trip, a tool, a tradition, something to fix. Post it, and the whole school can vote. Guides read every one. Ideas marked <b style="color:var(--lamp)">accepted</b> are happening.</p></section>
+<p>A rule, a trip, a tool, a tradition, something to fix. Post it, and the whole school can vote. Guides read every one. Ideas marked <b style="color:var(--lamp)">accepted</b> are happening. Something the whole community should talk through together? Send it to <b style="color:var(--lamp)">Town Hall</b> instead.</p></section>
 
 <section class="box" id="post">
-  <h2>Add an idea</h2>
+  <h2 id="posth">Add an idea</h2>
   <div id="postbody"><div class="signin">Sign in with your school account (top right) to post or vote.</div></div>
+</section>
+
+<section class="box" id="townhall" hidden>
+  <h2>Town Hall</h2>
+  <p class="hint" style="margin-top:0">Coming up at Town Hall, and what's happened to the items you sent.</p>
+  <h3 style="font-size:15px;margin:14px 0 0">Upcoming</h3>
+  <ul class="thl" id="thUp"><li class="hint">Nothing scheduled yet.</li></ul>
+  <h3 style="font-size:15px;margin:16px 0 0">Your Town Hall items</h3>
+  <ul class="thl" id="thMine"><li class="hint">You haven't sent any yet.</li></ul>
 </section>
 
 <div class="tabs" id="tabs"><button data-sort="top" class="on">Top</button><button data-sort="new">New</button><button data-sort="accepted">Accepted</button><span id="admtabs"></span></div>
 <ul class="list" id="list"><li class="empty">Loading ideas…</li></ul>
-<p class="fine">Every idea is checked for bad words and unkindness before it posts, and any student can flag one that slipped through; three flags hide it until a guide looks. Only Wilderland students and guides can see ideas. Guides can mark an idea accepted (everyone can still see it) or archive it (only guides can see it). Your first name and last initial show with your idea.</p>
+<p class="fine">Town Hall items are private: only you and the guides can see them, and nothing is voted on until it reaches the agenda. Every idea is checked for bad words and unkindness before it posts, and any student can flag one that slipped through; three flags hide it until a guide looks. Only Wilderland students and guides can see ideas. Guides can mark an idea accepted (everyone can still see it) or archive it (only guides can see it). Your first name and last initial show with your idea.</p>
 </main>
 
 <script type="module">
@@ -147,11 +168,66 @@ function render(){
     ${isAdmin?`${s.status!=="accepted"?`<button class="adm" data-acc="${s.id}">Accept</button>`:`<button class="adm" data-open="${s.id}">Un-accept</button>`}${s.status!=="archived"?`<button class="adm" data-arch="${s.id}">Archive</button>`:`<button class="adm" data-open="${s.id}">Restore</button>`}<button class="adm" data-note="${s.id}">${s.note?"Edit reply":"Reply"}</button>${f.length?`<button class="adm" data-clear="${s.id}">Clear flags</button>`:""}<button data-del="${s.id}">Delete</button>`:""}</span></div></div></li>`}).join(""):`<li class="empty">${SORT==="accepted"?"Nothing accepted yet.":"No ideas yet. Be the first."}</li>`;
 }
 function toast(t){const m=document.createElement("div");m.className="toast";m.textContent=t;document.body.appendChild(m);setTimeout(()=>m.remove(),5000)}
+// ---------- Town Hall agenda items: private to the student and guides ----------
+let MODE="idea";
+const TH_MAX=400, TH_KINDS={problem:"A problem we should solve",rule:"A rule to add or change",idea:"An idea, event or tradition",people:"How people are treating each other"};
+const TH_STATUS={new:"Sent to guides",agenda:"On the agenda",discussed:"Discussed",declined:"Not this time"};
+// Looser than the idea checker: Town Hall items may describe hard things (hitting, being left out) and are seen only by guides.
+function thCheck(text){
+  const t=text.trim(),n=" "+norm(t)+" ",words=n.trim().split(/\s+/).filter(Boolean);
+  if(t.length<MIN)return{ok:false,msg:"Say a little more. What should the community talk about, and why?"};
+  if(t.length>TH_MAX)return{ok:false,msg:`Keep it under ${TH_MAX} characters.`};
+  if(words.length<4)return{ok:false,msg:"Use at least four words so guides know what you mean."};
+  for(const b of BAD){if(n.includes(" "+b+" ")||n.includes(" "+b+"s "))return{ok:false,msg:"That has a word that doesn't belong on a school page. Say it another way."}}
+  const letters=(t.match(/[a-z]/gi)||[]).length;
+  if(letters/t.length<0.6)return{ok:false,msg:"That doesn't read as a sentence yet. Try plain words."};
+  const vowels=(t.match(/[aeiou]/gi)||[]).length;
+  if(vowels/letters<0.2)return{ok:false,msg:"That looks like keyboard mashing. What's the actual idea?"};
+  if(/https?:\/\/|www\.|@\w+\.\w+|\d{3}[-. ]\d{3}[-. ]\d{4}/i.test(t))return{ok:false,msg:"No links, emails or phone numbers."};
+  return{ok:true,msg:"Looks good. Only guides will see this."};
+}
+async function loadTownHall(){
+  if(!user)return; $("#townhall").hidden=false;
+  try{
+    const up=await getDocs(query(collection(db,"townhallAgenda"),where("status","==","upcoming"),limit(60)));
+    const items=up.docs.map(d=>d.data()).sort((a,b)=>(a.meeting||"").localeCompare(b.meeting||""));
+    $("#thUp").innerHTML=items.length?items.map(a=>`<li><span class="st agenda">${esc(a.meeting||"")}</span>${esc(a.title)}${a.band?` <span class="hint">(${esc(a.band)})</span>`:""}</li>`).join(""):`<li class="hint">Nothing scheduled yet.</li>`;
+  }catch(e){console.warn(e);$("#thUp").innerHTML=`<li class="hint">Couldn't load the agenda right now.</li>`}
+  try{
+    const mine=await getDocs(query(collection(db,"townhall"),where("by","==",user.uid),limit(50)));
+    const items=mine.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.created?.seconds||0)-(a.created?.seconds||0));
+    $("#thMine").innerHTML=items.length?items.map(x=>`<li><span class="st ${x.status}">${TH_STATUS[x.status]||x.status}</span>${esc(x.text)}
+      <div class="meta"><span>${esc(TH_KINDS[x.kind]||"")} · ${when(x.created)}${x.meeting?` · meeting ${esc(x.meeting)}`:""}</span>${x.status==="new"?`<span class="acts"><button data-thdel="${x.id}">Delete</button></span>`:""}</div>
+      ${x.note?`<div class="note"><b>Guides:</b> ${esc(x.note)}</div>`:""}${x.outcome?`<div class="note"><b>Decided:</b> ${esc(x.outcome)}</div>`:""}</li>`).join(""):`<li class="hint">You haven't sent any yet.</li>`;
+  }catch(e){console.warn(e);$("#thMine").innerHTML=`<li class="hint">Couldn't load your items${e.code==="permission-denied"?" (the database rules for Town Hall aren't published yet)":""}.</li>`}
+}
+function renderTownHallForm(){
+  $("#posth").textContent="Send something to Town Hall";
+  $("#postbody").innerHTML=modeTabs()+`<p class="hint" style="margin:0 0 10px">Town Hall is where students talk through things that affect everyone and vote on what to do. Only guides see what you send here. They'll put good items on the agenda or reply to you.</p>
+  <textarea id="tht" maxlength="${TH_MAX}" placeholder="What should we talk about, and why does it matter?"></textarea>
+  <div class="thf"><label>What kind of item?<select id="thk">${Object.entries(TH_KINDS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label>
+  <label>Your group<select id="thb"><option value="5-8">Grades 5–8</option><option value="2-4">Grades 2–4</option><option value="K-1">K–1</option></select></label></div>
+  <div id="thpeople" class="hint" hidden>If this is about one person, a guide will help privately first, maybe with a Peace Talk. Town Hall is never for getting someone in trouble.</div>
+  <div id="thchk" class="check" hidden></div>
+  <div class="row"><button class="btn" id="thsend" disabled>Send to Town Hall</button><span class="hint">Sending as ${esc(first(user))}</span><span class="n" id="thn">0 / ${TH_MAX}</span></div>`;
+  wireModeTabs();
+  const ta=$("#tht"),chk=$("#thchk"),send=$("#thsend"),kind=$("#thk");
+  kind.addEventListener("change",()=>{$("#thpeople").hidden=kind.value!=="people"});
+  ta.addEventListener("input",()=>{const t=ta.value;$("#thn").textContent=`${t.length} / ${TH_MAX}`;if(t.trim().length<4){chk.hidden=true;send.disabled=true;return}const r=thCheck(t);chk.hidden=false;chk.className="check "+(r.ok?"ok":"no");chk.textContent=r.msg;send.disabled=!r.ok});
+  send.addEventListener("click",async()=>{const t=ta.value.trim(),r=thCheck(t);if(!r.ok)return;send.disabled=true;
+    try{await addDoc(collection(db,"townhall"),{text:t,kind:kind.value,band:$("#thb").value,by:user.uid,name:first(user),email:user.email,status:"new",created:serverTimestamp()});ta.value="";chk.hidden=true;$("#thn").textContent=`0 / ${TH_MAX}`;toast("Sent. You'll see what guides decide in the Town Hall box below.");loadTownHall()}
+    catch(e){console.warn(e);toast(e.code==="permission-denied"?"Town Hall isn't accepting items yet. Tell a guide.":"Couldn't send. Try again.");send.disabled=false}});
+}
+function modeTabs(){return `<div class="mode" role="tablist"><button data-mode="idea" class="${MODE==="idea"?"on":""}" role="tab" aria-selected="${MODE==="idea"}">Suggestion Box idea</button><button data-mode="th" class="${MODE==="th"?"on":""}" role="tab" aria-selected="${MODE==="th"}">Town Hall agenda item</button></div>`}
+function wireModeTabs(){document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{MODE=b.dataset.mode;renderPost()}))}
 function renderPost(){
   if(!user){$("#postbody").innerHTML=`<div class="signin">Sign in with your school account (top right) to post or vote.</div>`;return}
-  $("#postbody").innerHTML=`<textarea id="txt" maxlength="${MAX}" placeholder="We should… / It would be better if… / Can we…"></textarea>
+  if(MODE==="th")return renderTownHallForm();
+  $("#posth").textContent="Add an idea";
+  $("#postbody").innerHTML=modeTabs()+`<textarea id="txt" maxlength="${MAX}" placeholder="We should… / It would be better if… / Can we…"></textarea>
   <div id="chk" class="check" hidden></div>
   <div class="row"><button class="btn" id="send" disabled>Post it</button><span class="hint">Posting as ${esc(first(user))}</span><span class="n" id="n">0 / ${MAX}</span></div>`;
+  wireModeTabs();
   const ta=$("#txt"),chk=$("#chk"),send=$("#send");
   ta.addEventListener("input",()=>{const t=ta.value;$("#n").textContent=`${t.length} / ${MAX}`;if(t.trim().length<4){chk.hidden=true;send.disabled=true;return}const r=check(t);chk.hidden=false;chk.className="check "+(r.ok?"ok":"no");chk.textContent=r.msg;send.disabled=!r.ok});
   send.addEventListener("click",async()=>{const t=ta.value.trim(),r=check(t);if(!r.ok)return;send.disabled=true;
@@ -160,6 +236,7 @@ function renderPost(){
 }
 document.addEventListener("click",async e=>{
   const t=e.target.closest("[data-sort]");if(t){SORT=t.dataset.sort;document.querySelectorAll("[data-sort]").forEach(b=>b.classList.toggle("on",b===t));render();return}
+  const td=e.target.closest("[data-thdel]");if(td&&user){if(!confirm("Delete this Town Hall item?"))return;try{await deleteDoc(doc(db,"townhall",td.dataset.thdel));loadTownHall()}catch(err){toast("Couldn't delete. Guides may already be looking at it.")}return}
   const b=e.target.closest("[data-vote],[data-flag],[data-del],[data-acc],[data-arch],[data-open],[data-note],[data-clear]");if(!b||!user)return;
   const d=b.dataset,id=d.vote||d.flag||d.del||d.acc||d.arch||d.open||d.note||d.clear,ref=doc(db,"suggestions",id),s=items.find(x=>x.id===id);
   try{
@@ -177,8 +254,8 @@ function start(){
   db=getFirestore(window.wlFirebase.app);
   const onAuth=u=>{user=u;isAdmin=!!(user&&ADMINS.includes((user.email||"").toLowerCase()));
     $("#admtabs").innerHTML=isAdmin?`<button data-sort="flagged">Flagged</button><button data-sort="archived">Archived</button>`:"";
-    if(!user){items=[];return}  // ideas are only readable when signed in with a school account
-    renderPost();load()};
+    if(!user){items=[];$("#townhall").hidden=true;return}  // ideas are only readable when signed in with a school account
+    renderPost();load();loadTownHall()};
   document.addEventListener("wl-auth",e=>onAuth(e.detail));
   if(window.wlAuthState&&window.wlAuthState.ready)onAuth(window.wlAuthState.user);
 }
