@@ -74,12 +74,16 @@ label.check input{margin-top:4px;width:18px;height:18px;flex:none}
 .stop b{font:700 18px var(--display)}.stop i{font-style:normal;color:var(--lamp);font:700 12px var(--body);letter-spacing:.08em}
 .stop span{color:var(--dim);font-size:14px}
 /* quadrant */
-.quad{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.quad button{all:unset;box-sizing:border-box;cursor:pointer;border-radius:14px;padding:14px;min-height:112px;display:flex;flex-direction:column;gap:5px;border:2px solid transparent;font-size:14px}
+.quad{display:grid;grid-template-columns:30px 1fr 1fr;gap:8px}
+.quad .ylab{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:center}
+.quad button{all:unset;box-sizing:border-box;cursor:pointer;border-radius:14px;padding:14px;min-height:118px;display:flex;flex-direction:column;gap:5px;border:2px solid var(--line);font-size:14px;transition:transform .12s,background .12s}
+.quad button:hover{transform:translateY(-2px)}
+.quad button:focus-visible{outline:3px solid var(--paper);outline-offset:2px}
 .quad button b{font:700 19px var(--display)}
-.quad button[aria-pressed=true]{border-color:var(--paper)}
-.qE{background:var(--ember-bg)}.qM{background:var(--lamp-bg)}.qP{background:var(--sky-bg)}.qA{background:var(--shelf2)}
-.axis{display:flex;justify-content:space-between;font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.quad .qE{background:#4a2218;border-color:var(--ember)}.quad .qM{background:#2e4a1c;border-color:var(--lamp)}.quad .qP{background:#1c3b5c;border-color:var(--sky)}.quad .qA{background:#2a3d37;border-color:#7d968b}
+.quad button[aria-pressed=true]{color:var(--ink);box-shadow:0 0 0 3px var(--paper)}
+.quad button[aria-pressed=true].qE{background:var(--ember)}.quad button[aria-pressed=true].qM{background:var(--lamp)}.quad button[aria-pressed=true].qP{background:var(--sky)}.quad button[aria-pressed=true].qA{background:#c4d3ca}
+.axis{display:flex;justify-content:space-between;font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding-left:38px}
 /* anatomy */
 .anat{display:flex;flex-direction:column;gap:8px}
 .anat div{border-radius:12px;padding:11px 13px;display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:center;background:var(--shelf2)}
