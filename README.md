@@ -35,3 +35,13 @@ hard moments at home, links to Challenges / Atlas of Sparks / Lantern Stacks, th
 and who to ask. Static, no sign-in. Unlisted: `noindex`, and not linked from any student page. Keep it that way.
 Content lives in `families/data.js`; sources are the Lower and Upper Campus Parent Handbooks, the Parent Partnership
 Guide, the Parent Education Night packet and `challenges/parents.html`. Choices families make are stored in their browser only.
+
+## Our Approach (`/families/approach/`, added Nov 17, 2026)
+The "why" half of the parent site: three promises, three pillars (with an on/off toggle that shows what breaks), the shape
+of a day by band, mornings, the eight Life Skills with one sample challenge per band, nature and healthy risk, the two kinds
+of guides, the evidence rated by strength, a glossary and a reading list. Same rules as At Home: static, no sign-in,
+`noindex`, not linked from student pages. Content lives in `families/approach/data.js`; sources are the Parent Education
+Night packet, the Upper Campus Parent Handbook, The Three Pillars staff draft, `/challenges/` and the studies linked on the
+Evidence stop. Only settled practice goes here. The two pages share `families/families.css` and the header tabs, and the
+grade band a family picks (localStorage `wl-family-prof`) carries across both. Sample challenges are copied from
+`challenges/data.js` by ID; if one is renamed or cut, update `SKILLS` in `data.js`.
