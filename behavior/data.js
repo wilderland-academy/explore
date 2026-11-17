@@ -5,7 +5,7 @@
 // #student-behavior and operational-meeting Slack threads, and the research listed in REFS.
 // Scenarios are composites. Names and identifying details are removed on purpose. Keep it that way.
 
-export const VERSION = { n: "0.1", date: "2026-11-17", note: "First edition, built from the 2026-27 Accountability System, the Freedom Level proposal, the 2025 Behavior Policy and the neurodiversity plan." };
+export const VERSION = { n: "0.2", date: "2026-11-17", note: "Board-president decisions added on the Tier 3 full day away, K–1 send-home, Town Halls, privileges versus rewards, and the normalization period." };
 
 /* ------------------------------------------------------------------ */
 /* Research the site leans on. Every card that cites research points here by id. */
@@ -65,9 +65,9 @@ export const STANDARDS = [
     nd: "Calm means calm. A dysregulated brain can't plan a repair. Some autistic students need hours, not minutes, and may need the repair options shown as a short written menu.",
     src: "Accountability System 2026-27" },
   { id: "sendhome", icon: "🏠", name: "Tier 3: send-home and the way back", short: "Immediate safety, a call home, a conversation before return, a repair plan on return.",
-    rules: ["Safety first: protect the harmed student and the group.", "The student is sent home right away. It is not a suspension and never framed as one. It's time to decompress away from what set things off.", "The guide emails an incident report to the parents.", "A parent-guide conversation is required before the student returns.", "Everyone involved agrees on a plan for repair before return, and the student delivers it on return.", "The student's own Field Guide owns the return conversation, even if a substitute handled the incident."],
+    rules: ["Safety first: protect the harmed student and the group.", "The student is sent home right away. It is not a suspension and never framed as one. It's time to decompress away from what set things off.", "The student stays away for a full school day. A Tier 3 late in the day means the next school day away too.", "Same rules in every band, K–8. K–1 does not get a softer version.", "The guide emails an incident report to the parents.", "A parent-guide conversation is required before the student returns.", "Everyone involved agrees on a plan for repair before return, and the student delivers it on return.", "The student's own Field Guide owns the return conversation, even if a substitute handled the incident."],
     nd: "The way back matters more than the way out. Return with a predictable script: who will meet them at the door, where they'll sit, what the first ten minutes look like. Surprise re-entry undoes the reset.",
-    src: "Accountability System 2026-27; Behavior Policy 2025", open: "latetier3" },
+    src: "Accountability System 2026-27; board president decision, Nov 2026" },
   { id: "parents", icon: "📨", name: "When families hear from us", short: "The same thresholds for every family.",
     rules: ["Yellow card (third Tier 1 in a day): text home.", "Same Tier 1 behavior on 3 or more days in a school week: the guide may call a parent meeting.", "Two Tier 2 incidents in one school week: email with all the incident reports.", "Tier 3: incident report email, then a parent-guide conversation before return.", "Never name other children to a family. Describe what happened around their child without identifying anyone else."],
     nd: "Families of neurodivergent children often hear only bad news from school. Pair every notice with one specific thing their child did well that week.",
@@ -81,17 +81,21 @@ export const STANDARDS = [
     nd: "Some neurodivergent children repeat shocking phrases they heard without grasping their weight. That changes how you teach afterward. It doesn't change the first steps.",
     src: "Accountability System 2026-27; Mental Health Crisis Policy", research: ["cstag"] },
   { id: "townhall", icon: "🏛️", name: "Town Halls", short: "For the whole community's problems, run by students.",
-    rules: ["Town Halls handle system-level and group concerns, not individual discipline. The old student judicial system is archived this year.", "Students submit agenda items through the Suggestion Box. Guides review them on the Town Hall page of this site.", "If 3 or more concerns about the same student arrive, the guide and class president may convene a restorative Town Hall. Its purpose is to name the impact and repair it, never to shame.", "Aim for students doing about 95 percent of the talking."],
-    nd: "Public discussion of one child's behavior lands hardest on socially sensitive and neurodivergent students. Peer judgment can trigger more shame than adult correction.",
-    src: "Accountability System 2026-27", open: "townhallnames", research: ["townhall", "rc"], link: "townhall" },
+    rules: ["Town Halls handle system-level and group concerns, not individual discipline. The old student judicial system is archived this year.", "A Town Hall can discuss a specific student when the community has a concern about them. Keep the talk on solving the problem together: what is happening, who is affected, what would help. Avoid discussing the behavior as a trait or a verdict.", "Students submit agenda items through the Suggestion Box. Guides review them on the Town Hall page of this site.", "If 3 or more concerns about the same student arrive, the guide and class president may convene a restorative Town Hall. Its purpose is to name the impact and repair it, never to shame.", "Aim for students doing about 95 percent of the talking."],
+    nd: "Public discussion of one child lands hardest on socially sensitive and neurodivergent students, and peer judgment can trigger more shame than adult correction. Tell the student beforehand what will be discussed, let them help word the problem, and let them help with the solution or pass.",
+    src: "Accountability System 2026-27; board president decision, Nov 2026", research: ["townhall", "rc"], link: "townhall" },
   { id: "record", icon: "🗂️", name: "Write it down", short: "Patterns are invisible without records.",
     rules: ["Document every Tier 2 and Tier 3, and any repeated Tier 1, the same day.", "Record what you saw and heard, word for word where it matters. Leave out labels and guesses about motive.", "Use Behavior Claude to draft incident reports and parent emails, then read and edit before sending."],
     nd: "Records help you spot triggers: time of day, transitions, noise, hunger, a certain peer. That's antecedent data, the first step in most evidence-based plans.",
     src: "Accountability System 2026-27", open: "logging", research: ["ncaep"] },
   { id: "norewards", icon: "🌱", name: "No prizes for behavior", short: "We skip sticker charts and prizes for behavior. We give specific feedback and gratitude.",
-    rules: ["Don't trade prizes, points or treats for good behavior.", "Do notice it out loud, specifically: what they did and why it mattered.", "Thank instead of praising the person: “Thanks for giving up your seat for her” beats “Good boy.”"],
+    rules: ["Don't trade prizes, points or treats for good behavior.", "Freedom Levels are not rewards. They pair privileges with the behavior that makes them safe and workable, such as more independence when a student shows they handle it well. Explain them that way.", "Do notice it out loud, specifically: what they did and why it mattered.", "Thank instead of praising the person: “Thanks for giving up your seat for her” beats “Good boy.”"],
     nd: "Some autistic and ADHD students rely on clear, immediate feedback more than peers do. No prizes doesn't mean no feedback. Make your notice frequent and concrete.",
-    src: "Behavior Policy 2025", open: "rewards", research: ["rewards", "praise"] }
+    src: "Behavior Policy 2025; board president decision, Nov 2026", research: ["rewards", "praise"] },
+  { id: "normalize", icon: "🌤️", name: "The normalization period", short: "In every band, new students get time to settle before behavior is judged against the full standard.",
+    rules: ["Every band, K–8, has a normalization period in which a new student's behavior can settle into the community's norms.", "Returning students do not need one.", "Normalization is time and support, not a pass on safety. Anything that hurts someone still gets a safety response."],
+    nd: "A new student may be masking, overloaded or testing whether the place is safe. Predictable routines, a named adult and fewer surprises in the first weeks do more than extra rules.",
+    src: "Board president decision, Nov 2026", open: "normalize" }
 ];
 
 /* ------------------------------------------------------------------ */
@@ -118,7 +122,7 @@ export const TIERS = [
   { n: 3, name: "Serious harm", color: "t3", q: "Does it present an immediate or serious threat to safety, dignity or wellbeing?",
     voice: "“My behavior presents an immediate or serious threat to someone's safety, dignity, or well-being.”",
     examples: ["Punching, kicking with force, choking, fighting", "Using an object as a weapon, throwing hard objects at people", "Threatening serious violence", "Identity-based harassment or discrimination", "Sexual harassment or sexually aggressive behavior", "Cornering or trapping someone, deliberate intimidation", "Severe, targeted bullying"],
-    response: ["Safety first.", "Sent home immediately.", "Guide emails the incident report.", "Parent-guide conversation before return.", "A repair plan agreed by all parties, delivered on return."],
+    response: ["Safety first.", "Sent home immediately, for a full school day (the next school day if it happens late in the day).", "Guide emails the incident report.", "Parent-guide conversation before return.", "A repair plan agreed by all parties, delivered on return."],
     escalate: "Any single incident. No count required.",
     nd: "A meltdown is not a tantrum and it is not a choice. If a meltdown causes Tier 3 harm, the safety response is the same, and the return plan should focus on what overloaded the student and how to catch it earlier next time." }
 ];
@@ -195,7 +199,7 @@ export const TOOLS = [
   { id: "restorative", name: "Restorative conversations and circles", when: "Harm between people, once everyone is calm.", research: ["rp"],
     how: ["Ask: What happened? What were you thinking at the time? Who has been affected and how? What do you need to make it right?", "Let the person who did the harm propose the repair. Imposed acts of service tend to become performances.", "Circles work best for proactive community building, not only for repair after harm."],
     nd: "Peer audiences raise shame for socially sensitive kids. Start one-to-one, and add people only when the student is ready.",
-    trap: "A circle convened to make one student face the group isn't restorative. It's a trial." },
+    trap: "A circle convened to make one student face the group isn't restorative. It's a trial.", extra: "Restorative practices are optional here. We don't mandate them. For middle school, lean on the Mentor Mindset approaches, which were built for that age group." },
   { id: "nvc", name: "Nonviolent Communication", when: "Helping students say hard things without attack.", research: [],
     how: ["Observation: “When I see…” (camera-ready facts).", "Feeling: “I feel…” (an emotion word, not a thought).", "Need: “Because I need…” (a need, not a strategy).", "Request: “Would you be willing…” (and be willing to hear no)."],
     nd: "The four-part frame is a gift to students who struggle with tone: it makes the unspoken explicit. Keep a feelings and needs card handy.",
@@ -295,12 +299,12 @@ export const KNOTS = [
     trap: "Adding one more incentive system. He's already told you incentives aren't the lever.", research: ["handicap", "wise", "rewards"] },
   { id: "late", title: "A Tier 3 at 2:45", band: "All", where: "End of day",
     story: "A Tier 3 happens fifteen minutes before dismissal. The student is sent home and picked up at 3:00. Tomorrow is a normal school day, and next week is the showcase.",
-    q: "What does the 2026-27 system require before tomorrow?",
-    opts: [["Nothing. The student was sent home, so the consequence is served.", false, "Send-home is only step two. Return has conditions."], ["An incident report email to parents, a parent-guide conversation before the student returns, and an agreed repair plan delivered on return.", true, "Those are the written requirements. Whether a full extra day away is also required is an open question."], ["An automatic full day away from school, no exceptions.", false, "That was board direction last spring, but the 2026-27 document doesn't say it. Until it's decided, follow the written rules and flag the case to leadership."]],
-    standard: ["Incident report email the same day.", "Parent-guide conversation before return.", "Repair plan agreed and delivered on return.", "Field Guide owns the return conversation."],
-    toolkit: ["Hold the parent conversation by phone that evening if the family can, so the student isn't kept out just by scheduling."],
-    nd: "Unpredictability about whether they're coming back tomorrow is its own stressor. Tell the student and family exactly what the next step is and when.",
-    trap: "Different guides making different calls on timing. That's the inconsistency families notice first.", research: ["suspend"], open: "latetier3" },
+    q: "What does the standard require now?",
+    opts: [["Nothing. The student was sent home at 3:00, so the consequence is served.", false, "A Tier 3 means a full school day away. Leaving fifteen minutes early doesn't count as one."], ["The student stays home tomorrow too, the guide emails an incident report, and a parent-guide conversation and repair plan come before return.", true, "A late-day Tier 3 still means a full school day away, so the return is the day after tomorrow at the earliest."], ["A short call home tonight, and the student returns tomorrow if the parents agree.", false, "The call is part of it, but the full day away isn't up to a guide or a parent to waive."]],
+    standard: ["Incident report email the same day.", "A full school day away. After a late-day Tier 3, that is the next school day.", "Parent-guide conversation before return.", "Repair plan agreed and delivered on return.", "Field Guide owns the return conversation."],
+    toolkit: ["Hold the parent conversation by phone that evening if the family can, so the return day is spent on the repair plan, not on scheduling."],
+    nd: "Unpredictability about whether they're coming back tomorrow is its own stressor. Tell the student and family exactly which day they return and who will meet them.",
+    trap: "Different guides making different calls on timing. That's the inconsistency families notice first.", research: ["suspend"] },
   { id: "sub", title: "The substitute's afternoon", band: "All", where: "Any",
     story: "A parent volunteer is covering. Two students fight; one punches the other. The volunteer calls home and the student is picked up. The next morning, nobody is sure who is meeting with him.",
     q: "Who owns the return?",
@@ -320,11 +324,11 @@ export const KNOTS = [
   { id: "window", title: "The window and the hose timers", band: "K–1", where: "Lower campus",
     story: "A young student jumps out the kitchen window twice in one morning. Outside, kids are using hose timers as pretend bombs and phones until they break. One boy's swearing and anger are escalating, and he fixates on one classmate at a time. When adults step in, he shuts down.",
     q: "Where do you start?",
-    opts: [["Write him up at Tier 2 every time.", false, "The tier system is written for grades 2 to 8. The lower campus runs on Montessori norms, and a six-year-old's impulsivity calls for environment and support first."], ["Safety first, then the environment: give the kids real things to play with, remove what's tempting and fragile, and start collecting pattern data on the one student.", true, "Change the room before trying to change the child. Data supports the next decision."], ["Ask his parents to keep him home until he's calmer.", false, "Possibly part of a later plan, but not a first move without data and a conversation."]],
-    standard: ["Unsafe actions (jumping out windows): call the family, follow the send-home process if the student can't be kept safe.", "Document behaviors and adult responses daily so decisions about support rest on patterns, not memory."],
+    opts: [["Write him up at Tier 2 every time and stop there.", false, "K–1 uses the same tiers and the same send-home rules as every other band, but a tier only names the response. A six-year-old's impulsivity also needs a change to the room and a plan, or the same thing happens tomorrow."], ["Safety first, then the environment: give the kids real things to play with, remove what's tempting and fragile, and start collecting pattern data on the one student.", true, "Change the room before trying to change the child. Data supports the next decision."], ["Ask his parents to keep him home until he's calmer.", false, "Possibly part of a later plan, but not a first move without data and a conversation."]],
+    standard: ["Classify each incident by the same tier definitions used in grades 2 to 8, and follow that tier's steps. If it is a Tier 3, the send-home rules are the same: a full school day away, a parent-guide conversation before return, a repair plan.", "Document behaviors and adult responses daily so decisions about support rest on patterns, not memory."],
     toolkit: ["Loose parts, swings, jump ropes, a mud kitchen: things to do instead of things to break.", "Precorrection before transitions and recess.", "A simplified Plan B: “I noticed you have a hard time when your friend plays with someone else. What's up?”"],
     nd: "Sensory seeking, impulsivity and fixation on one friend can all be part of ADHD or autism in young children. Vigorous movement and predictable routines are among the most useful supports.",
-    trap: "Relying on volunteers who change daily. Inconsistency is a trigger in itself.", research: ["ncaep", "move"], open: "k1" },
+    trap: "Relying on volunteers who change daily. Inconsistency is a trigger in itself.", research: ["ncaep", "move"] },
   { id: "tier0", title: "Can't sit, can't stop", band: "2–4", where: "Academic Block",
     story: "During focus time a boy hums, taps his pencil, gets up four times, and narrates his math out loud. His tablemate keeps sighing and asks to move.",
     q: "What tier is this?",
@@ -459,17 +463,15 @@ export const MODULES = [
 /* ------------------------------------------------------------------ */
 /* LIVING DOCUMENT: open questions leadership needs to settle. */
 export const OPEN = [
-  { id: "latetier3", q: "Does a Tier 3 late in the day still require a full day away?", why: "Last spring the board said Tier 3 means a full day home, including the next day for late incidents. The 2026-27 Accountability System says “sent home immediately” plus a parent-guide conversation before return, with no full-day rule. Guides need one answer.", sources: "#student-behavior, Apr–May 2026; Accountability System 2026-27" },
-  { id: "townhallnames", q: "Can a Town Hall ever discuss a specific student?", why: "The 2026-27 system allows a restorative Town Hall after 3 or more concerns about one student. A guide has said we never discuss specific people because it's public shaming. Alpha's town halls do address individuals. Pick one rule.", sources: "Accountability System 2026-27; #middle-school-5-to-8, Oct 2026" },
+  { id: "normalize", q: "How long is the normalization period, and what changes during it?", why: "The board president confirmed every band has one for new students and returning students skip it. The length, who decides it has ended, and how tiers apply in the meantime are not written down.", sources: "Board president, Nov 2026" },
   { id: "wallchart", q: "What goes on the Freedom Level wall chart?", why: "The proposal says levels are never posted as a public ranking, and also says to post the chart where students can see where they stand. This site assumes the wall shows what each level means, not who is where.", sources: "Freedom Level Proposal 2026-27" },
-  { id: "rewards", q: "Do we stay prize-free for behavior?", why: "Policy says no rewards. A guide proposed a camp-style system of specific praise plus stickers. The national evidence list for autism includes reinforcement, and the rewards research shows expected tangible rewards lower interest. Decide what “no rewards” means in practice.", sources: "Behavior Policy 2025; #student-behavior, Apr 2026" },
-  { id: "k1", q: "What are the K–1 rules for send-home and tiers?", why: "The Accountability System is written for grades 2 to 8. The lower campus uses Montessori norms, but guides there are sending children home and asking about 1:1 aides without a written threshold.", sources: "#lower-elementary-campus-k-to-1, Oct–Nov 2026" },
   { id: "logging", q: "Where do incidents and Peace Talk requests get logged?", why: "The system says to record incidents with Behavior Claude and request Peace Talks through the Dashboard. Guides have asked where that dashboard is.", sources: "Accountability System 2026-27; #lower-elementary-campus-k-to-1, Oct 2026" },
   { id: "twodocs", q: "Retire the 2025 parent-involvement thresholds?", why: "The 2025 Behavior Policy says 3 Tier 1s, 2 Tier 2s or 1 Tier 3 in a day means a note home. The 2026-27 system uses different counts. This site follows 2026-27. Archive the old rule so families don't hear two versions.", sources: "Behavior Policy 2025; Accountability System 2026-27" },
   { id: "aide", q: "What's the rule when a student's 1:1 aide is absent?", why: "A board member proposed: baseline expectations written into enrollment, case-by-case review, and if attendance depends on an aide, no aide means no attendance. Not yet adopted; it needs legal review because the ADA applies to private schools.", sources: "#lower-elementary-campus-k-to-1, Nov 2026" }
 ];
 
 export const CHANGELOG = [
+  ["0.2", "2026-11-17", "Decisions from the board president: a Tier 3 means a full school day away, including the next day for late incidents; K–1 follows the same send-home rules as 2–8; a Town Hall may discuss a specific student with the focus on solving the problem; Freedom Levels pair privileges with behavior and are not rewards; every band has a normalization period for new students, not for returning ones; restorative practices are optional and middle school leans on Mentor Mindset."],
   ["0.1", "2026-11-17", "First edition. Standards from the 2026-27 Accountability System (Guide Reference Edition) and the Freedom Level proposal; toolkit and neurodiversity guidance from the 2025 Behavior Policy and the neurodiversity plan; composite scenarios from staff Slack; research cards with sources."]
 ];
 
@@ -481,7 +483,7 @@ export const TH_GUIDE = [
   "Students run it: a facilitator, a timekeeper, a scribe. Guides speak last and least, about 5 percent.",
   "Each item: the person who raised it explains, discussion, proposal, vote, written decision.",
   "Rules can be tried for a set time and revisited. Let students see a rule fail and fix it.",
-  "No individual's behavior goes on the public agenda. Concerns about people go to a guide first."
+  "A concern about a specific student can be on the agenda. Word it as a problem to solve, not a behavior to judge, and tell the student first. Go to a guide first before it is posted."
 ];
 
 /* ------------------------------------------------------------------ */
@@ -494,13 +496,14 @@ STANDARDS (grades 2-8, 2026-27 Accountability System):
 - Tier by impact first. Tier 0 = self-regulation/developmental, not meaningful harm (humming, tapping, blurting, pacing, fidgeting). Response: patience, coaching, environment changes. After 2 reminders on the same behavior in one day, if it continues and affects another student, it becomes Tier 1.
 - Tier 1 = interferes with another's learning/space without significant harm. Within one day: 1st reminder, 2nd proximity to guide and loses seating preference, 3rd yellow card plus text home. If 2+ Tier 1s hit the same student in a day: Peace Talk with peace stone plus an act of kindness before resuming work. Same Tier 1 behavior on 3+ days in a school week: guide may call a parent meeting. Escalates to Tier 2 only after a yellow card AND a Peace Talk AND actual harm.
 - Tier 2 = actual physical, emotional, social or property harm or serious boundary violation (pushing, tripping, humiliating, deliberate harmful exclusion, rumors, taking and refusing to return belongings, following someone who asked for space). Response: red card; care for the harmed student first; calm down (Personal Fire Drill plan); SMART Restore matched to community-agreed restorative actions, due and signed off by Field Guide by end of next school day, and it is the student's next work; record the incident; discuss at next coaching meeting; 2 Tier 2s in a school week = email parents with reports.
-- Tier 3 = immediate or serious threat to safety, dignity or wellbeing (punching, choking, fighting, object as weapon, threats of serious violence including sexual violence, identity-based harassment, sexual harassment, cornering/intimidation). Response: safety first; sent home immediately (not a suspension); incident report email; parent-guide conversation required before return; repair plan agreed by all parties and delivered on return. The student's own Field Guide owns re-entry.
+- Tier 3 = immediate or serious threat to safety, dignity or wellbeing (punching, choking, fighting, object as weapon, threats of serious violence including sexual violence, identity-based harassment, sexual harassment, cornering/intimidation). Response: safety first; sent home immediately (not a suspension) for a full school day, so a late-day Tier 3 means the next school day too; incident report email; parent-guide conversation required before return; repair plan agreed by all parties and delivered on return. The student's own Field Guide owns re-entry.
 - Peace Talks: student-led with Peace Object when safe, or guide-supported after the guide assesses whether it's warranted; at least 20 protected minutes; never for physical aggression, threats, repeated harassment or big power imbalances. Every guide protects a morning Open Coaching Session.
 - Freedom Levels: four separate domains (Academic Block, Nature Walk, Table, Field Block), levels 1-4, everyone starts at 3, reviewed weekly on the week's pattern, move one rung at a time tied to criteria, delivered privately at one-on-ones, never posted as a ranking. Nature Walk Level 4 (blades) needs a second guide's confirmation. Level 5 = Level 4 in all four domains.
-- Town Halls handle system-level and group concerns, not individual discipline; never public shaming.
+- Town Halls handle system-level and group concerns, not individual discipline. A Town Hall may discuss a specific student, with the focus on solving the problem together, not on the behavior; never public shaming. Tell the student first.
 - Threats of serious violence: treat as Tier 3 pending leadership assessment; document exact words. Any mention of self-harm, suicide, abuse or being harmed: stop and follow the Mental Health Crisis Policy and involve leadership now.
 - No prizes for behavior; specific noticing and gratitude instead. Never name other children to a family.
-- K-1 (lower campus) runs on Montessori norms; the tier system is written for grades 2-8.
+- K-1 uses the same tiers and the same send-home rules as grades 2-8. Every band has a normalization period for new students to settle; returning students do not need one.
+- Freedom Levels pair privileges with behavior; they are not rewards. Restorative practices are optional; for middle school prefer Mentor Mindset approaches.
 
 TOOLKIT (guide's discretion): Collaborative & Proactive Solutions Plan B (empathy, adult concerns, invitation; assumes kids do well if they can; ask can't vs won't); co-regulation (Self-Reg); restorative conversations (student proposes the repair); Nonviolent Communication (weak evidence; use as a script); empathic listening; RULER; self-management plans (no rewards step); Personal Fire Drill plans; regulation space as time-in, never punishment; precorrection and priming; wise feedback; specific noticing; vigorous movement; meaning questions; teaching peers about differences; optional mindfulness (large trials found little benefit as a curriculum).
 
