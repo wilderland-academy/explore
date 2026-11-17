@@ -1,4 +1,4 @@
-// Behavior Trail Guide (staff only). Sign-in comes from /auth.js. Content lives in data.js.
+// The Behavior Net (staff only). The backup to the Mentor Mindset Field Guide, not a second path. Sign-in comes from /auth.js. Content lives in data.js.
 // Firestore: flStudents (+ /history) for Freedom Levels, townhall + townhallAgenda for Town Hall,
 // behaviorProgress for training badges, behaviorProposals for the living document. AI goes through the
 // same relay as the Mentor Mindset Field Guide (address saved in mentorConfig/main).
@@ -24,6 +24,16 @@ const fmtDate = ts => { const t = ms(ts); return t ? new Date(t).toLocaleDateStr
 const daysAgo = ts => { const t = ms(ts); return t ? Math.floor((Date.now() - t) / 864e5) : null; };
 function toast(t) { document.querySelectorAll(".toast").forEach(x => x.remove()); const m = h("div", { class: "toast", text: t }); document.body.appendChild(m); setTimeout(() => m.remove(), 4500); }
 const STRENGTH = { strong: "strong evidence", moderate: "moderate evidence", mixed: "mixed evidence", thin: "thin evidence" };
+let band = local.get("bg-band", "up");
+const isK1 = () => band === "k1";
+const B = (o, k) => isK1() && k ? Object.assign({}, o, k) : o;
+const k1Box = t => t ? h("div", { class: "k1note" }, [h("b", { text: "K–1" }), h("span", { text: t })]) : null;
+function drawBand() {
+  document.body.classList.toggle("k1", isK1());
+  const w = $("#bandsw"); if (!w) return; w.innerHTML = "";
+  w.append(h("span", { text: "Policy for" }), ...[["up", "Grades 2–8"], ["k1", "K–1"]].map(([k, t]) => h("button", { "aria-pressed": String(band === k), text: t, onclick: () => setBand(k) })));
+}
+function setBand(k) { band = k; local.set("bg-band", k); drawBand(); route(); }
 const ndBox = t => t ? h("div", { class: "nd" }, [h("b", { text: "Different wiring" }), h("span", { text: t })]) : null;
 const trapBox = t => t ? h("div", { class: "trap" }, [h("b", { text: "Watch out" }), h("span", { text: t })]) : null;
 const refLinks = ids => ids && ids.length ? h("div", { class: "refs" }, ids.filter(id => D.REFS[id]).map(id => { const r = D.REFS[id]; return h("a", { class: "ref", href: r.u, target: "_blank", rel: "noopener", text: "📚 " + r.t + " · " + STRENGTH[r.s] }); })) : null;
@@ -34,7 +44,7 @@ const confirmTap = (btn, label, fn) => { btn.onclick = async () => { if (btn.dat
 function gate(msg) { startedFor = null; $("#trail").hidden = true; app.innerHTML = ""; app.appendChild(h("section", { class: "view" }, [h("div", { class: "card gate" }, [h("h2", { text: "Wilderland staff area" }), h("p", { class: "dim", text: msg })])])); }
 async function onAuth(u) {
   const seq = ++authSeq; user = u;
-  if (!u) return gate("Sign in with your Wilderland account, top right, to open the Behavior Trail Guide.");
+  if (!u) return gate("Sign in with your Wilderland account, top right, to open the Behavior Net.");
   if (startedFor === u.uid) return;
   isAdmin = ADMINS.includes(me());
   let ok = isAdmin;
@@ -43,7 +53,7 @@ async function onAuth(u) {
   if (!ok) return gate("This area is for Wilderland guides and staff. If that's you, ask Alex to add your account.");
   try { const c = await getDoc(doc(db, "mentorConfig", "main")); relay = c.exists() ? (c.data().relay || "") : ""; } catch (e) { relay = ""; }
   if (seq !== authSeq) return;
-  startedFor = u.uid; cache.students = null; cache.th = null; cache.agenda = null; loadProgress(); buildNav(); $("#trail").hidden = false; route();
+  startedFor = u.uid; cache.students = null; cache.th = null; cache.agenda = null; loadProgress(); buildNav(); drawBand(); $("#trail").hidden = false; route();
 }
 (async () => {
   while (!window.wlFirebase) await new Promise(r => setTimeout(r, 50));
@@ -64,13 +74,13 @@ const aiErr = e => e && e.code === "norelay" ? "The AI isn't connected yet. An a
 
 /* ---------------- routing ---------------- */
 // [id, label, blurb, kind]: kind S = standard, T = toolkit, N = different wiring, D = data tools
-const STOPS = [["map", "Map", "", ""], ["standard", "The Standard", "What every guide does the same way", "S"], ["tiers", "Tier ladder", "Sort by impact, with exact counts", "S"], ["freedom", "Freedom Levels", "Four domains, one rung at a time", "S"], ["knots", "Knots", "Real scenarios, untangled", "S"], ["toolkit", "Toolkit", "Methods you choose", "T"], ["wiring", "Different wiring", "Neurodivergent students", "N"], ["evidence", "Evidence", "What the research says, honestly", "T"], ["training", "Training", "Earn your trail badges", "S"], ["coach", "Ask the coach", "Untangle your own situation", "T"], ["tracker", "Level tracker", "Weekly Freedom Level reviews", "D"], ["townhall", "Town Hall", "Student agenda items", "D"], ["living", "Living doc", "Open questions and proposals", "D"]];
+const STOPS = [["map", "Start", "", ""], ["standard", "The Standard", "What every guide does the same way", "S"], ["tiers", "Tier ladder", "Sort by impact, with exact counts", "S"], ["freedom", "Freedom Levels", "Four domains, one rung at a time", "S"], ["knots", "Knots", "Real scenarios, untangled", "S"], ["toolkit", "Toolkit", "Methods you choose", "T"], ["wiring", "Different wiring", "Neurodivergent students", "N"], ["evidence", "Evidence", "What the research says, honestly", "T"], ["training", "Training", "Earn your behavior badges", "S"], ["coach", "Ask the coach", "Untangle your own situation", "T"], ["tracker", "Level tracker", "Weekly Freedom Level reviews", "D"], ["townhall", "Town Hall", "Student agenda items", "D"], ["living", "Living doc", "Open questions and proposals", "D"]];
 function buildNav() { const nav = $("#nav"); nav.innerHTML = ""; STOPS.concat(isAdmin ? [["admin", "Admin"]] : []).forEach(s => nav.appendChild(h("a", { href: "#" + s[0], text: s[1] }))); }
 const VIEWS = {};
 function route() {
   if (!startedFor) return;
   let [v, sub] = location.hash.slice(1).split("/"); if (!VIEWS[v] || (v === "admin" && !isAdmin)) { v = "map"; sub = ""; }
-  document.querySelectorAll("#nav a").forEach(a => { if (a.getAttribute("href") === "#" + v) { a.setAttribute("aria-current", "page"); a.scrollIntoView && a.scrollIntoView({ block: "nearest", inline: "center" }); } else a.removeAttribute("aria-current"); });
+  document.querySelectorAll("#nav a").forEach(a => { if (a.getAttribute("href") === "#" + v) { a.setAttribute("aria-current", "page");  } else a.removeAttribute("aria-current"); });
   const sec = h("section", { class: "view" }); app.innerHTML = ""; app.appendChild(sec); VIEWS[v](sec, decodeURIComponent(sub || "")); window.scrollTo(0, 0);
 }
 addEventListener("hashchange", route);
@@ -93,41 +103,71 @@ const earned = () => D.MODULES.filter(m => progress[m.id] && progress[m.id].pass
 
 /* ---------------- map ---------------- */
 VIEWS.map = sec => {
-  head(sec, "The <span>Behavior</span> Trail Guide", "How Wilderland guides respond to behavior: the standards we all hold the same way, the tools you choose with judgment, and how to support neurodivergent students the whole way through.");
-  const pts = [[70, 450], [190, 392], [110, 300], [250, 250], [380, 330], [520, 410], [660, 350], [560, 250], [420, 172], [560, 104], [700, 160], [820, 240]];
-  const trees = [[40, 380], [300, 440], [520, 470], [380, 200], [690, 460], [860, 330], [200, 190], [610, 160]];
-  let svg = `<svg viewBox="0 0 900 520" role="img" aria-label="Trail map of the behavior guide">
-  <circle cx="790" cy="70" r="26" fill="#d5f367" opacity=".9"/>
-  <path d="M0 330 120 190 230 280 360 130 480 260 600 100 720 240 820 150 900 230V520H0Z" fill="#0f3a2d"/>
-  <path d="M0 420 150 300 290 400 430 290 560 390 700 280 900 400V520H0Z" fill="#0b2b20"/>
-  <path d="M600 100 560 150 600 140 640 152Z" fill="#f6f8ea" opacity=".8"/><path d="M360 130 330 170 360 162 392 172Z" fill="#f6f8ea" opacity=".6"/>
-  ${trees.map(t => `<path d="M${t[0]} ${t[1]}l10 22h-20z M${t[0]} ${t[1] + 12}l13 24h-26z" fill="#015640"/>`).join("")}
-  <polyline points="${pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="#d5f367" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>`;
-  const col = { S: "#d5f367", T: "#93c9ff", N: "#cdb6ff", D: "#ffd166" };
-  STOPS.slice(1).forEach((s, i) => { const [x, y] = pts[i]; svg += `<a href="#${s[0]}" aria-label="${esc(s[1])}"><circle cx="${x}" cy="${y}" r="17" fill="${col[s[3]]}" stroke="#08140f" stroke-width="3"/><text class="n" x="${x}" y="${y + 5}" text-anchor="middle">${i + 1}</text><text x="${x}" y="${y + 38}" text-anchor="middle">${esc(s[1])}</text></a>`; });
+  head(sec, "The Behavior <span>Net</span>", "Our policies and tools for when something slips: the standards every guide holds the same way, the tools you choose with judgment, and support for neurodivergent students throughout.");
+  // the path and the net
+  const pn = h("div", { class: "pathnet" });
+  pn.append(h("div", { class: "p" }, [h("span", { style: "font:800 11px var(--body);letter-spacing:.1em;text-transform:uppercase;opacity:.8", text: "First, every day · the path" }), h("h2", { text: "The Mentor Mindset" }), h("p", { text: D.PATHNET.path }), h("a", { href: "/fieldguide/", text: "Go to the Mentor Mindset Field Guide →" })]),
+    h("div", { class: "n" }, [h("span", { class: "tag S", text: "Backup · the net" }), h("h2", { text: "This site: Behavior" }), h("p", { class: "dim", text: D.PATHNET.net })]));
+  sec.appendChild(pn);
+  // prevention pyramid
+  const pyr = `<svg viewBox="0 0 760 330" role="img" aria-label="Pyramid: the Mentor Mindset is the wide base for every child; the toolkit supports some; tier responses catch a few">
+  <polygon points="380,18 470,98 290,98" fill="#b3263a"/><text x="380" y="80" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">Tiers 2–3</text>
+  <polygon points="290,104 470,104 560,184 200,184" fill="#8f5410"/><text x="380" y="140" text-anchor="middle" fill="#fff" font-weight="700" font-size="15">Toolkit and Tiers 0–1</text><text x="380" y="161" text-anchor="middle" fill="#fff" font-size="12.5">some children, some days</text>
+  <polygon points="200,190 560,190 680,300 80,300" fill="#0b3d2e"/><text x="380" y="235" text-anchor="middle" fill="#d5f367" font-weight="800" font-size="21">The Mentor Mindset</text><text x="380" y="260" text-anchor="middle" fill="#f3f7e6" font-size="13.5">every child, every interaction: high standards, high support, respect</text><text x="380" y="282" text-anchor="middle" fill="#f3f7e6" font-size="12.5" opacity=".85">plus a predictable day and expectations we teach</text>
+  <text x="600" y="60" fill="#5b6575" font-size="12.5">the net catches a few</text><path d="M596 56 476 70" stroke="#5b6575" stroke-dasharray="3 4"/>
+  <text x="20" y="325" fill="#5b6575" font-size="11.5">Shape adapted from the Pyramid Model and PBIS: prevention for all at the base, more intensive help for fewer children above it.</text></svg>`;
+  sec.appendChild(card("", [h("h2", { text: "Where your time goes" }), h("p", { class: "dim", text: "The base does most of the work. When the Mentor Mindset is practiced consistently, fewer children ever reach the top. If you only have time to get better at one thing this month, make it the base." }), h("div", { class: "pyr", html: pyr }), refLinks(["pyramid"])]));
+  // band
+  sec.appendChild(card(isK1() ? "K-edge" : "", [h("h3", { text: "Which policy are you reading?" }), h("p", { class: "dim", text: "K–1 keeps the same values with different mechanics: taught expectations, in-the-moment responses, same-day repairs and family updates. Pick your band. Every page follows it." }), h("div", { class: "chips" }, [["up", "Grades 2–8"], ["k1", "K–1 (lower campus)"]].map(([k, t]) => h("button", { class: "chip", "aria-pressed": String(band === k), text: t, onclick: () => setBand(k) })))]));
+  if (isK1()) sec.appendChild(k1Compare());
+  // island map
+  const isl = STOPS.slice(1), n = isl.length, cx = 450, cy = 285, rx = 330, ry = 175;
+  const pts = isl.map((_, i) => { const a = Math.PI * 0.95 - (i / (n - 1)) * Math.PI * 1.9; return [Math.round(cx + rx * Math.cos(a)), Math.round(cy - ry * Math.sin(a) * 0.92)]; });
+  const waves = Array.from({ length: 9 }, (_, i) => { const y = 40 + i * 58, x0 = (i % 2) * 40; let d = ""; for (let x = x0; x < 900; x += 120) d += `M${x} ${y}q15 -8 30 0t30 0 `; return d; }).join("");
+  const col = { S: "#1d4e89", T: "#8f5410", N: "#6a4bb0", D: "#8a6100" };
+  let svg = `<svg viewBox="0 0 900 560" role="img" aria-label="Island map of the Behavior Net">
+  <defs><radialGradient id="sea" cx="50%" cy="50%" r="70%"><stop offset="0" stop-color="#bfe0e6"/><stop offset="1" stop-color="#8cc3cf"/></radialGradient></defs>
+  <rect width="900" height="560" fill="url(#sea)"/><path d="${waves}" stroke="#fff" stroke-opacity=".45" stroke-width="2" fill="none"/>
+  <a href="/fieldguide/" aria-label="Mentor Mindset Field Guide, on the mainland"><path d="M0 120 60 40 110 90 170 10 240 100 290 70 330 120Z" fill="#0b3d2e"/><path d="M170 10 150 38 170 33 190 40Z" fill="#fff"/><path d="M0 120H330V128H0Z" fill="#0b3d2e"/><text x="342" y="52" style="font:800 14px Inter;fill:#0b3d2e;stroke:#d8ecef;stroke-width:5px;paint-order:stroke">← The mainland: Mentor Mindset trail</text></a>
+  <ellipse cx="${cx}" cy="${cy + 6}" rx="${rx + 52}" ry="${ry + 44}" fill="#e9dcb8"/>
+  <ellipse cx="${cx}" cy="${cy}" rx="${rx + 20}" ry="${ry + 16}" fill="#f1e6c8"/>
+  <path d="M${cx - 250} ${cy}c40 -120 160 -150 260 -140s200 40 230 120c20 70 -60 140 -190 150s-270 -30 -300 -130z" fill="#9cc58f"/>
+  <path d="M${cx - 150} ${cy - 10}c30 -70 110 -90 170 -80s120 30 130 80-60 90-150 90-170-30-150-90z" fill="#7fb178"/>
+  <g fill="#2f6b45">${[[330, 220], [390, 190], [520, 210], [560, 260], [420, 330], [350, 300], [480, 300]].map(t => `<path d="M${t[0]} ${t[1]}l9 20h-18z M${t[0]} ${t[1] + 10}l12 22h-24z"/>`).join("")}</g>
+  <g transform="translate(${cx + 8} ${cy - 30})"><rect x="-9" y="-48" width="18" height="52" fill="#fffdf8" stroke="#15263d" stroke-width="2"/><rect x="-9" y="-34" width="18" height="8" fill="#b3263a"/><rect x="-9" y="-18" width="18" height="8" fill="#b3263a"/><path d="M-12 -48h24l-12 -14z" fill="#15263d"/><path d="M12 -55 70 -70 70 -40Z" fill="#fff6c9" opacity=".7"/></g>
+  <path d="M${cx + 280} ${cy + 150}l60 30M${cx + 300} ${cy + 140}l40 50M${cx + 320} ${cy + 135}l10 60" stroke="#8f5410" stroke-width="1.5" opacity=".6"/>
+  <polyline points="${pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="#15263d" stroke-width="2.5" stroke-dasharray="1 9" stroke-linecap="round" opacity=".7"/>`;
+  isl.forEach((s, i) => { const [x, y] = pts[i]; const below = y > cy; svg += `<a href="#${s[0]}" aria-label="${esc(s[1])}"><circle cx="${x}" cy="${y}" r="16" fill="${col[s[3]]}" stroke="#fffdf8" stroke-width="3"/><text class="n" x="${x}" y="${y + 4.5}" text-anchor="middle">${i + 1}</text><text x="${x}" y="${below ? y + 36 : y - 24}" text-anchor="middle">${esc(s[1])}</text></a>`; });
   sec.appendChild(h("div", { class: "map", html: svg + "</svg>" }));
   sec.appendChild(h("div", { class: "grid g3" }, [
     card("S-edge", [tag("S", "Standard"), h("p", { text: D.KINDS.standard.say })]),
     card("T-edge", [tag("T", "Toolkit"), h("p", { text: D.KINDS.toolkit.say })]),
-    card("N-edge", [tag("N", "Different wiring"), h("p", { text: "Notes on neurodivergent students appear on nearly every page, in this color." })])
+    card("N-edge", [tag("N", "Different wiring"), h("p", { text: "Notes on neurodivergent students appear on nearly every page, in this color. The first principle is Inclusive Excellence." })])
   ]));
   const g = h("div", { class: "stops" });
-  STOPS.slice(1).forEach((s, i) => g.appendChild(h("a", { class: "stop " + s[3], href: "#" + s[0] }, [h("i", { text: "STOP " + (i + 1) + " · " + ({ S: "STANDARD", T: "TOOLKIT", N: "DIFFERENT WIRING", D: "TOOLS" }[s[3]]) }), h("b", { text: s[1] }), h("span", { text: s[2] })])));
+  isl.forEach((s, i) => g.appendChild(h("a", { class: "stop " + s[3], href: "#" + s[0] }, [h("i", { text: (i + 1) + " · " + ({ S: "STANDARD", T: "TOOLKIT", N: "DIFFERENT WIRING", D: "TOOLS" }[s[3]]) }), h("b", { text: s[1] }), h("span", { text: s[2] })])));
   sec.appendChild(g);
   const tip = D.ND_TIPS[Math.floor(Date.now() / 864e5) % D.ND_TIPS.length];
   sec.appendChild(h("div", { class: "grid g2" }, [
     card("N-edge", [tag("N", "Today's different-wiring tip"), h("p", { style: "font:700 19px/1.35 var(--display)", text: tip })]),
-    card("", [h("h3", { text: "Your trail badges" }), h("p", { class: "dim", text: earned() + " of " + D.MODULES.length + " earned. All six makes you a certified Trail Guide on our standards." }), h("a", { class: "btn", style: "align-self:flex-start;text-decoration:none", href: "#training", text: "Go to training" })])
+    card("", [h("h3", { text: "Your badges" }), h("p", { class: "dim", text: earned() + " of " + D.MODULES.length + " earned. Earn all six to be certified on our behavior standards." }), h("a", { class: "btn", style: "align-self:flex-start;text-decoration:none", href: "#training", text: "Go to training" })])
   ]));
-  sec.appendChild(card("", [h("h3", { text: "Something just happened?" }), h("p", { text: "Check the Tier ladder for what the standard requires, find a similar Knot, or describe it to the coach. If anyone is unsafe or a student mentions self-harm, stop and follow the Mental Health Crisis Policy first." }), h("p", { class: "small", html: "Edition " + esc(D.VERSION.n) + ", " + esc(D.VERSION.date) + ". This is a living document: see <a href=\"#living\">open questions and proposals</a>. The <a href=\"/fieldguide/\">Mentor Mindset Field Guide</a> covers how to talk with students day to day." })]));
+  sec.appendChild(card("", [h("h3", { text: "Something just happened?" }), h("p", { text: "Check the Tier ladder for what the standard requires, find a similar Knot, or describe it to the coach. If anyone is unsafe or a student mentions self-harm, stop and follow the Mental Health Crisis Policy first." }), h("p", { class: "small", html: "Edition " + esc(D.VERSION.n) + ", " + esc(D.VERSION.date) + ". This is a living document: see <a href=\"#living\">open questions and proposals</a>. Day-to-day conversations with students belong in the <a href=\"/fieldguide/\">Mentor Mindset Field Guide</a>." })]));
 };
+function k1Compare() {
+  const t = h("table"); t.appendChild(h("tr", null, [h("th", { text: "" }), h("th", { text: "Grades 2–8" }), h("th", { style: "color:#a2481f", text: "K–1" })]));
+  D.K1.diffs.forEach(r => t.appendChild(h("tr", null, [h("th", { text: r[0] }), h("td", { class: "dim", text: r[1] }), h("td", { style: "background:#fbeee6", text: r[2] })])));
+  return card("K-edge", [tag("K", "K–1"), h("h2", { text: "Same values, different mechanics" }), h("p", { text: D.K1.intro }), h("div", { class: "scroll" }, [t]),
+    h("h3", { text: "Why it's different" }), h("div", { class: "grid g2" }, D.K1.why.map(w => h("div", null, [h("b", { text: w[0] }), h("p", { class: "dim", text: w[1] }), refLinks([w[2]])])))]);
+}
 
 /* ---------------- the standard ---------------- */
 VIEWS.standard = (sec, sub) => {
   head(sec, "The <span>Standard</span>", "Twelve practices every guide does the same way. Consistency is a form of fairness: a student should get the same answer from any adult on either campus.");
-  sec.appendChild(card("", [h("p", { text: "The 2026-27 Community Accountability System (Guide Reference Edition) and the 2026-27 Freedom Level proposal are the sources for these rules. Where an older rule conflicts, the newer one wins here, and the conflict is listed in the Living doc." }), h("p", { class: "small", text: "These rules apply in every band, K–8, including the send-home rules. The lower campus still runs on Montessori practice day to day, and the tiers say what response is required, not what support a young child needs." })]));
+  sec.appendChild(card("", [h("p", { text: "The 2026-27 Community Accountability System (Guide Reference Edition) and the 2026-27 Freedom Level proposal are the sources for these rules. Where an older rule conflicts, the newer one wins here, and the conflict is listed in the Living doc." }), h("p", { class: "small", text: isK1() ? "Showing K–1. Cards marked K–1 differ from grades 2–8; the rest are the same in every band. The Tier 3 send-home rule is the same in every band." : "Showing grades 2–8. K–1 keeps the same values with different mechanics; switch to K–1 at the top to see them." })]));
+  if (isK1()) sec.appendChild(k1Compare());
   const g = h("div", { class: "grid g2" });
-  D.STANDARDS.forEach(s => g.appendChild(card("S-edge", [h("div", { class: "row" }, [h("span", { style: "font-size:26px", text: s.icon }), tag("S", "Standard")]), h("h3", { id: "s-" + s.id, text: s.name }), h("p", { class: "dim", text: s.short }), ul(s.rules), ndBox(s.nd), refLinks(s.research), s.open ? openLink(s.open) : null, h("p", { class: "small", text: "Source: " + s.src }), s.link ? h("a", { class: "chip", style: "align-self:flex-start", href: "#" + s.link, text: "Go deeper →" }) : null])));
+  D.STANDARDS.forEach(s0 => { const k = D.K1.standards[s0.id], s = B(s0, k && Object.assign({ src: "K–1 version (Nov 2026), adapted from early-childhood research. Based on: " + s0.src }, k)); g.appendChild(card(isK1() && k ? "K-edge" : "S-edge", [h("div", { class: "row" }, [h("span", { style: "font-size:26px", text: s.icon }), tag("S", "Standard"), isK1() && k ? tag("K", "K–1 version") : null]), h("h3", { id: "s-" + s.id, text: s.name }), h("p", { class: "dim", text: s.short }), ul(s.rules), ndBox(s.nd), refLinks(s.research), s.open ? openLink(s.open) : null, h("p", { class: "small", text: "Source: " + s.src }), s.link ? h("a", { class: "chip", style: "align-self:flex-start", href: "#" + s.link, text: "Go deeper →" }) : null])); });
   sec.appendChild(g);
   if (sub) setTimeout(() => { const t = document.getElementById("s-" + sub); t && t.scrollIntoView({ block: "start" }); }, 30);
 };
@@ -135,19 +175,26 @@ VIEWS.standard = (sec, sub) => {
 /* ---------------- tiers ---------------- */
 VIEWS.tiers = sec => {
   head(sec, "The <span>Tier</span> ladder", "Sort by impact first. Intent, age, skill and history shape how you respond, not which tier it is.");
-  let sel = 1; const ladder = h("div", { class: "ladder" }), detail = h("div");
+  let sel = 1; const ladder = h("div", { class: "ladder" }), detail = h("div"), TT = D.TIERS.map(t => B(t, D.K1.tiers[t.n]));
+  if (isK1()) sec.appendChild(card("K-edge", [tag("K", "K–1"), h("p", { text: "Impact still sets the tier. In K–1, hitting, pushing or biting without injury is usually Tier 2, and injury or danger is Tier 3. Responses happen in the moment, and families hear the same day." }), refLinks(["aggress", "brief"])]));
   const draw = () => {
-    ladder.innerHTML = ""; D.TIERS.forEach(t => ladder.appendChild(h("button", { class: "rung " + t.color, "aria-pressed": String(sel === t.n), onclick: () => { sel = t.n; draw(); } }, [h("div", { class: "num", text: String(t.n) }), h("div", null, [h("b", { text: "Tier " + t.n + " · " + t.name }), h("br"), h("span", { text: t.q })])])));
-    const t = D.TIERS[sel]; detail.innerHTML = "";
+    ladder.innerHTML = ""; TT.forEach(t => ladder.appendChild(h("button", { class: "rung " + t.color, "aria-pressed": String(sel === t.n), onclick: () => { sel = t.n; draw(); } }, [h("div", { class: "num", text: String(t.n) }), h("div", null, [h("b", { text: "Tier " + t.n + " · " + t.name }), h("br"), h("span", { text: t.q })])])));
+    const t = TT[sel]; detail.innerHTML = "";
     detail.appendChild(card("tierbox " + t.color, [h("h2", { text: "Tier " + t.n + ": " + t.name }), h("p", { style: "font:700 19px/1.35 var(--display);color:var(--paper)", text: t.voice }), h("div", { class: "grid g2" }, [h("div", null, [h("h3", { style: "color:var(--paper);margin-bottom:6px", text: "Looks like" }), ul(t.examples)]), h("div", null, [h("h3", { style: "color:var(--paper);margin-bottom:6px", text: "The standard response" }), ol(t.response)])]), h("div", { class: "say", style: "color:var(--paper)", text: "Moves up when: " + t.escalate }), ndBox(t.nd)]));
   };
   draw(); sec.append(card("", [h("p", { class: "small", text: "Tap a rung." }), ladder]), detail);
-  sec.appendChild(card("S-edge", [tag("S", "Standard"), h("h2", { text: "Tier 1 within one day" }), h("div", { class: "steps" }, [["Reminder", "Name the Code of Conduct expectation."], ["Closer to the guide", "Move near the guide; lose seating preference. Frame it as help."], ["Yellow card", "Text home."]].map(s => h("div", null, [h("b", { text: s[0] }), s[1]]))), h("p", { class: "small", text: "2 or more Tier 1s against the same student in a day: Peace Talk with the peace stone, plus an act of kindness before the offending student resumes scheduled work. Same Tier 1 behavior on 3 or more days in a school week: the guide may call a parent meeting." })]));
-  sec.appendChild(card("", [h("h3", { text: "Quick reference: exact counts" }), h("div", { class: "scroll", html: "<table><tr><th>Situation</th><th>Exact parameter</th></tr>" + [["Tier 0 → Tier 1", "After 2 reminders on the same behavior in one day, if it continues and affects another student"], ["Tier 1 ladder", "1st reminder · 2nd proximity · 3rd yellow card and text home (within one day)"], ["Peace Talk + act of kindness", "2 or more Tier 1s against the same student in one day"], ["Tier 1 → parent meeting", "Same behavior on 3 or more days within one school week"], ["Tier 1 → Tier 2", "Continues after a yellow card and a Peace Talk, and causes actual harm"], ["SMART Restore due", "Signed off by the end of the following school day"], ["Tier 2 → parent email", "2 Tier 2s within one school week"], ["Tier 3", "Any single incident: immediate removal"], ["Escalating after failed repair", "Generally at least 2 documented attempts at Peace Talks, coaching or repair"]].map(r => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>").join("") + "</table>" })]));
+  if (isK1()) {
+    sec.appendChild(card("K-edge", [tag("K", "K–1"), h("h2", { text: "Tier 1, in the moment" }), h("div", { class: "steps" }, [["Cue and redo", "A picture or gesture, then “Show me ___.”"], ["Next to the guide", "Work beside the guide for a bit. Framed as help."], ["Calm-down spot", "A minute or two within sight, then rejoin and try again."], ["End-of-day note", "One note home, with something that went well."]].map(x => h("div", null, [h("b", { text: x[0] }), x[1]]))), h("p", { class: "small", text: "Same Tier 1 behavior on 3 or more days in a school week: a family check-in." })]));
+    sec.appendChild(card("", [h("h3", { text: "K–1 quick reference" }), h("div", { class: "scroll", html: "<table><tr><th>Situation</th><th>K–1 response</th></tr>" + [["Tier 0 → Tier 1", "After 2 cues and redos on the same behavior in one day, if it keeps affecting another child"], ["Tier 1", "Cue and redo · next to the guide · calm-down spot · one end-of-day note"], ["Tier 1 → family check-in", "Same behavior on 3 or more days in a school week"], ["Peace Talk", "Guide-led, under five minutes, at the peace table"], ["Tier 2", "Care for the hurt child · calm · same-day repair from the picture menu · family told the same day"], ["Tier 2 → Tier 3", "Someone is injured or in danger"], ["Tier 3", "Sent home for a full school day; picture story and drop-off meeting for the return"]].map(r => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>").join("") + "</table>" })]));
+  } else {
+    sec.appendChild(card("S-edge", [tag("S", "Standard"), h("h2", { text: "Tier 1 within one day" }), h("div", { class: "steps" }, [["Reminder", "Name the Code of Conduct expectation."], ["Closer to the guide", "Move near the guide; lose seating preference. Frame it as help."], ["Yellow card", "Text home."]].map(s => h("div", null, [h("b", { text: s[0] }), s[1]]))), h("p", { class: "small", text: "2 or more Tier 1s against the same student in a day: Peace Talk with the peace stone, plus an act of kindness before the offending student resumes scheduled work. Same Tier 1 behavior on 3 or more days in a school week: the guide may call a parent meeting." })]));
+    sec.appendChild(card("", [h("h3", { text: "Quick reference: exact counts" }), h("div", { class: "scroll", html: "<table><tr><th>Situation</th><th>Exact parameter</th></tr>" + [["Tier 0 → Tier 1", "After 2 reminders on the same behavior in one day, if it continues and affects another student"], ["Tier 1 ladder", "1st reminder · 2nd proximity · 3rd yellow card and text home (within one day)"], ["Peace Talk + act of kindness", "2 or more Tier 1s against the same student in one day"], ["Tier 1 → parent meeting", "Same behavior on 3 or more days within one school week"], ["Tier 1 → Tier 2", "Continues after a yellow card and a Peace Talk, and causes actual harm"], ["SMART Restore due", "Signed off by the end of the following school day"], ["Tier 2 → parent email", "2 Tier 2s within one school week"], ["Tier 3", "Any single incident: immediate removal"], ["Escalating after failed repair", "Generally at least 2 documented attempts at Peace Talks, coaching or repair"]].map(r => "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>").join("") + "</table>" })]));
+  }
+  sec.appendChild(card("", [h("h2", { text: "Tier 3: the way out and the way back" }), h("div", { class: "tl" }, (isK1() ? [["Safety", "Protect the hurt child and the group."], ["Sent home", "Right away. Never called a suspension."], ["A full day away", "The next school day too, if it happened late."], ["Family talk", "Parent-guide conversation before return."], ["Picture story", "Who meets them, what happens first."], ["Back with a repair", "Guide meets them at drop-off."]] : [["Safety", "Protect the harmed student and the group."], ["Sent home", "Right away. Never called a suspension."], ["A full day away", "The next school day too, if it happened late."], ["Family talk", "Parent-guide conversation before return."], ["Repair plan", "Agreed by everyone involved."], ["Back with a repair", "Their own Field Guide owns the return."]]).map(x => h("div", null, [h("b", { text: x[0] }), h("span", { class: "dim", text: x[1] })])))]));
   // tier sorter game
-  const game = card("", []); let cur, streak = 0, best = local.get("bg-sort-best", 0), pool = shuffle(D.SORT);
-  const next = () => { if (!pool.length) pool = shuffle(D.SORT); cur = pool.pop(); game.innerHTML = ""; game.append(h("h2", { text: "Tier sorter" }), h("p", { class: "small", text: "Which tier? Streak " + streak + " · best " + best }), h("p", { class: "big", text: cur[0] }), h("div", { class: "tierbtns" }, D.TIERS.map(t => h("button", { class: t.color, onclick: () => answer(t.n) }, ["Tier " + t.n, h("span", { text: t.name })])))); };
-  const answer = n => { const right = n === cur[1]; streak = right ? streak + 1 : 0; if (streak > best) { best = streak; local.set("bg-sort-best", best); } const t = D.TIERS[cur[1]]; game.innerHTML = ""; game.append(h("h2", { text: right ? "Yes." : "That one's Tier " + cur[1] + "." }), h("p", { class: "big", text: cur[0] }), h("p", { class: "dim", text: t.q }), h("div", { class: "row" }, [h("button", { class: "btn", text: "Next", onclick: next }), h("span", { class: "small", text: "Streak " + streak + " · best " + best })])); };
+  const game = card("", []); let cur, streak = 0, best = local.get("bg-sort-best", 0), SRC = isK1() ? D.SORT_K1 : D.SORT, pool = shuffle(SRC);
+  const next = () => { if (!pool.length) pool = shuffle(SRC); cur = pool.pop(); game.innerHTML = ""; game.append(h("h2", { text: "Tier sorter" + (isK1() ? " · K–1" : "") }), h("p", { class: "small", text: "Which tier? Streak " + streak + " · best " + best }), h("p", { class: "big", text: cur[0] }), h("div", { class: "tierbtns" }, TT.map(t => h("button", { class: t.color, onclick: () => answer(t.n) }, ["Tier " + t.n, h("span", { text: t.name })])))); };
+  const answer = n => { const right = n === cur[1]; streak = right ? streak + 1 : 0; if (streak > best) { best = streak; local.set("bg-sort-best", best); } const t = TT[cur[1]]; game.innerHTML = ""; game.append(h("h2", { text: right ? "Yes." : "That one's Tier " + cur[1] + "." }), h("p", { class: "big", text: cur[0] }), h("p", { class: "dim", text: t.q }), h("div", { class: "row" }, [h("button", { class: "btn", text: "Next", onclick: next }), h("span", { class: "small", text: "Streak " + streak + " · best " + best })])); };
   next(); sec.appendChild(game);
   sec.appendChild(card("N-edge", [tag("N", "Different wiring"), h("h3", { text: "Can't, or won't?" }), h("p", { text: "Before you count anything, ask whether the student has the skill to do what you're asking right now, in this setting, with this noise level, at this time of day. If the answer is no, you're in Tier 0 territory: change the support, keep the standard." })]));
 };
@@ -155,9 +202,16 @@ VIEWS.tiers = sec => {
 /* ---------------- freedom levels ---------------- */
 VIEWS.freedom = sec => {
   head(sec, "<span>Freedom</span> Levels", "A picture of trust. It names how much independence a student has earned in one part of the day, and it grows or shrinks as their responsibility does. High standards, high support.");
+  if (isK1()) sec.appendChild(card("K-edge", [tag("K", "K–1"), h("h2", { text: "In K–1: the Nature Walk only" }), ul(D.K1.standards.freedom.rules), h("p", { class: "small", text: "Montessori calls the rest “freedom within limits”: freedom is given and withdrawn in the moment, which is the timescale a five-year-old understands." }), refLinks(["brief"])]));
+  // overview chart: what each level allows, by domain
+  const doms = isK1() ? D.DOMAINS.filter(d => d.id === "walk") : D.DOMAINS;
+  const fg = h("div", { class: "flgrid", style: isK1() ? "grid-template-columns:110px 1fr" : "" });
+  fg.append(h("div", { class: "hd", text: "Level" }), ...doms.map(d => h("div", { class: "hd", text: d.name })));
+  [4, 3, 2, 1].forEach(n => { fg.append(h("div", { class: "lvn", text: String(n) + (n === 3 ? "★" : "") }), ...doms.map(d => h("div", { class: "c l" + n, text: d.L[n] }))); });
+  sec.appendChild(card("", [h("h2", { text: "The levels at a glance" }), h("p", { class: "small", text: "★ Everyone starts at 3. Darker means more independence. Each column moves on its own." }), h("div", { class: "scroll" }, [fg])]));
   sec.appendChild(h("div", { class: "grid g3" }, [card("", [h("h3", { text: "Start at 3" }), h("p", { class: "dim", text: "Every student starts at Level 3, the baseline, in every domain." })]), card("", [h("h3", { text: "Four separate domains" }), h("p", { class: "dim", text: "A child who's great with tools but still building academic stamina isn't penalized everywhere." })]), card("", [h("h3", { text: "Private, weekly" }), h("p", { class: "dim", text: "Reviewed weekly. Delivered at the one-on-one. Never posted as a ranking." })])]));
   const g = h("div", { class: "grid g2" });
-  D.DOMAINS.forEach(d => g.appendChild(card("", [h("h2", { text: d.name }), h("p", { class: "dim", text: d.sub }), h("div", { class: "say", text: "Move up when you: " + d.up }), h("div", { class: "dom" }, [4, 3, 2, 1].map(n => h("div", { class: "lv" + (n === 3 ? " base" : "") }, [h("b", { text: String(n) }), h("span", { text: d.L[n] + (n === 3 ? " (baseline)" : "") })]))), d.id === "walk" ? h("p", { class: "small", text: "Level 4 must be confirmed by a second guide and paired with tool-handling expectations every time." }) : null, ndBox(d.nd)])));
+  (isK1() ? D.DOMAINS.filter(d => d.id === "walk") : D.DOMAINS).forEach(d => g.appendChild(card("", [h("h2", { text: d.name }), h("p", { class: "dim", text: d.sub }), h("div", { class: "say", text: "Move up when you: " + d.up }), h("div", { class: "dom" }, [4, 3, 2, 1].map(n => h("div", { class: "lv" + (n === 3 ? " base" : "") }, [h("b", { text: String(n) }), h("span", { text: d.L[n] + (n === 3 ? " (baseline)" : "") })]))), d.id === "walk" ? h("p", { class: "small", text: "Level 4 must be confirmed by a second guide and paired with tool-handling expectations every time." }) : null, ndBox(d.nd)])));
   sec.appendChild(g);
   sec.appendChild(card("S-edge", [h("div", { class: "row" }, [h("span", { style: "font-size:28px", text: "⛰️" }), h("h2", { text: "Level 5: the summit" })]), h("p", { text: "Earned only when a student holds Level 4 in all four domains at the same time. It pulls a student's weakest area upward and reconnects the domains into a picture of the whole child." }), h("h3", { text: "A Level 5 student may" }), ul(D.LEVEL5)]));
   sec.appendChild(card("", [h("h2", { text: "How a guide decides" }), h("div", { class: "grid g2" }, D.FL_RULES.map(r => h("div", null, [h("b", { text: r[0] }), h("p", { class: "dim", text: r[1] })])))]));
@@ -172,7 +226,8 @@ VIEWS.knots = (sec, sub) => {
   if (k) return knotView(sec, k);
   head(sec, "Untangling <span>knots</span>", "Situations like the ones on our campuses this year, rewritten as composites with names and details removed. Pick one, make the call, then see the standard, the options and the neurodivergent angle.");
   const g = h("div", { class: "stops" });
-  D.KNOTS.forEach(k => { const done = local.get("bg-knots", {})[k.id]; g.appendChild(h("a", { class: "stop S", href: "#knots/" + k.id }, [h("i", { text: (done ? "✓ " : "") + k.band + " · " + k.where.toUpperCase() }), h("b", { text: k.title }), h("span", { text: k.q })])); });
+  sec.appendChild(h("p", { class: "small", text: isK1() ? "Showing K–1 and all-band knots. Switch to Grades 2–8 at the top for the rest." : "Showing grades 2–8 and all-band knots. Switch to K–1 at the top for the lower campus." }));
+  D.KNOTS.filter(k => isK1() ? /K–1|All/.test(k.band) : !/^K–1$/.test(k.band)).forEach(k => { const done = local.get("bg-knots", {})[k.id]; g.appendChild(h("a", { class: "stop S", href: "#knots/" + k.id }, [h("i", { text: (done ? "✓ " : "") + k.band + " · " + k.where.toUpperCase() }), h("b", { text: k.title }), h("span", { text: k.q })])); });
   sec.appendChild(g);
 };
 function knotView(sec, k) {
@@ -206,7 +261,15 @@ VIEWS.wiring = sec => {
   const N = D.ND;
   head(sec, "Different <span>wiring</span>", "How we support autistic, ADHD and otherwise neurodivergent students. Wilderland was built partly with them in mind, and we likely have more of them than an average school.");
   sec.appendChild(card("N-edge", [h("p", { style: "font-size:17px", text: N.why })]));
-  sec.appendChild(h("div", { class: "grid g3" }, N.principles.map(p => card("N-edge", [h("h3", { text: p[0] }), h("p", { class: "dim", text: p[1] })]))));
+  const I = D.IE, ie = h("div", { class: "ie" });
+  ie.append(h("div", { class: "ax ay", text: "Standards →" }));
+  [[0, 1], [2, 3]].forEach(r => r.forEach(i => { const q = I.quad[i]; ie.append(h("div", { class: "q" + (i === 1 ? " win" : "") }, [h("b", { text: q[0] }), q[1], q[2] ? h("div", { style: "font:700 11px var(--body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px;opacity:.8", text: q[2] }) : null])); }));
+  ie.append(h("div", { class: "ax ax2", text: "Support →" }));
+  // grid order: row 1 = high standards (exclusive, inclusive), row 2 = low (neglect, non-excellence)
+  sec.appendChild(card("N-edge", [tag("N", "Principle 1"), h("h2", { html: "Inclusive <span>Excellence</span>" }), h("p", { style: "font:700 21px/1.35 var(--display)", text: I.line }), h("p", { text: I.body }), ie,
+    h("h3", { text: "What it looks like" }), h("p", { class: "dim", text: I.story }), h("a", { class: "ref", href: I.storyUrl, target: "_blank", rel: "noopener", text: "📚 Keivan Stassun and autistic researchers at Vanderbilt" }),
+    h("h3", { text: "At Wilderland" }), ul(I.doThis), refLinks(["wise"]), h("a", { class: "chip", style: "align-self:flex-start", href: "/fieldguide/", text: "It's the Mentor Mindset, applied. Go to the Field Guide →" })]));
+  sec.appendChild(h("div", { class: "grid g3" }, N.principles.slice(1).map(p => card("N-edge", [h("h3", { text: p[0] }), h("p", { class: "dim", text: p[1] })]))));
   // mirrors
   let f = "all"; const chips = h("div", { class: "chips" }), mg = h("div", { class: "grid g4" });
   const drawM = () => { chips.innerHTML = ""; [["all", "All"], ["autism", "Autism"], ["adhd", "ADHD"]].forEach(([k, t]) => chips.appendChild(h("button", { class: "chip", "aria-pressed": String(f === k), text: t, onclick: () => { f = k; drawM(); } }))); mg.innerHTML = ""; N.mirrors.filter(m => f === "all" || m[2] === f).forEach(m => { const b = h("button", { class: "flip" }); let on = false; const face = () => { b.classList.toggle("on", on); b.innerHTML = ""; b.append(h("span", { class: "small", text: on ? "The mirror strength" : "The label (" + (m[2] === "adhd" ? "ADHD" : "autism") + ")" }), h("span", { class: "q", text: on ? m[1] : m[0] }), h("span", { class: "small", text: on ? "" : "Tap to flip" })); }; b.onclick = () => { on = !on; face(); }; face(); mg.appendChild(b); }); };
@@ -230,6 +293,8 @@ VIEWS.wiring = sec => {
 VIEWS.evidence = sec => {
   head(sec, "What the <span>evidence</span> says", "Honest summaries of the research behind our practices, including where it's weak or mixed. Each card links to the source.");
   sec.appendChild(card("", [h("div", { class: "grid g4" }, [["strong", "Several trials or a meta-analysis agree."], ["moderate", "At least one good trial."], ["mixed", "Good studies disagree, or results differ by age."], ["thin", "Theory, small studies, or no rigorous tests yet."]].map(s => h("div", null, [h("div", { class: "meterw " + s[0], html: "<i></i><i></i><i></i><i></i>" }), h("b", { text: s[0] }), h("p", { class: "small", text: s[1] })])))]));
+  const cnt = { strong: 0, moderate: 0, mixed: 0, thin: 0 }; Object.values(D.REFS).forEach(r => cnt[r.s]++); const mx = Math.max(...Object.values(cnt)), cc = { strong: "var(--t0)", moderate: "#5d9c72", mixed: "var(--t1)", thin: "var(--W)" };
+  sec.appendChild(card("", [h("h3", { text: "How much of this rests on strong evidence?" }), h("div", { class: "evbars" }, Object.entries(cnt).map(([k, v]) => h("div", null, [h("span", { text: k }), h("i", { style: `width:${Math.max(4, v / mx * 100)}%;background:${cc[k]}` }), h("b", { text: String(v) })]))), h("p", { class: "small", text: "Number of research cards on this site at each strength." })]));
   let f = "all"; const chips = h("div", { class: "chips" }), out = h("div", { class: "grid g2" });
   const draw = () => { chips.innerHTML = ""; ["all", "strong", "moderate", "mixed", "thin"].forEach(k => chips.appendChild(h("button", { class: "chip", "aria-pressed": String(f === k), text: k === "all" ? "All" : k, onclick: () => { f = k; draw(); } }))); out.innerHTML = ""; Object.entries(D.REFS).forEach(([id, r]) => { if (f !== "all" && r.s !== f) return; out.appendChild(card("", [h("div", { class: "meterw " + r.s, html: "<i></i><i></i><i></i><i></i>" }), h("h3", { text: r.t }), h("p", { text: r.f }), h("p", { class: "small", text: "Caveat: " + r.c }), h("a", { class: "ref", href: r.u, target: "_blank", rel: "noopener", text: "Read the source →" })])); }); };
   sec.append(chips, out); draw();
@@ -240,9 +305,9 @@ VIEWS.evidence = sec => {
 VIEWS.training = (sec, sub) => {
   const m = D.MODULES.find(x => x.id === sub);
   if (m) return quizView(sec, m);
-  head(sec, "Trail <span>badges</span>", "Short drills on the standards. Earn all six to be a certified Trail Guide. Retake any time; your best score counts.");
+  head(sec, "Behavior <span>badges</span>", "Short drills on the standards. Earn all six to be certified on our behavior standards. Retake any time; your best score counts.");
   const cert = D.MODULES.every(x => progress[x.id] && progress[x.id].passed);
-  if (cert) sec.appendChild(card("S-edge", [h("h2", { text: "🏅 Certified Trail Guide" }), h("p", { text: "You've passed every module. Leadership can see that on the training roster." })]));
+  if (cert) sec.appendChild(card("S-edge", [h("h2", { text: "🏅 Certified on the behavior standards" }), h("p", { text: "You've passed every module. Leadership can see that on the training roster." })]));
   const g = h("div", { class: "grid g3" });
   D.MODULES.forEach(x => { const p = progress[x.id]; g.appendChild(h("a", { class: "stop S", href: "#training/" + x.id }, [h("i", { text: p && p.passed ? "✓ EARNED · BEST " + p.best + "/" + p.total : p ? "BEST " + p.best + "/" + p.total + " · PASS " + x.pass : "PASS " + x.pass + " TO EARN" }), h("b", { text: x.icon + " " + x.name }), h("span", { text: x.blurb })])); });
   sec.appendChild(g);

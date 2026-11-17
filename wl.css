@@ -41,3 +41,20 @@ body[data-gated].wl-pending .wl-wait{display:block}
 .wl-gate button{font:600 16px/1 Inter,system-ui,sans-serif;border:0;border-radius:999px;padding:13px 20px;background:#d5f367;color:#0b2b20;cursor:pointer}
 .wl-gate small{display:block;margin-top:14px;color:#7f978b;font-size:13px}
 .wl-wait{text-align:center;color:#a9bbb0;padding:60px 20px;font:400 15px Inter,system-ui,sans-serif}
+
+/* Staff guide switcher (Field Guide + Behavior Net). Mentor Mindset is the main route, so it gets most of the width. */
+.wlstaff{display:grid;grid-template-columns:3fr 1fr;border-bottom:1px solid rgba(0,0,0,.15);font-family:Inter,system-ui,sans-serif;position:relative;z-index:35}
+.wlstaff a{display:flex;align-items:center;gap:10px;text-decoration:none;padding:8px 20px;min-height:46px;line-height:1.2}
+.wlstaff b{font:700 15px/1.1 "Uncut Sans",Inter,system-ui,sans-serif;white-space:nowrap}
+.wlstaff span{font-size:12.5px;opacity:.85}
+.wlstaff i{font-style:normal;font:800 10px/1 Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;border-radius:4px;white-space:nowrap}
+.wlstaff .mm{background:#0b3d2e;color:#f3f7e6}
+.wlstaff .mm b{color:#d5f367;font-size:17px}
+.wlstaff .mm i{background:#d5f367;color:#0b2b20}
+.wlstaff .bh{background:#e9e1cf;color:#15263d;justify-content:flex-end;text-align:right}
+.wlstaff .bh b{font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;font-size:14px}
+.wlstaff .bh i{background:#15263d;color:#fff}
+.wlstaff a[aria-current=page]{box-shadow:inset 0 -4px 0 currentColor}
+.wlstaff a:not([aria-current]):hover{filter:brightness(1.08)}
+@media (max-width:640px){.wlstaff{grid-template-columns:2fr 1fr}.wlstaff a{padding:8px 12px}.wlstaff span{display:none}.wlstaff i{display:none}}
+@media print{.wlstaff{display:none}}

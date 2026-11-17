@@ -81,6 +81,7 @@ VIEWS.map = sec => {
   STOPS.slice(1).forEach((s, i) => g.appendChild(h("a", { class: "stop", href: "#" + s[0] }, [h("i", { text: "STOP " + (i + 1) }), h("b", { text: s[1] }), h("span", { text: s[2] })])));
   sec.appendChild(g);
   sec.appendChild(card("M-edge", [h("h3", { text: "Short on time?" }), h("p", { text: "Stop 5 has a line for whatever a student just said to you. Stop 10 opens the Session room for your next one-on-one." })]));
+  sec.appendChild(card("", [h("h3", { text: "This is the main route" }), h("p", { text: "The Mentor Mindset is how we take children from getting by to excellent, and it's where your daily practice goes. The Behavior Net holds our policies and tools for when something slips. It catches problems; it doesn't replace this. The more consistently we practice what's here, the less the net should be needed." }), h("a", { class: "chip", style: "align-self:flex-start", href: "/behavior/", text: "Open the Behavior Net →" })]));
 };
 
 /* ---------------- trailhead ---------------- */
