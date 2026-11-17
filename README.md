@@ -47,3 +47,13 @@ Not linked from the landing page. Same staff list as the Field Guide; school acc
   `behaviorProgress/{uid}` holds training badges (admins see the roster); `behaviorProposals` holds proposed changes.
 - `/suggest/` now has a Town Hall mode: students send agenda items, see their own items' status and the upcoming agenda.
 - `firestore.rules` has the new rules; paste the file into the Firebase console to publish them.
+
+## Our Approach (`/families/approach/`, added Nov 17, 2026)
+The "why" half of the parent site: three promises, three pillars (with an on/off toggle that shows what breaks), the shape
+of a day by band, mornings, the eight Life Skills with one sample challenge per band, nature and healthy risk, the two kinds
+of guides, the evidence rated by strength, a glossary and a reading list. Same rules as At Home: static, no sign-in,
+`noindex`, not linked from student pages. Content lives in `families/approach/data.js`; sources are the Parent Education
+Night packet, the Upper Campus Parent Handbook, The Three Pillars staff draft, `/challenges/` and the studies linked on the
+Evidence stop. Only settled practice goes here. The two pages share `families/families.css` and the header tabs, and the
+grade band a family picks (localStorage `wl-family-prof`) carries across both. Sample challenges are copied from
+`challenges/data.js` by ID; if one is renamed or cut, update `SKILLS` in `data.js`.
