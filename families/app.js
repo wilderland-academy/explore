@@ -9,6 +9,7 @@ const app = $("#app");
 const card = (cls, kids) => h("div", { class: "card " + (cls || "") }, kids);
 const ul = items => h("ul", null, items.map(t => h("li", { text: t })));
 const head = (sec, title, lede) => { sec.appendChild(h("h1", { html: title })); if (lede) sec.appendChild(h("p", { class: "lede", text: lede })); };
+const GUIDE_URL = "https://drive.google.com/file/d/1RxYs-YZDKj2JM5Z63qJOIj_CCak6ZpSF/view?usp=drive_link";
 const ext = (text, href) => h("a", { href, target: "_blank", rel: "noopener", text });
 
 /* ---------- saved in this browser only ---------- */
@@ -31,8 +32,9 @@ function picker(compact) {
 
 /* ---------- routing ---------- */
 const STOPS = [["home", "Start", ""], ["week", "Your part at home", "The daily routine and what school handles"], ["reading", "Reading together", "Read-alouds, routines and finding the right books"], ["math", "Math in real life", "Games and everyday number sense"], ["mentor", "The Mentor Mindset", "High standards and high support, at home"], ["moments", "Hard moments", "Mornings, screens, meltdowns and more"], ["explore", "Explore together", "Challenges, project sparks and books"], ["practices", "Twelve practices", "Sleep, food, play: pick two or three"], ["help", "Who to ask", "Which guide to talk to, and how"]];
+const NAVL = { week: "At home", reading: "Reading", math: "Math", mentor: "Mentor Mindset", moments: "Hard moments", explore: "Explore", practices: "12 practices", help: "Who to ask" };
 const VIEWS = {};
-function buildNav() { const nav = $("#nav"); STOPS.forEach(s => nav.appendChild(h("a", { href: "#" + s[0], text: s[1] }))); }
+function buildNav() { const nav = $("#nav"); STOPS.forEach(s => nav.appendChild(h("a", { href: "#" + s[0], text: NAVL[s[0]] || s[1] }))); }
 function route() {
   let v = location.hash.slice(1).split("/")[0]; if (!VIEWS[v]) v = "home";
   document.querySelectorAll("#nav a").forEach(a => { if (a.getAttribute("href") === "#" + v) { a.setAttribute("aria-current", "page"); a.scrollIntoView && a.scrollIntoView({ block: "nearest", inline: "center" }); } else a.removeAttribute("aria-current"); });
@@ -49,8 +51,8 @@ VIEWS.home = sec => {
   sec.appendChild(card("", [picker(false)]));
   const pts = [[90, 420], [230, 340], [140, 230], [320, 190], [470, 290], [620, 360], [760, 270], [650, 150]];
   const trees = [[40, 360], [300, 420], [520, 450], [380, 140], [700, 430], [860, 320], [200, 160]];
-  let svg = `<svg viewBox="0 0 900 480" role="img" aria-label="Map of this guide"><circle cx="800" cy="70" r="26" fill="#d5f367" opacity=".9"/><path d="M0 300 120 170 230 250 360 110 480 230 600 90 720 210 820 130 900 200V480H0Z" fill="#0f3a2d"/><path d="M0 390 150 280 290 370 430 270 560 360 700 260 900 370V480H0Z" fill="#0b2b20"/><path d="M600 90 562 136 600 128 638 138Z" fill="#f6f8ea" opacity=".8"/>${trees.map(t => `<path d="M${t[0]} ${t[1]}l10 22h-20z M${t[0]} ${t[1] + 12}l13 24h-26z" fill="#015640"/>`).join("")}<polyline points="${pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="#d5f367" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round" opacity=".85"/>`;
-  STOPS.slice(1).forEach((s, i) => { const [x, y] = pts[i]; svg += `<a href="#${s[0]}" aria-label="${esc(s[1])}"><circle cx="${x}" cy="${y}" r="18" fill="#d5f367" stroke="#08140f" stroke-width="3"/><text class="n" x="${x}" y="${y + 5}" text-anchor="middle">${i + 1}</text><text class="l" x="${x}" y="${y + 40}" text-anchor="middle">${esc(s[1])}</text></a>`; });
+  let svg = `<svg viewBox="0 0 900 480" role="img" aria-label="Map of this guide"><circle cx="800" cy="70" r="26" fill="#f5c542"/><path d="M0 300 120 170 230 250 360 110 480 230 600 90 720 210 820 130 900 200V480H0Z" fill="#b9d9a6"/><path d="M0 390 150 280 290 370 430 270 560 360 700 260 900 370V480H0Z" fill="#8fc08a"/><path d="M600 90 562 136 600 128 638 138Z" fill="#ffffff"/>${trees.map(t => `<path d="M${t[0]} ${t[1]}l10 22h-20z M${t[0]} ${t[1] + 12}l13 24h-26z" fill="#2f7d4f"/>`).join("")}<polyline points="${pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="#015640" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>`;
+  STOPS.slice(1).forEach((s, i) => { const [x, y] = pts[i]; svg += `<a href="#${s[0]}" aria-label="${esc(s[1])}"><circle cx="${x}" cy="${y}" r="18" fill="#d5f367" stroke="#015640" stroke-width="3"/><text class="n" x="${x}" y="${y + 5}" text-anchor="middle">${i + 1}</text><text class="l" x="${x}" y="${y + 40}" text-anchor="middle">${esc(s[1])}</text></a>`; });
   sec.appendChild(h("div", { class: "map", html: svg + "</svg>" }));
   const g = h("div", { class: "stops" });
   STOPS.slice(1).forEach((s, i) => g.appendChild(h("a", { class: "stop", href: "#" + s[0] }, [h("i", { text: "STOP " + (i + 1) }), h("b", { text: s[1] }), h("span", { text: s[2] })])));
@@ -60,21 +62,27 @@ VIEWS.home = sec => {
 
 /* ---------- your week ---------- */
 VIEWS.week = sec => {
-  head(sec, "Your <span>part</span> at home", "Short, daily, predictable practice beats long, occasional sessions. Here is what home covers, what school covers, and a week that works.");
-  sec.appendChild(picker(true));
-  if (!prof.band) { sec.appendChild(card("", [h("p", { text: "Pick your child's grades above to see your routine." })])); return; }
-  const W = isUp() ? D.WEEK.up : D.WEEK.k1, pt = prof.sched === "pt";
+  head(sec, "Your <span>part</span> at home", "Short, daily, predictable practice beats long, occasional sessions. Pick your child's grades and schedule to see what home covers, what school covers, and a week that works.");
+  const pick = h("div", { class: "prof" });
+  const grp = (key, opts) => h("div", { class: "chips", role: "group" }, Object.entries(opts).map(([k, v]) => h("button", { class: "chip", "aria-pressed": String(prof[key] === k), text: v, onclick: () => { prof[key] = prof[key] === k ? "" : k; store.set("prof", prof); route(); } })));
+  pick.append(h("b", { text: "Grades" }), grp("band", D.BANDS), h("b", { text: "Schedule" }), grp("sched", D.SCHED), h("p", { class: "small", text: "Saved on this device only." }));
+  sec.appendChild(pick);
+  if (!prof.band || !prof.sched) { sec.appendChild(card("", [h("p", { text: !prof.band && !prof.sched ? "Choose your child's grades and whether they attend full time or part time. The routine is different for each." : !prof.band ? "Now choose your child's grades." : "Now choose full time or part time. Home looks different for each." })])); return; }
+  const up = isUp(), W = up ? D.WEEK.up : D.WEEK.k1, pt = prof.sched === "pt";
   sec.appendChild(card("M-edge", [h("p", { text: W.growth })]));
-  sec.appendChild(h("div", { class: "split" }, [card("", [h("h3", { text: "Your part at home" }), ul(W.home)]), card("", [h("h3", { text: "What you can count on school for" }), ul(W.school)])]));
-  sec.appendChild(card("", [h("h2", { text: isUp() ? "Every school day" : "The daily reading routine" }), h("div", { class: "routine" }, W.routine.map(r => h("div", null, [h("span", { class: "t", text: r[0] }), h("b", { text: r[1] }), h("span", { class: "small", text: r[2] })])))]));
-  if (pt || !prof.sched) sec.appendChild(card("P-edge", [h("span", { class: "tag P", text: "Part-time families" }), h("p", { text: W.pt }), W.ptOpts ? h("p", { class: "small", text: W.ptOpts }) : null, isUp() ? h("p", { class: "small", text: "If off-day work is proving too much, ask your child's academic guide to adjust the Dashboard targets. That's a normal, welcome conversation. Targets stay rigorous enough to push your child without becoming unmanageable." }) : null]));
-  if (isUp()) sec.appendChild(card("", [h("h3", { text: "How catch-up work works" }), h("p", { text: "Each day has a set number of lessons. Anything unfinished becomes catch-up work on the Dashboard and stays there until it's done. Short daily catch-up beats one big weekend session." }), h("h3", { text: "Tips for app work at home" }), ul(W.tips)]));
+  sec.appendChild(h("div", { class: "split" }, [card("", [h("h3", { text: "Your part at home" }), ul(pt ? W.home : (W.homeFT || W.home))]), card("", [h("h3", { text: "What you can count on school for" }), ul(W.school)])]));
+  sec.appendChild(card("", [h("h2", { text: up ? (pt ? "Every school day" : "A typical school day") : "The daily reading routine" }), h("div", { class: "routine" }, (pt ? W.routine : (W.routineFT || W.routine)).map(r => h("div", null, [h("span", { class: "t", text: r[0] }), h("b", { text: r[1] }), h("span", { class: "small", text: r[2] })])))]));
+  if (pt) sec.appendChild(card("P-edge", [h("span", { class: "tag P", text: "Part-time families" }), h("p", { text: W.pt }), W.ptOpts ? h("p", { class: "small", text: W.ptOpts }) : null, up ? h("p", { class: "small", text: "If home-day work is proving too much, ask your child's academic guide to adjust the Dashboard targets. That's a normal, welcome conversation. Targets stay rigorous enough to push your child without becoming unmanageable." }) : null]));
+  else if (up) sec.appendChild(card("E-edge", [h("span", { class: "tag E", text: "Full-time families" }), h("p", { text: W.ft })]));
+  if (up && pt) sec.appendChild(card("", [h("h3", { text: "How catch-up work works" }), h("p", { text: "Each day has a set number of lessons. Anything unfinished becomes catch-up work on the Dashboard and stays there until it's done. Short daily catch-up beats one big weekend session." }), h("h3", { text: "Tips for app work at home" }), ul(W.tips)]));
+  else if (up) sec.appendChild(card("", [h("h3", { text: "If you do add practice at home" }), h("p", { text: "Unfinished lessons stay on the Dashboard as catch-up work until they're done, so a short daily session at home can clear them. Keep it brief and calm." }), ul(W.tips)]));
   sec.appendChild(card("", [h("h3", { text: "See your child's progress" })].concat(W.progress.map(p => h("p", null, [ext(p[0], p[1]), h("span", { class: "dim", text: " · " + p[2] })])))));
-  const t = h("table"); t.appendChild(h("tr", null, ["Day", isUp() ? "Academics" : "Reading", isUp() ? "Reading" : "Math", "Independence"].map(x => h("th", { text: x }))));
-  W.week.forEach(r => t.appendChild(h("tr", null, r.map((x, i) => h(i ? "td" : "th", { text: x })))));
-  sec.appendChild(card("", [h("h2", { text: "A sample week" }), h("div", { class: "scroll" }, [t]), h("p", { class: "small", text: W.weekNote })]));
-  const key = "check-" + (isUp() ? "up" : "k1"), done = store.get(key, []);
-  sec.appendChild(card("", [h("h2", { text: "Five-minute checklist" })].concat(W.check.map((c, i) => { const box = h("input", { type: "checkbox" }); box.checked = done.includes(i); box.onchange = () => { const d = store.get(key, []).filter(x => x !== i); if (box.checked) d.push(i); store.set(key, d); }; return h("label", { class: "check" }, [box, h("span", { text: c })]); }))));
+  const rows = pt ? (W.weekPT || W.week) : W.week, note = pt ? (W.weekPTNote || W.weekNote) : W.weekNote;
+  const t = h("table"); t.appendChild(h("tr", null, ["Day", "Where", up ? "Academics" : "Reading", up ? "Reading" : "Math", "Independence"].map(x => h("th", { text: x }))));
+  rows.forEach(r => t.appendChild(h("tr", null, r.map((x, i) => h(i ? "td" : "th", { text: x })))));
+  sec.appendChild(card("", [h("h2", { text: "A sample week" }), h("div", { class: "scroll" }, [t]), h("p", { class: "small", text: note })]));
+  const list = pt ? W.check : (W.checkFT || W.check), key = "check-" + (up ? "up" : "k1") + (pt ? "" : "-ft"), done = store.get(key, []);
+  sec.appendChild(card("", [h("h2", { text: "Five-minute checklist" })].concat(list.map((c, i) => { const box = h("input", { type: "checkbox" }); box.checked = done.includes(i); box.onchange = () => { const d = store.get(key, []).filter(x => x !== i); if (box.checked) d.push(i); store.set(key, d); }; return h("label", { class: "check" }, [box, h("span", { text: c })]); }))));
   next(sec, "week");
 };
 
@@ -136,7 +144,7 @@ VIEWS.moments = sec => {
     detail.innerHTML = ""; const m = D.MOMENTS.find(x => x.id === open); if (!m || !show(m)) { detail.remove(); return; }
     detail.appendChild(card("M-edge", [h("span", { class: "tag M", text: "Hard moment" }), h("h2", { text: m.title }), h("p", { class: "dim", text: m.when }),
       h("div", { class: "reflex" }, [h("div", { class: "rE" }, [h("small", { text: "Enforcer reflex" }), m.E]), h("div", { class: "rP" }, [h("small", { text: "Protector reflex" }), m.P])]),
-      h("h3", { text: "The mentor move" }), ul(m.M), h("h3", { text: "Words to try" }), h("div", { class: "lines" }, m.lines.map(l => h("div", { class: "say", text: l }))), h("p", { class: "small", text: "Why: " + m.why })]));
+      h("h3", { text: "The mentor move" }), ul(m.M), h("h3", { text: "Words to try" }), h("div", { class: "lines" }, m.lines.map(l => h("div", { class: "say", text: l }))), h("p", { class: "small", html: esc("Why: " + m.why).replace("Partnership Guide", `<a href="${GUIDE_URL}" target="_blank" rel="noopener">Partnership Guide</a>`) })]));
   };
   detail.style.gridColumn = "1 / -1"; sec.append(chips, list); draw();
   sec.appendChild(card("", [h("h3", { text: "When it's more than a hard week" }), h("p", { text: "If something keeps turning into a daily battle, or your child seems anxious, stuck or unusually frustrated, tell their field guide early. We'd much rather hear from you sooner than later." }), h("a", { href: "#help", text: "Who to ask →" })]));
@@ -152,7 +160,8 @@ VIEWS.explore = sec => {
 
 /* ---------- twelve practices ---------- */
 VIEWS.practices = sec => {
-  head(sec, "Twelve <span>home practices</span>", "From our Parent Partnership Guide: twelve research-backed habits that help children learn and thrive. They're optional. Pick two or three that fit your family right now; new routines usually stop meeting resistance within two to four weeks.");
+  head(sec, "Twelve <span>home practices</span>", "");
+  sec.appendChild(h("p", { class: "lede" }, ["From our ", ext("Parent Partnership Guide", GUIDE_URL), ": twelve research-backed habits that help children learn and thrive. They're optional. Pick two or three that fit your family right now; new routines usually stop meeting resistance within two to four weeks."]));
   let mine = store.get("prac", []);
   const note = h("p", { class: "small" }), g = h("div", { class: "stops" });
   const draw = () => { g.innerHTML = ""; D.PRACTICES.forEach(p => g.appendChild(h("button", { class: "prac", "aria-pressed": String(mine.includes(p[0])), onclick: () => { mine = mine.includes(p[0]) ? mine.filter(x => x !== p[0]) : mine.concat(p[0]); store.set("prac", mine); draw(); } }, [h("i", { text: p[0] + (mine.includes(p[0]) ? " · OUR FOCUS" : "") }), h("b", { text: p[1] }), h("span", { text: p[2] })]))); note.textContent = mine.length ? (mine.length > 3 ? "That's " + mine.length + ". Two or three at a time tends to stick better." : "Your focus: " + D.PRACTICES.filter(p => mine.includes(p[0])).map(p => p[1]).join(", ") + ".") : "Tap the ones you want to focus on. Saved on this device only."; };
