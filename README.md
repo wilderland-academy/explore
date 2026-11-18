@@ -56,7 +56,13 @@ Two more parent pages beside At Home, same rules: static, no sign-in, `noindex`,
   pillars toggle, how guides help and give feedback, mornings up close, Life Skills with one sample challenge per band
   (copied from `challenges/data.js` by ID; update `SKILLS` if one is renamed or cut), evidence rated by strength, glossary,
   and a short refresher of the packet at the end. Only SETTLED practice from The Three Pillars goes here.
-- **Field Notes** is the parent education series: one entry per book or talk on wilderland.academy/inspiration (the
-  Philosophical Canon plus Other Media), never titles from elsewhere. Each entry has big ideas, where you'll see it at
-  Wilderland (tags from `METHODS`, which must be real practices), where we part ways, worth knowing, questions to talk
-  about and one thing to try. Content is in `families/series/data.js`; entries open at `#<id>`.
+- **Field Notes** is the parent education series. Three featured books (`START`: 10 to 25, The Self-Driven Child,
+  Free-Range Kids), a short shelf of other books, and podcasts and talks, each a full entry in `ITEMS`: big ideas,
+  where you'll see it at Wilderland (tags from `METHODS`, which must be real practices), where we part ways, worth
+  knowing, questions to talk about and one thing to try. Entries open at `#<id>`. Books come only from
+  wilderland.academy/inspiration, and only ones Alex has read; keep the shelf short. Podcasts and talks come from what
+  the team has shared (Slack #inspiration and #alpha-inspiration). Big ideas for an episode must come from its own
+  description or transcript.
+- Lighter reading lives in `READS` (one linked card each, grouped by `READ_GROUPS`: the microschool movement, Alpha
+  from both sides, research). Keep facts and numbers to what the article itself says, and keep the critical pieces.
+  Content is in `families/series/data.js`.

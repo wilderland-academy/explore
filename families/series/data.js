@@ -1,12 +1,14 @@
-// Field Notes: the parent education series. One entry per book or talk from Wilderland's Inspiration list
-// (https://wilderland.academy/inspiration), the "Philosophical Canon" plus "Other Media". Only titles on that list go here.
-// Each entry: why it matters to us, big ideas, where you'll see it at Wilderland (METHODS), where we part ways,
-// anything worth knowing about the evidence, questions to talk about, and one thing to try.
-// Plain language for parents. No em dashes in copy. Paraphrase the books; quote only what has been checked.
+// Field Notes: the parent education series. Three featured books, a short shelf of others from Wilderland's
+// Inspiration list (https://wilderland.academy/inspiration), and podcasts and talks the team has shared and stands behind
+// (many from Slack #inspiration and #alpha-inspiration). Full entries live in ITEMS; lighter reading lives in READS.
+// Each full entry: why it matters to us, big ideas, where you'll see it at Wilderland (METHODS), where we part ways,
+// anything worth knowing, questions to talk about, and one thing to try.
+// Plain language for parents. No em dashes in copy. Big ideas for podcasts and talks come from the episode's own
+// description or transcript; never invent what someone said. Quote only what has been checked.
 
 export const INSPIRATION = "https://wilderland.academy/inspiration";
 
-// Wilderland practices a book can point to. Keep these to things that really happen at school.
+// Wilderland practices an entry can point to. Keep these to things that really happen at school.
 export const METHODS = {
   mentor: { n: "Mentor mindset", d: "Guides hold a high bar and give real help at the same time, from David Yeager's research." },
   cps: { n: "Solving problems together", d: "Behavior starts from “kids do well if they can”: find the lagging skill and solve the problem with the child." },
@@ -30,8 +32,26 @@ export const THEMES = {
   school: "Rethinking school"
 };
 
+// How the grid groups things. "Listen" = Podcast; "Watch" = Talk or Video.
+export const KINDS = { Book: "Books", Podcast: "Listen", Talk: "Watch", Video: "Watch" };
+
+const FOE = "Future of Education, Alpha School's podcast";
+
 export const ITEMS = [
-  /* ---------------- start here ---------------- */
+  /* ================= featured books ================= */
+  { id: "10-to-25", theme: "drive", kind: "Book", t: "10 to 25", sub: "The Science of Motivating Young People", by: "David Yeager", yr: 2024,
+    why: "The research behind how our guides talk to kids. If one book explains the adults at Wilderland, it's this one.",
+    ideas: [
+      "Adults tend to fall into one of three mindsets: the enforcer (high standards, low support), the protector (high support, low standards), or the mentor (both).",
+      "From about age ten, young people care intensely about status and respect. Many “bad decisions” make sense once you see that.",
+      "Mentors explain why, ask before telling, and treat stress as a sign a challenge matters, not a sign something's wrong.",
+      "Feedback lands when it's framed as belief: high standards, plus confidence the young person can reach them."
+    ],
+    here: [["mentor", "It's the core of how guides are trained, and the lens for our behavior approach."], ["inclusive", "Inclusive excellence, from this book, is our top principle for supporting neurodivergent students."], ["lifeskills", "Challenges are designed to carry real status with peers, not just adult approval."]],
+    ask: ["When you correct your child, do you sound more like an enforcer, a protector or a mentor?", "How does your child react when they feel talked down to?", "What high standard could you hold this week while making it clear you believe they can meet it?"],
+    tryit: "Before your next correction, say why: “I'm telling you this because I have high standards and I know you can reach them.”",
+    link: ["Hear Yeager explain it (Class Disrupted podcast)", "https://www.the74million.org/article/podcast-what-a-mentorship-mindset-can-do-for-student-motivation/"] },
+
   { id: "self-driven-child", theme: "drive", kind: "Book", t: "The Self-Driven Child", sub: "The Science and Sense of Giving Your Kids More Control Over Their Lives", by: "William Stixrud & Ned Johnson", yr: 2018,
     why: "Why a child's sense of control is the best antidote to stress, and what that means for how we parent and teach.",
     ideas: [
@@ -58,6 +78,7 @@ export const ITEMS = [
     ask: ["What could you do alone at your child's age that they can't do now? What changed: the world, or us?", "What's one thing your child is ready for that you haven't let them try?", "What would you need to see before you said yes?"],
     tryit: "Let your child do one new thing on their own this week, then ask them to tell you how it went." },
 
+  /* ================= the rest of the shelf ================= */
   { id: "lost-connections", theme: "connect", kind: "Book", t: "Lost Connections", sub: "Why You're Depressed and How to Find Hope", by: "Johann Hari", yr: 2018,
     why: "A journalist's search for why so many people are depressed and anxious. His answer, that we've lost things humans need, shaped what we want school to give children.",
     ideas: [
@@ -70,20 +91,6 @@ export const ITEMS = [
     know: { t: "This is a book about adults, written by a journalist, not a clinician. Read it as a lens on what children need, not as medical advice, and never change a medication without a doctor. Hari also admitted in 2011 to plagiarizing quotes in his journalism, which is fair to keep in mind.", src: ["Irish Times on Hari's work", "https://www.irishtimes.com/culture/too-few-of-us-are-paying-attention-to-the-problems-with-johann-hari-s-new-book-1.4775651"] },
     ask: ["Which of these connections feel strong in your family right now, and which feel thin?", "Where does your child feel they truly belong?", "Is your child mostly chasing things that feel good to have, or things that feel good to do?"],
     tryit: "Plan one thing this week that connects your family to something bigger than yourselves: a neighbor, a cause, or a place outdoors." },
-
-  /* ---------------- motivation from the inside ---------------- */
-  { id: "10-to-25", theme: "drive", kind: "Book", t: "10 to 25", sub: "The Science of Motivating Young People", by: "David Yeager", yr: 2024,
-    why: "The research behind how our guides talk to kids. If one book explains the adults at Wilderland, it's this one.",
-    ideas: [
-      "Adults tend to fall into one of three mindsets: the enforcer (high standards, low support), the protector (high support, low standards), or the mentor (both).",
-      "From about age ten, young people care intensely about status and respect. Many “bad decisions” make sense once you see that.",
-      "Mentors explain why, ask before telling, and treat stress as a sign a challenge matters, not a sign something's wrong.",
-      "Feedback lands when it's framed as belief: high standards, plus confidence the young person can reach them."
-    ],
-    here: [["mentor", "It's the core of how guides are trained, and the lens for our behavior approach."], ["inclusive", "Inclusive excellence, from this book, is our top principle for supporting neurodivergent students."], ["lifeskills", "Challenges are designed to carry real status with peers, not just adult approval."]],
-    ask: ["When you correct your child, do you sound more like an enforcer, a protector or a mentor?", "How does your child react when they feel talked down to?", "What high standard could you hold this week while making it clear you believe they can meet it?"],
-    tryit: "Before your next correction, say why: “I'm telling you this because I have high standards and I know you can reach them.”",
-    link: ["Hear Yeager explain it (Class Disrupted podcast)", "https://www.the74million.org/article/podcast-what-a-mentorship-mindset-can-do-for-student-motivation/"] },
 
   { id: "raising-human-beings", theme: "drive", kind: "Book", t: "Raising Human Beings", sub: "Creating a Collaborative Partnership with Your Child", by: "Ross W. Greene", yr: 2016,
     why: "The thinking behind how we handle hard behavior: kids do well if they can.",
@@ -98,33 +105,6 @@ export const ITEMS = [
     ask: ["What's the recurring battle in your home, and what skill might your child still be missing?", "Do you know your child's concern about it, or only your own?", "Which problems could you drop for now so you can solve the important ones well?"],
     tryit: "Pick one recurring problem. At a calm time, start with “I've noticed that ___. What's up?” Then just listen." },
 
-  { id: "your-childs-strengths", theme: "drive", kind: "Book", t: "Your Child's Strengths", sub: "Discover Them, Develop Them, Use Them", by: "Jenifer Fox", yr: 2008,
-    why: "A school leader's argument that we spend too much energy fixing weaknesses and too little building on what energizes a child.",
-    ideas: [
-      "A strength isn't just something you're good at. It's something that leaves you feeling energized and engaged.",
-      "Fox names three kinds: activity strengths (what absorbs you), relationship strengths (what you do for and with others that makes you feel valued), and learning strengths (how you best take in new things).",
-      "School mostly measures deficits. A child who only hears about weaknesses learns to see themselves that way.",
-      "Strengths can be discovered on purpose, with reflection and a little structure. The book includes tools to do it."
-    ],
-    here: [["projects", "Passion pursuits and projects start from what a child cares about."], ["choice", "Choosing their own challenges lets children lean into what energizes them."], ["inclusive", "The bar stays the same; the path is shaped to the child."]],
-    differ: "We still hold a floor in core academics for every child. Strengths are how we get there, not a reason to skip it.",
-    ask: ["When does your child lose track of time?", "What does your child do for others that makes them light up?", "How much of your talk with your child is about fixing weaknesses?"],
-    tryit: "For a week, jot down moments your child seems most energized. Then look for the pattern together." },
-
-  /* ---------------- independence, play and nature ---------------- */
-  { id: "play", theme: "free", kind: "Book", t: "Play", sub: "How It Shapes the Brain, Opens the Imagination, and Invigorates the Soul", by: "Stuart Brown with Christopher Vaughan", yr: 2009,
-    why: "A psychiatrist's case that play is a biological need, not a reward for finishing the real work.",
-    ideas: [
-      "Play is done for its own sake. It's voluntary, absorbing, and makes you lose track of time.",
-      "Play prepares us for the unexpected. It's how young animals and people rehearse for a world they can't predict.",
-      "Brown began studying play after looking at the life histories of young men who had committed murder, and finding severe play deprivation.",
-      "Adults need play too, and a child who sees adults play learns it's allowed."
-    ],
-    here: [["nature", "Unstructured time outdoors is part of every day."], ["projects", "Hobbies like music, art and games can become Life Skills work when a child takes them further."], ["risk", "Climbing and adventurous play are part of the day, with the skills taught first."]],
-    know: { t: "The murderer research was small and observational, and Brown himself hedges on it. Treat it as a striking clue, not proof." },
-    ask: ["When did your child last play with no adult running it?", "What did you play as a kid that you'd want for them?", "What's your own play?"],
-    tryit: "Protect one afternoon this week with nothing scheduled and no screens." },
-
   { id: "last-child-in-the-woods", theme: "free", kind: "Book", t: "Last Child in the Woods", sub: "Saving Our Children from Nature-Deficit Disorder", by: "Richard Louv", yr: 2005,
     why: "The book that named what children lose when childhood moves indoors.",
     ideas: [
@@ -137,47 +117,141 @@ export const ITEMS = [
     ask: ["Where did you spend unstructured time outdoors as a kid?", "How many hours did your child spend outside last week, with no adult agenda?", "What keeps your family indoors?"],
     tryit: "Find a “sit spot” near home and visit it with your child a few times this week. Notice what changes." },
 
-  { id: "anxious-generation", theme: "free", kind: "Book", t: "The Anxious Generation", sub: "How the Great Rewiring of Childhood Is Causing an Epidemic of Mental Illness", by: "Jonathan Haidt", yr: 2024,
-    why: "The most talked-about case for a play-based childhood over a phone-based one.",
+  /* ================= listen ================= */
+  { id: "yeager-class-disrupted", theme: "drive", kind: "Podcast", t: "What a Mentorship Mindset Can Do for Student Motivation", sub: "Class Disrupted, from The 74", by: "David Yeager with Diane Tavenner & Michael B. Horn", yr: 2024,
+    why: "The fastest way into 10 to 25. Yeager explains the mentor mindset in his own words, with classroom stories you can borrow at home.",
     ideas: [
-      "Between about 2010 and 2015, childhood shifted from play-based to phone-based, and teen anxiety and depression rose sharply.",
-      "We overprotect children in the real world and underprotect them online.",
-      "Haidt proposes four norms: no smartphones before high school, no social media before 16, phone-free schools, and far more independence and free play.",
-      "These work best when families agree on them together."
+      "Adults tend to slide into one of two traps. Enforcers hold high standards with little support. Protectors give lots of support and drop the standards. Yeager argues both quietly assume young people aren't capable.",
+      "Mentors explain their reasons. Teenagers read a lot into ambiguous signals, so adults should say why they're asking for something more often than feels necessary.",
+      "Ask before you tell. Real questions, ones you don't know the answer to, build on the young person's own thinking.",
+      "Stress often means something matters. Telling a child “don't be stressed” tends to backfire.",
+      "Purpose comes from knowing someone is counting on you, and belonging is built through contribution over time. It can't be announced."
     ],
-    here: [["screens", "Students use Chromebooks for mastery work, not phones, and school tech use is monitored."], ["nature", "Most afternoons are outdoors, with real play."], ["risk", "Independence and healthy risk are built into the day."]],
-    know: { t: "Haidt's claim that phones and social media caused the rise in teen mental illness is disputed. Psychologist Candice Odgers argued in Nature that the research doesn't show it; Haidt has responded at length. His four norms are sensible either way.", src: ["Odgers in Nature (2024)", "https://www.nature.com/articles/d41586-024-00902-2"] },
-    ask: ["When does your family plan to give your child a smartphone, and why then?", "Are we protecting our kids more in the real world or online?", "Which families could you agree with on phone norms, so your child isn't the only one?"],
-    tryit: "Talk with two other Wilderland families about when your kids will get phones.",
-    link: ["The book's site", "https://www.anxiousgeneration.com/"] },
+    here: [["mentor", "This is the model our guides are trained in."], ["lifeskills", "Challenges give children real roles that others count on."]],
+    ask: ["When did someone explain their high expectations of you in a way that made you rise to them?", "What would change if you asked your child one real question before giving advice?"],
+    tryit: "Next time you hold a firm line, add one sentence on why. Notice whether the pushback changes.",
+    link: ["Listen at The 74", "https://www.the74million.org/article/podcast-what-a-mentorship-mindset-can-do-for-student-motivation/"] },
 
-  /* ---------------- connection and attention ---------------- */
-  { id: "stolen-focus", theme: "connect", kind: "Book", t: "Stolen Focus", sub: "Why You Can't Pay Attention, and How to Think Deeply Again", by: "Johann Hari", yr: 2022,
-    why: "An argument that our trouble focusing isn't just a personal failing. Much of it is done to us.",
+  { id: "foe-mentor", theme: "drive", kind: "Podcast", len: "38 min", t: "How to Be a Mentor to Your Kid (Not Just a Parent)", sub: FOE + ", S2 E363", by: "MacKenzie Price with Alpha guide Chauncey", yr: 2026,
+    why: "A working guide on taking the mentor mindset home: high standards, high support, and routines that don't feel like a fight.",
     ideas: [
-      "Hari names twelve causes of lost focus, from technology designed to grab attention to too little sleep and too much stress.",
-      "Constant switching between tasks has real costs. Deep focus, or flow, takes protected time.",
-      "Reading long books builds a kind of attention that skimming doesn't.",
-      "One chapter is about children: how much less freedom kids now have to play and roam, and what that does to their attention."
+      "High standards paired with high support. Kids look for real challenge when they trust the adult behind it.",
+      "Most life lessons are “caught, not taught.” Children copy what we do far more than what we say.",
+      "“Glows, Grows & Everyone Should Know”: a simple daily framework for talking through the day together.",
+      "Separate age from learning stage, so a child can close a gap without feeling ashamed of it.",
+      "Practical ways to reach a quiet or anxious child, starting in their world."
     ],
-    here: [["mastery", "Mornings are split into focused segments, one subject at a time."], ["screens", "Devices are for mastery work, with tech use monitored."], ["choice", "Children choose their own books, and reading every day is expected."], ["lifeskills", "Energy, one of our eight Life Skills, includes sleep."]],
-    know: { t: "Psychologist Stuart Ritchie and others have criticized the book for leaning on anecdote. Hari himself notes there are no long-term studies tracking changes in people's ability to focus. Read it as a strong argument, not settled science.", src: ["Irish Times on the critiques", "https://www.irishtimes.com/culture/too-few-of-us-are-paying-attention-to-the-problems-with-johann-hari-s-new-book-1.4775651"] },
-    ask: ["What pulls your attention most in a day? What about your child's?", "When did your child last get lost in something for an hour?", "Is sleep protected in your home, for kids and adults?"],
-    tryit: "Choose one hour a day this week as a phone-free family hour, adults included." },
+    here: [["mentor", "Our guides use the same high-standards, high-support model."], ["mastery", "Children work at their own level in each subject, whatever their age."], ["bands", "Mixed-age bands make it normal to be at different stages."]],
+    ask: ["Which of your habits is your child most likely to “catch” this year?", "Where is your child behind or ahead, and how do they feel about it?"],
+    tryit: "Try Glows and Grows at dinner for a week: each person shares one thing that went well and one thing to work on, adults too.",
+    link: ["Listen on Apple Podcasts", "https://podcasts.apple.com/us/podcast/future-of-education-podcast/id1673109764?i=1000797773957"] },
 
-  /* ---------------- rethinking school ---------------- */
-  { id: "one-world-schoolhouse", theme: "school", kind: "Book", t: "The One World Schoolhouse", sub: "Education Reimagined", by: "Salman Khan", yr: 2012,
-    why: "Khan Academy's founder on why kids should move on when they've mastered something, not when the calendar says so.",
+  { id: "foe-weekly-meeting", theme: "drive", kind: "Podcast", len: "46 min", t: "The 15-Minute Weekly Habit That Turns Kids into Self-Starters", sub: FOE + ", S2 E357", by: "MacKenzie Price with Alpha guide Jackson", yr: 2026,
+    why: "A short weekly one-on-one is one of the most useful things a parent can borrow from school. This episode walks through how to run one.",
     ideas: [
-      "In a time-based class, everyone moves on together, so most kids carry gaps. Khan calls it “Swiss cheese” learning, and the holes catch up with them later.",
-      "Mastery learning flips that: the time varies, the understanding doesn't.",
-      "Video and software can handle much of the explaining, freeing class time for working problems with help.",
-      "Grouping children strictly by age is a habit, not a law of learning. Mixed ages let kids learn from and teach each other."
+      "One focused conversation a week helps a child name what they want, what's in the way, and their own next step.",
+      "Use questions, in the style of motivational interviewing, instead of lecturing or jumping to a fix.",
+      "Shift the agenda over time from the parent's list to the child's.",
+      "Two ground rules: keep the conversation private, and tie goals to real-life skills.",
+      "Fit the length to the child's age, and end by letting the child decide how they want to be held accountable."
     ],
-    here: [["mastery", "Mornings are built on exactly this: own level, own pace, move on when mastered."], ["bands", "Mixed-age bands let older and younger kids learn together."], ["mentor", "Guides spend their time coaching, not lecturing."]],
-    differ: "Khan imagines technology doing most of the teaching. We pair it with Montessori materials, Life Skills, and a lot of time outdoors.",
-    ask: ["Did you ever move on in school before you really understood something? What happened later?", "How would you feel if your child spent longer on a skill than their age-mates? Or less?", "What does “finished” mean in your house: done, or done well?"],
-    tryit: "Ask your child to teach you one thing they mastered this week." },
+    here: [["mentor", "Guides meet one-on-one with students to set goals and check progress."], ["choice", "Children set their own goals and pick their own challenges."], ["lifeskills", "Goals often become Life Skills challenges."]],
+    ask: ["When did your child last set a goal that was truly theirs?", "In your check-ins, who does most of the talking?"],
+    tryit: "Set a 15-minute weekly meeting with each child. Ask three questions: What do you want this week? What's in the way? What's your next step?",
+    link: ["Listen on Apple Podcasts", "https://podcasts.apple.com/us/podcast/future-of-education-podcast/id1673109764?i=1000789037781"] },
+
+  { id: "foe-grit", theme: "free", kind: "Podcast", len: "28 min", t: "When Grit Looks Like Crying", sub: FOE + ", S2 E327", by: "MacKenzie Price with Alpha guide Carrington", yr: 2026,
+    why: "A reassuring listen for any parent of a young child who melts down at the hard part. Tears are often the start of grit.",
+    ideas: [
+      "Grit isn't a fixed trait. It grows under real challenge, the way a muscle grows under load.",
+      "For a five-year-old, challenge often looks like tears and frustration. That's normal, and it's where the growth happens.",
+      "Be a “spotter”: stay close and supportive, and let the child do the lift.",
+      "“Confidence anchors,” sources of steadiness, help a child keep going while they struggle.",
+      "The episode follows a young student working through a daunting bike challenge."
+    ],
+    here: [["lifeskills", "Challenges are built to be hard, with a “not yet” that invites another try."], ["risk", "Kids push through real difficulty, with skills taught first."], ["mentor", "Guides support without taking over."]],
+    ask: ["What does your child's frustration look like, and what's your instinct when you see it?", "What's one thing you rescue your child from that they could push through?"],
+    tryit: "Next time your child is stuck and upset, stay close, name the feeling, and wait one more minute before you help.",
+    link: ["Listen on Apple Podcasts", "https://podcasts.apple.com/us/podcast/future-of-education-podcast/id1673109764?i=1000764541573"] },
+
+  { id: "foe-coddling", theme: "free", kind: "Podcast", len: "24 min", t: "Are You Coddling Your Kid?", sub: FOE + ", S2 E364", by: "MacKenzie Price with educator Eric Salgado", yr: 2026,
+    why: "A veteran principal on the signs of overprotection teachers see, and the small daily routines that build independence.",
+    ideas: [
+      "Overprotection usually comes from love, and it can still cost a child confidence, problem-solving and resilience.",
+      "Teachers see the signs in class. Parents and school work best as one team.",
+      "“1% better every day”: small daily wins instead of perfectionism.",
+      "Morning routines, checklists and avoiding empty threats.",
+      "The forgotten sports gear test: let a child live with the natural consequence."
+    ],
+    here: [["mentor", "High standards and high support, at school and at home."], ["lifeskills", "Self-Governance challenges include owning your own gear and routines."], ["bands", "Freedoms grow as children show they're ready."]],
+    ask: ["What did you do for your child this week that they could have done themselves?", "If your child forgot something tomorrow, would you bring it?"],
+    tryit: "Make a short morning checklist with your child, then stop reminding them. Let the list do the work.",
+    link: ["Listen on Apple Podcasts", "https://podcasts.apple.com/us/podcast/future-of-education-podcast/id1673109764?i=1000798940554"] },
+
+  { id: "greene-tilt", theme: "drive", kind: "Podcast", t: "How to Parent Angry and Explosive Children", sub: "Tilt Parenting, Session 81", by: "Ross Greene with Debbie Reber",
+    why: "Ross Greene explains his model in under an hour. The most practical companion to Raising Human Beings.",
+    ideas: [
+      "Kids with hard behavior usually lack skills like flexibility, frustration tolerance and problem solving. They aren't short on motivation.",
+      "Treat unmet expectations as unsolved problems. Fixing the problem gets at the cause; rewards and punishments only reach the symptom.",
+      "Plan A imposes a solution, Plan B solves it with the child, Plan C sets it aside for now.",
+      "Most problems are predictable, so solve them ahead of time, at a calm moment.",
+      "Listening to a child's concerns doesn't weaken a parent's authority. Greene argues it strengthens it."
+    ],
+    here: [["cps", "Guides solve recurring problems with the child, using Greene's approach."], ["inclusive", "Support is shaped to the skill a child is missing."]],
+    ask: ["Which problem in your home is completely predictable?", "Do you know your child's concern about it?"],
+    tryit: "Write down the three most predictable problems in your week. Pick one to talk through with your child at a calm time.",
+    link: ["Listen at Tilt Parenting", "https://tiltparenting.com/session81"] },
+
+  { id: "sold-a-story", theme: "school", kind: "Podcast", len: "21 min", t: "Sold a Story, Season 2", sub: "Episode 1: It's Not Just Reading", by: "Emily Hanford, APM Reports", yr: 2026,
+    why: "Season 1 showed why so many kids weren't taught to read well. Season 2 widens the lens to how kids learn anything, and why direct, well-built teaching works.",
+    ideas: [
+      "Season 1 (2022) showed how many U.S. schools taught children to guess at words from pictures and context instead of sounding them out.",
+      "Season 2 opens with Zig Engelmann, an outsider who in the 1960s doubted what experts assumed young children could learn. He taught his 4-year-old twins basic algebra.",
+      "Engelmann's approach, Direct Instruction, breaks skills into small clear steps and checks that each one is learned.",
+      "The idea we take from it: competence builds confidence. Children who truly master the basics start to believe they can learn hard things."
+    ],
+    context: "Season 1 is the place to start if you haven't heard it. Season 2 began in October 2026.",
+    here: [["montessori", "In K–1, letter sounds and phonics are taught directly, with Montessori language materials and decodable books."], ["mastery", "Mastery apps in grades 2–8 move a child on only when a skill is learned."], ["lifeskills", "Challenges have a clear standard and a “not yet,” so kids know when they've mastered something."]],
+    ask: ["How were you taught to read? To do math?", "When has getting good at something made your child more confident?"],
+    tryit: "When your young reader is stuck on a word, cover the picture and say, “Let's sound it out.”",
+    link: ["Listen on Apple Podcasts", "https://podcasts.apple.com/us/podcast/sold-a-story/id1649580473?i=1000796435660"] },
+
+  { id: "report-card-alpha", theme: "school", kind: "Podcast", len: "69 min", t: "Alpha School, with MacKenzie Price", sub: "The Report Card with Nat Malkus", by: "Nat Malkus (American Enterprise Institute) with MacKenzie Price", yr: 2025,
+    why: "Alpha's co-founder explains the model to a researcher who asks hard questions. Worth hearing both the pitch and the pushback.",
+    ideas: [
+      "Alpha uses software and mastery learning, plus incentives, to speed up academics so the rest of the day can go to other things.",
+      "Malkus presses on what's known so far. The first graduating class was small (twelve students), and most students come from well-off families, so results are hard to judge yet."
+    ],
+    here: [["mastery", "Our mornings borrow Alpha's mastery model."], ["screens", "Screens are used for mastery work, then put away."]],
+    differ: "We borrow Alpha's mornings, not the whole model. Our afternoons are outdoors, our K–1 is Montessori.",
+    ask: ["What would you want to see before believing any school's results, including ours?"],
+    tryit: "Ask your child's guide how they know your child has mastered a skill, and what “mastered” means in that app.",
+    link: ["Listen on Pocket Casts", "https://pocketcasts.com/podcast/the-report-card-with-nat-malkus/d6aa06d0-9792-0139-c11f-0acc26574db2/alpha-school-with-mackenzie-price/276b75a1-99fa-4150-a92b-01c5a67d3791"] },
+
+  /* ================= watch ================= */
+  { id: "skenazy-ted", theme: "free", kind: "Talk", len: "13 min", t: "Why You Should Spend Less Time with Your Kids", sub: "TED2025", by: "Lenore Skenazy", yr: 2025,
+    why: "The author of Free-Range Kids makes her case in thirteen minutes. A good one to watch with your partner.",
+    ideas: [
+      "Heavy adult involvement in childhood (directing play, hovering, constant phone use) has fed anxiety in kids and in parents.",
+      "Kids often learn the most when adults step back.",
+      "Skenazy co-founded Let Grow, which helps schools and families give kids more independence."
+    ],
+    here: [["risk", "Children range more widely as they pass Safety Gates."], ["nature", "Afternoons outdoors include play no adult is running."], ["bands", "Freedoms grow with each band."]],
+    ask: ["Where in your child's week is there no adult in charge?", "What are you most afraid would happen if you stepped back?"],
+    tryit: "Watch it together with your partner, then each name one thing your child could do alone this month.",
+    link: ["Watch on TED", "https://www.ted.com/talks/lenore_skenazy_why_you_should_spend_less_time_with_your_kids"] },
+
+  { id: "lythcott-haims-ted", theme: "free", kind: "Talk", len: "14 min", t: "How to Raise Successful Kids, Without Over-Parenting", sub: "TED Talks Live", by: "Julie Lythcott-Haims", yr: 2015,
+    why: "A former Stanford dean of freshmen on what over-managed childhoods cost, and what kids need instead.",
+    ideas: [
+      "Micromanaging children's lives and loading them with expectations doesn't help them.",
+      "Stop defining a child's success by grades and test scores.",
+      "Focus on unconditional love. She saw what over-parenting costs firsthand as Stanford's dean of freshmen."
+    ],
+    here: [["private", "No academic rankings or leaderboards."], ["lifeskills", "Life Skills are about doing real things yourself."], ["mentor", "Guides care about the whole child."]],
+    ask: ["How much of your talk with your child is about grades and scores?", "What does success mean in your family?"],
+    tryit: "For one week, when you ask about school, skip “How did you do?” and ask “What did you try?”",
+    link: ["Watch on TED", "https://www.ted.com/talks/julie_lythcott_haims_how_to_raise_successful_kids_without_over_parenting"] },
 
   { id: "myth-of-average", theme: "school", kind: "Talk", t: "The Myth of Average", sub: "TEDxSonomaCounty", by: "Todd Rose", yr: 2013,
     why: "A short, memorable talk on why a system built for the “average” child fits almost no one.",
@@ -204,81 +278,70 @@ export const ITEMS = [
     tryit: "Ask your child how many uses they can think of for an ordinary object, like a paper clip. Count them together.",
     link: ["Watch on YouTube", "https://www.youtube.com/watch?v=zDZFcDGpL4U"] },
 
-  { id: "sold-a-story", theme: "school", kind: "Podcast", t: "Sold a Story", sub: "How Teaching Kids to Read Went So Wrong", by: "Emily Hanford, APM Reports", yr: 2022,
-    why: "A gripping investigation of why so many American kids weren't taught to read well, and why we teach reading the way we do.",
+  { id: "most-likely-to-succeed", theme: "school", kind: "Video", len: "86 min", t: "Most Likely to Succeed", sub: "Documentary, Sundance 2015", by: "Directed by Greg Whiteley", yr: 2015,
+    why: "A year inside High Tech High in San Diego, where students learn through big projects with real audiences. Good for a family movie night.",
     ideas: [
-      "Many U.S. schools taught children to guess at words using pictures and context, a method called three-cueing, instead of sounding them out.",
-      "The research is clear that young readers need explicit, systematic teaching of how letters and sounds work.",
-      "Popular programs and well-meaning teachers spread an approach that didn't match the science, for decades.",
-      "Season 2 (2026) asks what else in teaching should be rebuilt on how children actually learn."
+      "The film argues that school in America has changed little in a century, while the world it prepares kids for has changed a lot.",
+      "At High Tech High, a public charter school, students build ambitious projects and show them to the public.",
+      "It follows students and teachers through a year of projects, including the ones that struggle."
     ],
-    here: [["montessori", "In K–1, letter sounds and phonics are taught directly, with Montessori language materials and decodable books."], ["mastery", "Reading apps in grades 2–8 move a child on only when they've mastered a skill."], ["choice", "Once they can read, children choose their own books."]],
-    ask: ["How were you taught to read?", "When your child gets stuck on a word, what do you usually say?"],
-    tryit: "When your young reader is stuck on a word, cover the picture and say, “Let's sound it out.”",
-    link: ["Listen", "https://features.apmreports.org/sold-a-story/"] },
+    here: [["projects", "Long, self-designed projects in grades 5–8."], ["lifeskills", "Storytelling & Speaking challenges put kids in front of real audiences."]],
+    know: { t: "The film leans on the “factory model” story of how schools began, which education historians dispute. Some critics also felt it sold project-based learning without enough doubt.", src: ["Background and critiques on Wikipedia", "https://en.wikipedia.org/wiki/Most_Likely_to_Succeed_(film)"] },
+    ask: ["Which student in the film reminded you of your child?", "What would your child build if they had a whole semester?"],
+    tryit: "Watch it as a family (older kids) and ask your child what project they'd pick.",
+    link: ["Where to watch", "https://www.whatschoolcouldbe.org/most-likely-to-succeed"] },
 
-  { id: "teach-like-finland", theme: "school", kind: "Book", t: "Teach Like Finland", sub: "33 Simple Strategies for Joyful Classrooms", by: "Timothy D. Walker", yr: 2017,
-    why: "An American teacher's account of teaching in Helsinki, and the small habits behind joyful, serious classrooms.",
+  { id: "death-of-recess", theme: "free", kind: "Video", len: "Documentary", t: "The Death of Recess", sub: "Documentary, Angel Studios", by: "Spencer Taylor",
+    why: "A documentary on how school pushed out play, movement and time outdoors, and the schools bringing them back.",
     ideas: [
-      "Walker groups his strategies under five ideas: well-being, belonging, autonomy, mastery and mindset.",
-      "Frequent breaks matter. Finnish students often get a 15-minute break after each 45 minutes of class.",
-      "Students are expected to take responsibility for themselves, and teachers have freedom in how they teach.",
-      "Finland pairs that freedom with plenty of traditional, teacher-led instruction. Joy and rigor aren't opposites."
+      "Many schools have cut or ended daily recess as testing and schedules took over.",
+      "The film presents research that movement and hands-on learning help memory, emotional health and development.",
+      "It looks at alternatives, including outdoor education models."
     ],
-    here: [["mastery", "Mornings run in focused segments, with movement and outdoor time around them."], ["choice", "Students set their own pace and own much of their day."], ["mentor", "Belonging comes first: every child is known by at least one adult."]],
-    differ: "Like Finland, we pair freedom with direct teaching. Choice here covers pace and order, not whether a child gets taught.",
-    ask: ["Where does your child get real breaks in a day?", "What would a joyful school day look like to your child?"],
-    tryit: "Try a work-then-move rhythm for app work or reading at home: 20 minutes on, 5 minutes moving." },
-
-  { id: "thomas-jefferson-education", theme: "school", kind: "Book", t: "A Thomas Jefferson Education", sub: "Teaching a Generation of Leaders for the 21st Century", by: "Oliver DeMille", yr: 2000,
-    why: "A Utah classic on mentoring, great books and inspiring kids rather than forcing them.",
-    ideas: [
-      "DeMille's seven keys: classics, not textbooks; mentors, not professors; inspire, not require; structure time, not content; quality, not conformity; simplicity, not complexity; you, not them.",
-      "“You, not them”: the best way to raise a learner is to be one, visibly.",
-      "Children move through phases: a core phase of values and family life (roughly up to age 8), a love-of-learning phase (about 8 to 12), and a scholar phase (about 12 to 16)."
-    ],
-    here: [["mentor", "Guides are mentors, and weekly coaching is one-on-one."], ["choice", "Children choose their own books, and inspiration is the goal."], ["bands", "Our bands roughly track the phases: discover, take ownership, design and lead."]],
-    differ: "We require more than DeMille does. Core academics happen every morning for every child, and mastery apps do much of that work. Inspiration is how we want children to feel about it.",
-    ask: ["What are you reading right now that your child sees you read?", "Which subject would your child chase on their own if it were sparked?", "What would “structure time, not content” look like at home?"],
-    tryit: "Read something you love where your child can see you, then tell them about it." },
-
-  { id: "excellent-sheep", theme: "school", kind: "Book", t: "Excellent Sheep", sub: "The Miseducation of the American Elite and the Way to a Meaningful Life", by: "William Deresiewicz", yr: 2014,
-    why: "A former Yale professor on what goes wrong when kids are raised to win the race without asking which race is theirs.",
-    ideas: [
-      "High-achieving students are often anxious, timid and lost: superb at clearing hurdles, unsure why they're running.",
-      "Chasing credentials crowds out curiosity, risk-taking and the freedom to fail.",
-      "The real purpose of education is to build a self: to think for yourself and decide what your life is for."
-    ],
-    here: [["lifeskills", "“Ready for life, not just tests” is one of our three promises."], ["private", "No rankings or leaderboards in academics."], ["projects", "Projects let kids find out what they care about, with real chances to fail."]],
-    ask: ["Are we raising our child to win the race, or to know which race is theirs?", "What would your child do if no one were grading it?", "Which of your child's activities are for them, and which are for a résumé?"],
-    tryit: "Ask your child what they'd learn this month if nothing counted." },
-
-  { id: "school-of-our-own", theme: "school", kind: "Book", t: "A School of Our Own", sub: "The Story of the First Student-Run High School and a New Vision for American Education", by: "Samuel Levin & Susan Engel", yr: 2016,
-    why: "The true story of a high school junior who designed a semester run by students, and what happened when it worked.",
-    ideas: [
-      "In 2010, students at Monument Mountain Regional High School in Massachusetts ran their own semester, called the Independent Project.",
-      "Each week they picked a real question, researched it, and taught their findings to each other. They read books they chose and wrote about them.",
-      "Each student carried one long project of their own, like building a kayak or writing a novel, plus a group project together.",
-      "Students asked more questions, judged sources better and managed their time better. Engagement turned out to be a design problem."
-    ],
-    here: [["projects", "Long, self-designed projects in grades 5–8."], ["choice", "Students choose their own books and challenges."], ["lifeskills", "Storytelling & Speaking challenges ask kids to teach and present to real audiences."]],
-    differ: "These were high schoolers with a strong school around them. Our younger students get more structure, and the structure loosens as they show they're ready.",
-    ask: ["If your child designed their own semester, what would be in it?", "Where does your child already teach others?"],
-    tryit: "Ask your child one real question this week, and let them research it and teach you the answer." },
-
-  { id: "free-at-last", theme: "school", kind: "Book", t: "Free at Last", sub: "The Sudbury Valley School", by: "Daniel Greenberg", yr: 1987,
-    why: "Stories from the most radical school in America: one that trusts children to run their own education.",
-    ideas: [
-      "At Sudbury Valley in Massachusetts, founded in 1968, there are no required classes and no grades.",
-      "Children of all ages mix freely and learn from each other.",
-      "The school is run by a School Meeting where every student and staff member gets one vote, including on rules.",
-      "Children learn things like reading when they're ready and want to, often faster than adults expect."
-    ],
-    here: [["bands", "Mixed ages learning side by side."], ["choice", "Real choices about how and what, growing with age."], ["lifeskills", "Self-Governance is one of our eight Life Skills."]],
-    differ: "We part ways on required learning. Sudbury makes all classes optional. We protect a daily academic block for every child, because research on young learners favors direct, explicit teaching.",
-    ask: ["How much of your child's learning do you trust them to direct?", "What rules would your child write for their school, or your home?"],
-    tryit: "Hold a family meeting where your child proposes one house rule. If it's fair, everyone follows it, including you." }
+    here: [["nature", "A daily nature walk and afternoons mostly outdoors."], ["risk", "Real play, with skills taught first."]],
+    ask: ["How much free time outdoors did you get in a school day? How much does your child get?"],
+    tryit: "Ask your child to show you their favorite spot outside at school, and what they do there.",
+    link: ["Watch on Angel", "https://www.angel.com/watch/death-of-recess"] }
 ];
 
 // the three to start with, in order
-export const START = ["self-driven-child", "free-range-kids", "lost-connections"];
+export const START = ["10-to-25", "self-driven-child", "free-range-kids"];
+
+// Lighter reading: one card each, linking out. g = which group it shows in.
+export const READS = [
+  /* the bigger movement */
+  { g: "movement", t: "7 Things to Know About Microschools in 2026", src: "The 74", by: "Linda Jacobson", d: "June 2026", url: "https://www.the74million.org/article/exclusive-7-things-to-know-about-microschools-in-2026/",
+    why: "The latest national snapshot. Microschools are lasting: 1 in 5 has been open six or more years and 70% expect to reach ten. The median private microschool has about 20 students, and about half get more than a quarter of their tuition from state school-choice programs." },
+  { g: "movement", t: "As Movement Grows, Microschools Aren't So “Micro” Anymore", src: "The 74", by: "Linda Jacobson", d: "May 2025", url: "https://www.yahoo.com/news/exclusive-report-movement-grows-microschools-103000348.html",
+    why: "Microschools now serve roughly 750,000 U.S. students, about 2% of the total. Fewer than a quarter are accredited, and 38% take state choice funds." },
+  { g: "movement", t: "Why Microschools Are Multiplying", src: "Education Next", by: "Mickey Revenaugh", d: "July 2026", url: "https://www.educationnext.org/why-microschools-are-multiplying-schools-out-book-excerpt/",
+    why: "From her book School's Out. Revenaugh estimates more than 100,000 microschools serving 1 to 2 million children, and argues they're often a strong fit for boys and neurodivergent kids." },
+  { g: "movement", t: "A School With 7 Students: Inside the “Microschools” Movement", src: "The New York Times", d: "2024", url: "https://ca.news.yahoo.com/school-7-students-inside-microschools-172733589.html",
+    why: "A clear-eyed look at the upside and the risks: microschools are lightly regulated and aren't bound by the same disability laws as public schools." },
+  { g: "movement", t: "The Macro Dilemma with Microschools", src: "Chalkbeat", by: "Erica Meltzer", d: "June 2026", url: "https://cbnewsletters.chalkbeat.org/p/the-macro-dilemma-with-microschools",
+    why: "In Indiana, public school districts are opening microschools too. The open question is which families get access." },
+  { g: "movement", t: "Microschools as an Emerging Education Model", src: "RAND", d: "2025", url: "https://www.rand.org/pubs/research_reports/RRA3698-1.html",
+    why: "An independent research look at what's known, and how much isn't yet, about how microschool students do." },
+  { g: "movement", t: "The State of Private and Microschool Enrollment", src: "Sutherland Institute (Utah)", d: "January 2024", url: "https://sutherlandinstitute.org/the-state-of-private-and-microschool-enrollment/",
+    why: "Utah's picture: about a quarter of Utah parents said they'd choose a private school if they could, and the Utah Fits All scholarship gives eligible families $8,000 a year." },
+  /* on Alpha, both sides */
+  { g: "alpha", t: "Your Review: Alpha School", src: "Astral Codex Ten", d: "June 2025", url: "https://www.astralcodexten.com/p/your-review-alpha-school",
+    why: "A parent who moved to Austin and enrolled three kids writes the most detailed outside account we've seen: what works (mastery pacing, incentives, strong guides) and what's oversold (“two hours” runs closer to three and a half, and the results data is thin)." },
+  { g: "alpha", t: "Wealthy Parents Pay $75,000 for Alpha's Two-Hour AI School Day. Half of Its K-8 Students Missed the Math Target.", src: "Fortune", by: "Muskaan Arshad", d: "November 2026", url: "https://fortune.com/2026/11/14/alpha-school-ai-students-tuition-learning-goals",
+    why: "A critical look at Alpha's own numbers: only 42% of students met its “2x” learning goal in both subjects. Worth reading next to the review above." },
+  /* research we keep coming back to */
+  { g: "research", t: "Decline in Independent Activity as a Cause of Decline in Children's Mental Well-Being", src: "Journal of Pediatrics", by: "Peter Gray, David Lancy & David Bjorklund", d: "2023", url: "https://www.petergray.org/_files/ugd/b4b4f9_eb922e47312e43cf94b8ba5923e9993b.pdf",
+    why: "Three researchers summarize the evidence that kids today get far less time to play, roam and do things without adults, and argue it's a major cause of rising anxiety and depression." },
+  { g: "research", t: "Childhood Friends, Not Moms, Shape Attachment Styles Most", src: "Nautilus", by: "Kristen French", d: "November 2025", url: "https://nautil.us/childhood-friends-not-moms-shape-attachment-styles-most-1247316/",
+    why: "A study following about 1,300 children to ages 26 to 31 found childhood friendships predicted adult relationship security more than relationships with mothers did. Friendships are where kids practice give and take." },
+  { g: "research", t: "Young Adults Are More Perfectionistic Than Ever Before", src: "American Psychological Association", d: "May 2026", url: "https://www.apa.org/news/press/releases/2026/05/young-adults-perfectionistic",
+    why: "A review of 35 years of studies covering more than 82,000 college students. Fear of failure and of being judged has risen fastest, and perfectionism stays tied to anxiety and depression." },
+  { g: "research", t: "Outside Play", src: "University of British Columbia", url: "https://www.outsideplay.org/", go: "Try the tool ↗",
+    why: "A free online tool for parents who feel nervous about risky play, from Mariana Brussoni's lab at UBC and BC Children's Hospital. It builds the confidence to let kids play outside with some risk." }
+];
+
+export const READ_GROUPS = {
+  movement: ["The bigger movement", "Wilderland is one of thousands of microschools. Here's what reporters and researchers are finding, good and bad."],
+  alpha: ["On Alpha, both sides", "Our mornings borrow from Alpha School. These are the two most useful outside looks at it."],
+  research: ["Research we keep coming back to", "Short reads and one tool, shared by our team."]
+};

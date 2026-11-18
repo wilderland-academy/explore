@@ -48,7 +48,7 @@ const next = (sec, id) => { const i = STOPS.findIndex(s => s[0] === id); const n
 VIEWS.home = sec => {
   head(sec, "Wilderland <span>at home</span>", "School and home each carry part of your child's growth. This is the home half: what to do each day, how to talk so your child rises to a high bar, and where to go for help.");
   sec.appendChild(card("M-edge", [h("span", { class: "tag M", text: "The Wilderland promise" }), h("p", { style: "font:700 clamp(20px,3vw,26px)/1.25 var(--display)", text: "We want your child to love school, to surprise everyone, and to be ready for real life." }), h("p", { class: "dim", text: "Everything here serves one of those three. Take what serves your family and leave what doesn't. The daily academic routine is an expectation; the twelve practices are optional." })]));
-  sec.appendChild(card("", [h("p", { html: "Want the why behind it? <a href=\"/families/approach/\">Our Approach</a> goes deeper on our three pillars, how guides help, Life Skills and the research. <a href=\"/families/series/\">Field Notes</a> walks through the books that shaped Wilderland." })]));
+  sec.appendChild(card("", [h("p", { html: "Want the why behind it? <a href=\"/families/approach/\">Our Approach</a> goes deeper on our three pillars, how guides help, Life Skills and the research. <a href=\"/families/series/\">Field Notes</a> collects the books, podcasts and talks behind it." })]));
   sec.appendChild(card("", [picker(false)]));
   const pts =[[90, 420], [230, 340], [140, 230], [320, 190], [470, 290], [620, 360], [760, 270], [650, 150]];
   const trees = [[40, 360], [300, 420], [520, 450], [380, 140], [700, 430], [860, 320], [200, 160]];
