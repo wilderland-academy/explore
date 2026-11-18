@@ -5,7 +5,7 @@
 const PROJECT = "wilderland-df15e";                       // Firebase project that signs staff in
 const ORIGINS = ["https://explore.wilderland.academy"];   // sites allowed to call this relay
 const DOMAIN = "@wilderland.academy";
-const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com"];   // outside guests allowed to use the relay
+const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];   // outside guests allowed to use the relay
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const MODELS = { quick: "claude-haiku-5-5", deep: "claude-sonnet-5-5" };
 const MAX_OUT = 1500;        // most tokens Claude may write per call
