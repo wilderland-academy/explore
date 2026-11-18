@@ -58,7 +58,7 @@ VIEWS.home = sec => {
   const g = h("div", { class: "stops" });
   STOPS.slice(1).forEach((s, i) => g.appendChild(h("a", { class: "stop", href: "#" + s[0] }, [h("i", { text: "STOP " + (i + 1) }), h("b", { text: s[1] }), h("span", { text: s[2] })])));
   sec.appendChild(g);
-  sec.appendChild(card("", [h("h3", { text: "Short on time?" }), h("p", { text: isUp() ? "If you only remember five things: daily app work gets done, read every day, check the Dashboard weekly, let your child do real things themselves, and protect sleep." : "If you only remember four things: read aloud every day, keep up the reading routine on home days, tell your child's guide early when you notice a struggle, and protect sleep." })]));
+  sec.appendChild(card("", [h("h3", { text: "Short on time?" }), h("p", { text: (() => { const pt = prof.sched === "pt"; if (isUp()) return pt ? "If you only remember five things: on home weekdays, app work gets done to target and your child works on a Life Skills challenge; read every day; check the Dashboard; protect sleep." : "If you only remember four things: read every day, look at the Dashboard weekly, let your child do real things themselves, and protect sleep. App work happens at school."; return pt ? "If you only remember four things: read aloud every day, run the phonics routine and Life Skills practice on home weekdays, tell your child's guide early when you notice a struggle, and protect sleep." : "If you only remember four things: read aloud every day, let your child do real things themselves, tell your child's guide early when you notice a struggle, and protect sleep."; })() })]));
 };
 
 /* ---------- your week ---------- */
@@ -69,20 +69,30 @@ VIEWS.week = sec => {
   pick.append(h("b", { text: "Grades" }), grp("band", D.BANDS), h("b", { text: "Schedule" }), grp("sched", D.SCHED), h("p", { class: "small", text: "Saved on this device only." }));
   sec.appendChild(pick);
   if (!prof.band || !prof.sched) { sec.appendChild(card("", [h("p", { text: !prof.band && !prof.sched ? "Choose your child's grades and whether they attend full time or part time. The routine is different for each." : !prof.band ? "Now choose your child's grades." : "Now choose full time or part time. Home looks different for each." })])); return; }
-  const up = isUp(), W = up ? D.WEEK.up : D.WEEK.k1, pt = prof.sched === "pt";
+  const up = isUp(), W = up ? D.WEEK.up : D.WEEK.k1, pt = prof.sched === "pt", S = pt ? "PT" : "FT";
   sec.appendChild(card("M-edge", [h("p", { text: W.growth })]));
-  sec.appendChild(h("div", { class: "split" }, [card("", [h("h3", { text: "Your part at home" }), ul(pt ? W.home : (W.homeFT || W.home))]), card("", [h("h3", { text: "What you can count on school for" }), ul(W.school)])]));
-  sec.appendChild(card("", [h("h2", { text: up ? (pt ? "Every school day" : "A typical school day") : "The daily reading routine" }), h("div", { class: "routine" }, (pt ? W.routine : (W.routineFT || W.routine)).map(r => h("div", null, [h("span", { class: "t", text: r[0] }), h("b", { text: r[1] }), h("span", { class: "small", text: r[2] })])))]));
-  if (pt) sec.appendChild(card("P-edge", [h("span", { class: "tag P", text: "Part-time families" }), h("p", { text: W.pt }), W.ptOpts ? h("p", { class: "small", text: W.ptOpts }) : null, up ? h("p", { class: "small", text: "If home-day work is proving too much, ask your child's academic guide to adjust the Dashboard targets. That's a normal, welcome conversation. Targets stay rigorous enough to push your child without becoming unmanageable." }) : null]));
+  // the commitment, side by side, with the family's own schedule highlighted
+  const colHead = k => h("div", { class: "cmp-h" + (prof.sched === k ? " on" : "") }, [h("span", { class: "tag " + (k === "ft" ? "M" : "P"), text: D.SCHED[k] + (prof.sched === k ? " · you" : "") }), h("b", { text: W.sum[k][0] + " commitment" }), h("span", { class: "small", text: W.sum[k][1] })]);
+  const cmp = h("div", { class: "cmp" }, [h("div", { class: "cmp-l" }), colHead("ft"), colHead("pt")]);
+  W.compare.forEach(r => cmp.append(h("div", { class: "cmp-l", text: r[0] }), h("div", { class: "cmp-c" + (pt ? "" : " on"), "data-k": "Full time" }, [r[1]]), h("div", { class: "cmp-c" + (pt ? " on" : ""), "data-k": "Part time" }, [r[2]])));
+  sec.appendChild(card("", [h("h2", { text: "Full time and part time are different commitments" }), h("p", { class: "dim", text: "Even full-time families read at home every day. Beyond that, part time asks much more of you." }), cmp]));
+  // who does what, for this family
+  const schoolCards = pt
+    ? [card("", [h("h3", { text: "On campus days, school handles" }), ul(W.schoolPT.campus)]), card("P-edge", [h("h3", { text: "On home weekdays, school…" }), ul(W.schoolPT.home)])]
+    : [card("", [h("h3", { text: "What school handles" }), ul(W.schoolFT)])];
+  sec.appendChild(h("div", { class: "split" }, [card("", [h("h3", { text: "Your part at home" }), ul(W["home" + S])])].concat(schoolCards)));
+  sec.appendChild(card("", [h("h2", { text: pt ? "Your weekday routine" : (up ? "A typical weekday" : "The daily reading routine") }), h("div", { class: "routine" }, W["routine" + S].map(r => h("div", null, [h("span", { class: "t", text: r[0] }), h("b", { text: r[1] }), h("span", { class: "small", text: r[2] })])))]));
+  if (pt) sec.appendChild(card("P-edge", [h("span", { class: "tag P", text: "Part-time families" }), h("p", { text: W.pt }), h("p", { class: "small", text: D.PT_CHOICE }), up ? h("p", { class: "small", text: "If home-weekday work is proving too much, ask your child's academic guide to adjust the Dashboard targets. That's a normal, welcome conversation. Targets stay rigorous enough to push your child without becoming unmanageable." }) : null]));
   else if (up) sec.appendChild(card("E-edge", [h("span", { class: "tag E", text: "Full-time families" }), h("p", { text: W.ft })]));
   if (up && pt) sec.appendChild(card("", [h("h3", { text: "How catch-up work works" }), h("p", { text: "Each day has a set number of lessons. Anything unfinished becomes catch-up work on the Dashboard and stays there until it's done. Short daily catch-up beats one big weekend session." }), h("h3", { text: "Tips for app work at home" }), ul(W.tips)]));
-  else if (up) sec.appendChild(card("", [h("h3", { text: "If you do add practice at home" }), h("p", { text: "Unfinished lessons stay on the Dashboard as catch-up work until they're done, so a short daily session at home can clear them. Keep it brief and calm." }), ul(W.tips)]));
+  else if (up) sec.appendChild(card("", [h("h3", { text: "If you do add practice at home" }), h("p", { text: "Unfinished lessons stay on the Dashboard as catch-up work until they're done, so a short session at home can clear them. Keep it brief and calm." }), ul(W.tips.slice(1))]));
+  if (pt && up) sec.appendChild(card("", [h("h3", { text: "Life Skills on home weekdays" }), h("p", { text: "Chores and independence at home are great, but they aren't the Life Skills challenges. On home weekdays, help your child pick a challenge marked “Can do at home” on the challenge map, practice it, and pass it off with a video, parent log or witness note, held to the same standard as school. Labs only happen on campus." }), h("div", { class: "row" }, [h("a", { class: "btn", style: "text-decoration:none", href: "/challenges/", text: "Open the challenge map" }), h("a", { class: "btn ghost", style: "text-decoration:none", href: D.PT_PASSOFF, text: "Home pass-off guide" })])]));
+  if (pt && !up) sec.appendChild(card("", [h("h3", { text: "Life Skills on home weekdays" }), h("p", { text: "Chores and independence at home are great, but they aren't the Life Skills challenges. In K–1, guides run challenges at school, so ask your child's guide which skill they're working toward and practice it together on home weekdays." })]));
   sec.appendChild(card("", [h("h3", { text: "See your child's progress" })].concat(W.progress.map(p => h("p", null, [ext(p[0], p[1]), h("span", { class: "dim", text: " · " + p[2] })])))));
-  const rows = pt ? (W.weekPT || W.week) : W.week, note = pt ? (W.weekPTNote || W.weekNote) : W.weekNote;
-  const t = h("table"); t.appendChild(h("tr", null, ["Day", "Where", up ? "Academics" : "Reading", up ? "Reading" : "Math", "Independence"].map(x => h("th", { text: x }))));
-  rows.forEach(r => t.appendChild(h("tr", null, r.map((x, i) => h(i ? "td" : "th", { text: x })))));
-  sec.appendChild(card("", [h("h2", { text: "A sample week" }), h("div", { class: "scroll" }, [t]), h("p", { class: "small", text: note })]));
-  const list = pt ? W.check : (W.checkFT || W.check), key = "check-" + (up ? "up" : "k1") + (pt ? "" : "-ft"), done = store.get(key, []);
+  const t = h("table"); t.appendChild(h("tr", null, W.cols.map(x => h("th", { text: x }))));
+  W["week" + S].forEach(r => t.appendChild(h("tr", { class: r[1] === "Home" && r[0] !== "Weekend" ? "homeday" : "" }, r.map((x, i) => h(i ? "td" : "th", { text: x })))));
+  sec.appendChild(card("", [h("h2", { text: "A sample week" }), h("div", { class: "scroll" }, [t]), h("p", { class: "small", text: W["note" + S] })]));
+  const list = W["check" + S], key = "check-" + (up ? "up" : "k1") + (pt ? "" : "-ft"), done = store.get(key, []);
   sec.appendChild(card("", [h("h2", { text: "Five-minute checklist" })].concat(list.map((c, i) => { const box = h("input", { type: "checkbox" }); box.checked = done.includes(i); box.onchange = () => { const d = store.get(key, []).filter(x => x !== i); if (box.checked) d.push(i); store.set(key, d); }; return h("label", { class: "check" }, [box, h("span", { text: c })]); }))));
   next(sec, "week");
 };

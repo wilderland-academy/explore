@@ -35,6 +35,10 @@ hard moments at home, links to Challenges / Atlas of Sparks / Lantern Stacks, th
 and who to ask. Static, no sign-in. Unlisted: `noindex`, and not linked from any student page. Keep it that way.
 Content lives in `families/data.js`; sources are the Lower and Upper Campus Parent Handbooks, the Parent Partnership
 Guide, the Parent Education Night packet and `challenges/parents.html`. Choices families make are stored in their browser only.
+Full time and part time are different commitments and the "Your part at home" stop must keep them visibly different
+(`WEEK` in `families/data.js`, side-by-side compare table). Full time: school runs app work and Life Skills; home is reading
+and a weekly look. Part time: on home weekdays the family runs app work to target and Life Skills challenge work; school
+assigns and tracks it but does not supervise it. Say "weekday" or "home weekday", never "school day".
 
 ## Behavior Trail Guide (`/behavior/`, added Nov 17, 2026)
 Staff-only guide to Wilderland's behavior standards (tiers, Peace Talks, send-home, Freedom Levels), the discretionary toolkit,
