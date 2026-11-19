@@ -5,7 +5,7 @@
 // #student-behavior and operational-meeting Slack threads, and the research listed in REFS.
 // Scenarios are composites. Names and identifying details are removed on purpose. Keep it that way.
 
-export const VERSION = { n: "0.3", date: "2026-11-17", note: "K–1 gets its own mechanics; Inclusive Excellence leads the neurodiversity guidance. Earlier: Board-president decisions added on the Tier 3 full day away, K–1 send-home, Town Halls, privileges versus rewards, and the normalization period." };
+export const VERSION = { n: "0.4", date: "2026-11-18", note: "Renamed the Behavior Guide, with a valley map. Earlier: K–1 gets its own mechanics; Inclusive Excellence leads the neurodiversity guidance. Earlier: Board-president decisions added on the Tier 3 full day away, K–1 send-home, Town Halls, privileges versus rewards, and the normalization period." };
 
 /* ------------------------------------------------------------------ */
 /* Research the site leans on. Every card that cites research points here by id. */
@@ -476,7 +476,8 @@ export const OPEN = [
 ];
 
 export const CHANGELOG = [
-  ["0.3", "2026-11-17", "Renamed the Behavior Net and placed it under the Mentor Mindset as the backup, not a second path. K–1 now has its own mechanics, drawn from early-childhood research: taught expectations, in-the-moment responses, a same-day repair menu, guide-led Peace Talks, Montessori freedom within limits outside the Nature Walk, and class meetings without discussing a specific child. Tier 3 send-home rules are unchanged. Inclusive Excellence (Yeager, 10 to 25) is the first neurodiversity principle."],
+  ["0.4", "2026-11-18", "Renamed the Behavior Guide. The map is now a valley: behavior keeps every child safe, in school and getting along (table stakes), while the Mentor Mindset is how children climb the peaks. One toggle in the top bar switches between the two guides."],
+  ["0.3", "2026-11-17", "Gave this guide its own look, separate from the Mentor Mindset Field Guide. K–1 now has its own mechanics, drawn from early-childhood research: taught expectations, in-the-moment responses, a same-day repair menu, guide-led Peace Talks, Montessori freedom within limits outside the Nature Walk, and class meetings without discussing a specific child. Tier 3 send-home rules are unchanged. Inclusive Excellence (Yeager, 10 to 25) is the first neurodiversity principle."],
   ["0.2", "2026-11-17", "Decisions from the board president: a Tier 3 means a full school day away, including the next day for late incidents; K–1 follows the same send-home rules as 2–8; a Town Hall may discuss a specific student with the focus on solving the problem; Freedom Levels pair privileges with behavior and are not rewards; every band has a normalization period for new students, not for returning ones; restorative practices are optional and middle school leans on Mentor Mindset."],
   ["0.1", "2026-11-17", "First edition. Standards from the 2026-27 Accountability System (Guide Reference Edition) and the Freedom Level proposal; toolkit and neurodiversity guidance from the 2025 Behavior Policy and the neurodiversity plan; composite scenarios from staff Slack; research cards with sources."]
 ];
@@ -508,7 +509,7 @@ STANDARDS (grades 2-8, 2026-27 Accountability System):
 - Town Halls handle system-level and group concerns, not individual discipline. A Town Hall may discuss a specific student, with the focus on solving the problem together, not on the behavior; never public shaming. Tell the student first.
 - Threats of serious violence: treat as Tier 3 pending leadership assessment; document exact words. Any mention of self-harm, suicide, abuse or being harmed: stop and follow the Mental Health Crisis Policy and involve leadership now.
 - No prizes for behavior; specific noticing and gratitude instead. Never name other children to a family.
-- Mentor Mindset (high standards, high support) is the main approach; this behavior policy is the backup net. Suggest the Mentor Mindset move first.
+- The Mentor Mindset (high standards, high support) is how children climb to excellence; this behavior policy is the valley floor: table stakes for safety and living together. Suggest the Mentor Mindset move first.
 - K-1 (lower campus) uses the same Tier 3 send-home rule (a full school day away) but different mechanics elsewhere: 3-5 positively stated, taught and practiced expectations; Tier 1 = cue, redo, short calm-down spot near the guide, one end-of-day note home; Tier 2 = care for the hurt child, calm, then a same-day 3-picture repair menu (check on them, fix it, do something kind) and the family told the same day; Peace Talks are always guide-led and under 5 minutes; Freedom Levels only for the Nature Walk, everything else is Montessori freedom within limits with a fresh start each morning; class meetings never discuss a specific child; much more noticing than correcting. In K-1, hitting or pushing without injury is usually Tier 2; injury or danger is Tier 3. Every band has a normalization period for new students to settle; returning students do not need one.
 - Freedom Levels pair privileges with behavior; they are not rewards. Restorative practices are optional; for middle school prefer Mentor Mindset approaches.
 
@@ -575,8 +576,8 @@ export const SORT_K1 = [
 ];
 
 export const PATHNET = {
-  path: "Practiced every day with every child, the Mentor Mindset is what moves a child from getting by to excellent: high standards, high support, and respect. Most of what fills the rest of this site shouldn't happen when it's working.",
-  net: "Policies and tools that have worked for us when something slips. They keep children safe and make our responses fair and consistent. They won't by themselves take a child from mediocre to excellent."
+  path: "Practiced every day with every child, the Mentor Mindset is how children climb from getting by to excellent: high standards, high support, and respect. When it's working, most of what's on this site rarely comes up.",
+  net: "Our policies and tools for keeping every child safe, in school, and getting along with others. That's table stakes: every child needs it, and every guide holds it the same way. It keeps the community livable, but it won't by itself get a child to a summit."
 };
 
 export const IE = {

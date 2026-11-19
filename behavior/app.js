@@ -1,4 +1,4 @@
-// The Behavior Net (staff only). The backup to the Mentor Mindset Field Guide, not a second path. Sign-in comes from /auth.js. Content lives in data.js.
+// Behavior Guide (staff only). The valley floor under the Mentor Mindset Field Guide: table stakes, not the climb. Sign-in comes from /auth.js. Content lives in data.js.
 // Firestore: flStudents (+ /history) for Freedom Levels, townhall + townhallAgenda for Town Hall,
 // behaviorProgress for training badges, behaviorProposals for the living document. AI goes through the
 // same relay as the Mentor Mindset Field Guide (address saved in mentorConfig/main).
@@ -44,7 +44,7 @@ const confirmTap = (btn, label, fn) => { btn.onclick = async () => { if (btn.dat
 function gate(msg) { startedFor = null; $("#trail").hidden = true; app.innerHTML = ""; app.appendChild(h("section", { class: "view" }, [h("div", { class: "card gate" }, [h("h2", { text: "Wilderland staff area" }), h("p", { class: "dim", text: msg })])])); }
 async function onAuth(u) {
   const seq = ++authSeq; user = u;
-  if (!u) return gate("Sign in with your Wilderland account, top right, to open the Behavior Net.");
+  if (!u) return gate("Sign in with your Wilderland account, top right, to open the Behavior Guide.");
   if (startedFor === u.uid) return;
   isAdmin = ADMINS.includes(me());
   let ok = isAdmin;
@@ -103,41 +103,46 @@ const earned = () => D.MODULES.filter(m => progress[m.id] && progress[m.id].pass
 
 /* ---------------- map ---------------- */
 VIEWS.map = sec => {
-  head(sec, "The Behavior <span>Net</span>", "Our policies and tools for when something slips: the standards every guide holds the same way, the tools you choose with judgment, and support for neurodivergent students throughout.");
-  // the path and the net
+  head(sec, "The Behavior <span>Guide</span>", "How we keep every child safe, in school, and getting along with others: the standards every guide holds the same way, the tools you choose with judgment, and support for neurodivergent students throughout.");
+  // the peaks and the valley
   const pn = h("div", { class: "pathnet" });
-  pn.append(h("div", { class: "p" }, [h("span", { style: "font:800 11px var(--body);letter-spacing:.1em;text-transform:uppercase;opacity:.8", text: "First, every day · the path" }), h("h2", { text: "The Mentor Mindset" }), h("p", { text: D.PATHNET.path }), h("a", { href: "/fieldguide/", text: "Go to the Mentor Mindset Field Guide →" })]),
-    h("div", { class: "n" }, [h("span", { class: "tag S", text: "Backup · the net" }), h("h2", { text: "This site: Behavior" }), h("p", { class: "dim", text: D.PATHNET.net })]));
+  pn.append(h("div", { class: "p" }, [h("span", { style: "font:800 11px var(--body);letter-spacing:.1em;text-transform:uppercase;opacity:.8", text: "The peaks · the climb to excellence" }), h("h2", { text: "The Mentor Mindset" }), h("p", { text: D.PATHNET.path }), h("a", { href: "/fieldguide/", text: "Go to the Mentor Mindset Field Guide →" })]),
+    h("div", { class: "n" }, [h("span", { class: "tag S", text: "The valley · table stakes" }), h("h2", { text: "This site: Behavior" }), h("p", { class: "dim", text: D.PATHNET.net })]));
   sec.appendChild(pn);
   // prevention pyramid
   const pyr = `<svg viewBox="0 0 760 330" role="img" aria-label="Pyramid: the Mentor Mindset is the wide base for every child; the toolkit supports some; tier responses catch a few">
   <polygon points="380,18 470,98 290,98" fill="#b3263a"/><text x="380" y="80" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">Tiers 2–3</text>
   <polygon points="290,104 470,104 560,184 200,184" fill="#8f5410"/><text x="380" y="140" text-anchor="middle" fill="#fff" font-weight="700" font-size="15">Toolkit and Tiers 0–1</text><text x="380" y="161" text-anchor="middle" fill="#fff" font-size="12.5">some children, some days</text>
   <polygon points="200,190 560,190 680,300 80,300" fill="#0b3d2e"/><text x="380" y="235" text-anchor="middle" fill="#d5f367" font-weight="800" font-size="21">The Mentor Mindset</text><text x="380" y="260" text-anchor="middle" fill="#f3f7e6" font-size="13.5">every child, every interaction: high standards, high support, respect</text><text x="380" y="282" text-anchor="middle" fill="#f3f7e6" font-size="12.5" opacity=".85">plus a predictable day and expectations we teach</text>
-  <text x="600" y="60" fill="#5b6575" font-size="12.5">the net catches a few</text><path d="M596 56 476 70" stroke="#5b6575" stroke-dasharray="3 4"/>
+  <text x="600" y="60" fill="#5b6575" font-size="12.5">fewer children need these</text><path d="M596 56 476 70" stroke="#5b6575" stroke-dasharray="3 4"/>
   <text x="20" y="325" fill="#5b6575" font-size="11.5">Shape adapted from the Pyramid Model and PBIS: prevention for all at the base, more intensive help for fewer children above it.</text></svg>`;
   sec.appendChild(card("", [h("h2", { text: "Where your time goes" }), h("p", { class: "dim", text: "The base does most of the work. When the Mentor Mindset is practiced consistently, fewer children ever reach the top. If you only have time to get better at one thing this month, make it the base." }), h("div", { class: "pyr", html: pyr }), refLinks(["pyramid"])]));
   // band
   sec.appendChild(card(isK1() ? "K-edge" : "", [h("h3", { text: "Which policy are you reading?" }), h("p", { class: "dim", text: "K–1 keeps the same values with different mechanics: taught expectations, in-the-moment responses, same-day repairs and family updates. Pick your band. Every page follows it." }), h("div", { class: "chips" }, [["up", "Grades 2–8"], ["k1", "K–1 (lower campus)"]].map(([k, t]) => h("button", { class: "chip", "aria-pressed": String(band === k), text: t, onclick: () => setBand(k) })))]));
   if (isK1()) sec.appendChild(k1Compare());
-  // island map
-  const isl = STOPS.slice(1), n = isl.length, cx = 450, cy = 285, rx = 330, ry = 175;
-  const pts = isl.map((_, i) => { const a = Math.PI * 0.95 - (i / (n - 1)) * Math.PI * 1.9; return [Math.round(cx + rx * Math.cos(a)), Math.round(cy - ry * Math.sin(a) * 0.92)]; });
-  const waves = Array.from({ length: 9 }, (_, i) => { const y = 40 + i * 58, x0 = (i % 2) * 40; let d = ""; for (let x = x0; x < 900; x += 120) d += `M${x} ${y}q15 -8 30 0t30 0 `; return d; }).join("");
-  const col = { S: "#1d4e89", T: "#8f5410", N: "#6a4bb0", D: "#8a6100" };
-  let svg = `<svg viewBox="0 0 900 560" role="img" aria-label="Island map of the Behavior Net">
-  <defs><radialGradient id="sea" cx="50%" cy="50%" r="70%"><stop offset="0" stop-color="#bfe0e6"/><stop offset="1" stop-color="#8cc3cf"/></radialGradient></defs>
-  <rect width="900" height="560" fill="url(#sea)"/><path d="${waves}" stroke="#fff" stroke-opacity=".45" stroke-width="2" fill="none"/>
-  <a href="/fieldguide/" aria-label="Mentor Mindset Field Guide, on the mainland"><path d="M0 120 60 40 110 90 170 10 240 100 290 70 330 120Z" fill="#0b3d2e"/><path d="M170 10 150 38 170 33 190 40Z" fill="#fff"/><path d="M0 120H330V128H0Z" fill="#0b3d2e"/><text x="342" y="52" style="font:800 14px Inter;fill:#0b3d2e;stroke:#d8ecef;stroke-width:5px;paint-order:stroke">← The mainland: Mentor Mindset trail</text></a>
-  <ellipse cx="${cx}" cy="${cy + 6}" rx="${rx + 52}" ry="${ry + 44}" fill="#e9dcb8"/>
-  <ellipse cx="${cx}" cy="${cy}" rx="${rx + 20}" ry="${ry + 16}" fill="#f1e6c8"/>
-  <path d="M${cx - 250} ${cy}c40 -120 160 -150 260 -140s200 40 230 120c20 70 -60 140 -190 150s-270 -30 -300 -130z" fill="#9cc58f"/>
-  <path d="M${cx - 150} ${cy - 10}c30 -70 110 -90 170 -80s120 30 130 80-60 90-150 90-170-30-150-90z" fill="#7fb178"/>
-  <g fill="#2f6b45">${[[330, 220], [390, 190], [520, 210], [560, 260], [420, 330], [350, 300], [480, 300]].map(t => `<path d="M${t[0]} ${t[1]}l9 20h-18z M${t[0]} ${t[1] + 10}l12 22h-24z"/>`).join("")}</g>
-  <g transform="translate(${cx + 8} ${cy - 30})"><rect x="-9" y="-48" width="18" height="52" fill="#fffdf8" stroke="#15263d" stroke-width="2"/><rect x="-9" y="-34" width="18" height="8" fill="#b3263a"/><rect x="-9" y="-18" width="18" height="8" fill="#b3263a"/><path d="M-12 -48h24l-12 -14z" fill="#15263d"/><path d="M12 -55 70 -70 70 -40Z" fill="#fff6c9" opacity=".7"/></g>
-  <path d="M${cx + 280} ${cy + 150}l60 30M${cx + 300} ${cy + 140}l40 50M${cx + 320} ${cy + 135}l10 60" stroke="#8f5410" stroke-width="1.5" opacity=".6"/>
-  <polyline points="${pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="#15263d" stroke-width="2.5" stroke-dasharray="1 9" stroke-linecap="round" opacity=".7"/>`;
-  isl.forEach((s, i) => { const [x, y] = pts[i]; const below = y > cy; svg += `<a href="#${s[0]}" aria-label="${esc(s[1])}"><circle cx="${x}" cy="${y}" r="16" fill="${col[s[3]]}" stroke="#fffdf8" stroke-width="3"/><text class="n" x="${x}" y="${y + 4.5}" text-anchor="middle">${i + 1}</text><text x="${x}" y="${below ? y + 36 : y - 24}" text-anchor="middle">${esc(s[1])}</text></a>`; });
+  // valley map: the peaks above are the Mentor Mindset; the stops here sit on the valley floor
+  const isl = STOPS.slice(1), col = { S: "#1d4e89", T: "#8f5410", N: "#6a4bb0", D: "#8a6100" };
+  const pts = isl.map((_, i) => i < 6 ? [110 + i * 136, 318 + (i % 2 ? 16 : -8)] : [790 - (i - 6) * 136, 458 + ((i - 6) % 2 ? -14 : 10)]);
+  const route = "M" + pts.slice(0, 6).map(p => p.join(" ")).join(" L") + " C 880 " + (pts[5][1] + 20) + " 880 " + (pts[6][1] - 30) + " " + pts[6].join(" ") + " L" + pts.slice(6).map(p => p.join(" ")).join(" L");
+  const tree = (x, y, k = 1) => `<path d="M${x} ${y - 22 * k}l${9 * k} ${16 * k}h${-18 * k}z M${x} ${y - 14 * k}l${11 * k} ${18 * k}h${-22 * k}z" fill="#3f6b4f"/>`;
+  let svg = `<svg viewBox="0 0 900 560" role="img" aria-label="Valley map of the Behavior Guide, with the Mentor Mindset peaks above">
+  <defs><linearGradient id="vsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe0ea"/><stop offset="1" stop-color="#eef2ec"/></linearGradient></defs>
+  <rect width="900" height="560" fill="url(#vsky)"/>
+  <a href="/fieldguide/" aria-label="The peaks: Mentor Mindset Field Guide">
+    <path d="M0 210 90 120 150 160 250 50 330 130 420 70 470 20 540 100 610 60 700 140 780 80 900 170 900 280 0 280Z" fill="#0b3d2e"/>
+    <path d="M250 50 232 74 250 68 268 76Z M470 20 450 46 470 40 490 48Z M780 80 764 102 780 96 796 104Z" fill="#fff"/>
+    <circle cx="470" cy="20" r="6" fill="#d5f367"/>
+    <rect x="540" y="14" width="236" height="28" rx="14" fill="#d5f367"/><text x="658" y="33" text-anchor="middle" style="font:800 13.5px Inter;fill:#0b2b20;stroke:none">▲ The peaks: Mentor Mindset ↗</text>
+  </a>
+  <path d="M0 225C120 200 200 250 300 238S520 210 600 232 780 250 900 222V560H0Z" fill="#9db48a"/>
+  <path d="M0 255C150 240 260 268 450 262S760 240 900 258V560H0Z" fill="#dfe4c7"/>
+  <path d="M470 236C430 300 520 340 450 390S380 470 470 560" fill="none" stroke="#9cc3d6" stroke-width="16" stroke-linecap="round" opacity=".8"/>
+  ${tree(40, 300) + tree(66, 312, .8) + tree(850, 300) + tree(826, 318, .85) + tree(320, 545, .8) + tree(860, 540, .9) + tree(300, 400, .7) + tree(620, 395, .75)}
+  <g transform="translate(560 392)"><rect x="-22" y="-16" width="44" height="26" fill="#fffdf8" stroke="#15263d" stroke-width="2"/><path d="M-28 -16 0 -36 28 -16Z" fill="#b4532a" stroke="#15263d" stroke-width="2"/><rect x="-5" y="-2" width="10" height="12" fill="#15263d"/></g>
+  <g transform="translate(250 395)"><rect x="-14" y="-10" width="28" height="18" fill="#fffdf8" stroke="#15263d" stroke-width="2"/><path d="M-18 -10 0 -24 18 -10Z" fill="#1d4e89" stroke="#15263d" stroke-width="2"/></g>
+  <text x="18" y="550" style="font:700 12px Inter;fill:#5b6575">The valley floor: where we all live together</text>
+  <path d="${route}" fill="none" stroke="#15263d" stroke-width="2.5" stroke-dasharray="1 9" stroke-linecap="round" opacity=".7"/>`;
+  isl.forEach((s, i) => { const [x, y] = pts[i]; const below = i >= 6; svg += `<a href="#${s[0]}" aria-label="${esc(s[1])}"><circle cx="${x}" cy="${y}" r="16" fill="${col[s[3]]}" stroke="#fffdf8" stroke-width="3"/><text class="n" x="${x}" y="${y + 4.5}" text-anchor="middle">${i + 1}</text><text x="${x}" y="${below ? y + 36 : y - 24}" text-anchor="middle">${esc(s[1])}</text></a>`; });
   sec.appendChild(h("div", { class: "map", html: svg + "</svg>" }));
   sec.appendChild(h("div", { class: "grid g3" }, [
     card("S-edge", [tag("S", "Standard"), h("p", { text: D.KINDS.standard.say })]),

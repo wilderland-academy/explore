@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Behavior Net · Wilderland staff</title>
+<title>Behavior Guide · Wilderland staff</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#102a46">
 <link rel="icon" href="/books/f/icon.png">
@@ -11,7 +11,7 @@
 <style>
 @font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
 :root{
-  /* The Net: a sand-and-harbor world, deliberately unlike the green Mentor Mindset trail.
+  /* The valley floor: a sand-and-slate world, deliberately unlike the green Mentor Mindset peaks.
      Navy = standard (the rope everyone ties the same way), ochre = toolkit, violet = different wiring, coral = watch out. */
   color-scheme:light;
   --ink:#f3eee3;--shelf:#fffdf8;--shelf2:#efe8da;--line:#dcd2bf;--paper:#15263d;--dim:#5b6575;
@@ -75,7 +75,7 @@ input[type=text],input[type=search],input[type=email],input[type=date],select,te
 textarea{min-height:100px;resize:vertical}
 label.check{flex-direction:row;align-items:center;gap:8px;font-weight:500}
 .gate{max-width:520px;margin:12vh auto 0;text-align:center;align-items:center}
-/* path vs net */
+/* peaks vs valley */
 .pathnet{display:grid;grid-template-columns:1.6fr 1fr;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--shelf)}
 .pathnet .p{background:#0b3d2e;color:#f3f7e6;padding:22px;display:flex;flex-direction:column;gap:10px}
 .pathnet .p h2{font-family:"Uncut Sans",Inter,system-ui,sans-serif;color:#d5f367;font-size:clamp(24px,3.4vw,32px);letter-spacing:-.02em}
@@ -87,7 +87,7 @@ label.check{flex-direction:row;align-items:center;gap:8px;font-weight:500}
 .pyr svg{display:block;width:100%;max-width:760px;height:auto;margin:0 auto}
 .pyr text{font-family:var(--body)}
 /* map */
-.map{background:#cfe6ea;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.map{background:#dfe9ee;border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .map svg{display:block;width:100%;height:auto}
 .map a text{font:700 14px var(--body);fill:var(--paper);paint-order:stroke;stroke:#fffdf8;stroke-width:5px;stroke-linejoin:round}
 .map a .n{font:700 13px var(--body);fill:#fff;stroke:none}
@@ -193,7 +193,7 @@ details summary{cursor:pointer;font-weight:700}
 @media (prefers-reduced-motion:reduce){.map a circle{transition:none}}
 @media print{
   body{background:#fff;color:#111;font-size:12pt}
-  .trail,.noprint,.wlbar,.wlstaff{display:none!important}
+  .trail,.noprint,.wlbar{display:none!important}
   .printonly{display:block}
   .card,.lv,.nd,.say,.note{background:#fff!important;color:#111!important;border:1px solid #bbb!important;outline:none!important;break-inside:avoid}
   .dim,.small{color:#444!important} a{color:#111}
@@ -202,9 +202,8 @@ details summary{cursor:pointer;font-weight:700}
 </style>
 </head>
 <body>
-<div class="wlbar"><div class="wlbar-in"><a class="wlbar-home" href="/" aria-label="Wilderland Explore home"><svg class="wlbar-mark" style="display:block;height:20px" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg></a><a class="wl-title" href="#map" style="margin-left:10px;font-size:18px">The Behavior Net <span style="color:#e9d8b4;font-size:12px;letter-spacing:.08em;vertical-align:middle">STAFF</span></a><span class="wlbar-auth" data-wl-auth></span></div></div>
-<nav class="wlstaff" aria-label="Staff guides"><a class="mm" href="/fieldguide/"><i>Start here</i><b>Mentor Mindset</b><span>The path. How we take every child to excellence, every day.</span></a><a class="bh" aria-current="page" href="/behavior/"><span>The net, for when things slip</span><b>Behavior</b><i>Backup</i></a></nav>
-<div class="trail" id="trail" hidden><div class="in"><nav id="nav" aria-label="Behavior Net pages"></nav><div class="bandsw" id="bandsw"></div></div></div>
+<div class="wlbar"><div class="wlbar-in"><a class="wlbar-home" href="/" aria-label="Wilderland Explore home"><svg class="wlbar-mark" style="display:block;height:20px" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg></a><nav class="wlguides" aria-label="Staff guides"><a class="mm" href="/fieldguide/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 12 6 3l3 4 3-6 6 11z" fill="currentColor"/></svg>Mentor Mindset</a><a class="bh" aria-current="page" href="/behavior/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 1c4 0 5 9 9 9s5-9 9-9v11H0z" fill="currentColor" opacity=".9"/></svg>Behavior</a></nav><span class="wlbar-auth" data-wl-auth></span></div></div>
+<div class="trail" id="trail" hidden><div class="in"><nav id="nav" aria-label="Behavior Guide pages"></nav><div class="bandsw" id="bandsw"></div></div></div>
 <main class="wrap" id="app">
   <section class="view"><div class="card gate"><h2>Wilderland staff area</h2><p class="dim" id="gateMsg">Checking who's here…</p></div></section>
 </main>
