@@ -559,13 +559,91 @@ function rosterView(editId) {
   ]);
   return h("div", {}, [
     head("Students and parents", "Only guides and admins can link a parent to a child. A parent sees a child's record only after you add their email here, and only after they confirm that email."),
-    h("section", { class: "band" }, h("div", { class: "wrap stack" }, [form])),
+    h("section", { class: "band" }, h("div", { class: "wrap stack" }, [form, s ? null : importPanel()])),
     h("section", { class: "band tint" }, h("div", { class: "wrap stack" }, [
       h("h2", { class: "h", text: `All students (${all.length})` }),
       all.length ? h("div", { class: "items" }, all.map(x => h("div", { class: "item" }, [h("span", { class: "bar", style: { background: "var(--forest)" } }),
         h("div", {}, [h("div", { class: "t" }, h("a", { href: "#s=" + x.id, text: x.name })), h("div", { class: "meta", text: [`Grades ${x.band}${x.grade ? ", grade " + x.grade : ""}`, x.email || "no student sign-in", (x.parents || []).length ? "Parents: " + x.parents.join(", ") : "No parents linked"].join(" · ") })]),
         h("a", { class: "btn", href: "#roster=" + x.id, text: "Edit" })]))) : h("p", { class: "empty", text: "No students yet." })
     ]))
+  ]);
+}
+
+// ---------- guides: import many students at once from a CSV ----------
+// Columns (header row required): name, grade, band, student_email, parent_emails (separated by ; or spaces).
+// A student who is already here (same school email, or same name) is updated: band and grade from the file,
+// their email if they had none, and the parent emails added to the ones already linked. Nobody is removed.
+function parseCSV(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+    else if (c === '"') q = true; else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim()));
+}
+function importPanel() {
+  const file = h("input", { type: "file", id: "imf", accept: ".csv,text/csv", class: "in" });
+  const out = h("div", { class: "stack" }), note = h("p", { class: "note", "aria-live": "polite" });
+  let plan = [];
+  file.addEventListener("change", async () => {
+    out.innerHTML = ""; note.className = "note"; note.textContent = ""; plan = [];
+    const f = file.files[0]; if (!f) return;
+    const rows = parseCSV(await f.text()); const hd = (rows.shift() || []).map(x => x.trim().toLowerCase());
+    const col = k => hd.indexOf(k);
+    if (col("name") < 0 || col("band") < 0) { note.className = "note err"; note.textContent = "The file needs a header row with at least name and band."; return; }
+    const all = Object.values(S.students), bad = [];
+    rows.forEach((r, i) => {
+      const get = k => col(k) < 0 ? "" : String(r[col(k)] || "").trim();
+      const name = get("name").replace(/\s+/g, " "), band = get("band").replace("-", "–"), email = get("student_email").toLowerCase(), parents = emails(get("parent_emails"));
+      const why = [];
+      if (name.length < 2 || name.length > 60) why.push("name");
+      if (!BANDS.includes(band)) why.push("band");
+      if (email && !email.endsWith(DOMAIN)) why.push("student email");
+      if (parents.some(p => !isEmail(p) || p.endsWith(DOMAIN))) why.push("a parent email");
+      if (why.length) { bad.push(`Row ${i + 2} (${name || "no name"}): check ${why.join(", ")}`); return; }
+      const ex = all.find(x => (email && x.email === email) || x.name.toLowerCase() === name.toLowerCase());
+      const merged = ex ? [...new Set([...(ex.parents || []), ...parents])] : parents;
+      if (merged.length > 6) { bad.push(`Row ${i + 2} (${name}): more than 6 parent emails`); return; }
+      plan.push({ ex, name, band, grade: get("grade"), email: ex && ex.email ? ex.email : email, parents: merged, added: merged.length - (ex ? (ex.parents || []).length : 0) });
+    });
+    const dupe = plan.filter((p, i) => p.email && plan.findIndex(q => q.email === p.email) !== i);
+    dupe.forEach(p => bad.push(`${p.name}: ${p.email} is used twice in the file`));
+    if (dupe.length) plan = [];
+    if (bad.length) out.append(h("div", { class: "panel sun" }, [h("p", { text: "Fix these rows, then choose the file again:" }), h("ul", {}, bad.map(b => h("li", { class: "small", text: b })))]));
+    if (!plan.length) return;
+    const nNew = plan.filter(p => !p.ex).length;
+    out.append(h("p", { text: `${nNew} new student${nNew === 1 ? "" : "s"}, ${plan.length - nNew} already here (updated), ${plan.reduce((n, p) => n + Math.max(0, p.added), 0)} parent links to add.` }),
+      h("div", { class: "tablewrap" }, h("table", { class: "ov", style: { minWidth: "760px" } }, [
+        h("thead", {}, h("tr", {}, ["", "Student", "Band", "Student email", "Parents"].map(t => h("th", { scope: "col", style: { textAlign: "left" }, text: t })))),
+        h("tbody", {}, plan.map(p => h("tr", {}, [h("td", { style: { textAlign: "left" } }, h("span", { class: "tag" + (p.ex ? "" : " forest"), text: p.ex ? "Update" : "New" })), h("td", { style: { textAlign: "left" }, text: p.name }), h("td", { style: { textAlign: "left" }, text: p.band }), h("td", { style: { textAlign: "left" }, text: p.email || "none" }), h("td", { style: { textAlign: "left" }, class: "small", text: p.parents.join(", ") || "none" })])))
+      ])),
+      h("div", {}, h("button", { class: "btn go", type: "button", text: `Import ${plan.length} students`, onclick: async ev => {
+        ev.target.disabled = true; note.className = "note"; note.textContent = "Saving…";
+        try {
+          for (let i = 0; i < plan.length; i += 200) {
+            const batch = writeBatch(db);
+            plan.slice(i, i + 200).forEach(p => {
+              const ref = p.ex ? doc(db, "lsStudents", p.ex.id) : doc(collection(db, "lsStudents"));
+              const data = { name: p.ex ? p.ex.name : p.name, band: p.band, grade: p.grade, email: p.email, parents: p.parents, updated: Date.now(), updatedBy: S.email };
+              if (p.ex) batch.update(ref, data); else batch.set(ref, { ...data, guide: "", celebrated: 0, created: Date.now() });
+              S.students[ref.id] = { ...(p.ex || { guide: "", celebrated: 0 }), ...data, id: ref.id };
+              if (!S.entries[ref.id]) S.entries[ref.id] = [];
+              const b = boardDoc(ref.id); batch.set(doc(db, "lsBoard", ref.id), b); S.boards[ref.id] = { id: ref.id, ...b };
+            });
+            await batch.commit();
+          }
+          toast(`Imported ${plan.length} students.`); route();
+        } catch (x) { ev.target.disabled = false; note.className = "note err"; note.textContent = errText(x) + " Nothing after the last saved group was changed; choose the file again to finish."; }
+      } })), note);
+  });
+  return h("div", { class: "panel stack" }, [
+    h("h2", { class: "h", text: "Import from a spreadsheet" }),
+    h("p", { class: "small muted", text: "A CSV with a header row: name, grade, band (K–1, 2–4 or 5–8), student_email, parent_emails (separate several with ;). Students already here are matched by school email or name and get the new parent emails added. Nothing is removed. You'll see every row before anything saves." }),
+    h("label", { class: "f", for: "imf" }, ["CSV file", file]), out, note
   ]);
 }
 
