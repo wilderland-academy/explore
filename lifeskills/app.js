@@ -381,7 +381,7 @@ function record(sid, opts = {}) {
   };
   return h("div", {}, [
     h("div", { class: "wrap page-head" }, h("div", { class: "who" }, [
-      h("div", {}, [h("h1", { text: opts.self ? "My trail" : s.name }), h("p", { text: [opts.self ? s.name : "", s.grade ? "Grade " + s.grade : "Grades " + s.band, s.guide ? "Field Guide " + s.guide.split("@")[0].replace(/^./, x => x.toUpperCase()) : ""].filter(Boolean).join(", ") })]),
+      h("div", {}, [h("h1", { text: opts.self ? "My trail" : s.name }), h("p", { text: [opts.self ? s.name : "", s.grade ? "Grade " + s.grade : "Grades " + s.band, s.guide ? (emails(s.guide).length > 1 ? "Field Guides " : "Field Guide ") + emails(s.guide).map(g => g.split("@")[0].replace(/^./, x => x.toUpperCase())).join(" and ") : ""].filter(Boolean).join(", ") })]),
       staffBits
     ])),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
@@ -517,16 +517,16 @@ function rosterView(editId) {
     band: h("select", { class: "in", id: "rb" }, BANDS.map(b => h("option", { value: b, text: "Grades " + b, selected: s ? s.band === b : b === "2–4" }))),
     grade: h("input", { class: "in", id: "rg", value: s ? s.grade || "" : "", maxlength: "2", placeholder: "3" }),
     email: h("input", { class: "in", id: "re", type: "email", value: s ? s.email || "" : "", placeholder: "maya@wilderland.academy" }),
-    guide: h("input", { class: "in", id: "rgd", type: "email", value: s ? s.guide || "" : S.email }),
+    guide: h("input", { class: "in", id: "rgd", value: s ? s.guide || "" : S.email, placeholder: "april@wilderland.academy, shanan@wilderland.academy" }),
     parents: h("textarea", { class: "in", id: "rp", placeholder: "one email per line", text: s ? (s.parents || []).join("\n") : "" })
   };
   const note = h("p", { class: "note", "aria-live": "polite" });
   const save = async () => {
     note.className = "note err";
-    const name = f.name.value.trim().replace(/\s+/g, " "), email = f.email.value.trim().toLowerCase(), guide = f.guide.value.trim().toLowerCase(), parents = emails(f.parents.value);
+    const name = f.name.value.trim().replace(/\s+/g, " "), email = f.email.value.trim().toLowerCase(), guide = emails(f.guide.value).join(", "), parents = emails(f.parents.value);
     if (name.length < 2) { note.textContent = "Add the student's full name."; return; }
     if (email && !email.endsWith(DOMAIN)) { note.textContent = "The student email must be their @wilderland.academy account (or leave it blank for K–1)."; return; }
-    if (guide && !guide.endsWith(DOMAIN)) { note.textContent = "The Field Guide email must be a @wilderland.academy account."; return; }
+    if (emails(guide).some(g => !g.endsWith(DOMAIN))) { note.textContent = "Field Guide emails must be @wilderland.academy accounts."; return; }
     const bad = parents.filter(p => !isEmail(p)); if (bad.length) { note.textContent = "Check these parent emails: " + bad.join(", "); return; }
     if (parents.some(p => p.endsWith(DOMAIN) && !ADMINS.includes(p))) { note.textContent = "Use each parent's personal email, not a school account."; return; }
     if (email && all.some(x => x.email === email && x.id !== (s && s.id))) { note.textContent = "Another student already has that email."; return; }
@@ -547,7 +547,7 @@ function rosterView(editId) {
   const form = h("div", { class: "panel stack" }, [
     h("h2", { class: "h", text: s ? "Edit " + s.name : "Add a student" }),
     h("div", { class: "grid2" }, [h("label", { class: "f", for: "rn" }, ["Full name", f.name]), h("div", { class: "row", style: { alignItems: "flex-end" } }, [h("label", { class: "f", for: "rb", style: { flex: "1" } }, ["Band", f.band]), h("label", { class: "f", for: "rg", style: { width: "90px" } }, ["Grade", f.grade])])]),
-    h("div", { class: "grid2" }, [h("label", { class: "f", for: "re" }, [h("span", {}, ["Student's school email ", h("span", { class: "hint", text: "(lets them sign in; optional for K–1)" })]), f.email]), h("label", { class: "f", for: "rgd" }, ["Field Guide's email", f.guide])]),
+    h("div", { class: "grid2" }, [h("label", { class: "f", for: "re" }, [h("span", {}, ["Student's school email ", h("span", { class: "hint", text: "(lets them sign in; optional for K–1)" })]), f.email]), h("label", { class: "f", for: "rgd" }, [h("span", {}, ["Field Guides ", h("span", { class: "hint", text: "(school emails, separated by commas)" })]), f.guide])]),
     h("label", { class: "f", for: "rp" }, [h("span", {}, ["Parent emails ", h("span", { class: "hint", text: "One per line. Each parent signs in with this exact email and sees only this child." })]), f.parents]),
     h("div", { class: "row" }, [h("button", { class: "btn go", type: "button", text: s ? "Save" : "Add student", onclick: save }), s ? h("a", { class: "btn plain", href: "#roster", text: "Cancel" }) : null,
       s && S.admin ? h("button", { class: "btn danger", type: "button", style: { marginLeft: "auto" }, text: "Delete student", onclick: async ev => {
@@ -598,17 +598,18 @@ function importPanel() {
     const all = Object.values(S.students), bad = [];
     rows.forEach((r, i) => {
       const get = k => col(k) < 0 ? "" : String(r[col(k)] || "").trim();
-      const name = get("name").replace(/\s+/g, " "), band = get("band").replace("-", "–"), email = get("student_email").toLowerCase(), parents = emails(get("parent_emails"));
+      const name = get("name").replace(/\s+/g, " "), band = get("band").replace("-", "–"), email = get("student_email").toLowerCase(), parents = emails(get("parent_emails")), guides = emails(get("guides"));
       const why = [];
       if (name.length < 2 || name.length > 60) why.push("name");
       if (!BANDS.includes(band)) why.push("band");
       if (email && !email.endsWith(DOMAIN)) why.push("student email");
       if (parents.some(p => !isEmail(p) || p.endsWith(DOMAIN))) why.push("a parent email");
+      if (guides.some(g => !g.endsWith(DOMAIN))) why.push("a guide email");
       if (why.length) { bad.push(`Row ${i + 2} (${name || "no name"}): check ${why.join(", ")}`); return; }
       const ex = all.find(x => (email && x.email === email) || x.name.toLowerCase() === name.toLowerCase());
       const merged = ex ? [...new Set([...(ex.parents || []), ...parents])] : parents;
       if (merged.length > 6) { bad.push(`Row ${i + 2} (${name}): more than 6 parent emails`); return; }
-      plan.push({ ex, name, band, grade: get("grade"), email: ex && ex.email ? ex.email : email, parents: merged, added: merged.length - (ex ? (ex.parents || []).length : 0) });
+      plan.push({ ex, guide: guides.length ? guides.join(", ") : null, name, band, grade: get("grade"), email: ex && ex.email ? ex.email : email, parents: merged, added: merged.length - (ex ? (ex.parents || []).length : 0) });
     });
     const dupe = plan.filter((p, i) => p.email && plan.findIndex(q => q.email === p.email) !== i);
     dupe.forEach(p => bad.push(`${p.name}: ${p.email} is used twice in the file`));
@@ -618,8 +619,8 @@ function importPanel() {
     const nNew = plan.filter(p => !p.ex).length;
     out.append(h("p", { text: `${nNew} new student${nNew === 1 ? "" : "s"}, ${plan.length - nNew} already here (updated), ${plan.reduce((n, p) => n + Math.max(0, p.added), 0)} parent links to add.` }),
       h("div", { class: "tablewrap" }, h("table", { class: "ov", style: { minWidth: "760px" } }, [
-        h("thead", {}, h("tr", {}, ["", "Student", "Band", "Student email", "Parents"].map(t => h("th", { scope: "col", style: { textAlign: "left" }, text: t })))),
-        h("tbody", {}, plan.map(p => h("tr", {}, [h("td", { style: { textAlign: "left" } }, h("span", { class: "tag" + (p.ex ? "" : " forest"), text: p.ex ? "Update" : "New" })), h("td", { style: { textAlign: "left" }, text: p.name }), h("td", { style: { textAlign: "left" }, text: p.band }), h("td", { style: { textAlign: "left" }, text: p.email || "none" }), h("td", { style: { textAlign: "left" }, class: "small", text: p.parents.join(", ") || "none" })])))
+        h("thead", {}, h("tr", {}, ["", "Student", "Band", "Student email", "Parents", "Guides"].map(t => h("th", { scope: "col", style: { textAlign: "left" }, text: t })))),
+        h("tbody", {}, plan.map(p => h("tr", {}, [h("td", { style: { textAlign: "left" } }, h("span", { class: "tag" + (p.ex ? "" : " forest"), text: p.ex ? "Update" : "New" })), h("td", { style: { textAlign: "left" }, text: p.name }), h("td", { style: { textAlign: "left" }, text: p.band }), h("td", { style: { textAlign: "left" }, text: p.email || "none" }), h("td", { style: { textAlign: "left" }, class: "small", text: p.parents.join(", ") || "none" }), h("td", { style: { textAlign: "left" }, class: "small", text: p.guide || (p.ex && p.ex.guide) || "none" })])))
       ])),
       h("div", {}, h("button", { class: "btn go", type: "button", text: `Import ${plan.length} students`, onclick: async ev => {
         ev.target.disabled = true; note.className = "note"; note.textContent = "Saving…";
@@ -629,7 +630,8 @@ function importPanel() {
             plan.slice(i, i + 200).forEach(p => {
               const ref = p.ex ? doc(db, "lsStudents", p.ex.id) : doc(collection(db, "lsStudents"));
               const data = { name: p.ex ? p.ex.name : p.name, band: p.band, grade: p.grade, email: p.email, parents: p.parents, updated: Date.now(), updatedBy: S.email };
-              if (p.ex) batch.update(ref, data); else batch.set(ref, { ...data, guide: "", celebrated: 0, created: Date.now() });
+              if (p.guide !== null) data.guide = p.guide;
+              if (p.ex) batch.update(ref, data); else batch.set(ref, { guide: "", ...data, celebrated: 0, created: Date.now() });
               S.students[ref.id] = { ...(p.ex || { guide: "", celebrated: 0 }), ...data, id: ref.id };
               if (!S.entries[ref.id]) S.entries[ref.id] = [];
               const b = boardDoc(ref.id); batch.set(doc(db, "lsBoard", ref.id), b); S.boards[ref.id] = { id: ref.id, ...b };
@@ -642,7 +644,7 @@ function importPanel() {
   });
   return h("div", { class: "panel stack" }, [
     h("h2", { class: "h", text: "Import from a spreadsheet" }),
-    h("p", { class: "small muted", text: "A CSV with a header row: name, grade, band (K–1, 2–4 or 5–8), student_email, parent_emails (separate several with ;). Students already here are matched by school email or name and get the new parent emails added. Nothing is removed. You'll see every row before anything saves." }),
+    h("p", { class: "small muted", text: "A CSV with a header row: name, grade, band (K–1, 2–4 or 5–8), student_email, parent_emails and guides (separate several emails with ;). Students already here are matched by school email or name and get the new parent emails added. Nothing is removed. You'll see every row before anything saves." }),
     h("label", { class: "f", for: "imf" }, ["CSV file", file]), out, note
   ]);
 }
