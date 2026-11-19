@@ -1,7 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function school() { return request.auth != null && request.auth.token.email.lower().matches('.*@wilderland[.]academy$'); }
+    // email_verified matters now that parents can make email/password accounts: without it, anyone could
+    // register an unverified password account under a school address.
+    function school() { return request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower().matches('.*@wilderland[.]academy$'); }
     // Outside guests: allowed in the staff Field Guide only. Student data above and below still requires school().
     function guest() { return request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower() in ['ian@silverlineventures.com', 'online@bodyform.com']; }
     function isAdmin() { return school() && request.auth.token.email.lower() in [
@@ -112,6 +114,44 @@ service cloud.firestore {
         && request.resource.data.status == 'open';
       allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reply']);
       allow delete: if isAdmin() || (staffSchool() && resource.data.by == request.auth.uid);
+    }
+
+    // ---- Life Skills Tracker (/lifeskills/) ----
+    // Parents: any account whose email is confirmed. They see a child only after a guide puts that email in the child's parents list.
+    function verified() { return request.auth != null && request.auth.token.email_verified == true; }
+    function me() { return request.auth.token.email.lower(); }
+    function lsStudent(sid) { return get(/databases/$(database)/documents/lsStudents/$(sid)).data; }
+    function lsSelf(sid) { return school() && lsStudent(sid).email == me(); }
+    function lsParent(sid) { return verified() && me() in lsStudent(sid).parents; }
+    match /lsStudents/{sid} {
+      allow read: if staffSchool()
+        || (school() && resource.data.email == me())
+        || (verified() && me() in resource.data.parents);
+      // Only guides and admins write student records, which is where parents are matched to children.
+      allow create, update: if staffSchool()
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.resource.data.band in ['K–1', '2–4', '5–8']
+        && request.resource.data.email is string
+        && request.resource.data.parents is list && request.resource.data.parents.size() <= 6;
+      allow delete: if isAdmin();
+      match /entries/{eid} {
+        allow read: if staffSchool() || lsSelf(sid) || lsParent(sid);
+        allow create, update: if staffSchool()
+          && request.resource.data.result in ['pass', 'notyet']
+          && request.resource.data.cid is string && request.resource.data.cid.size() <= 12
+          && request.resource.data.date is string;
+        allow delete: if staffSchool();
+      }
+    }
+    // The crew board: short names, what each student is working on and has passed. No not yets, notes or emails.
+    match /lsBoard/{sid} {
+      allow read: if school() || lsParent(sid);
+      allow create, update: if staffSchool();
+      // A student may change only their own working list (3 at most).
+      allow update: if lsSelf(sid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['working', 'updated'])
+        && request.resource.data.working is list && request.resource.data.working.size() <= 3;
+      allow delete: if isAdmin();
     }
 
     // Stories guides share with all staff.

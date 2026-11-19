@@ -16,7 +16,7 @@ const CONFIG = {
 const DOMAIN = "wilderland.academy";
 // Outside guests who may open the staff Field Guide only (no other Explore site). Keep in step with worker.js, firestore.rules and fieldguide/app.js.
 const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com"];
-const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["Projects", "/projects/"]];
+const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["Projects", "/projects/"], ["Life Skills tracker", "/lifeskills/"]];
 
 const me = document.querySelector('script[src$="auth.js"]');
 const SITE = (me && me.dataset.site) || "";
@@ -33,6 +33,8 @@ const auth = getAuth(app);
 window.wlFirebase = { app, auth, config: CONFIG };
 const announce = u => document.dispatchEvent(new CustomEvent("wl-auth", { detail: u }));
 let user = null, pushTimer = null, applying = false;
+// A parent signed in with a confirmed non-school email (for /lifeskills/). They stay signed in here but get no student features.
+let family = null;
 
 // ---------- reading and writing this site's keys ----------
 const readLocal = () => { const o = {}; KEYS.forEach(k => { const v = localStorage.getItem(k); if (v != null) o[k] = v; }); return o; };
@@ -123,6 +125,11 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 function render() {
   const here = location.pathname;
   const links = SITES.map(([n, p]) => `<a href="${p}" class="${here.startsWith(p) ? "here" : ""}">${n}</a>`).join("");
+  if (!user && family) {
+    host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${esc((family.email || "?")[0].toUpperCase())}</span><span>Parent</span></button>
+    ${open ? `<div class="menu"><p>Signed in as ${esc(family.email)}, a family account.</p><a href="/lifeskills/">Life Skills tracker</a><a href="/challenges/parents.html">Passing off at home</a><hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
+    return;
+  }
   if (!user) {
     host.innerHTML = `<button class="out" type="button" data-wla="in">Sign in</button>`;
     return;
@@ -168,7 +175,13 @@ function mount() {
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount); else mount();
 
 onAuthStateChanged(auth, async u => {
-  if (u && !((u.email || "").toLowerCase().endsWith("@" + DOMAIN) || (SITE === "fieldguide" && u.emailVerified && GUESTS.includes((u.email || "").toLowerCase())))) {
+  const em = ((u && u.email) || "").toLowerCase();
+  family = null;
+  // A confirmed family account: keep it signed in (so the tracker stays open) but treat this page as signed out.
+  if (u && u.emailVerified && !em.endsWith("@" + DOMAIN) && !(SITE === "fieldguide" && GUESTS.includes(em))) {
+    family = u; user = null; render(); gate(null); announce(null); return;
+  }
+  if (u && !((em.endsWith("@" + DOMAIN) && u.emailVerified) || (SITE === "fieldguide" && u.emailVerified && GUESTS.includes(em)))) {
     await signOut(auth); msg("Please sign in with your @" + DOMAIN + " school account."); user = null; render(); gate(null); announce(null); return;
   }
   // Signed out (maybe on another site): don't leave the last student's things for the next person.

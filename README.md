@@ -70,3 +70,21 @@ Two more parent pages beside At Home, same rules: static, no sign-in, `noindex`,
 - Lighter reading lives in `READS` (one linked card each, grouped by `READ_GROUPS`: the microschool movement, Alpha
   from both sides, research). Keep facts and numbers to what the article itself says, and keep the critical pieces.
   Content is in `families/series/data.js`.
+
+## Life Skills Tracker (`/lifeskills/`, added Nov 18, 2026)
+Pass records for the Life Skills challenges, separate from academics. Built on the Wilderland Academy design system
+(forest nav, white page, lime only on forest, meadow buttons on white, Uncut Sans, no borders or shadows).
+Linked from Challenges ("My progress"), the parent pass-off page and the Field Guide header. `noindex`.
+- **Guides and admins** (school account on the staff list): band overview with filters (no pass in 3 weeks, open
+  not yets, new milestones), log a pass or not yet, every student's record, and Students and parents, where guides
+  add students and match parent emails. Only guides and admins can match a parent to a child.
+- **Students** (school account a guide added): their own record, their "working on" list (up to 3, can load from
+  their Challenges plan), and the crew board: what everyone is working on and has passed. Not yets stay private.
+- **Parents**: any confirmed email a guide put in a child's `parents` list sees that child only. Sign in with
+  Google, email and password (with email confirmation), or an emailed sign-in link; password reset by email.
+- Firestore: `lsStudents/{sid}` (private: name, band, grade, email, guide, parents, celebrated),
+  `lsStudents/{sid}/entries/*` (each pass or not yet), `lsBoard/{sid}` (short name, working, passed; read by all
+  school accounts and the child's parents). Credits, ranks and milestones (every 4 credits) are worked out in `app.js`.
+- `school()` in `firestore.rules` now requires a confirmed email, because email/password accounts exist.
+  `auth.js` keeps a confirmed family account signed in on other Explore pages without student features.
+- Testing: `lifeskills/?emu` on localhost talks to the Firebase emulators (auth 9099, firestore 8085).
