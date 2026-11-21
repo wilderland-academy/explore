@@ -29,7 +29,8 @@ const DOMAIN = "@wilderland.academy";
 // Keep in step with firestore.rules, auth.js and fieldguide/app.js.
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const EMU = location.hostname === "localhost" && new URLSearchParams(location.search).has("emu");
-const BASE = "/lifeskills/" + (EMU ? "?emu" : "");
+// The same tracker also runs inside the staff guides at /guides/lifeskills/ (with the staff menu on top).
+const BASE = (location.pathname.startsWith("/guides/lifeskills") ? "/guides/lifeskills/" : "/lifeskills/") + (EMU ? "?emu" : "");
 const HOME = location.origin + BASE;
 const LINK_KEY = "wl-ls-link-email";
 
