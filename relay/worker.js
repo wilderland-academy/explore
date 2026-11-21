@@ -8,7 +8,7 @@ const DOMAIN = "@wilderland.academy";
 const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];   // outside guests allowed to use the relay
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const MODELS = { quick: "claude-haiku-5-5", deep: "claude-sonnet-5-5" };
-const MAX_OUT = 1500;        // most tokens Claude may write per call
+const MAX_OUT = 3000;        // most tokens Claude may write per call (a full newsletter plus notes needs about 2,000)
 const MAX_IN_CHARS = 90000;  // largest request accepted (a 30-minute transcript is about 25,000)
 
 let jwks = null, jwksAt = 0;
@@ -72,6 +72,6 @@ export default {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) return out(r.status === 429 ? 429 : 502, { error: (j.error && j.error.message) || "Claude API error " + r.status });
     const text = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("");
-    return out(200, { text });
+    return out(200, { text, stop: j.stop_reason || "" });
   }
 };
