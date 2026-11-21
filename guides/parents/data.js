@@ -1,6 +1,6 @@
-// Parent Communication coach: content and instructions. The writing rules themselves live in skill.md
-// (Ian's wilderland-parent-comms skill, copied verbatim). To update the rules, replace skill.md with the new
-// SKILL.md and add a CHANGELOG line below. This is a public file: never put real student or family names here.
+// Parent Communication coach: content and instructions. The writing rules themselves live in skill.txt
+// (Ian's wilderland-parent-comms SKILL.md, verbatim minus the --- header). To update the rules, paste the new
+// SKILL.md body into skill.txt and add a CHANGELOG line below. It is .txt because GitHub Pages (Jekyll) turns .md into .html. This is a public file: never put real student or family names here.
 
 export const CHANGELOG = [
   ["2026-11-21", "First version: three modes (newsletters, customer service, events) built on the wilderland-parent-comms skill."]
