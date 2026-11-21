@@ -1,5 +1,5 @@
 // Parent Communication coach (staff only). Sign-in comes from /auth.js; AI goes through the same relay as the
-// Field Guide and Behavior Guide (address saved in Firestore mentorConfig/main). The writing rules are skill.md;
+// Field Guide and Behavior Guide (address saved in Firestore mentorConfig/main). The writing rules are skill.txt;
 // page content and mode focus are in data.js. Conversations live in sessionStorage only.
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import * as D from "./data.js";
@@ -36,7 +36,7 @@ async function onAuth(u) {
   if (seq !== authSeq) return;
   if (!ok) return gate("This area is for Wilderland guides and staff. If that's you, ask Alex to add your account.");
   try { const c = await getDoc(doc(db, "mentorConfig", "main")); relay = c.exists() ? (c.data().relay || "") : ""; } catch (e) { relay = ""; }
-  if (!skill) { try { const r = await fetch("skill.md", { cache: "no-cache" }); if (r.ok) skill = (await r.text()).replace(/^---[\s\S]*?---\s*/, ""); } catch (e) { skill = ""; } }
+  if (!skill) { try { const r = await fetch("skill.txt", { cache: "no-cache" }); if (r.ok) skill = (await r.text()).replace(/^---[\s\S]*?---\s*/, ""); } catch (e) { skill = ""; } }
   if (seq !== authSeq) return;
   startedFor = u.uid; draw();
 }
@@ -79,7 +79,7 @@ async function ask(t) {
   if (!r.ok) throw { code: r.status, message: j.error || "" };
   return { text: j.text || "", stop: j.stop || "" };
 }
-const aiErr = e => e && e.name === "AbortError" ? "Stopped." : e && e.code === "norelay" ? "The AI isn't connected yet. An admin adds the relay address on the Mentor Mindset Field Guide's Admin stop." : e && e.code === "noskill" ? "The writing guide (skill.md) didn't load. Reload the page." : e && e.code === 429 ? "The AI is busy. Wait a minute and try again." : (e && (e.code === 401 || e.code === 403)) ? "The AI relay didn't recognize your account. Sign out and back in, or ask an admin." : e && e.code === 413 ? "That conversation got too long. Start a new one and paste just what you need." : "The AI didn't answer. Try again in a moment.";
+const aiErr = e => e && e.name === "AbortError" ? "Stopped." : e && e.code === "norelay" ? "The AI isn't connected yet. An admin adds the relay address on the Mentor Mindset Field Guide's Admin stop." : e && e.code === "noskill" ? "The writing guide (skill.txt) didn't load. Reload the page." : e && e.code === 429 ? "The AI is busy. Wait a minute and try again." : (e && (e.code === 401 || e.code === 403)) ? "The AI relay didn't recognize your account. Sign out and back in, or ask an admin." : e && e.code === 413 ? "That conversation got too long. Start a new one and paste just what you need." : "The AI didn't answer. Try again in a moment.";
 
 /* ---------------- Markdown, kept small and safe ---------------- */
 function inline(s) {
