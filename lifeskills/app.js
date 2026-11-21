@@ -187,7 +187,7 @@ const head = (title, sub) => h("div", { class: "wrap page-head" }, [h("h1", { te
 function navLinks(items) {
   const cur = location.hash.slice(1).split("=")[0] || items[0][0];
   const nav = $("#links"); nav.innerHTML = "";
-  items.forEach(([id, label]) => nav.append(h("a", { href: "#" + id, text: label, "aria-current": cur === id ? "page" : null })));
+  items.forEach(([id, label, href]) => nav.append(h("a", { href: href || "#" + id, text: label, "aria-current": !href && cur === id ? "page" : null })));
 }
 let menuOpen = false;
 function acct() {
@@ -686,7 +686,8 @@ function route() {
   const [v, arg] = location.hash.slice(1).split("=");
   acct();
   if (S.role === "staff") {
-    navLinks([["overview", "Overview"], ["log", "Log"], ["roster", "Students and parents"], ["board", "Crew board"]]);
+    // Inside the staff guides (/guides/lifeskills/), guides also get the Lab builder.
+    navLinks([["overview", "Overview"], ["log", "Log"], ["roster", "Students and parents"], ["board", "Crew board"], ...(BASE.startsWith("/guides/") ? [["build", "Lab builder", "/guides/lifeskills/builder/"]] : [])]);
     if (v === "s") return main(record(arg, { staff: true }));
     if (v === "log") return main(logView(arg));
     if (v === "roster") return main(rosterView(arg));

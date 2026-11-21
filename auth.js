@@ -16,7 +16,7 @@ const CONFIG = {
 const DOMAIN = "wilderland.academy";
 // Outside guests (Ian) who may open the staff Field Guide, the Guides hub and the Parent Communication coach only (no student site). Keep in step with worker.js, firestore.rules and fieldguide/app.js.
 const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];
-const GUEST_SITES = ["fieldguide", "guides", "parentcomms"];
+const GUEST_SITES = ["fieldguide", "guides", "parentcomms", "history", "labbuilder"];
 const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["Projects", "/projects/"], ["Life Skills tracker", "/lifeskills/"]];
 
 const me = document.querySelector('script[src$="auth.js"]');

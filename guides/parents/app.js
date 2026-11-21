@@ -1,8 +1,10 @@
 // Parent Communication coach (staff only). Sign-in comes from /auth.js; AI goes through the same relay as the
 // Field Guide and Behavior Guide (address saved in Firestore mentorConfig/main). The writing rules are skill.txt;
-// page content and mode focus are in data.js. Conversations live in sessionStorage only.
+// page content and mode focus are in data.js. Each conversation is saved to the person's private history
+// (/guides/log.js); the open conversation also sits in sessionStorage so a reload doesn't lose it.
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import * as D from "./data.js";
+import { coachLog, autosaver } from "../log.js";
 
 // Outside guests (Ian). Keep in step with auth.js, worker.js, fieldguide/app.js and firestore.rules.
 const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];
@@ -15,12 +17,14 @@ function h(tag, attrs, kids) { const e = document.createElement(tag); if (attrs)
 const store = { get(k, d) { try { const v = sessionStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }, del(k) { try { sessionStorage.removeItem(k); } catch (e) { } } };
 
 const app = $("#app");
-let fb, db, user = null, relay = "", skill = "", startedFor = null, authSeq = 0, busy = false, ctrl = null;
+let fb, db, user = null, relay = "", skill = "", startedFor = null, authSeq = 0, busy = false, ctrl = null, log = null;
+const save = autosaver(() => log, () => toastNote("Couldn't save this conversation to your history. It's still here in this tab."));
 let mode = (location.hash.slice(1) in D.MODES) ? location.hash.slice(1) : store.get("pc-mode", "newsletter");
 const me = () => (user && user.email || "").toLowerCase();
 const firstName = () => ((user && user.displayName) || me().split("@")[0]).split(" ")[0];
 const thread = () => store.get("pc-" + mode, []);
 const saveThread = t => store.set("pc-" + mode, t);
+const threadId = m => { let id = store.get("pc-id-" + m, ""); if (!id && log) { id = log.newId(); store.set("pc-id-" + m, id); } return id; };
 
 /* ---------------- sign-in gate ---------------- */
 function gate(msg) {
@@ -38,7 +42,14 @@ async function onAuth(u) {
   try { const c = await getDoc(doc(db, "mentorConfig", "main")); relay = c.exists() ? (c.data().relay || "") : ""; } catch (e) { relay = ""; }
   if (!skill) { try { const r = await fetch("skill.txt", { cache: "no-cache" }); if (r.ok) skill = (await r.text()).replace(/^---[\s\S]*?---\s*/, ""); } catch (e) { skill = ""; } }
   if (seq !== authSeq) return;
-  startedFor = u.uid; draw();
+  startedFor = u.uid; log = coachLog(db, u);
+  // Opened from history: /guides/parents/?t=<id> loads that conversation to continue it.
+  const t = new URLSearchParams(location.search).get("t");
+  if (t) {
+    try { const x = await log.get(t); if (x && x.site === "parents") { const m = (x.meta && x.meta.mode) in D.MODES ? x.meta.mode : mode; mode = m; store.set("pc-mode", m); store.set("pc-" + m, x.messages || []); store.set("pc-id-" + m, x.id); } } catch (e) { console.warn(e); }
+    history.replaceState(null, "", location.pathname + "#" + mode);
+  }
+  draw();
 }
 (async () => {
   while (!window.wlFirebase) await new Promise(r => setTimeout(r, 50));
@@ -162,7 +173,8 @@ function draw() {
   const head = h("header", { class: "hero" }, [
     h("p", { class: "eyebrow", text: "Staff guides · Parent Communication" }),
     h("h1", { html: "Write to families <span>with confidence.</span>" }),
-    h("p", { class: "lede", text: "Tell the coach what you need or paste a draft. You get a message you can send right away, plus the one or two things that would make it better. Your voice stays yours." })
+    h("p", { class: "lede", text: "Tell the coach what you need or paste a draft. You get a message you can send right away, plus the one or two things that would make it better. Your voice stays yours." }),
+    h("a", { class: "histlink", href: "/guides/history/#parents", text: "Your past conversations →" })
   ]);
 
   const log = h("div", { class: "log", id: "log", "aria-live": "polite" });
@@ -182,7 +194,7 @@ function draw() {
   const sendBtn = h("button", { class: "send", text: busy ? "Stop" : "Send", onclick: () => busy ? ctrl && ctrl.abort() : send() });
   const composer = h("div", { class: "composer" }, [starters, box, h("div", { class: "crow" }, [
     h("span", { class: "small", text: "Ctrl/⌘ + Enter to send · " + D.PRIVACY }),
-    t.length ? h("button", { class: "ghost", text: "New conversation", disabled: busy || null, onclick: () => { saveThread([]); store.del("pc-draft-" + mode); draw(); } }) : null,
+    t.length ? h("button", { class: "ghost", text: "New conversation", disabled: busy || null, onclick: () => { saveThread([]); store.del("pc-draft-" + mode); store.del("pc-id-" + mode); draw(); } }) : null,
     sendBtn
   ])]);
 
@@ -198,6 +210,10 @@ function draw() {
   app.append(head, tabs, h("div", { class: "work" }, [chat, side]));
   log.scrollTop = log.scrollHeight;
   if (!busy && t.length) { const last = log.lastElementChild; if (last && last.classList.contains("a")) last.scrollIntoView({ block: "nearest" }); }
+}
+function toastNote(t) {
+  const n = h("p", { class: "hint", role: "status", text: t, style: "position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;max-width:92vw" });
+  document.body.appendChild(n); setTimeout(() => n.remove(), 6000);
 }
 function hint(t) {
   document.querySelectorAll(".hint").forEach(x => x.remove());
@@ -222,6 +238,7 @@ async function send(text) {
   catch (e) { reply = { role: "assistant", content: aiErr(e), err: true }; }
   busy = false; ctrl = null;
   const now = store.get("pc-" + forMode, []); now.push(reply); store.set("pc-" + forMode, now);
+  if (!reply.err) save({ id: threadId(forMode), site: "parents", kind: forMode, messages: now, meta: { mode: forMode } });
   if (mode === forMode) draw();
   else { const b = document.querySelector(".mode." + D.MODES[forMode].color); b && b.classList.add("new"); }
 }

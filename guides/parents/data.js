@@ -4,7 +4,8 @@
 
 export const CHANGELOG = [
   ["2026-11-21", "First version: three modes (newsletters, customer service, events) built on the wilderland-parent-comms skill."],
-  ["2026-11-21", "Starter buttons fill the box unless marked to send; an unfinished template is never sent."]
+  ["2026-11-21", "Starter buttons fill the box unless marked to send; an unfinished template is never sent."],
+  ["2026-11-21", "Conversations save to each person's private history (/guides/history/), where they can be reopened or deleted."]
 ];
 
 // How the page wraps the skill. Sent as part of the system prompt on every call.
@@ -117,4 +118,4 @@ export const PRACTICE = `PRACTICE ROUNDS: When the guide's message starts with "
 2. When they answer, coach them: start with what they did well (specific, one or two bullets), then up to three things to change, most important first, each tied to the skill or protocol. Then show a stronger version inside the message block. For "spot the gaps", list what they caught, what they missed, and why each missed item matters to a parent.
 3. Keep it encouraging and brief. This is practice; nobody is graded.`;
 
-export const PRIVACY = "Leave out last names and anything a family shared in confidence. Conversations stay in this browser tab and are cleared when you close it.";
+export const PRIVACY = "Leave out last names and anything a family shared in confidence. Each conversation is saved to your private history, which only you can see; delete it there anytime.";
