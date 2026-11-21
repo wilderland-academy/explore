@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parent Communication · Wilderland staff</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#2a1d2b">
+<link rel="icon" href="/books/f/icon.png">
+<link rel="stylesheet" href="/wl.css">
+<style>
+@font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{
+  /* Letter paper and sealing wax. Each mode keeps its own ink: green for newsletters, wine for customer service, amber for events. */
+  color-scheme:light;
+  --paper:#f5f1ea;--sheet:#fffdf9;--sheet2:#efe9df;--line:#ddd3c4;--ink:#231b24;--dim:#625a63;
+  --nl:#2f6b45;--nl-bg:#e3efe6;--cs:#8a2d55;--cs-bg:#f6e4ec;--ev:#93560a;--ev-bg:#f8ecd9;
+  --acc:var(--cs);--acc-bg:var(--cs-bg);
+  --display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+body[data-mode=nl]{--acc:var(--nl);--acc-bg:var(--nl-bg)} body[data-mode=cs]{--acc:var(--cs);--acc-bg:var(--cs-bg)} body[data-mode=ev]{--acc:var(--ev);--acc-bg:var(--ev-bg)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.55 var(--body)}
+.wlbar{background:#2a1d2b}
+h1,h2,h3,h4{font-family:var(--display);font-weight:700;letter-spacing:-.01em;line-height:1.15;margin:0;text-wrap:balance}
+p{margin:0}
+a{color:var(--acc)}
+button,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#app{max-width:1180px;margin:0 auto;padding:0 18px 70px}
+.gate{max-width:520px;margin:12vh auto 0;text-align:center;background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:28px;display:flex;flex-direction:column;gap:10px}
+.gate p{color:var(--dim)}
+.hero{padding:34px 0 20px;display:flex;flex-direction:column;gap:10px}
+.eyebrow{font:700 12px var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.hero h1{font-size:clamp(30px,5vw,46px)}
+.hero h1 span{color:var(--acc);font-style:italic}
+.lede{font-size:18px;color:var(--dim);max-width:62ch}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mode{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:14px 16px;border-radius:8px;background:var(--sheet);border:1px solid var(--line);border-top:5px solid var(--line);position:relative}
+.mode b{font:700 19px var(--display)} .mode span{font-size:13.5px;color:var(--dim)}
+.mode:hover{border-color:var(--ink)}
+.mode.nl{border-top-color:var(--nl)}.mode.cs{border-top-color:var(--cs)}.mode.ev{border-top-color:var(--ev)}
+.mode[aria-selected=true].nl{background:var(--nl-bg);border-color:var(--nl)}
+.mode[aria-selected=true].cs{background:var(--cs-bg);border-color:var(--cs)}
+.mode[aria-selected=true].ev{background:var(--ev-bg);border-color:var(--ev)}
+.mode.new::after{content:"New reply";position:absolute;top:10px;right:12px;font:700 11px var(--body);color:#fff;background:var(--ink);padding:3px 7px;border-radius:99px}
+.mode:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.work{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.chat{background:var(--sheet);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;min-height:560px}
+.log{flex:1;display:flex;flex-direction:column;gap:18px;padding:20px;max-height:68vh;min-height:300px;overflow-y:auto}
+.empty{margin:auto 0;padding:10px 4px;display:flex;flex-direction:column;gap:8px;max-width:58ch}
+.empty h3{font-size:24px;color:var(--acc)}
+.small{font-size:13px;color:var(--dim)}
+.turn{display:flex;flex-direction:column;gap:8px;max-width:100%}
+.who{font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.turn.u{align-self:flex-end;max-width:min(92%,640px)}
+.turn.u .who{text-align:right}
+.utext{white-space:pre-wrap;background:var(--sheet2);border-radius:8px;padding:11px 14px;max-height:280px;overflow:auto;font-size:15px}
+.turn.err p{background:#fbe6e0;color:#8a2a17;border-radius:8px;padding:10px 13px;font-size:15px}
+.prose{display:flex;flex-direction:column;gap:8px;font-size:15.5px;max-width:72ch}
+.prose h4,.mbody h4{font:700 16px var(--display);margin-top:6px}
+.prose ul,.prose ol,.mbody ul,.mbody ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+.prose code{font-size:13px;background:var(--sheet2);padding:1px 5px;border-radius:4px}
+mark.ph{background:#fff1a6;color:inherit;border-radius:3px;padding:0 3px;font-weight:600}
+.mcard{border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:8px;background:#fff;overflow:hidden;box-shadow:0 1px 0 rgba(35,27,36,.04)}
+.mcard.review{border-left-color:#b8402b}
+.mbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 12px;background:var(--acc-bg);border-bottom:1px solid var(--line)}
+.mcard.review .mbar{background:#fbe6e0}
+.mlab{font:700 11.5px var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--acc);margin-right:auto}
+.mcard.review .mlab{color:#a23620}
+.mini{all:unset;cursor:pointer;font:600 13px var(--body);padding:7px 11px;border-radius:6px;border:1px solid var(--line);background:#fff}
+.mini.strong{background:var(--acc);color:#fff;border-color:var(--acc)}
+.mini:focus-visible{outline:2px solid var(--ink)}
+.msubj{display:flex;gap:10px;align-items:baseline;padding:11px 16px 0;font-size:15px}
+.msubj span{font:700 11px var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+.mbody{padding:12px 16px 16px;display:flex;flex-direction:column;gap:10px;font-size:15.5px;line-height:1.6}
+.cut{font-size:13.5px;color:#8a2a17;padding:0 16px 12px}
+.turn.a>.cut{padding:0}
+.typing .dots{display:inline-flex;gap:5px;padding:8px 0}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--acc);opacity:.3;animation:b 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+@keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.dots i{animation:none;opacity:.7}}
+.composer{border-top:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--sheet)}
+.starters{display:flex;flex-wrap:wrap;gap:6px}
+.starter{all:unset;box-sizing:border-box;cursor:pointer;font:600 13.5px/1.2 var(--body);padding:8px 12px;border-radius:99px;border:1px solid var(--line);background:#fff;display:inline-flex;gap:6px;align-items:center}
+.starter:hover{border-color:var(--acc);color:var(--acc)}
+.starter:disabled{opacity:.45;cursor:default}
+.starter i{font-style:normal;font:700 10px var(--body);letter-spacing:.07em;text-transform:uppercase;background:var(--acc);color:#fff;padding:3px 6px;border-radius:99px}
+.starter:focus-visible{outline:2px solid var(--acc)}
+textarea{width:100%;min-height:96px;max-height:40vh;resize:vertical;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 13px;font-size:16px;line-height:1.5}
+textarea:focus{border-color:var(--acc);outline:none;box-shadow:0 0 0 3px var(--acc-bg)}
+.crow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.crow .small{flex:1 1 280px}
+.send{all:unset;cursor:pointer;font:700 15px var(--body);background:var(--acc);color:#fff;padding:12px 22px;border-radius:8px}
+.send:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ghost{all:unset;cursor:pointer;font:600 14px var(--body);color:var(--dim);padding:10px 12px;border-radius:8px;border:1px solid var(--line)}
+.ghost:disabled{opacity:.45;cursor:default}
+.side{position:sticky;top:14px;display:flex;flex-direction:column;gap:14px;background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:18px}
+.side h3{font-size:20px}
+.side h4{font:700 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.look{margin:0;padding:0;list-style:none;counter-reset:k;display:flex;flex-direction:column;gap:10px}
+.look li{counter-increment:k;display:grid;grid-template-columns:26px 1fr;column-gap:8px;font-size:14px;color:var(--dim)}
+.look li::before{content:counter(k);grid-row:span 2;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--acc);color:#fff;font:700 12px var(--body)}
+.look b{color:var(--ink);font-size:14.5px}
+.every ul{margin:0;padding-left:1.1em;font-size:13.5px;display:flex;flex-direction:column;gap:3px}
+.review{background:#fbeee9;border-radius:6px;padding:11px 12px;font-size:13.5px}
+.review h4{color:#a23620}
+.warn{background:#fff1a6;border-radius:6px;padding:10px 12px;font-size:13.5px}
+@media (max-width:900px){.work{grid-template-columns:1fr}.side{position:static}.log{max-height:none}}
+@media (max-width:620px){.modes{grid-template-columns:1fr;gap:6px}.mode{flex-direction:row;align-items:baseline;gap:10px;padding:11px 13px}.mode span{display:none}.log{padding:14px}.hero{padding-top:22px}.lede{font-size:16px}}
+@media print{.wlbar,.modes,.composer,.side,.hero{display:none!important}.chat{border:0}.log{max-height:none;overflow:visible}}
+</style>
+</head>
+<body data-mode="cs">
+<div class="wlbar"><div class="wlbar-in"><a class="wlbar-home" href="/" aria-label="Wilderland Explore home"><svg class="wlbar-mark" style="display:block;height:20px" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg></a><!--guides-nav--><nav class="wlguides" aria-label="Staff guides"><a class="hub" href="/guides/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M2 0h5v5H2zM11 0h5v5h-5zM2 7h5v5H2zM11 7h5v5h-5z" fill="currentColor"/></svg>Guides</a><a class="mm" href="/fieldguide/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 12 6 3l3 4 3-6 6 11z" fill="currentColor"/></svg><span>Mentor<span class="lg"> Mindset</span></span></a><a class="bh" href="/behavior/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 1c4 0 5 9 9 9s5-9 9-9v11H0z" fill="currentColor" opacity=".9"/></svg>Behavior</a><a class="ls" href="/lifeskills/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M1 11 6 2l5 9zM9 11l4-7 4 7z" fill="currentColor"/></svg>Life Skills</a><a class="pc" aria-current="page" href="/guides/parents/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M1 1h16v10H1zM1 1l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>Parent<span class="lg"> Comms</span></span></a></nav><!--/guides-nav--><span class="wlbar-auth" data-wl-auth></span></div></div><script>(function(n,a){if(n&&a)n.scrollLeft=a.offsetLeft-n.clientWidth/2+a.offsetWidth/2})(document.querySelector(".wlguides"),document.querySelector(".wlguides [aria-current]"))</script>
+<main id="app"><section class="gate"><h2>Wilderland staff area</h2><p>Checking who's here…</p></section></main>
+<script type="module" src="/auth.js" data-site="parentcomms"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

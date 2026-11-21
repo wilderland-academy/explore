@@ -14,8 +14,9 @@ const CONFIG = {
   appId: "1:310046559783:web:66af8f02d96d315ab14802"
 };
 const DOMAIN = "wilderland.academy";
-// Outside guests who may open the staff Field Guide only (no other Explore site). Keep in step with worker.js, firestore.rules and fieldguide/app.js.
-const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com"];
+// Outside guests (Ian) who may open the staff Field Guide, the Guides hub and the Parent Communication coach only (no student site). Keep in step with worker.js, firestore.rules and fieldguide/app.js.
+const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];
+const GUEST_SITES = ["fieldguide", "guides", "parentcomms"];
 const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["Projects", "/projects/"], ["Life Skills tracker", "/lifeskills/"]];
 
 const me = document.querySelector('script[src$="auth.js"]');
@@ -178,10 +179,10 @@ onAuthStateChanged(auth, async u => {
   const em = ((u && u.email) || "").toLowerCase();
   family = null;
   // A confirmed family account: keep it signed in (so the tracker stays open) but treat this page as signed out.
-  if (u && u.emailVerified && !em.endsWith("@" + DOMAIN) && !(SITE === "fieldguide" && GUESTS.includes(em))) {
+  if (u && u.emailVerified && !em.endsWith("@" + DOMAIN) && !(GUEST_SITES.includes(SITE) && GUESTS.includes(em))) {
     family = u; user = null; render(); gate(null); announce(null); return;
   }
-  if (u && !((em.endsWith("@" + DOMAIN) && u.emailVerified) || (SITE === "fieldguide" && u.emailVerified && GUESTS.includes(em)))) {
+  if (u && !((em.endsWith("@" + DOMAIN) && u.emailVerified) || (GUEST_SITES.includes(SITE) && u.emailVerified && GUESTS.includes(em)))) {
     await signOut(auth); msg("Please sign in with your @" + DOMAIN + " school account."); user = null; render(); gate(null); announce(null); return;
   }
   // Signed out (maybe on another site): don't leave the last student's things for the next person.

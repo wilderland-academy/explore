@@ -5,7 +5,7 @@ service cloud.firestore {
     // register an unverified password account under a school address.
     function school() { return request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower().matches('.*@wilderland[.]academy$'); }
     // Outside guests: allowed in the staff Field Guide only. Student data above and below still requires school().
-    function guest() { return request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower() in ['ian@silverlineventures.com', 'online@bodyform.com']; }
+    function guest() { return request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower() in ['ian@silverlineventures.com', 'online@bodyform.com', 'ian.silverberg@gmail.com']; }
     function isAdmin() { return school() && request.auth.token.email.lower() in [
       'alex@wilderland.academy', 'sarah@wilderland.academy', 'shanan@wilderland.academy',
       'april@wilderland.academy', 'scott@wilderland.academy'

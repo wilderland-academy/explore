@@ -88,3 +88,18 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
 - `school()` in `firestore.rules` now requires a confirmed email, because email/password accounts exist.
   `auth.js` keeps a confirmed family account signed in on other Explore pages without student features.
 - Testing: `lifeskills/?emu` on localhost talks to the Firebase emulators (auth 9099, firestore 8085).
+
+## Staff Guides hub (`/guides/`) and Parent Communication (`/guides/parents/`), added Nov 21, 2026
+- `/guides/` is the one page for guides: cards for Mentor Mindset, Behavior, Life Skills and Parent Communication. Static, `noindex`,
+  not linked from student pages.
+- Every staff page (`/guides/`, `/fieldguide/`, `/behavior/`, `/guides/parents/`) has the same five-tab `.wlguides` menu in its top bar,
+  between `<!--guides-nav-->` markers on the new pages. Change all four together. `/lifeskills/` keeps its own header because
+  students and parents use it too.
+- **Parent Communication** is a writing coach with three modes: newsletters (model stories), customer service (replies to parent
+  questions and concerns) and events. Staff only: admin list, Firestore `staff`, and Ian's three guest addresses (the guest list in `auth.js`, `worker.js`, `fieldguide/app.js`, `guides/parents/app.js` and `firestore.rules`). Guests can open `/fieldguide/`, `/guides/` and `/guides/parents/`, not the Behavior Guide or student sites.
+  It uses the same AI relay. Nothing is saved to Firestore: conversations live in the browser tab (sessionStorage) and clear when it closes.
+- The writing rules are `guides/parents/skill.md`, a verbatim copy of Ian's `wilderland-parent-comms` skill. To update the rules,
+  replace that file with the new SKILL.md. Mode focus, starters, the side checklists and the customer-service additions from the
+  Parent Concern Protocol are in `guides/parents/data.js` (add a CHANGELOG line there when you change it).
+- `relay/worker.js` now allows 3,000 output tokens (was 1,500) and returns `stop` so the coach can say when a reply was cut off.
+  Paste the new worker.js into Cloudflare and Deploy for this to take effect; until then long newsletters may be cut short.
