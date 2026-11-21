@@ -96,7 +96,7 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   between `<!--guides-nav-->` markers on the new pages. Change all four together. `/lifeskills/` keeps its own header because
   students and parents use it too.
 - **Parent Communication** is a writing coach with three modes: newsletters (model stories), customer service (replies to parent
-  questions and concerns) and events. Staff only (admin list plus Firestore `staff`, school accounts only, like the Behavior Guide).
+  questions and concerns) and events. Staff only: admin list, Firestore `staff`, and Ian's three guest addresses (the guest list in `auth.js`, `worker.js`, `fieldguide/app.js`, `guides/parents/app.js` and `firestore.rules`). Guests can open `/fieldguide/`, `/guides/` and `/guides/parents/`, not the Behavior Guide or student sites.
   It uses the same AI relay. Nothing is saved to Firestore: conversations live in the browser tab (sessionStorage) and clear when it closes.
 - The writing rules are `guides/parents/skill.md`, a verbatim copy of Ian's `wilderland-parent-comms` skill. To update the rules,
   replace that file with the new SKILL.md. Mode focus, starters, the side checklists and the customer-service additions from the

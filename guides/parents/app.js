@@ -4,6 +4,8 @@
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import * as D from "./data.js";
 
+// Outside guests (Ian). Keep in step with auth.js, worker.js, fieldguide/app.js and firestore.rules.
+const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const MAX_TURNS = 14;        // most past messages sent back to Claude
 const MAX_CHARS = 60000;     // keeps a request well under the relay's 90,000-character limit
@@ -29,7 +31,7 @@ async function onAuth(u) {
   const seq = ++authSeq; user = u;
   if (!u) return gate("Sign in with your Wilderland account, top right, to open the Parent Communication coach.");
   if (startedFor === u.uid) return;
-  let ok = ADMINS.includes(me());
+  let ok = ADMINS.includes(me()) || GUESTS.includes(me());
   if (!ok) { try { ok = (await getDoc(doc(db, "staff", me()))).exists(); } catch (e) { ok = false; } }
   if (seq !== authSeq) return;
   if (!ok) return gate("This area is for Wilderland guides and staff. If that's you, ask Alex to add your account.");
