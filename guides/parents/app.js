@@ -174,9 +174,10 @@ function draw() {
   box.value = store.get("pc-draft-" + mode, "");
   box.oninput = () => store.set("pc-draft-" + mode, box.value);
   box.onkeydown = e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(); } };
-  const starters = h("div", { class: "starters" }, M.starters.map(([lab, text]) => h("button", { class: "starter" + (text.startsWith("PRACTICE:") ? " prac" : ""), disabled: busy || null, onclick: () => {
-    if (/\n\n$|: $/.test(text)) { box.value = text; store.set("pc-draft-" + mode, text); box.focus(); box.setSelectionRange(text.length, text.length); }
-    else send(text);
+  const starters = h("div", { class: "starters" }, M.starters.map(([lab, text, how]) => h("button", { class: "starter" + (text.startsWith("PRACTICE:") ? " prac" : ""), disabled: busy || null, onclick: () => {
+    if (how === "send") return send(text);
+    const at = text.indexOf("¦"), fill = text.replace("¦", ""), pos = at < 0 ? fill.length : at;
+    box.value = fill; store.set("pc-draft-" + mode, fill); box.focus(); box.setSelectionRange(pos, pos);
   } }, [text.startsWith("PRACTICE:") ? h("i", { text: "Practice" }) : null, lab])));
   const sendBtn = h("button", { class: "send", text: busy ? "Stop" : "Send", onclick: () => busy ? ctrl && ctrl.abort() : send() });
   const composer = h("div", { class: "composer" }, [starters, box, h("div", { class: "crow" }, [
@@ -198,6 +199,11 @@ function draw() {
   log.scrollTop = log.scrollHeight;
   if (!busy && t.length) { const last = log.lastElementChild; if (last && last.classList.contains("a")) last.scrollIntoView({ block: "nearest" }); }
 }
+function hint(t) {
+  document.querySelectorAll(".hint").forEach(x => x.remove());
+  const c = document.querySelector(".composer"); if (!c) return;
+  const n = h("p", { class: "hint", role: "status", text: t }); c.insertBefore(n, c.querySelector("textarea")); setTimeout(() => n.remove(), 5000);
+}
 function placeholder() {
   return { newsletter: "Paste your notes or a draft, or tell me what happened this week…", service: "Paste the parent's message (and your draft reply, if you have one)…", event: "What's the event? Date, time, place, who's going, and anything you're unsure about…" }[mode];
 }
@@ -205,6 +211,9 @@ async function send(text) {
   if (busy) return;
   const box = $("#box"); text = (text ?? (box ? box.value : "")).trim();
   if (!text) { box && box.focus(); return; }
+  // A starter template sent without anything added: say what's missing instead of sending it.
+  const tmpl = D.MODES[mode].starters.find(([, t, how]) => how !== "send" && t.replace("¦", "").replace(/\s+/g, " ").trim() === text.replace(/\s+/g, " ").trim());
+  if (tmpl) { hint(tmpl[0] === "Check my reply" ? "Paste the parent's message and your draft reply into the box first." : "Add your details to the box first, then send."); box && box.focus(); return; }
   const forMode = mode, t = thread().filter(m => !m.err);
   t.push({ role: "user", content: text }); saveThread(t); store.del("pc-draft-" + forMode);
   busy = true; draw();
