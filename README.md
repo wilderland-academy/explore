@@ -92,9 +92,11 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
 ## Staff Guides hub (`/guides/`) and Parent Communication (`/guides/parents/`), added Nov 21, 2026
 - `/guides/` is the one page for guides: cards for Mentor Mindset, Behavior, Life Skills and Parent Communication. Static, `noindex`,
   not linked from student pages.
-- Every staff page (`/guides/`, `/fieldguide/`, `/behavior/`, `/guides/parents/`) has the same five-tab `.wlguides` menu in its top bar,
-  between `<!--guides-nav-->` markers on the new pages. Change all four together. `/lifeskills/` keeps its own header because
-  students and parents use it too.
+- Every staff page (`/guides/`, `/fieldguide/`, `/behavior/`, `/guides/lifeskills/`, `/guides/parents/`) has the same five-tab `.wlguides`
+  menu in its top bar, between `<!--guides-nav-->` markers on the new pages. Change all five together.
+- `/guides/lifeskills/` is the Life Skills tracker inside the staff guides: its own `index.html` with the staff menu on top, running
+  the same `/lifeskills/app.js` and `/lifeskills/styles.css`. `/lifeskills/` stays as is for students and parents. The tracker has
+  its own sign-in, so `/guides/lifeskills/` does not load `auth.js`.
 - **Parent Communication** is a writing coach with three modes: newsletters (model stories), customer service (replies to parent
   questions and concerns) and events. Staff only: admin list, Firestore `staff`, and Ian's three guest addresses (the guest list in `auth.js`, `worker.js`, `fieldguide/app.js`, `guides/parents/app.js` and `firestore.rules`). Guests can open `/fieldguide/`, `/guides/` and `/guides/parents/`, not the Behavior Guide or student sites.
   It uses the same AI relay. Nothing is saved to Firestore: conversations live in the browser tab (sessionStorage) and clear when it closes.
