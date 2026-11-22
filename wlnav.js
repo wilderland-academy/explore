@@ -103,8 +103,8 @@
       (tabs ? '<nav class="wlbar-sites" aria-label="' + esc(site.name) + '">' + tabs + "</nav>" : "") +
       // Search (⌘K / Ctrl+K, or "/"), for everyone: /search.js, loaded on first use.
       '<button type="button" class="wlbar-search" data-wl-search aria-label="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')" title="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="wlbar-search-t">Search</span><kbd>' + (MAC ? "⌘K" : "Ctrl K") + "</kbd></button>" +
-      // The Guide Mentor (🐲) is one click away on every staff page.
-      (key === "guides" ? '<button type="button" class="wlbar-mentor" data-wl-mentor aria-label="Open the Guide Mentor" title="Guide Mentor: ask anything about your work"><span aria-hidden="true">🐲</span><span class="wlbar-mentor-t">Guide Mentor</span></button>' : "") +
+      // Trail Partner (🐲) is one click away on every staff page.
+      (key === "guides" ? '<button type="button" class="wlbar-mentor" data-wl-mentor aria-label="Open Trail Partner" title="Trail Partner: ask anything about your work"><span aria-hidden="true">🐲</span><span class="wlbar-mentor-t">Trail Partner</span></button>' : "") +
       (tester ? '<div class="wlbar-test"><button type="button" class="wlbar-testbtn' + (view ? " on" : "") + '" aria-haspopup="true" aria-expanded="false" title="See the site as a test guide, student or parent"><span aria-hidden="true">🧪</span><span class="wlbar-test-t">' + (view ? "Test " + view.as : "Test view") + "</span></button>" + testMenu() + "</div>" : "") +
       (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-auth" data-wl-auth></span>') + "</div>" + banner();
     // Keep the sign-in chip if it was already mounted.
@@ -173,7 +173,7 @@
     if ((k === "k" && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) || (k === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey)) { e.preventDefault(); window.wlOpenSearch(); }
   });
 
-  // The Guide Mentor lives in /guides/mentor/mentor.js, loaded on first use.
+  // Trail Partner lives in /guides/mentor/mentor.js, loaded on first use.
   window.wlOpenMentor = function (opts) { return import("/guides/mentor/mentor.js").then(function (m) { return opts ? m.open(opts) : m.toggle(); }); };
   document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-wl-mentor]")) { e.preventDefault(); window.wlOpenMentor(); } });
   bar.addEventListener("click", function (e) {

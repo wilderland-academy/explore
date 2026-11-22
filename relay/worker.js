@@ -3,7 +3,7 @@
 //   - Staff tools (Field Guide, Behavior, Parent Comms, Lab builder): any request without mode "coach".
 //   - The student Mr. Fox: requests with mode "coach" (kinds: challenge, project, find-challenge, find-project,
 //     conflict, academic for pilot students only, lesson), and mode "interest" (a student asks to join the academics pilot).
-//   - The Guide Mentor (mode "mentor", staff only): answers from the Staff Handbook and Behavior Policy (Cloudflare KV,
+//   - Trail Partner (mode "mentor", staff only): answers from the Staff Handbook and Behavior Policy (Cloudflare KV,
 //     binding DOCS, never in the public repo) plus the public Field Guide, Our Approach, At Home and Lab builder files.
 //     Mode "doc" (staff only) returns a document from DOCS for the Staff Handbook page.
 //   - Book matching (mode "booktags", any school account): tags an outside book with the Lantern Stacks' own labels. Everything that keeps students safe lives here, on the server,
@@ -515,7 +515,7 @@ async function interest(env, who, token, out, body = {}) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// The Guide Mentor (staff): one AI that knows the Staff Handbook, the Behavior Policy and how Wilderland works.
+// Trail Partner (staff): one AI that knows the Staff Handbook, the Behavior Policy and how Wilderland works.
 // ---------------------------------------------------------------------------------------------------------------
 const MENTOR_PUBLIC = [
   ["Mentor Mindset Field Guide (the coaching moves guides practice)", "/fieldguide/data.js"],
@@ -535,7 +535,7 @@ async function mentorKnowledge(env) {
   }
   return parts.join("\n\n");
 }
-const MENTOR_SYSTEM = `You are the Guide Mentor for Wilderland Academy, a nature-based K-8 microschool in Eden, Utah. You help Wilderland's guides (teachers), admins and team with anything about their work: a behavior situation, a hard conversation with a parent, planning a Life Skill Lab, a policy question, coaching a student, the daily schedule, safety, what the handbook says.
+const MENTOR_SYSTEM = `You are Trail Partner, an AI thinking partner for the guides at Wilderland Academy, a nature-based K-8 microschool in Eden, Utah. Wilderland's guides (teachers), admins and team are experienced educators; talk with them as a capable colleague who is also always learning, never as a supervisor or trainer. Assume they know their students and their craft, ask what they've already tried before suggesting basics, and offer options and evidence rather than verdicts. You help with anything about their work: a behavior situation, a hard conversation with a parent, planning a Life Skill Lab, a policy question, coaching a student, the daily schedule, safety, what the handbook says.
 
 How you answer
 - Ground every answer in Wilderland's own documents below. Say which document and section you're drawing on (for example "Staff Handbook, 18. First Aid and Incident Reporting" or "Behavior Policy, Tiered Behaviors"). If the documents don't cover it, say so plainly, then give your best general advice and label it as such.
@@ -548,7 +548,7 @@ How you answer
 
 async function mentor(env, who, token, staff, body, out) {
   // School staff only (not outside guests): the handbook is internal.
-  if (!staff || !who.email.endsWith(DOMAIN)) return out(403, { error: "The Guide Mentor is for Wilderland staff." });
+  if (!staff || !who.email.endsWith(DOMAIN)) return out(403, { error: "Trail Partner is for Wilderland staff." });
   const messages = Array.isArray(body.messages) ? body.messages.filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string").map(m => ({ role: m.role, content: m.content.slice(0, 20000) })).slice(-30) : [];
   if (!messages.length || messages[messages.length - 1].role !== "user") return out(400, { error: "messages must end with a user turn" });
   const docs = await mentorKnowledge(env);

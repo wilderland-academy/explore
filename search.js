@@ -99,8 +99,8 @@ function build() {
   if (built) return; built = true;
   const k = kind(), r = role() || {}, sites = SITES_FOR[k] || SITES_FOR.anon, test = !!r.test;
   IX.pages = PAGES.filter(p => sites.includes(p[2])).map(([t, u, s, w]) => ({ t, u, sub: { s: "Students", g: "Guides", p: "Parents", h: "Explore" }[s], w }));
-  // Staff: the Guide Mentor, as an action.
-  if (k === "staff") IX.pages.push({ t: "Ask the Guide Mentor 🐲", act: q => window.wlOpenMentor && window.wlOpenMentor(q ? { prefill: q } : undefined), sub: "Guides", w: "mentor ai help question policy" });
+  // Staff: Trail Partner, as an action.
+  if (k === "staff") IX.pages.push({ t: "Ask Trail Partner 🐲", act: q => window.wlOpenMentor && window.wlOpenMentor(q ? { prefill: q } : undefined), sub: "Guides", w: "mentor ai help question policy" });
   // Challenges (students see their own band and older, as on the map).
   job(async () => {
     if (!window.WL) await loadScript("/challenges/data.js");
@@ -233,8 +233,8 @@ function draw() {
     });
   });
   if (words.length && (kind() === "staff") && window.wlOpenMentor) {
-    const i = flat.length; flat.push({ t: "Ask the Guide Mentor", act: () => window.wlOpenMentor({ prefill: q }) });
-    html += `<p class="wls-h">Not finding it?</p><a class="wls-i" role="option" id="wls-o${i}" data-i="${i}" href="#" aria-selected="${i === sel}"><i></i><span><b>Ask the Guide Mentor 🐲: “${esc(q)}”</b><small>Answers from the Staff Handbook, the Behavior Policy and our approach.</small></span></a>`;
+    const i = flat.length; flat.push({ t: "Ask Trail Partner", act: () => window.wlOpenMentor({ prefill: q }) });
+    html += `<p class="wls-h">Not finding it?</p><a class="wls-i" role="option" id="wls-o${i}" data-i="${i}" href="#" aria-selected="${i === sel}"><i></i><span><b>Ask Trail Partner 🐲: “${esc(q)}”</b><small>Answers from the Staff Handbook, the Behavior Policy and our approach.</small></span></a>`;
   }
   if (!flat.length) html = `<p class="wls-empty">${loading ? "Searching…" : "Nothing matches “" + esc(q) + "”. Try fewer or different words."}</p>`;
   if (sel >= flat.length) sel = Math.max(0, flat.length - 1);

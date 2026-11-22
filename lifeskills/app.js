@@ -310,6 +310,25 @@ function signedOut() {
     box.innerHTML = ""; box.append(parentForm(tab, t => { tab = t; draw(); }));
   };
   draw();
+  // On the Parents site the family sign-in comes first: any Google account (most families have one; we don't give
+  // parents school accounts), or an email link or password. Staff sign in with the school account below it.
+  if (PATH === HOMES.parent) return main([
+    head("Life Skills", "Every challenge your child has passed, what they're working on, the Labs coming up, and how to support it all at home."),
+    h("section", { class: "band" }, h("div", { class: "wrap signin" }, [
+      h("div", { class: "panel stack" }, [
+        h("h2", { class: "h", text: "Parents and families" }),
+        h("p", { class: "muted", text: "Sign in with the email address you gave the school. Your child's guide links it to your child." }),
+        h("div", {}, h("button", { class: "btn go gbtn", type: "button", onclick: () => google(false), html: GLOGO + "<span>Continue with Google</span>" })),
+        h("p", { class: "small muted", text: "Any Google account works, like Gmail. No Google account? Use your email instead:" }),
+        tabs, box
+      ]),
+      h("div", { class: "panel" }, [
+        h("h2", { class: "h", text: "Wilderland staff" }),
+        h("p", { class: "muted", text: "Guides and admins: use your Wilderland school account." }),
+        h("div", {}, h("button", { class: "btn", type: "button", onclick: () => google(true), text: "Continue with school Google" }))
+      ])
+    ]))
+  ]);
   main([
     head("Life Skills Tracker", "Every challenge your child has passed, what they're working on, and what to practice next. Guides record each pass the day it happens."),
     h("section", { class: "band" }, h("div", { class: "wrap signin" }, [

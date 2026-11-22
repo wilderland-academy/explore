@@ -33,10 +33,12 @@ function viewFor(u) {
   if (!v || !u || !u.emailVerified || v.by !== em || !TESTERS.includes(em)) return null;
   return { as: v.as, band: ["K–1", "2–4", "5–8"].includes(v.band) ? v.band : "2–4", by: em };
 }
+const ANY_ACCOUNT_PATH = /^\/(parents\/|challenges\/parents\.html|$)/.test(location.pathname);
 const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["My progress", "/challenges/#progress"], ["Projects", "/projects/"]];
 
 const me = document.querySelector('script[src$="auth.js"]');
 const SITE = (me && me.dataset.site) || "";
+const ANY_ACCOUNT = ANY_ACCOUNT_PATH || SITE === "parents" || SITE === "home" || GUEST_SITES.includes(SITE);
 // What each site keeps in the browser. Add a line here when a new site joins.
 const ALLKEYS = { books: ["lantern-stacks"], challenges: ["wl-picks", "wl-band"], projects: ["atlas-sparks", "atlas-me"], store: ["wl-store"] };
 // In a test view only the test student's things are kept (in their own place, testStudents/{uid}/sites/{site}).
@@ -173,9 +175,11 @@ host.addEventListener("click", async e => {
   if (b.dataset.wla === "in") wlSignIn();
 });
 async function wlSignIn() {
-  const p = new GoogleAuthProvider(); p.setCustomParameters(SITE === "fieldguide" ? { prompt: "select_account" } : { hd: DOMAIN, prompt: "select_account" });
+  // Parents (and outside guests) use their own Google accounts, so the Parents pages, the front door and the pages guests
+  // may open offer any Google account. Student and staff pages point Google at the school's accounts.
+  const p = new GoogleAuthProvider(); p.setCustomParameters(ANY_ACCOUNT ? { prompt: "select_account" } : { hd: DOMAIN, prompt: "select_account" });
   try { await signInWithPopup(auth, p); }
-  catch (err) { if (err && err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") msg("Sign-in didn't work. Make sure pop-ups are allowed, and use your @" + DOMAIN + " account."); }
+  catch (err) { if (err && err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") msg("Sign-in didn't work. Make sure pop-ups are allowed" + (ANY_ACCOUNT ? "." : ", and use your @" + DOMAIN + " account.")); }
 }
 window.wlSignIn = wlSignIn;
 // Pages marked <body data-gated> show their content only to signed-in school accounts.

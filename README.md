@@ -295,3 +295,8 @@ the `PAGES` list at the top of `/search.js`.
   guides' notes for home, and challenges they can pass off at home (what they're working on first, then the life skills
   furthest from this year's goal). Staff who open Parents › Life Skills get a **parent preview** (pick any student to see
   their family's view) instead of being sent to the Guides copy.
+- The guides' AI is now **Trail Partner** 🐲 ("Think it through with a fellow guide"). Its instructions treat guides as
+  experienced colleagues: ask what they've tried, offer options and evidence rather than verdicts.
+- **Parents sign in with any Google account.** The Parents pages, the front door and the pages outside guests may open no
+  longer ask Google for a school account; Parents › Life Skills leads with "Continue with Google" for families and keeps
+  school sign-in for staff below it. Student pages still point Google at school accounts.
