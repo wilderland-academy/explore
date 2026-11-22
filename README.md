@@ -118,12 +118,10 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   from the Scorecard, the Challenge System doc and the Valley Builders lab; replace them with Ian's `builder-rules.md` if he wants
   his exact wording (keep the Scorecard and output-order sections, which the page relies on). A "Lab builder" tab appears in the Life
   Skills sub-nav only inside the staff guides. Guests (Ian) can use it.
-- `firestore.rules` has the new `coachLog` rule; publish it in the Firebase console or history saves will fail.
-
-## Epic Life Skill Labs (in the Lab builder), added Nov 21, 2026
-- `guides/lifeskills/builder/epics.js`: four example Epic Labs per band (weeks-long Labs that end in a real, public feat),
+- **Epic Labs** (added later Nov 21): `guides/lifeskills/builder/epics.js` holds four example Epic Labs per band (weeks-long Labs that end in a real, public feat),
   each with its Skill Map abilities, how it meets high standards, high support and high autonomy, Test to Pass, showcase,
   safety and a rough cost. They appear as the first way into the Lab builder ("An epic Lab to adapt"); a guide picks one,
   sets band, time and notes, and the builder writes the full week-by-week plan and scores it. Link straight to one with
   `/guides/lifeskills/builder/?epic=<id>`. Places marked [CONFIRM] still need checking.
 - `rules.txt` now defines Epic Labs and allows multi-week Labs in K–1 (a standard K–1 Lab still fits in one day).
+- `firestore.rules` has the new `coachLog` rule; publish it in the Firebase console or history saves will fail.
