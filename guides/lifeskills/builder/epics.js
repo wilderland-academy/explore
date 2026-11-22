@@ -3,7 +3,7 @@
 // would call impressive. It follows the Workshop Scorecard: high standards (the bar is real and never lowered), high support
 // (skills taught in steps, adults and experts beside them) and high autonomy (students make real decisions and own roles).
 // Inspired by Alpha School, which reports pre-K students building a real treehouse with power tools, swimming long distances
-// and building 1,000-piece sets, and whose published K–1 goals include learning to swim and 5-mile bike races. We have less
+// and building 1,000-piece sets (we have no pool, so swimming isn't an option here), and whose published K–1 goals include learning to swim and 5-mile bike races. We have less
 // money and higher ratios than Alpha, so each option says what support it needs and what it costs, roughly.
 // skills: Skill Map ability ids from /challenges/data.js. Places marked [CONFIRM] haven't been checked yet.
 // cost: "$" uses what we have; "$$" a few hundred dollars; "$$$" over about $1,000 or a paid partner.
@@ -20,16 +20,6 @@ export const EPICS = [
     showcase: "A ribbon cutting for families, with each child giving a 20-second tour of the part they built.",
     safety: "Tool Safety Gate first. Platform kept low (no fall height a child couldn't safely jump from). Clear the rusted metal and old fencing first. Check with our insurance agent before building.",
     cost: "$$", note: "Courtney flagged the current treehouse as hazardous in September, so this fixes a real problem." },
-  { id: "k1-big-swim", band: "K–1", title: "The Big Swim", weeks: "10 weeks (weekly pool sessions)",
-    feat: "Every child swims 4 lengths of a 25-yard pool (100 yards, about 300 feet) without stopping or touching the wall. The stretch goal is 1,000 feet.",
-    skills: ["EN-06", "CG-05", "CG-10"],
-    standards: "Continuous swimming, no noodles or touching the lane rope. A lifeguard who isn't a Wilderland adult times it.",
-    support: "Certified swim instructors teach in small groups by level. Every child gets a written swim-level card and a clear next step each week.",
-    autonomy: "Each child sets their own distance goal for the week and logs it on the crew's swim chart; kids choose which stroke to train.",
-    test: "300 feet continuous, witnessed by the lifeguard. Kids who pass early train for 1,000 feet.",
-    showcase: "A swim meet where families line the deck and every child swims their distance, announced by name.",
-    safety: "Lifeguarded pool only. Water competency check first. Swim-level cards decide who swims where.",
-    cost: "$$$", note: "Needs a pool partner and instructors: [CONFIRM: pool and price]. Alpha's published K–1 goals include learning to swim." },
   { id: "k1-five-mile-ride", band: "K–1", title: "Five-Mile Ride", weeks: "6–8 weeks",
     feat: "Every child rides 5 miles on a real route, including those who start the Lab unable to ride without training wheels.",
     skills: ["EN-03", "EN-05", "CG-04", "SG-06"],
@@ -107,7 +97,7 @@ export const EPICS = [
   { id: "g58-boat", band: "5–8", title: "Build a Boat, Cross the Reservoir", weeks: "10–12 weeks",
     feat: "Students build working small boats (for example skin-on-frame kayaks or a plywood rowboat) and paddle them across Pineview Reservoir.",
     skills: ["AI-06", "EN-06", "FE-11", "CG-04"],
-    standards: "Every boat passes a float and swamp test in a pool before it touches open water.",
+    standards: "Every boat passes a float and swamp test in shallow water at the shore, with adults in the water, before it goes out.",
     support: "A boatbuilder or woodworker mentor; jigs and templates; build in teams of three or four with an adult per team on tool days.",
     autonomy: "Teams choose the design, name and finish, plan the build schedule, and plan the crossing route with the adults.",
     test: "Each team's boat passes the float test, and each student paddles their share of the crossing in their PFD.",

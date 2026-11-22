@@ -118,7 +118,7 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   from the Scorecard, the Challenge System doc and the Valley Builders lab; replace them with Ian's `builder-rules.md` if he wants
   his exact wording (keep the Scorecard and output-order sections, which the page relies on). A "Lab builder" tab appears in the Life
   Skills sub-nav only inside the staff guides. Guests (Ian) can use it.
-- **Epic Labs** (added later Nov 21): `guides/lifeskills/builder/epics.js` holds four example Epic Labs per band (weeks-long Labs that end in a real, public feat),
+- **Epic Labs** (added later Nov 21): `guides/lifeskills/builder/epics.js` holds example Epic Labs for each band (three for K–1, four for 2–4 and 5–8) (weeks-long Labs that end in a real, public feat),
   each with its Skill Map abilities, how it meets high standards, high support and high autonomy, Test to Pass, showcase,
   safety and a rough cost. They appear as the first way into the Lab builder ("An epic Lab to adapt"); a guide picks one,
   sets band, time and notes, and the builder writes the full week-by-week plan and scores it. Link straight to one with
