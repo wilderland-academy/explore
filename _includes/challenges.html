@@ -13,19 +13,21 @@
 <link rel="stylesheet" href="/wl.css">
 </head>
 <body data-site="{{ include.site }}">
-<div class="wlbar" data-wlnav="{{ include.site }}" data-current="challenges"{% if include.site == "parents" %} data-auth="off"{% endif %}></div><script src="/wlnav.js"></script>
+<div class="wlbar" data-wlnav="{{ include.site }}" data-current="{% if include.site == "students" %}challenges{% else %}lifeskills{% endif %}"{% if include.site == "parents" %} data-auth="off"{% endif %}></div><script src="/wlnav.js"></script>
 <a class="skip" href="#tree">Skip to challenges</a>
 
 <header class="nav">
   <div class="nav-inner">
-    <a class="brand wl-title" href="{% if include.site == "students" %}/challenges/{% else %}/{{ include.site }}/challenges/{% endif %}">Life Skills Challenges</a>
+{% if include.site == "students" %}    <a class="brand wl-title" href="/challenges/">Life Skills Challenges</a>
     <nav class="nav-links" aria-label="On this site">
       <a class="wide" href="#explore-title">Challenges</a>
       <a class="wide" href="#how-title">How it works</a>
-{% if include.site == "students" %}      <a href="#progress">My progress</a>
+      <a href="#progress">My progress</a>
       <a href="#crew">Crew</a>
-{% else %}      <a href="/challenges/parents.html">Passing off at home</a>
-{% endif %}    </nav>
+    </nav>
+{% else %}    <a class="brand wl-title" href="/{{ include.site }}/lifeskills/">Life Skills</a>
+    <nav class="nav-links" aria-label="Life Skills" data-ls-subnav="{{ include.site }}" data-current="challenges"></nav><script src="/lifeskills/subnav.js"></script>
+{% endif %}
 {% if include.site == "students" %}    <button class="btn-lime" type="button" data-open-picks><span class="lbl">My plan</span> <span class="count picks-count">0</span></button>
 {% endif %}  </div>
 </header>
@@ -231,6 +233,7 @@
 <script src="/challenges/data.js"></script>
 <script src="/challenges/ai.js"></script>
 <script src="/challenges/app.js"></script>
+<script src="/challenges/modal.js"></script>
 {% if include.site == "students" %}<script type="module" src="/challenges/progress.js"></script>
 <script type="module" src="/coach/coach.js"></script>
 {% endif %}<script type="module" src="/auth.js" data-site="{% if include.site == "parents" %}parents{% else %}challenges{% endif %}"></script>

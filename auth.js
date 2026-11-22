@@ -219,7 +219,7 @@ async function findRole(u, em) {
 }
 // Staff on the Guides site: how many AI Coach alerts are open, for the badge on the "Students" tab.
 async function countAlerts(u) {
-  if (!document.querySelector('[data-wlnav="guides"]') || location.pathname.startsWith("/guides/students/")) return;
+  if (!document.querySelector('[data-wlnav="guides"]') || location.pathname.startsWith("/guides/roster/")) return;
   try {
     const r = await fetch(`${FS}:runQuery`, { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" },
       body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "aiAlerts" }], where: { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "open" } } }, limit: 100 } }) });

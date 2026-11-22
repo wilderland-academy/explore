@@ -470,3 +470,6 @@ main{max-width:1180px;margin:0 auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
 }
 .progress .wrap{padding-left:0;padding-right:0;max-width:none}
 .coach-starts{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+/* Guides and Parents: the Life Skills sub-menu (/lifeskills/subnav.js) looks the same as on the tracker pages. */
+.nav-links[data-ls-subnav] a{padding:6px 12px;border-radius:8px}
+.nav-links[data-ls-subnav] a[aria-current="page"]{color:#121213;background:#d5f367;text-decoration:none}

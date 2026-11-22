@@ -442,6 +442,7 @@
     detail.querySelector('.d-close').focus();
   }
   detail.addEventListener('close', function () {
+    if (detail.dataset.wlcKeep) return; // closed only to move it beside the AI Coach
     if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
   });
 
@@ -583,7 +584,8 @@
     }
     if (t.dataset.pick) { setPick(t.dataset.pick, picks.indexOf(t.dataset.pick) < 0); return; }
     if (t.dataset.unpick) { setPick(t.dataset.unpick, false); return; }
-    if (t.dataset.coach) { if (detail.open) detail.close(); openCoach(t.dataset.coach, t.dataset.say); return; }
+    // The challenge stays open: the coach opens beside it (coach/coach.js moves the sheet next to the panel).
+    if (t.dataset.coach) { openCoach(t.dataset.coach, t.dataset.say); return; }
     if (t.dataset.open) { if (picksDlg.open) picksDlg.close(); openDetail(t.dataset.open); return; }
     if (t.hasAttribute('data-close')) { t.closest('dialog').close(); return; }
     if (t.hasAttribute('data-open-picks')) { lastFocus = t; renderPicks(); picksDlg.showModal(); return; }
@@ -654,9 +656,14 @@
   try { var rc = JSON.parse(localStorage.getItem('wl-role') || 'null'); if (rc && rc.r === 'student') setLock(rc.b); } catch (e) {}
   document.addEventListener('wl-role', function (e) {
     if (!setLock(lockFrom(e.detail))) return;
-    if (detail.open) detail.close();
+    // Keep an open challenge open (a link straight to it, say) if it's still in the student's bands: refresh it in
+    // place rather than closing and reopening it.
+    var was = detail.open && detail.querySelector('[data-cid]') ? detail.querySelector('[data-cid]').getAttribute('data-cid') : null;
+    var keep = was && BYID[was] && bandOpen(BYID[was].b);
+    if (detail.open && !keep) detail.close();
     if (state.skill && !state.sub && !window.matchMedia('(max-width:820px)').matches) state.sub = (structure()[state.skill].subs[0] || null);
     renderAll();
+    if (keep) openDetail(was);
   });
 
   // ---------- hooks for progress.js ----------
@@ -666,9 +673,25 @@
     setStatus: function (m, hooks) { status = m || {}; statusHooks = hooks || null; renderTree(); renderSearch(); if (detail.open) { var t = detail.querySelector('[data-cid]'); if (t) openDetail(t.getAttribute('data-cid')); } }
   };
 
+  // ---------- a link straight to one challenge: #c=EN-03.2 (from challenge links anywhere on Explore) ----------
+  function fromChallengeHash() {
+    var m = /^#c=([A-Za-z0-9.\-]+)$/.exec(location.hash);
+    if (!m || !BYID[decodeURIComponent(m[1])]) return;
+    var id = decodeURIComponent(m[1]);
+    // The #c= link stays in the address while the sheet is open (the first sign-in on a Chromebook reloads the page
+    // once, and the link has to survive that); closing the sheet clears it.
+    setTimeout(function () { openDetail(id); }, 0);
+  }
+  detail.addEventListener('close', function () {
+    if (detail.dataset.wlcKeep || !/^#c=/.test(location.hash)) return;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  });
+  window.addEventListener('hashchange', fromChallengeHash);
+
   // ---------- start ----------
   state.skill = 'EN';
   if (!window.matchMedia('(max-width:820px)').matches) state.sub = S.EN.subs[0] || null;
   else state.skill = null;
   renderAll();
+  fromChallengeHash();
 })();

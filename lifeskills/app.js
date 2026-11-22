@@ -1,12 +1,14 @@
 // Life Skills Tracker (explore.wilderland.academy/lifeskills/)
 // Three views on one page, picked by who signs in:
-//   guides and admins (school account on the staff list): every student, log passes, match parents
+//   guides and admins (school account on the staff list): band overview (passed or saved), log passes, the Labs
+//     schedule. Students and parents are added on the Student Roster (/guides/roster/).
 //   students (school account a guide has added): their own record, and the crew board
-//   parents (any verified email a guide has matched to a child): their own children only
+//   parents (any verified email a guide has matched to a child): their own children only, and the Labs schedule
 // Data (Firestore, rules in /firestore.rules):
 //   lsStudents/{sid}            name, band, grade, email, guide, parents[], celebrated   (private)
 //   lsStudents/{sid}/entries/*  one pass or not yet each                                 (private)
 //   lsBoard/{sid}               short name, band, working[], passed[]                     (all school accounts)
+//   labs/{id}                   the Life Skill Labs schedule                              (staff; linked parents)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -14,7 +16,7 @@ import {
   signOut, onAuthStateChanged, connectAuthEmulator
 } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection, query, where, writeBatch, connectFirestoreEmulator
+  getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection, collectionGroup, query, where, writeBatch, connectFirestoreEmulator
 } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 
 const CONFIG = {
@@ -37,6 +39,8 @@ const PATH = location.pathname.startsWith("/guides/lifeskills") ? HOMES.staff : 
 const BASE = PATH + (EMU ? "?emu" : "");
 const HOME = location.origin + BASE;
 const LINK_KEY = "wl-ls-link-email";
+// Each site's own copy of the challenge map, for challenge links.
+const CHMAP = PATH === HOMES.staff ? "/guides/challenges/" : PATH === HOMES.parent ? "/parents/challenges/" : "/challenges/";
 
 const app = initializeApp(CONFIG);
 const auth = getAuth(app);
@@ -66,7 +70,7 @@ function h(tag, a, kids) {
     const v = a[k]; if (v == null || v === false) continue;
     if (k === "text") e.textContent = v; else if (k === "html") e.innerHTML = v;
     else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
-    else if (k === "style" && typeof v === "object") Object.assign(e.style, v);
+    else if (k === "style" && typeof v === "object") Object.entries(v).forEach(([p, x]) => p.startsWith("--") ? e.style.setProperty(p, x) : e.style[p] = x);
     else e.setAttribute(k, v === true ? "" : v);
   }
   (Array.isArray(kids) ? kids : kids == null ? [] : [kids]).flat().forEach(c => { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c)); });
@@ -98,7 +102,7 @@ const errText = e => {
 };
 
 // ---------- state ----------
-const S = { user: null, email: "", role: null, admin: false, students: {}, entries: {}, boards: {}, mine: [] };
+const S = { user: null, email: "", role: null, admin: false, students: {}, entries: {}, boards: {}, mine: [], saved: {}, labs: null, parentBands: [] };
 
 // ---------- records: everything a view needs, worked out from a student's entries ----------
 function summary(sid) {
@@ -135,6 +139,7 @@ async function loadAll() {
     snap.forEach(d => S.students[d.id] = { id: d.id, ...d.data() });
     await Promise.all(Object.keys(S.students).map(loadEntries));
     const b = await getDocs(collection(db, "lsBoard")); b.forEach(d => S.boards[d.id] = { id: d.id, ...d.data() });
+    await loadSaved();
   } else if (S.role === "student") {
     const snap = await getDocs(query(collection(db, "lsStudents"), where("email", "==", S.email)));
     snap.forEach(d => { S.students[d.id] = { id: d.id, ...d.data() }; S.mine.push(d.id); });
@@ -150,6 +155,28 @@ async function loadAll() {
     }));
   }
 }
+// What each student saved to their Challenges plan (students/{uid}/sites/challenges, written by /auth.js; staff can
+// read them all, see firestore.rules). Matched to tracker records by school email. S.saved[sid] = [challenge ids].
+async function loadSaved() {
+  S.saved = {};
+  try {
+    const bySchool = {}; Object.values(S.students).forEach(s => { if (s.email) bySchool[s.email.toLowerCase()] = s.id; });
+    const snap = await getDocs(collectionGroup(db, "sites"));
+    snap.forEach(d => {
+      if (d.id !== "challenges") return;
+      const x = d.data(), sid = bySchool[String(x.email || "").toLowerCase()]; if (!sid) return;
+      let picks = []; try { picks = JSON.parse(JSON.parse(x.data || "{}")["wl-picks"] || "[]"); } catch (e) { picks = []; }
+      S.saved[sid] = [...new Set(picks.filter(c => BYID[c]))];
+    });
+  } catch (e) { console.warn("Life Skills: couldn't read saved challenges", e); S.saved = null; }
+}
+// Saved challenges for one student, grouped by life skill, leaving out ones they've already passed.
+function savedBySkill(sid) {
+  const passed = new Set(summary(sid).passes.map(p => p.cid)), out = {};
+  ((S.saved || {})[sid] || []).filter(c => !passed.has(c)).forEach(c => { const k = (skillOf(c) || {}).k; if (k) (out[k] = out[k] || []).push(c); });
+  return out;
+}
+
 // The crew board copy of a student's passes, rebuilt from their entries after every change.
 function boardDoc(sid) {
   const s = S.students[sid], sum = summary(sid), old = S.boards[sid] || {};
@@ -189,10 +216,16 @@ async function finishEmailLink() {
 function main(kids) { const m = $("#app"); m.innerHTML = ""; m.append(...[kids].flat().filter(Boolean)); }
 const head = (title, sub) => h("div", { class: "wrap page-head" }, [h("h1", { text: title }), sub ? h("p", { text: sub }) : null]);
 function navLinks(items) {
+  // Items are [id, label, href]. A link to a view on this same page (PATH#view) becomes a plain #view link.
+  items = items.map(([id, label, href]) => [id, label, href && href.startsWith(PATH + "#") ? "" : href]);
   const cur = location.hash.slice(1).split("=")[0] || items[0][0];
   const nav = $("#links"); nav.innerHTML = "";
   items.forEach(([id, label, href]) => nav.append(h("a", { href: href || "#" + id, text: label, "aria-current": !href && cur === id ? "page" : null })));
 }
+// The Life Skills menu for this site, from /lifeskills/subnav.js (one list for every Life Skills page).
+const SUBNAV = window.WLSubnav || { guides: [["overview", "Overview", "/guides/lifeskills/#overview"]], parents: [] };
+// Student records and parent links are edited on the Student Roster (/guides/roster/).
+const ROSTER = "/guides/roster/";
 let menuOpen = false;
 function acct() {
   const box = $("#acct"); box.innerHTML = "";
@@ -295,6 +328,12 @@ function unverified() {
 
 // ---------- shared pieces ----------
 function chTitle(cid) { const c = BYID[cid]; return c ? c.t : cid + " (no longer in the challenge list)"; }
+// A challenge's title as a link that opens the challenge in a modal over this page (/challenges/modal.js).
+function chLink(cid, text) {
+  const t = text == null ? chTitle(cid) : text;
+  if (!BYID[cid]) return t;
+  return h("a", { class: "wl-ch", href: CHMAP + "#c=" + encodeURIComponent(cid), "data-wl-ch": cid, text: t });
+}
 function chMeta(cid) { const c = BYID[cid], sk = skillOf(cid); return [sk ? sk.n : "", cid, c && c.z === "Epic" ? "Epic" : ""].filter(Boolean).join(", "); }
 function picker(opts) {
   // A search box for challenges. opts.band narrows the list; opts.onpick(cid)
@@ -327,7 +366,7 @@ function workingList(sid, editable) {
   const wrap = h("div", { class: "stack" });
   const ul = h("div", { class: "items" });
   if (!list.length) wrap.append(h("p", { class: "empty", text: editable ? "Nothing yet. Add up to 3 challenges you're working on so your crew can see." : "Nothing listed right now." }));
-  list.forEach(c => ul.append(h("div", { class: "item" }, [h("span", { class: "bar", style: { background: colOf(c) } }), h("div", {}, [h("div", { class: "meta", text: chMeta(c) }), h("div", { class: "t", text: chTitle(c) })]),
+  list.forEach(c => ul.append(h("div", { class: "item" }, [h("span", { class: "bar", style: { background: colOf(c) } }), h("div", {}, [h("div", { class: "meta", text: chMeta(c) }), h("div", { class: "t" }, chLink(c))]),
     editable ? h("button", { class: "btn danger", type: "button", text: "Remove", "aria-label": "Remove " + c, onclick: () => setWorking(sid, list.filter(x => x !== c)) }) : h("span")])));
   if (list.length) wrap.append(ul);
   if (editable) {
@@ -368,13 +407,13 @@ function record(sid, opts = {}) {
         (sum.nextRank && sum.nextRank[0] === sum.milestone + 4 ? `Next: ${sum.nextRank[1]} at ${sum.nextRank[0]}. ` : `Next milestone at ${sum.milestone + 4}` + (sum.nextRank ? `, then ${sum.nextRank[1]} at ${sum.nextRank[0]}. ` : ". ")) + "Every 4 credits is a milestone, celebrated at Honor Court."]);
   const staffBits = opts.staff ? h("div", { class: "row noprint" }, [
     h("a", { class: "btn go", href: "#log=" + sid, text: "Log a challenge" }),
-    h("a", { class: "btn", href: "#roster=" + sid, text: "Edit student and parents" }),
+    h("a", { class: "btn", href: ROSTER + "#edit=" + encodeURIComponent(sid), text: "Edit student and parents" }),
     sum.newMilestone ? h("button", { class: "btn", type: "button", text: `Mark milestone ${sum.milestone} celebrated`, onclick: async () => { try { await updateDoc(doc(db, "lsStudents", sid), { celebrated: sum.milestone }); s.celebrated = sum.milestone; toast("Marked. It drops off the new milestones list."); route(); } catch (e) { toast(errText(e)); } } }) : null
   ]) : null;
   const entryRow = (e, kind) => {
     const sk = skillOf(e.cid), c = BYID[e.cid];
     const kids = [h("div", { class: "meta" }, [h("b", { text: fmt(e.date) }), ", " + (sk ? sk.n : e.cid) + ", " + (kind === "pass" ? ((e.credits || (c || {}).cr || 1) > 1 ? "Epic, 2 credits" : "1 credit") : "not yet")]),
-      h("div", { class: "t", text: chTitle(e.cid) })];
+      h("div", { class: "t" }, chLink(e.cid))];
     if (kind === "pass" && e.note) kids.push(h("div", { class: "gnote", text: (e.byName ? e.byName + ": " : "") + e.note }));
     if (kind === "notyet") kids.push(h("dl", { class: "ny" }, [h("dt", { text: "Missing" }), h("dd", { text: e.missing || "—" }), h("dt", { text: "Practice" }), h("dd", { text: e.practice || "—" }), h("dt", { text: "Retry" }), h("dd", { text: e.retry ? "On or after " + fmt(e.retry) : "Any day you're ready" })]));
     let confirm = false;
@@ -398,6 +437,7 @@ function record(sid, opts = {}) {
     ])),
     h("section", { class: "band tint" }, h("div", { class: "wrap stack" }, [
       h("h2", { class: "h", text: "Working on" }), workingList(sid, opts.self),
+      opts.staff ? savedPanel(sid) : null,
       sum.notyets.length ? h("h2", { class: "h", style: { marginTop: "12px" }, text: "Not yet, with what to practice" }) : null,
       sum.notyets.length ? h("div", { class: "items" }, sum.notyets.map(e => entryRow(e, "notyet"))) : null
     ])),
@@ -409,42 +449,136 @@ function record(sid, opts = {}) {
   ]);
 }
 
+// Staff view of one student: what they saved to their Challenges plan, by life skill.
+function savedPanel(sid) {
+  const by = savedBySkill(sid), n = Object.values(by).reduce((a, l) => a + l.length, 0);
+  return h("div", { class: "stack" }, [h("h2", { class: "h", style: { marginTop: "12px" }, text: `Saved to their plan (${n})` }),
+    n ? h("div", { class: "grid2" }, W.skills.filter(k => by[k.k]).map(k => h("div", { class: "panel" }, [h("p", { class: "sklbl", style: { color: k.col }, text: k.n }), savedList(by[k.k])])))
+      : h("p", { class: "empty", text: S.saved === null ? "Couldn't read saved challenges." : "Nothing saved (or they haven't signed in on Challenges yet)." })]);
+}
+
 // ---------- guides: band overview ----------
-let ovBand = "2–4", ovFilter = "all";
+// Two ways to read it: credits passed this year per life skill, or challenges saved to each student's plan (saved/goal).
+// Wide screens with a mouse get a table where pointing at a saved count lists those challenges; phones and touch
+// screens get one card per student with each life skill as a tap-to-open row, so nothing depends on hover.
+let ovBand = "2–4", ovFilter = "all", ovShow = "passed";
+const NOHOVER = matchMedia("(max-width:760px), (hover:none)");
+NOHOVER.addEventListener("change", () => { if (S.role === "staff" && (location.hash.slice(1).split("=")[0] || "overview") === "overview") route(); });
+function savedList(cids) {
+  return h("ul", { class: "svl" }, cids.map(c => h("li", {}, [h("i", { style: { background: colOf(c) } }), chLink(c)])));
+}
+// One floating list for the table's saved counts: opens on hover or keyboard focus, stays open on click (pinned),
+// and stays open while the pointer is over it so its links can be clicked.
+let pop = null, popFor = null, popPinned = false, popT = 0;
+function popShow(btn, pin) {
+  if (!pop) {
+    pop = h("div", { class: "svpop", role: "dialog", "aria-modal": "false" });
+    pop.addEventListener("mouseenter", () => clearTimeout(popT));
+    pop.addEventListener("mouseleave", () => { if (!popPinned) popT = setTimeout(popHide, 200); });
+    document.body.append(pop);
+  }
+  clearTimeout(popT);
+  popFor = btn; popPinned = !!pin;
+  const sid = btn.getAttribute("data-sid"), k = btn.getAttribute("data-k"), s = S.students[sid], list = savedBySkill(sid)[k] || [];
+  pop.innerHTML = "";
+  pop.setAttribute("aria-label", `${s.name}: saved ${SKILL[k].n} challenges`);
+  pop.append(h("p", { class: "svh" }, [h("b", { text: firstName(s.name) }), ` · ${SKILL[k].n} · ${list.length} saved, goal ${goalFor(s.band)} this year`]),
+    list.length ? savedList(list) : h("p", { class: "small muted", text: "Nothing saved in this life skill yet." }));
+  const r = btn.getBoundingClientRect();
+  pop.hidden = false;
+  const w = pop.offsetWidth, left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+  const below = r.bottom + 8 + pop.offsetHeight < innerHeight;
+  pop.style.left = left + scrollX + "px";
+  pop.style.top = (below ? r.bottom + 8 : r.top - pop.offsetHeight - 8) + scrollY + "px";
+  document.querySelectorAll(".svb[aria-expanded=true]").forEach(x => x.setAttribute("aria-expanded", "false"));
+  btn.setAttribute("aria-expanded", "true");
+}
+function popHide() { if (!pop) return; pop.hidden = true; popPinned = false; if (popFor) popFor.setAttribute("aria-expanded", "false"); popFor = null; }
+document.addEventListener("mouseover", e => { const b = e.target.closest && e.target.closest(".svb"); if (b && !NOHOVER.matches && !popPinned) popShow(b); });
+document.addEventListener("mouseout", e => { const b = e.target.closest && e.target.closest(".svb"); if (b && !popPinned && !(e.relatedTarget && pop && pop.contains(e.relatedTarget))) popT = setTimeout(popHide, 200); });
+document.addEventListener("focusin", e => { const b = e.target.closest && e.target.closest(".svb"); if (b) popShow(b, popPinned); else if (pop && !pop.contains(e.target) && !popPinned) popHide(); });
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest(".svb");
+  if (b) { if (popFor === b && popPinned) popHide(); else popShow(b, true); return; }
+  if (pop && !pop.hidden && !pop.contains(e.target)) popHide();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && pop && !pop.hidden) { const f = popFor; popHide(); if (f) f.focus(); } });
+addEventListener("hashchange", popHide);
+addEventListener("scroll", () => { if (pop && !pop.hidden && !popPinned) popHide(); }, { passive: true });
+
 function overview() {
+  popHide();
   const all = Object.values(S.students).sort((a, b) => a.name.localeCompare(b.name));
   const inBand = all.filter(s => ovBand === "All" || s.band === ovBand);
   const sums = Object.fromEntries(inBand.map(s => [s.id, summary(s.id)]));
+  const saves = Object.fromEntries(inBand.map(s => [s.id, savedBySkill(s.id)]));
   const stale = inBand.filter(s => daysAgo(sums[s.id].last) > 21);
   const open = inBand.filter(s => sums[s.id].notyets.length);
   const fresh = inBand.filter(s => sums[s.id].newMilestone);
-  const rows = { all: inBand, stale, open, fresh }[ovFilter];
+  // Students whose plan doesn't cover the year goal yet in at least one life skill (passed + saved < goal).
+  const thin = inBand.filter(s => W.skills.some(k => (sums[s.id].per[k.k] || 0) + (saves[s.id][k.k] || []).length < goalFor(s.band)));
+  const rows = { all: inBand, stale, open, fresh, thin }[ovFilter] || inBand;
   const chip = (id, label) => h("button", { class: "chip", type: "button", "aria-pressed": String(ovFilter === id), text: label, onclick: () => { ovFilter = id; route(); } });
   const bandChip = b => h("button", { class: "chip", type: "button", "aria-pressed": String(ovBand === b), text: b === "All" ? "All bands" : "Grades " + b, onclick: () => { ovBand = b; route(); } });
+  const showChip = (id, label) => h("button", { class: "chip", type: "button", "aria-pressed": String(ovShow === id), text: label, onclick: () => { ovShow = id; route(); } });
   const goal = goalFor(ovBand);
-  const table = h("table", { class: "ov" }, [
-    h("caption", { class: "small muted", style: { textAlign: "left", padding: "14px 18px 4px" }, text: `Credits this school year per life skill. A filled circle means the year goal of ${ovBand === "All" ? "2 (3 in K–1)" : goal} is met.` }),
-    h("thead", {}, h("tr", {}, [h("th", { scope: "col", text: "Student" }), ...W.skills.map(k => h("th", { scope: "col", title: k.n, style: { borderTopColor: k.col }, text: SHORT[k.k] })),
-      h("th", { scope: "col", text: "This year" }), h("th", { scope: "col", text: "Trail" }), h("th", { scope: "col", style: { textAlign: "left" }, text: "Last pass" })])),
-    h("tbody", {}, rows.map(s => {
+  const savedView = ovShow === "saved";
+  const noSaves = S.saved === null;
+  const cell = (s, k) => {
+    const m = sums[s.id], g = goalFor(s.band);
+    if (!savedView) { const v = m.per[k.k] || 0; return h("span", { class: "cnt " + (v >= g ? "g" : v ? "o" : "z"), style: v >= g ? { background: k.col } : v ? { color: k.col } : {} }, h("span", { style: v && v < g ? { color: "var(--ink)" } : {}, text: String(v) })); }
+    const n = (saves[s.id][k.k] || []).length;
+    return h("button", { type: "button", class: "svb" + (n >= g ? " met" : n ? " some" : ""), style: { "--c": k.col }, "data-sid": s.id, "data-k": k.k, "aria-expanded": "false", "aria-haspopup": "dialog",
+      "aria-label": `${s.name}, ${k.n}: ${n} saved, goal ${g}. Show the saved challenges.` }, `${n}/${g}`);
+  };
+  let body;
+  if (!all.length) body = h("div", { class: "panel" }, [h("p", { text: "No students yet. Add your crew first, with each student's school email and their parents' emails." }), h("div", {}, h("a", { class: "btn go", href: ROSTER + "#add", text: "Add students" }))]);
+  else if (NOHOVER.matches) {
+    // Phones and touch screens: a card per student; each life skill opens to show its challenges.
+    body = h("div", { class: "ovcards" }, rows.map(s => {
       const m = sums[s.id], g = goalFor(s.band);
-      return h("tr", {}, [h("th", { scope: "row", style: { textAlign: "left", paddingLeft: "18px" } }, [h("a", { class: "stu", href: "#s=" + s.id, text: s.name }), m.newMilestone ? h("span", { class: "tag forest", style: { marginLeft: "8px" }, text: "Milestone " + m.milestone }) : null]),
-        ...W.skills.map(k => { const v = m.per[k.k] || 0; return h("td", {}, h("span", { class: "cnt " + (v >= g ? "g" : v ? "o" : "z"), style: v >= g ? { background: k.col } : v ? { color: k.col } : {} }, h("span", { style: v && v < g ? { color: "var(--ink)" } : {}, text: String(v) }))); }),
-        h("td", { style: { fontWeight: 700 }, text: String(m.year) }), h("td", { text: s.band === "K–1" ? "—" : m.trail + (m.rank ? " · " + m.rank : "") }),
-        h("td", { style: { textAlign: "left" }, class: daysAgo(m.last) > 21 ? "stale" : "", text: m.last ? fmt(m.last) : "None yet" })]);
-    }))
-  ]);
+      return h("article", { class: "ovcard" }, [
+        h("div", { class: "row", style: { justifyContent: "space-between" } }, [h("a", { class: "stu", href: "#s=" + s.id, text: s.name }), h("span", { class: "small muted", text: (s.band === "K–1" ? m.year + " passed" : m.trail + " credits") + " · last pass " + (m.last ? fmt(m.last) : "none") })]),
+        h("div", { class: "ovskills" }, W.skills.map(k => {
+          const passed = m.per[k.k] || 0, saved = saves[s.id][k.k] || [], n = savedView ? saved.length : passed;
+          const kids = savedView ? (saved.length ? savedList(saved) : h("p", { class: "small muted", text: "Nothing saved here yet." }))
+            : (m.passes.filter(p => (skillOf(p.cid) || {}).k === k.k && (p.date || "") >= yearStart()).length ? savedList(m.passes.filter(p => (skillOf(p.cid) || {}).k === k.k && (p.date || "") >= yearStart()).map(p => p.cid)) : h("p", { class: "small muted", text: "No passes this year yet." }));
+          return h("details", { class: "ovsk", style: { "--c": k.col } }, [h("summary", {}, [h("i"), h("span", { text: k.n }), h("b", { class: n >= g ? "met" : "", text: `${n}/${g}` })]), kids]);
+        }))
+      ]);
+    }));
+  } else {
+    const table = h("table", { class: "ov" }, [
+      h("caption", { class: "small muted", style: { textAlign: "left", padding: "14px 18px 4px" }, text: savedView
+        ? `Challenges each student has saved to their plan in each life skill (not yet passed), out of the year goal of ${ovBand === "All" ? "2 (3 in K–1)" : goal}. Point at or tap a count to see which ones.`
+        : `Credits this school year per life skill. A filled circle means the year goal of ${ovBand === "All" ? "2 (3 in K–1)" : goal} is met.` }),
+      h("thead", {}, h("tr", {}, [h("th", { scope: "col", text: "Student" }), ...W.skills.map(k => h("th", { scope: "col", title: k.n, style: { borderTopColor: k.col }, text: SHORT[k.k] })),
+        h("th", { scope: "col", text: savedView ? "Saved" : "This year" }), h("th", { scope: "col", text: "Trail" }), h("th", { scope: "col", style: { textAlign: "left" }, text: "Last pass" })])),
+      h("tbody", {}, rows.map(s => {
+        const m = sums[s.id];
+        return h("tr", {}, [h("th", { scope: "row", style: { textAlign: "left", paddingLeft: "18px" } }, [h("a", { class: "stu", href: "#s=" + s.id, text: s.name }), m.newMilestone ? h("span", { class: "tag forest", style: { marginLeft: "8px" }, text: "Milestone " + m.milestone }) : null]),
+          ...W.skills.map(k => h("td", {}, cell(s, k))),
+          h("td", { style: { fontWeight: 700 }, text: String(savedView ? Object.values(saves[s.id]).reduce((n, l) => n + l.length, 0) : m.year) }), h("td", { text: s.band === "K–1" ? "—" : m.trail + (m.rank ? " · " + m.rank : "") }),
+          h("td", { style: { textAlign: "left" }, class: daysAgo(m.last) > 21 ? "stale" : "", text: m.last ? fmt(m.last) : "None yet" })]);
+      }))
+    ]);
+    body = h("div", { class: "tablewrap" }, table);
+  }
   const said = [];
   if (stale.length) said.push(`${stale.map(s => firstName(s.name)).join(", ")} ${stale.length === 1 ? "hasn't" : "haven't"} passed a challenge in 3 weeks. Bring it up in this week's coaching: what are they working on, and what's in the way?`);
   if (fresh.length) said.push(`${fresh.map(s => firstName(s.name)).join(", ")} reached a new milestone. Call them up at the next Honor Court.`);
+  if (savedView && thin.length) said.push(`${thin.length} of ${inBand.length} students haven't passed or saved enough challenges to reach the year goal in every life skill. Use "Plan short of the goal" to find them.`);
   return h("div", {}, [
-    head("Band overview", "Who's moving, who's stuck, and who to celebrate."),
+    head("Band overview", "Who's moving, who's stuck, who to celebrate, and what each student has saved to their plan."),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
       h("div", { class: "row" }, ["All", ...BANDS].map(bandChip)),
-      h("div", { class: "row" }, [chip("all", `All ${inBand.length} students`), chip("stale", `No pass in 3 weeks (${stale.length})`), chip("open", `Open not yets (${open.length})`), chip("fresh", `New milestones (${fresh.length})`),
+      h("div", { class: "row", role: "group", "aria-label": "Show" }, [h("span", { class: "small muted", text: "Show:" }), showChip("passed", "Passed this year"), showChip("saved", "Saved to plan")]),
+      h("div", { class: "row" }, [chip("all", `All ${inBand.length} students`), chip("stale", `No pass in 3 weeks (${stale.length})`), chip("open", `Open not yets (${open.length})`), chip("fresh", `New milestones (${fresh.length})`), chip("thin", `Plan short of the goal (${thin.length})`),
         h("a", { class: "btn go", href: "#log", style: { marginLeft: "auto" }, text: "Log a challenge" })]),
-      all.length ? h("div", { class: "tablewrap" }, table) : h("div", { class: "panel" }, [h("p", { text: "No students yet. Add your crew first, with each student's school email and their parents' emails." }), h("div", {}, h("a", { class: "btn go", href: "#roster", text: "Add students" }))]),
+      savedView && noSaves ? h("p", { class: "note err", text: "Couldn't read students' saved challenges. The database rules may need publishing (see firestore.rules)." }) : null,
+      body,
       rows.length || !all.length ? null : h("p", { class: "empty", text: "No students match." }),
+      savedView ? h("p", { class: "small muted", text: "Saved challenges come from each student's Challenges plan when they're signed in with their school account. K–1 students and anyone who hasn't signed in show 0." }) : null,
       said.length ? h("div", { class: "stack" }, said.map(t => h("p", { class: "muted", text: t }))) : null
     ]))
   ]);
@@ -453,7 +587,7 @@ function overview() {
 // ---------- guides: log a pass or a not yet ----------
 function logView(pre) {
   const all = Object.values(S.students).sort((a, b) => a.name.localeCompare(b.name));
-  if (!all.length) return h("div", {}, [head("Log a challenge"), h("div", { class: "wrap" }, h("div", { class: "panel" }, [h("p", { text: "Add students to your crew first." }), h("div", {}, h("a", { class: "btn go", href: "#roster", text: "Add students" }))]))]);
+  if (!all.length) return h("div", {}, [head("Log a challenge"), h("div", { class: "wrap" }, h("div", { class: "panel" }, [h("p", { text: "Add students to your crew first, on the Student Roster." }), h("div", {}, h("a", { class: "btn go", href: ROSTER + "#add", text: "Add students" }))]))]);
   let sid = pre && S.students[pre] ? pre : "", cid = "", result = "pass";
   const sel = h("select", { class: "in", id: "ls" }, [h("option", { value: "", text: "Choose a student" }), ...BANDS.map(b => { const ss = all.filter(s => s.band === b); return ss.length ? h("optgroup", { label: "Grades " + b }, ss.map(s => h("option", { value: s.id, text: s.name, selected: s.id === sid }))) : null; })]);
   const chosen = h("div");
@@ -514,143 +648,234 @@ function logView(pre) {
 }
 
 // ---------- guides: students and parent matching ----------
-function rosterView(editId) {
-  const all = Object.values(S.students).sort((a, b) => a.band.localeCompare(b.band) || a.name.localeCompare(b.name));
-  const s = editId && S.students[editId] ? S.students[editId] : null;
-  const f = {
-    name: h("input", { class: "in", id: "rn", value: s ? s.name : "", maxlength: "60", autocomplete: "off" }),
-    band: h("select", { class: "in", id: "rb" }, BANDS.map(b => h("option", { value: b, text: "Grades " + b, selected: s ? s.band === b : b === "2–4" }))),
-    grade: h("input", { class: "in", id: "rg", value: s ? s.grade || "" : "", maxlength: "2", placeholder: "3" }),
-    email: h("input", { class: "in", id: "re", type: "email", value: s ? s.email || "" : "", placeholder: "maya@wilderland.academy" }),
-    guide: h("input", { class: "in", id: "rgd", value: s ? s.guide || "" : S.email, placeholder: "april@wilderland.academy, shanan@wilderland.academy" }),
-    parents: h("textarea", { class: "in", id: "rp", placeholder: "one email per line", text: s ? (s.parents || []).join("\n") : "" })
-  };
-  const note = h("p", { class: "note", "aria-live": "polite" });
-  const save = async () => {
-    note.className = "note err";
-    const name = f.name.value.trim().replace(/\s+/g, " "), email = f.email.value.trim().toLowerCase(), guide = emails(f.guide.value).join(", "), parents = emails(f.parents.value);
-    if (name.length < 2) { note.textContent = "Add the student's full name."; return; }
-    if (email && !email.endsWith(DOMAIN)) { note.textContent = "The student email must be their @wilderland.academy account (or leave it blank for K–1)."; return; }
-    if (emails(guide).some(g => !g.endsWith(DOMAIN))) { note.textContent = "Field Guide emails must be @wilderland.academy accounts."; return; }
-    const bad = parents.filter(p => !isEmail(p)); if (bad.length) { note.textContent = "Check these parent emails: " + bad.join(", "); return; }
-    if (parents.some(p => p.endsWith(DOMAIN) && !ADMINS.includes(p))) { note.textContent = "Use each parent's personal email, not a school account."; return; }
-    if (email && all.some(x => x.email === email && x.id !== (s && s.id))) { note.textContent = "Another student already has that email."; return; }
-    const data = { name, band: f.band.value, grade: f.grade.value.trim(), email, guide, parents, updated: Date.now(), updatedBy: S.email };
-    try {
-      const ref = s ? doc(db, "lsStudents", s.id) : doc(collection(db, "lsStudents"));
-      const batch = writeBatch(db);
-      if (s) batch.update(ref, data); else batch.set(ref, { ...data, celebrated: 0, created: Date.now() });
-      S.students[ref.id] = { ...(s || { celebrated: 0 }), ...data, id: ref.id };
-      if (!S.entries[ref.id]) S.entries[ref.id] = [];
-      const b = boardDoc(ref.id); batch.set(doc(db, "lsBoard", ref.id), b);
-      await batch.commit(); S.boards[ref.id] = { id: ref.id, ...b };
-      toast(s ? "Saved." : `Added ${firstName(name)}.`); location.hash = s ? "#s=" + ref.id : "#roster";
-      if (!s) route();
-    } catch (x) { note.textContent = errText(x); }
-  };
-  let confirmDel = false;
-  const form = h("div", { class: "panel stack" }, [
-    h("h2", { class: "h", text: s ? "Edit " + s.name : "Add a student" }),
-    h("div", { class: "grid2" }, [h("label", { class: "f", for: "rn" }, ["Full name", f.name]), h("div", { class: "row", style: { alignItems: "flex-end" } }, [h("label", { class: "f", for: "rb", style: { flex: "1" } }, ["Band", f.band]), h("label", { class: "f", for: "rg", style: { width: "90px" } }, ["Grade", f.grade])])]),
-    h("div", { class: "grid2" }, [h("label", { class: "f", for: "re" }, [h("span", {}, ["Student's school email ", h("span", { class: "hint", text: "(lets them sign in; optional for K–1)" })]), f.email]), h("label", { class: "f", for: "rgd" }, [h("span", {}, ["Field Guides ", h("span", { class: "hint", text: "(school emails, separated by commas)" })]), f.guide])]),
-    h("label", { class: "f", for: "rp" }, [h("span", {}, ["Parent emails ", h("span", { class: "hint", text: "One per line. Each parent signs in with this exact email and sees only this child." })]), f.parents]),
-    h("div", { class: "row" }, [h("button", { class: "btn go", type: "button", text: s ? "Save" : "Add student", onclick: save }), s ? h("a", { class: "btn plain", href: "#roster", text: "Cancel" }) : null,
-      s && S.admin ? h("button", { class: "btn danger", type: "button", style: { marginLeft: "auto" }, text: "Delete student", onclick: async ev => {
-        if (!confirmDel) { confirmDel = true; ev.target.textContent = "Delete " + s.name + " and every record? Click again."; return; }
-        try { for (const e of S.entries[s.id] || []) await deleteDoc(doc(db, "lsStudents", s.id, "entries", e.id)); await deleteDoc(doc(db, "lsBoard", s.id)); await deleteDoc(doc(db, "lsStudents", s.id)); delete S.students[s.id]; toast("Deleted."); location.hash = "#roster"; }
-        catch (x) { note.className = "note err"; note.textContent = errText(x); }
-      } }) : null]),
-    note
-  ]);
+// Adding and editing students, linking parents and CSV import moved to the Student Roster (/guides/roster/app.js).
+
+// ---------- Life Skill Labs schedule ----------
+// Guides add and edit Labs; parents see the Labs for their children's grade bands, with any notes and files on how to
+// support the Lab at home. Data: labs/{id} in Firestore (rules in /firestore.rules), files in Firebase Storage under
+// labs/{id}/ (rules in /storage.rules). Parents can read Labs only once a guide has linked them to a child
+// (lsParents/{email}, kept in step by the Student Roster).
+const STORAGE_SDK = "https://www.gstatic.com/firebasejs/13.3.0/firebase-storage.js";
+const MAX_FILE = 20 * 1024 * 1024;
+let calMonth = null, calBand = "All";
+const todayISO = () => today();
+const labEnd = l => l.endDate && l.endDate >= l.date ? l.endDate : l.date;
+const labOn = (l, iso) => l.date <= iso && labEnd(l) >= iso;
+const timeTxt = t => { if (!t) return ""; const [hh, mm] = t.split(":").map(Number); const d = new Date(2000, 0, 1, hh, mm); return d.toLocaleTimeString("en-US", { hour: "numeric", minute: mm ? "2-digit" : undefined }); };
+const whenTxt = l => {
+  const d = fmt(l.date) + (l.endDate && l.endDate > l.date ? " to " + fmt(l.endDate) : "");
+  const wd = new Date(l.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" });
+  return wd + ", " + d + (l.start ? " · " + timeTxt(l.start) + (l.end ? "–" + timeTxt(l.end) : "") : "");
+};
+const sizeTxt = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+async function loadLabs(force) {
+  if (S.labs && !force) return S.labs;
+  const snap = await getDocs(collection(db, "labs"));
+  S.labs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.start || "").localeCompare(b.start || ""));
+  return S.labs;
+}
+// Which bands a parent's view shows: their children's.
+function myBands() { const b = new Set(S.mine.map(id => (S.students[id] || {}).band)); return BANDS.filter(x => b.has(x)); }
+function childrenIn(band) { return S.mine.filter(id => (S.students[id] || {}).band === band).map(id => firstName(S.students[id].name)); }
+function labsFor(staff) {
+  const bands = staff ? (calBand === "All" ? BANDS : [calBand]) : myBands();
+  return (S.labs || []).filter(l => (l.bands || []).some(b => bands.includes(b)));
+}
+
+function scheduleView(arg, staff) {
+  const box = h("div", {}, h("p", { class: "loading", text: "Loading the schedule…" }));
+  loadLabs().then(() => {
+    box.innerHTML = "";
+    if (staff && arg === "new") box.append(labForm(null));
+    else if (staff && arg && arg.startsWith("edit.")) { const l = S.labs.find(x => x.id === arg.slice(5)); box.append(l ? labForm(l) : notFound()); }
+    else if (arg) { const l = S.labs.find(x => x.id === arg); box.append(l ? labDetail(l, staff) : notFound()); }
+    else box.append(calendar(staff));
+  }).catch(e => {
+    box.innerHTML = "";
+    box.append(head("Labs schedule"), h("div", { class: "wrap" }, h("p", { class: "empty", text: e.code === "permission-denied"
+      ? (staff ? "The database rules for the Labs schedule aren't published yet. Paste firestore.rules into the Firebase console." : "Your account isn't linked to a child yet, or the school hasn't finished setting up the schedule. Ask your child's guide.")
+      : "Couldn't load the schedule. Check your connection and reload." })));
+  });
+  return box;
+}
+const notFound = () => h("div", {}, [head("Lab not found"), h("div", { class: "wrap" }, h("a", { class: "btn", href: "#schedule", text: "Back to the schedule" }))]);
+
+function calendar(staff) {
+  const now = todayISO();
+  if (!calMonth) calMonth = now.slice(0, 7);
+  const [y, m] = calMonth.split("-").map(Number);
+  const first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate(), lead = first.getDay();
+  const list = labsFor(staff);
+  const iso = d => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const move = n => { const d = new Date(y, m - 1 + n, 1); calMonth = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); route(); };
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push(h("div", { class: "cal-d out", "aria-hidden": "true" }));
+  for (let d = 1; d <= days; d++) {
+    const on = list.filter(l => labOn(l, iso(d)));
+    cells.push(h("div", { class: "cal-d" + (iso(d) === now ? " today" : "") + (on.length ? " has" : "") }, [h("span", { class: "n", text: String(d) }),
+      ...on.slice(0, 3).map(l => h("a", { class: "cal-ev", href: "#schedule=" + l.id, style: { "--c": bandCol(l) }, title: l.title, text: (l.start && l.date === iso(d) ? timeTxt(l.start) + " " : "") + l.title })),
+      on.length > 3 ? h("span", { class: "small muted", text: `+${on.length - 3} more` }) : null]));
+  }
+  const monthName = first.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const inMonth = list.filter(l => l.date.slice(0, 7) <= calMonth && labEnd(l).slice(0, 7) >= calMonth);
+  const upcoming = list.filter(l => labEnd(l) >= now), past = list.filter(l => labEnd(l) < now).reverse();
+  const bands = staff ? ["All", ...BANDS] : null;
+  const kids = staff ? null : myBands();
   return h("div", {}, [
-    head("Students and parents", "Only guides and admins can link a parent to a child. A parent sees a child's record only after you add their email here, and only after they confirm that email."),
-    h("section", { class: "band" }, h("div", { class: "wrap stack" }, [form, s ? null : importPanel()])),
+    h("div", { class: "wrap page-head" }, h("div", { class: "who" }, [
+      h("div", {}, [h("h1", { text: "Life Skill Labs" }), h("p", { text: staff ? "The guide-led Labs for every band. Add a Lab, attach anything parents could use to support it at home, and families see it on their Life Skills page." : `Labs your ${S.mine.length > 1 ? "children are" : "child is"} doing at school${kids.length ? " (grades " + kids.join(", ") + ")" : ""}, and how you can support them at home if you'd like to.` })]),
+      staff ? h("div", { class: "row noprint" }, h("a", { class: "btn go", href: "#schedule=new", text: "Add a Lab" })) : null
+    ])),
+    h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
+      bands ? h("div", { class: "row" }, bands.map(b => h("button", { class: "chip", type: "button", "aria-pressed": String(calBand === b), text: b === "All" ? "All bands" : "Grades " + b, onclick: () => { calBand = b; route(); } }))) : null,
+      h("div", { class: "cal-head" }, [h("button", { class: "btn plain", type: "button", "aria-label": "Previous month", text: "←", onclick: () => move(-1) }), h("h2", { class: "h", text: monthName }), h("button", { class: "btn plain", type: "button", "aria-label": "Next month", text: "→", onclick: () => move(1) }),
+        calMonth !== now.slice(0, 7) ? h("button", { class: "btn plain", type: "button", text: "This month", onclick: () => { calMonth = now.slice(0, 7); route(); } }) : null]),
+      // Month grid on wide screens; on phones the list for the month below is the calendar.
+      h("div", { class: "cal", role: "presentation" }, [...["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => h("div", { class: "cal-w", text: d })), ...cells]),
+      h("div", { class: "cal-list" }, [h("h3", { class: "h", text: "In " + first.toLocaleDateString("en-US", { month: "long" }) }), inMonth.length ? h("div", { class: "items" }, inMonth.map(l => labRow(l, staff))) : h("p", { class: "empty", text: "No Labs this month." })])
+    ])),
     h("section", { class: "band tint" }, h("div", { class: "wrap stack" }, [
-      h("h2", { class: "h", text: `All students (${all.length})` }),
-      all.length ? h("div", { class: "items" }, all.map(x => h("div", { class: "item" }, [h("span", { class: "bar", style: { background: "var(--forest)" } }),
-        h("div", {}, [h("div", { class: "t" }, h("a", { href: "#s=" + x.id, text: x.name })), h("div", { class: "meta", text: [`Grades ${x.band}${x.grade ? ", grade " + x.grade : ""}`, x.email || "no student sign-in", (x.parents || []).length ? "Parents: " + x.parents.join(", ") : "No parents linked"].join(" · ") })]),
-        h("a", { class: "btn", href: "#roster=" + x.id, text: "Edit" })]))) : h("p", { class: "empty", text: "No students yet." })
+      h("h2", { class: "h", text: `Coming up (${upcoming.length})` }),
+      upcoming.length ? h("div", { class: "items" }, upcoming.slice(0, 30).map(l => labRow(l, staff))) : h("p", { class: "empty", text: staff ? "Nothing scheduled yet. Add the first Lab." : "Nothing scheduled yet. Check back soon." }),
+      past.length ? h("details", {}, [h("summary", { class: "small", text: `Past Labs (${past.length})` }), h("div", { class: "items", style: { marginTop: "10px" } }, past.slice(0, 60).map(l => labRow(l, staff)))]) : null
+    ]))
+  ]);
+}
+function bandCol(l) { const b = (l.bands || [])[0]; return b === "K–1" ? "#356B33" : b === "2–4" ? "#2F5D8A" : b === "5–8" ? "#6E4382" : "#015640"; }
+function labRow(l, staff) {
+  const extras = [(l.files || []).length + (l.links || []).length ? `${(l.files || []).length + (l.links || []).length} file${(l.files || []).length + (l.links || []).length === 1 ? "" : "s"} or link${(l.files || []).length + (l.links || []).length === 1 ? "" : "s"} for home` : "", l.home ? "home notes" : ""].filter(Boolean);
+  return h("div", { class: "item" }, [h("span", { class: "bar", style: { background: bandCol(l) } }),
+    h("div", {}, [h("div", { class: "meta" }, [h("b", { text: whenTxt(l) }), " · grades " + (l.bands || []).join(", ") + (l.where ? " · " + l.where : "")]),
+      h("div", { class: "t" }, h("a", { href: "#schedule=" + l.id, text: l.title })),
+      !staff ? h("div", { class: "small muted", text: (l.bands || []).flatMap(childrenIn).filter((x, i, a) => a.indexOf(x) === i).join(", ") }) : null,
+      extras.length ? h("div", { class: "small muted", text: extras.join(" · ") }) : null]),
+    staff ? h("a", { class: "btn", href: "#schedule=edit." + l.id, text: "Edit" }) : h("span")]);
+}
+function labDetail(l, staff) {
+  const files = l.files || [], links = l.links || [];
+  return h("div", {}, [
+    h("div", { class: "wrap page-head" }, [h("p", { class: "small" }, h("a", { href: "#schedule", text: "← Labs schedule" })),
+      h("div", { class: "who" }, [h("div", {}, [h("h1", { text: l.title }), h("p", { text: [whenTxt(l), "Grades " + (l.bands || []).join(", "), l.where, l.guides ? "With " + l.guides : ""].filter(Boolean).join(" · ") })]),
+        staff ? h("div", { class: "row noprint" }, h("a", { class: "btn go", href: "#schedule=edit." + l.id, text: "Edit this Lab" })) : null])]),
+    h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
+      l.about ? h("div", { class: "panel" }, [h("h2", { class: "h", text: "What we'll do" }), h("p", { class: "pre", text: l.about })]) : null,
+      (l.challenges || []).length ? h("div", { class: "panel" }, [h("h2", { class: "h", text: "Challenges in this Lab" }), savedList(l.challenges.filter(c => BYID[c])),
+        h("p", { class: "small muted", text: "Tap a challenge to see its standard, steps and how it's shown." })]) : null,
+      h("div", { class: "panel home-support" }, [h("h2", { class: "h", text: "Supporting it at home" }),
+        l.home ? h("p", { class: "pre", text: l.home }) : h("p", { class: "muted", text: "Nothing extra needed at home for this one." }),
+        files.length || links.length ? h("ul", { class: "files" }, [
+          ...files.map(f => h("li", {}, [h("a", { href: f.url, target: "_blank", rel: "noopener", text: f.name }), h("span", { class: "small muted", text: " · " + sizeTxt(f.size || 0) })])),
+          ...links.map(k => h("li", {}, h("a", { href: k.url, target: "_blank", rel: "noopener", text: k.label || k.url })))]) : null,
+        staff ? null : h("p", { class: "small muted", text: "All of this is optional. Questions? Ask your child's guide." })])
     ]))
   ]);
 }
 
-// ---------- guides: import many students at once from a CSV ----------
-// Columns (header row required): name, grade, band, student_email, parent_emails (separated by ; or spaces).
-// A student who is already here (same school email, or same name) is updated: band and grade from the file,
-// their email if they had none, and the parent emails added to the ones already linked. Nobody is removed.
-function parseCSV(text) {
-  const rows = []; let row = [], cell = "", q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) { if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
-    else if (c === '"') q = true; else if (c === ",") { row.push(cell); cell = ""; }
-    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
-    else cell += c;
-  }
-  if (cell || row.length) { row.push(cell); rows.push(row); }
-  return rows.filter(r => r.some(x => x.trim()));
-}
-function importPanel() {
-  const file = h("input", { type: "file", id: "imf", accept: ".csv,text/csv", class: "in" });
-  const out = h("div", { class: "stack" }), note = h("p", { class: "note", "aria-live": "polite" });
-  let plan = [];
-  file.addEventListener("change", async () => {
-    out.innerHTML = ""; note.className = "note"; note.textContent = ""; plan = [];
-    const f = file.files[0]; if (!f) return;
-    const rows = parseCSV(await f.text()); const hd = (rows.shift() || []).map(x => x.trim().toLowerCase());
-    const col = k => hd.indexOf(k);
-    if (col("name") < 0 || col("band") < 0) { note.className = "note err"; note.textContent = "The file needs a header row with at least name and band."; return; }
-    const all = Object.values(S.students), bad = [];
-    rows.forEach((r, i) => {
-      const get = k => col(k) < 0 ? "" : String(r[col(k)] || "").trim();
-      const name = get("name").replace(/\s+/g, " "), band = get("band").replace("-", "–"), email = get("student_email").toLowerCase(), parents = emails(get("parent_emails")), guides = emails(get("guides"));
-      const why = [];
-      if (name.length < 2 || name.length > 60) why.push("name");
-      if (!BANDS.includes(band)) why.push("band");
-      if (email && !email.endsWith(DOMAIN)) why.push("student email");
-      if (parents.some(p => !isEmail(p) || p.endsWith(DOMAIN))) why.push("a parent email");
-      if (guides.some(g => !g.endsWith(DOMAIN))) why.push("a guide email");
-      if (why.length) { bad.push(`Row ${i + 2} (${name || "no name"}): check ${why.join(", ")}`); return; }
-      const ex = all.find(x => (email && x.email === email) || x.name.toLowerCase() === name.toLowerCase());
-      const merged = ex ? [...new Set([...(ex.parents || []), ...parents])] : parents;
-      if (merged.length > 6) { bad.push(`Row ${i + 2} (${name}): more than 6 parent emails`); return; }
-      plan.push({ ex, guide: guides.length ? guides.join(", ") : null, name, band, grade: get("grade"), email: ex && ex.email ? ex.email : email, parents: merged, added: merged.length - (ex ? (ex.parents || []).length : 0) });
+function labForm(l) {
+  const isNew = !l; l = l || { bands: [], challenges: [], files: [], links: [] };
+  const id = isNew ? doc(collection(db, "labs")).id : l.id;
+  const f = {
+    title: h("input", { class: "in", id: "lt", maxlength: "120", value: l.title || "", placeholder: "Fire-building Lab" }),
+    date: h("input", { class: "in", id: "ld", type: "date", value: l.date || "" }),
+    endDate: h("input", { class: "in", id: "le2", type: "date", value: l.endDate || "" }),
+    start: h("input", { class: "in", id: "ls1", type: "time", value: l.start || "" }),
+    end: h("input", { class: "in", id: "ls2", type: "time", value: l.end || "" }),
+    where: h("input", { class: "in", id: "lw", maxlength: "120", value: l.where || "", placeholder: "Back field, or Eden Park" }),
+    guides: h("input", { class: "in", id: "lg", maxlength: "160", value: l.guides != null ? l.guides : firstName(S.user.displayName || ""), placeholder: "April and Shanan" }),
+    about: h("textarea", { class: "in", id: "la", maxlength: "3000", rows: "5", text: l.about || "", placeholder: "What students will do and practice." }),
+    home: h("textarea", { class: "in", id: "lh", maxlength: "3000", rows: "5", text: l.home || "", placeholder: "Optional. What parents can do at home: questions to ask, something to practice together, what to pack." })
+  };
+  const bands = BANDS.map(b => { const c = h("input", { type: "checkbox", value: b, checked: (l.bands || []).includes(b) }); return [b, c]; });
+  let chs = (l.challenges || []).slice(), files = (l.files || []).slice(), links = (l.links || []).map(x => ({ ...x })), adds = [], drops = [];
+  const chBox = h("div", { class: "stack" }), fileBox = h("div", { class: "stack" }), linkBox = h("div", { class: "stack" });
+  const drawCh = () => { chBox.innerHTML = ""; if (chs.length) chBox.append(h("div", { class: "items" }, chs.map(c => h("div", { class: "item" }, [h("span", { class: "bar", style: { background: colOf(c) } }), h("div", {}, [h("div", { class: "meta", text: chMeta(c) }), h("div", { class: "t" }, chLink(c))]), h("button", { class: "btn danger", type: "button", text: "Remove", onclick: () => { chs = chs.filter(x => x !== c); drawCh(); } })])))); if (chs.length < 8) chBox.append(picker({ id: "lch", band: () => { const b = bands.filter(x => x[1].checked).map(x => x[0]); return b.length === 1 ? b[0] : null; }, onpick: c => { if (!chs.includes(c)) chs.push(c); drawCh(); } })); };
+  const drawFiles = () => {
+    fileBox.innerHTML = "";
+    const rows = [...files.map((x, i) => h("li", {}, [h("a", { href: x.url, target: "_blank", rel: "noopener", text: x.name }), h("span", { class: "small muted", text: " · " + sizeTxt(x.size || 0) + " " }), h("button", { class: "btn plain", type: "button", text: "Remove", onclick: () => { drops.push(x); files.splice(i, 1); drawFiles(); } })])),
+      ...adds.map((x, i) => h("li", {}, [h("span", { text: x.name }), h("span", { class: "small muted", text: " · " + sizeTxt(x.size) + " · uploads when you save " }), h("button", { class: "btn plain", type: "button", text: "Remove", onclick: () => { adds.splice(i, 1); drawFiles(); } })]))];
+    if (rows.length) fileBox.append(h("ul", { class: "files" }, rows));
+    const inp = h("input", { type: "file", multiple: true, class: "in", id: "lf" });
+    inp.addEventListener("change", () => { [...inp.files].forEach(x => { if (x.size > MAX_FILE) toast(`${x.name} is over 20 MB. Share it as a Google Drive link instead.`); else adds.push(x); }); drawFiles(); });
+    fileBox.append(h("label", { class: "f", for: "lf" }, [h("span", {}, ["Attach files ", h("span", { class: "hint", text: "(PDFs, photos, documents; up to 20 MB each)" })]), inp]));
+  };
+  const drawLinks = () => {
+    linkBox.innerHTML = "";
+    links.forEach((k, i) => {
+      const lab = h("input", { class: "in", value: k.label || "", placeholder: "What it is", "aria-label": "Link name", oninput: e => { k.label = e.target.value; } });
+      const url = h("input", { class: "in", type: "url", value: k.url || "", placeholder: "https://docs.google.com/…", "aria-label": "Link address", oninput: e => { k.url = e.target.value.trim(); } });
+      linkBox.append(h("div", { class: "row linkrow" }, [lab, url, h("button", { class: "btn plain", type: "button", text: "Remove", onclick: () => { links.splice(i, 1); drawLinks(); } })]));
     });
-    const dupe = plan.filter((p, i) => p.email && plan.findIndex(q => q.email === p.email) !== i);
-    dupe.forEach(p => bad.push(`${p.name}: ${p.email} is used twice in the file`));
-    if (dupe.length) plan = [];
-    if (bad.length) out.append(h("div", { class: "panel sun" }, [h("p", { text: "Fix these rows, then choose the file again:" }), h("ul", {}, bad.map(b => h("li", { class: "small", text: b })))]));
-    if (!plan.length) return;
-    const nNew = plan.filter(p => !p.ex).length;
-    out.append(h("p", { text: `${nNew} new student${nNew === 1 ? "" : "s"}, ${plan.length - nNew} already here (updated), ${plan.reduce((n, p) => n + Math.max(0, p.added), 0)} parent links to add.` }),
-      h("div", { class: "tablewrap" }, h("table", { class: "ov", style: { minWidth: "760px" } }, [
-        h("thead", {}, h("tr", {}, ["", "Student", "Band", "Student email", "Parents", "Guides"].map(t => h("th", { scope: "col", style: { textAlign: "left" }, text: t })))),
-        h("tbody", {}, plan.map(p => h("tr", {}, [h("td", { style: { textAlign: "left" } }, h("span", { class: "tag" + (p.ex ? "" : " forest"), text: p.ex ? "Update" : "New" })), h("td", { style: { textAlign: "left" }, text: p.name }), h("td", { style: { textAlign: "left" }, text: p.band }), h("td", { style: { textAlign: "left" }, text: p.email || "none" }), h("td", { style: { textAlign: "left" }, class: "small", text: p.parents.join(", ") || "none" }), h("td", { style: { textAlign: "left" }, class: "small", text: p.guide || (p.ex && p.ex.guide) || "none" })])))
-      ])),
-      h("div", {}, h("button", { class: "btn go", type: "button", text: `Import ${plan.length} students`, onclick: async ev => {
-        ev.target.disabled = true; note.className = "note"; note.textContent = "Saving…";
-        try {
-          for (let i = 0; i < plan.length; i += 200) {
-            const batch = writeBatch(db);
-            plan.slice(i, i + 200).forEach(p => {
-              const ref = p.ex ? doc(db, "lsStudents", p.ex.id) : doc(collection(db, "lsStudents"));
-              const data = { name: p.ex ? p.ex.name : p.name, band: p.band, grade: p.grade, email: p.email, parents: p.parents, updated: Date.now(), updatedBy: S.email };
-              if (p.guide !== null) data.guide = p.guide;
-              if (p.ex) batch.update(ref, data); else batch.set(ref, { guide: "", ...data, celebrated: 0, created: Date.now() });
-              S.students[ref.id] = { ...(p.ex || { guide: "", celebrated: 0 }), ...data, id: ref.id };
-              if (!S.entries[ref.id]) S.entries[ref.id] = [];
-              const b = boardDoc(ref.id); batch.set(doc(db, "lsBoard", ref.id), b); S.boards[ref.id] = { id: ref.id, ...b };
-            });
-            await batch.commit();
-          }
-          toast(`Imported ${plan.length} students.`); route();
-        } catch (x) { ev.target.disabled = false; note.className = "note err"; note.textContent = errText(x) + " Nothing after the last saved group was changed; choose the file again to finish."; }
-      } })), note);
-  });
-  return h("div", { class: "panel stack" }, [
-    h("h2", { class: "h", text: "Import from a spreadsheet" }),
-    h("p", { class: "small muted", text: "A CSV with a header row: name, grade, band (K–1, 2–4 or 5–8), student_email, parent_emails and guides (separate several emails with ;). Students already here are matched by school email or name and get the new parent emails added. Nothing is removed. You'll see every row before anything saves." }),
-    h("label", { class: "f", for: "imf" }, ["CSV file", file]), out, note
+    if (links.length < 8) linkBox.append(h("div", {}, h("button", { class: "btn", type: "button", text: "Add a link", onclick: () => { links.push({ label: "", url: "" }); drawLinks(); } })));
+  };
+  drawCh(); drawFiles(); drawLinks();
+  const note = h("p", { class: "note", "aria-live": "polite" });
+  const say = (t, c) => { note.className = "note " + (c || ""); note.textContent = t; };
+  const save = async ev => {
+    const title = f.title.value.trim().replace(/\s+/g, " "), date = f.date.value, endDate = f.endDate.value, picked = bands.filter(x => x[1].checked).map(x => x[0]);
+    if (title.length < 3) return say("Give the Lab a name.", "err");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return say("Pick the date.", "err");
+    if (endDate && endDate < date) return say("The last day is before the first day.", "err");
+    if (!picked.length) return say("Pick at least one grade band.", "err");
+    if (f.start.value && f.end.value && f.end.value <= f.start.value) return say("The end time is before the start time.", "err");
+    const okLinks = links.filter(k => k.url || k.label);
+    if (okLinks.some(k => !/^https:\/\/[^\s]+\.[^\s]+/.test(k.url))) return say("Each link needs a full address starting with https://", "err");
+    ev.target.disabled = true;
+    try {
+      let uploaded = [];
+      if (adds.length || drops.length) {
+        say(adds.length ? `Uploading ${adds.length} file${adds.length === 1 ? "" : "s"}…` : "Saving…");
+        const st = await import(STORAGE_SDK), store = st.getStorage(app);
+        if (EMU && !store._wlEmu) { st.connectStorageEmulator(store, "127.0.0.1", 9199); store._wlEmu = true; }
+        for (const x of adds) {
+          const path = `labs/${id}/${Date.now()}-${x.name.replace(/[^\w.\- ]+/g, "_").slice(0, 80)}`;
+          const r = st.ref(store, path);
+          await st.uploadBytes(r, x, { contentType: x.type || "application/octet-stream" });
+          uploaded.push({ name: x.name.slice(0, 120), path, size: x.size, type: x.type || "", url: await st.getDownloadURL(r) });
+        }
+        for (const x of drops) { try { await st.deleteObject(st.ref(store, x.path)); } catch (e) { /* already gone */ } }
+      }
+      say("Saving…");
+      const data = { title, date, endDate: endDate && endDate > date ? endDate : "", start: f.start.value, end: f.end.value, bands: picked, where: f.where.value.trim(), guides: f.guides.value.trim(),
+        about: f.about.value.trim(), home: f.home.value.trim(), challenges: chs.slice(0, 8), files: files.concat(uploaded), links: okLinks.map(k => ({ label: (k.label || "").trim().slice(0, 80), url: k.url.slice(0, 500) })),
+        updated: Date.now(), updatedBy: S.email, ...(isNew ? { created: Date.now(), createdBy: S.email } : {}) };
+      await setDoc(doc(db, "labs", id), data, { merge: !isNew });
+      S.labs = null; toast(isNew ? "Lab added. Parents in those bands can see it now." : "Saved."); location.hash = "#schedule=" + id;
+    } catch (e) {
+      ev.target.disabled = false;
+      const c = String(e.code || "");
+      say(c.startsWith("storage/") ? "Couldn't upload the files. File storage may not be switched on for the school's Firebase project yet (it needs the Blaze plan). Use a Google Drive link for now, and tell Alex." : errText(e), "err");
+    }
+  };
+  let confirmDel = false;
+  const del = isNew ? null : h("button", { class: "btn danger", type: "button", style: { marginLeft: "auto" }, text: "Delete this Lab", onclick: async ev => {
+    if (!confirmDel) { confirmDel = true; ev.target.textContent = "Delete it for everyone? Click again."; return; }
+    try {
+      if ((l.files || []).length) { try { const st = await import(STORAGE_SDK), store = st.getStorage(app); for (const x of l.files) { try { await st.deleteObject(st.ref(store, x.path)); } catch (e) { } } } catch (e) { } }
+      await deleteDoc(doc(db, "labs", id)); S.labs = null; toast("Deleted."); location.hash = "#schedule";
+    } catch (e) { say(errText(e), "err"); }
+  } });
+  return h("div", {}, [
+    h("div", { class: "wrap page-head" }, [h("p", { class: "small" }, h("a", { href: isNew ? "#schedule" : "#schedule=" + id, text: isNew ? "← Labs schedule" : "← Back to the Lab" })), h("h1", { text: isNew ? "Add a Lab" : "Edit " + l.title })]),
+    h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
+      h("div", { class: "panel stack" }, [
+        h("label", { class: "f", for: "lt" }, ["Name of the Lab", f.title]),
+        h("div", { class: "grid4" }, [h("label", { class: "f", for: "ld" }, ["Date", f.date]), h("label", { class: "f", for: "le2" }, [h("span", {}, ["Last day ", h("span", { class: "hint", text: "(if it runs several days)" })]), f.endDate]),
+          h("label", { class: "f", for: "ls1" }, [h("span", {}, ["Starts ", h("span", { class: "hint", text: "(optional)" })]), f.start]), h("label", { class: "f", for: "ls2" }, [h("span", {}, ["Ends ", h("span", { class: "hint", text: "(optional)" })]), f.end])]),
+        h("fieldset", { class: "f bands" }, [h("legend", { text: "Grade bands" }), h("div", { class: "row" }, bands.map(([b, c]) => h("label", { class: "chk" }, [c, " Grades " + b])))]),
+        h("div", { class: "grid2" }, [h("label", { class: "f", for: "lw" }, ["Where", f.where]), h("label", { class: "f", for: "lg" }, ["Guides running it", f.guides])]),
+        h("label", { class: "f", for: "la" }, ["What students will do", f.about]),
+        h("div", { class: "f" }, [h("span", {}, ["Challenges in this Lab ", h("span", { class: "hint", text: "(optional, up to 8)" })]), chBox])
+      ]),
+      h("div", { class: "panel stack" }, [
+        h("h2", { class: "h", text: "For parents: supporting it at home" }),
+        h("p", { class: "small muted", text: "Optional. Parents of students in these bands see this with the Lab." }),
+        h("label", { class: "f", for: "lh" }, ["Notes for parents", f.home]),
+        fileBox,
+        h("div", { class: "f" }, [h("span", {}, ["Links ", h("span", { class: "hint", text: "(Google Docs, videos, anything online)" })]), linkBox])
+      ]),
+      h("div", { class: "row" }, [h("button", { class: "btn go", type: "button", text: isNew ? "Add the Lab" : "Save", onclick: save }), h("a", { class: "btn plain", href: isNew ? "#schedule" : "#schedule=" + id, text: "Cancel" }), del]),
+      note
+    ]))
   ]);
 }
 
@@ -667,7 +892,7 @@ function boardView() {
     .sort((a, b) => a.name.localeCompare(b.name));
   const q = h("input", { class: "in", type: "search", id: "bq", value: boardQ, placeholder: "Find a name or a challenge", style: { maxWidth: "340px" } });
   q.addEventListener("change", () => { boardQ = q.value.trim().toLowerCase(); route(); setTimeout(() => $("#bq") && $("#bq").focus(), 0); });
-  const ch = (c, extra) => h("li", {}, [h("i", { style: { background: colOf(c) } }), h("span", {}, [chTitle(c), extra ? h("span", { class: "muted", text: " · " + extra }) : null])]);
+  const ch = (c, extra) => h("li", {}, [h("i", { style: { background: colOf(c) } }), h("span", {}, [chLink(c), extra ? h("span", { class: "muted", text: " · " + extra }) : null])]);
   return h("div", {}, [
     head("Crew board", "What everyone is working on, and what they've passed. Ask someone who's done it how they did it."),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
@@ -697,10 +922,12 @@ function route() {
   acct();
   if (S.role === "staff") {
     // Inside the staff guides (/guides/lifeskills/), guides also get the Lab builder.
-    navLinks([["overview", "Overview"], ["log", "Log"], ["roster", "Students and parents"], ["board", "Crew board"], ...(PATH === HOMES.staff ? [["build", "Lab builder", "/guides/lifeskills/builder/"]] : [])]);
+    navLinks(PATH === HOMES.staff ? SUBNAV.guides : [["overview", "Overview"], ["log", "Log"], ["board", "Crew board"], ["schedule", "Labs schedule"]]);
     if (v === "s") return main(record(arg, { staff: true }));
     if (v === "log") return main(logView(arg));
-    if (v === "roster") return main(rosterView(arg));
+    // Old links to the roster here go to the Student Roster.
+    if (v === "roster") { location.replace(ROSTER + (arg ? "#edit=" + arg : "#roster")); return; }
+    if (v === "schedule") return main(scheduleView(arg, true));
     if (v === "board") return main(boardView());
     return main(overview());
   }
@@ -712,7 +939,8 @@ function route() {
   }
   if (S.role === "parent") {
     if (!S.mine.length) { $("#links").innerHTML = ""; return main([head("Your account is ready", "We haven't linked it to your child yet. Ask your child's Field Guide to add this email to your child's record: " + S.email + ". Then reload this page."), h("div", { class: "wrap" }, h("a", { class: "btn go", href: "/challenges/parents.html", text: "How passing off at home works" }))]); }
-    navLinks(S.mine.map(id => ["c=" + id, firstName(S.students[id].name)]).map(([k, l]) => [k, l]));
+    navLinks(S.mine.map(id => ["c=" + id, firstName(S.students[id].name)]).concat(SUBNAV.parents));
+    if (v === "schedule") { document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#schedule" ? "page" : "false")); return main(scheduleView(arg, false)); }
     const sid = v === "c" && S.mine.includes(arg) ? arg : S.mine[0];
     document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#c=" + sid ? "page" : "false"));
     return main(record(sid, { parent: true }));

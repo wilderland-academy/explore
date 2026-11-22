@@ -13,8 +13,11 @@ Student sites for Wilderland Academy, served at https://explore.wilderland.acade
 Explore is four sites under one domain, with one top bar shared by all of them:
 - `/`: the front door. Three choices: Students, Guides, Parents.
 - **Students** (home `/students/`): Books, Challenges, Life Skills (`/lifeskills/`), Projects, Store, Ideas.
-- **Guides** (home `/guides/`): Mentor Mindset (`/fieldguide/`), Behavior, Life Skills (`/guides/lifeskills/`), Parent Comms.
+- **Guides** (home `/guides/`): Mentor Mindset (`/fieldguide/`), Behavior, Life Skills (`/guides/lifeskills/`), Student Roster (`/guides/roster/`), Parent Comms.
+  Life Skills has its own sub-menu: Overview, Challenges (`/guides/challenges/`), Labs schedule, Log, Crew board, Lab builder.
 - **Parents** (home `/parents/`): At Home, Our Approach, Field Notes (`/parents/series/`), Life Skills (`/parents/lifeskills/`).
+  Life Skills' sub-menu: one tab per child, Challenges (`/parents/challenges/`), Labs schedule, Passing off at home.
+- The Life Skills sub-menu for both sites is one list in `/lifeskills/subnav.js`. Edit it there.
 - Every site also links Basecamp (`https://my.wilderland.academy/`), the academic portal. It's a separate website, so its tab
   sits after a thin rule, has an arrow and opens in a new tab.
 
@@ -173,5 +176,40 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
 - **Students** (grades 2–8, signed in): an "AI Coach" tab (`/coach/`, their own conversations and a first lesson on using AI), plus the coach inside every challenge sheet ("Ask the AI Coach") and every project spark ("Plan it with your AI Coach"). The chat panel is `coach/coach.js`: a four-point intro the first time, starter buttons, suggested replies after each answer, and short "Coach tip" lines that teach good AI habits. The old copy-a-prompt boxes are gone for students; guides still get the copyable prompts on `/guides/challenges/`.
 - **Every safeguard runs in the relay Worker**, not the browser: see "The student AI Coach" in `relay/README.md` for the full list and order. Research and rules it follows: Anthropic's requirements for organizations serving minors (moderation, monitoring and reporting, education on safe use, AI disclosure, a public compliance statement), Khanmigo's model (screening, teacher-visible chat history, alerts with a severity tier, daily limits), California SB 243's crisis-protocol and AI-disclosure ideas, Common Sense Media's findings against companion-style and mental-health chatbots for minors, Utah Code 80-2-602 (everyone must report suspected abuse to DCFS, 1-855-323-3237), and Bastani et al., PNAS 2025 (guardrailed AI tutors avoid the learning loss that answer-giving AI causes).
 - **Data** (Firestore, rules in `firestore.rules`): `aiChats` (one per conversation), `aiTurns` (every message, signed by the Worker), `aiAlerts`, `aiStudents` (daily counts). Students read only their own and can't edit or delete; every staff member reads everything; admins can delete.
-- **Staff: Guides › Students** (`/guides/students/`): Alerts (with what to do for urgent ones, and a note when marked reviewed), every AI conversation, and each student's saved challenges, project sparks and books. Admins see all students; other staff see the grade bands of the students they guide (the `guide` field in the tracker). The Students tab shows a count of open alerts on every Guides page.
+- **Staff: Guides › Students** (`/guides/students/`, now the Student Roster at `/guides/roster/`, see below): Alerts (with what to do for urgent ones, and a note when marked reviewed), every AI conversation, and each student's saved challenges, project sparks and books. Admins see all students; other staff see the grade bands of the students they guide (the `guide` field in the tracker). The Students tab shows a count of open alerts on every Guides page.
 - **Parents:** `/parents/ai/` explains the coach, the safeguards and the data, and is linked from the Parents home and the coach page.
+
+## Coach beside the page, academics, Student Roster, saved challenges and the Labs schedule, added Nov 22, 2026
+
+- **The AI Coach opens beside the page, not over it.** `coach/coach.js` docks the panel on the right (the page narrows to make
+  room; no dark backdrop) on screens wider than 860px, and as a bottom panel on phones (with a button to make it taller). A sheet
+  that was open, like a challenge, stays open in the space next to the coach. While the coach is open, `showModal()` is swapped
+  for a plain `show()` (a modal dialog would freeze the coach), and sheets go back to modal when it closes.
+- **Why a coach, and academics.** The first-time intro and `/coach/` explain why to ask the coach (always there, knows something
+  about almost everything, the guide still passes you). Students can now get hint-only help with academics from the subject
+  buttons on `/coach/`. The rules and the #alerts Slack notice for every academics conversation are in `relay/README.md`.
+  Bumping `INTRO_VERSION` in `coach.js` shows the intro again to everyone once.
+- **Any challenge, anywhere, opens as a modal.** `/challenges/modal.js` turns any `<a data-wl-ch="EN-03.2" href="/challenges/#c=EN-03.2">`
+  into a modal over the current page (`WLChallenge.open(id)`, `WLChallenge.link(id, text)`). It's used in the tracker, the Labs
+  schedule, the Student Roster, the coach's header, Our Approach and the Lab builder. On the Challenges page it opens the page's
+  own sheet. `/challenges/#c=ID` (all three sites) opens that challenge.
+- **Student Roster** (`/guides/roster/`, top-level Guides tab, replaces Guides › Students and the tracker's "Students and parents";
+  old links forward): every student and their parents (add, edit, CSV import, delete for admins), Alerts, and every AI
+  conversation (filter: academics, not reviewed yet). A student's page has their parents, conversations, alerts and saved sparks
+  and books. Writes go through Firestore's `:commit` endpoint, so a student and their crew-board record save together.
+- **Saved challenges are on the Life Skills overview.** Show: "Saved to plan" turns each cell into saved/goal for that life skill
+  (challenges in the student's Challenges plan they haven't passed). With a mouse, pointing at (or clicking, or tabbing to) a
+  count lists those challenges as links. On phones and touch screens the overview is one card per student and each life skill
+  opens with a tap, so nothing needs hover. "Plan short of the goal" finds students whose passes plus saves don't reach the year
+  goal in some life skill. A student's record also lists what they saved. Read from `students/{uid}/sites/challenges` (staff can).
+- **Life Skill Labs schedule** (`#schedule` in the tracker: guides at `/guides/lifeskills/#schedule`, parents at
+  `/parents/lifeskills/#schedule`). Guides add, edit and delete Labs: date (and last day for multi-day Labs), times, bands, place,
+  guides, what students do, up to 8 challenges, and for parents optional notes, files (up to 20 MB each) and links. Month grid on
+  wide screens, a list on phones, plus Coming up and Past. Parents see only their children's bands and which child each Lab is for.
+  - Firestore `labs/{id}`; files in Firebase Storage under `labs/{id}/` (`storage.rules`, new). **Storage needs the Blaze plan**
+    (no-cost usage still applies). Without it, uploads fail with a message to use a Google Drive link instead; links always work.
+    When publishing `storage.rules`, the console asks to let Storage read Firestore (the rules check the staff list): allow it.
+  - Parents can read Labs only once a guide has linked them to a child: `lsParents/{email}` (children, bands), which the Student
+    Roster rebuilds from the student records every time a staff member opens it and after every save. **After deploying, open the
+    Student Roster once** so existing parents get their records.
+- `firestore.rules` has new rules for `labs` and `lsParents`; publish it, and `storage.rules`, in the Firebase console.
