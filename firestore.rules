@@ -60,6 +60,14 @@ service cloud.firestore {
       allow read: if isStaff();
       allow write: if isAdmin();
     }
+    // Each person's conversation history with the AI coaches and the Lab builder (/guides/log.js).
+    // Only the owner can read, write or delete it. Admins included: nobody else can.
+    match /coachLog/{uid}/threads/{tid} {
+      allow read, delete: if isStaff() && request.auth.uid == uid;
+      allow create, update: if isStaff() && request.auth.uid == uid
+        && request.resource.data.site in ['mentor', 'behavior', 'parents', 'labs']
+        && request.resource.data.messages is list;
+    }
     // Each guide's own students and coaching sessions. Nobody else, admins included, can read them.
     match /mentor/{uid}/{doc=**} {
       allow read, write: if isStaff() && request.auth.uid == uid;

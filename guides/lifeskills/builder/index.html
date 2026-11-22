@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab builder · Wilderland staff</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#015640">
+<link rel="preload" href="/challenges/fonts/uncut-sans-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/challenges/fonts/uncut-sans-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/wl.css">
+<link rel="stylesheet" href="/lifeskills/styles.css">
+<style>
+/* Same frame as /guides/lifeskills/: staff menu on top, the tracker's forest bar as a slim sub-bar. */
+.wlbar{background:#2a1d2b}
+.nav-in{min-height:56px}
+.brand span{border-left:0;padding-left:0}
+@media (max-width:760px){.nav-in{min-height:48px;padding-top:8px}}
+main{padding-bottom:64px}
+.step{display:flex;flex-direction:column;gap:14px;padding-block:20px 6px}
+.step h2{font:700 24px/30px var(--font-sans);letter-spacing:-.5px;color:var(--fg-brand)}
+.stepn{font:700 12px/1 var(--font-sans);letter-spacing:.1em;text-transform:uppercase;color:var(--meadow)}
+.ways{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.way{all:unset;box-sizing:border-box;cursor:pointer;background:var(--mist);border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;gap:4px;border:2px solid transparent}
+.way b{font:700 17px/22px var(--font-sans);color:var(--ink)} .way span{font-size:14px;line-height:20px;color:var(--fg-muted)}
+.way:hover{border-color:var(--meadow)} .way[aria-pressed=true]{border-color:var(--forest);background:var(--lime-tint)}
+.way:focus-visible{outline:3px solid var(--forest);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:0}
+.chip:disabled{opacity:.4;cursor:not-allowed}
+.lbl{font:700 12px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-muted)}
+.field{display:flex;flex-direction:column;gap:8px;min-width:0}
+.rows{display:flex;flex-direction:column;gap:6px}
+.r{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:10px 14px;border-radius:var(--radius-sm);background:var(--white);border:2px solid transparent}
+.r:hover{border-color:var(--meadow)} .r[aria-pressed=true]{border-color:var(--forest);background:var(--lime-tint)}
+.r .t{min-width:0;font-weight:600;line-height:22px} .r .s{grid-column:1/-1;font-size:14px;line-height:20px;color:var(--fg-muted)}
+.r:focus-visible{outline:3px solid var(--forest)}
+.cnts{display:flex;gap:4px;font:600 12px/1 var(--font-sans);font-variant-numeric:tabular-nums}
+.cn{padding:5px 7px;border-radius:6px;background:var(--mist);color:var(--slate);white-space:nowrap}
+.cn.zero{background:#a3290b1a;color:var(--danger)} .cn.sel{outline:2px solid var(--forest)}
+textarea,input[type=text],input[type=search],select{width:100%;font:400 16px/24px var(--font-sans);color:var(--ink);background:var(--white);border:1px solid var(--silver);border-radius:var(--radius-sm);padding:10px 12px}
+textarea{min-height:110px;resize:vertical}
+.grid2x{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.box{border-radius:var(--radius-sm);padding:10px 14px;font-size:15px;line-height:22px}
+.box.warn{background:var(--sun-tint)} .box.gap{background:#a3290b14;color:#7c1f08} .box.ok{background:var(--lime-tint);color:var(--forest)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.out{background:var(--white);border-radius:var(--radius-md);padding:6px 4px;min-width:0;overflow-wrap:anywhere;display:flex;flex-direction:column;gap:8px}
+.out h2,.out h3{font:700 21px/28px var(--font-sans);color:var(--fg-brand);margin-top:10px}
+.out h3{font-size:18px}
+.out p{line-height:26px}
+.out ul,.out ol{margin:0;padding-left:22px;line-height:26px}
+.out pre{background:var(--mist);border-radius:var(--radius-sm);padding:14px;white-space:pre-wrap;font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:0;overflow-x:auto}
+.out code{font-family:ui-monospace,Menlo,monospace;font-size:.92em;background:var(--mist);padding:1px 4px;border-radius:4px}
+.out pre code{background:none;padding:0}
+.out table{border-collapse:collapse;font-size:14px}.out td,.out th{border:1px solid var(--silver);padding:6px 8px;text-align:left;vertical-align:top}
+.thinking{color:var(--fg-muted);font-style:italic}
+.score{border-radius:var(--radius-md);background:var(--mist);padding:16px;display:flex;flex-direction:column;gap:10px}
+.score .tot{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.score .tot b{font:700 34px/1 var(--font-sans);color:var(--forest)}
+.score .tot span{color:var(--fg-muted)}
+.srows{display:flex;flex-direction:column;gap:6px}
+.srow{display:grid;grid-template-columns:minmax(150px,240px) 96px 1fr;gap:6px 12px;align-items:start;background:var(--white);border-radius:var(--radius-sm);padding:10px 12px;font-size:14.5px;line-height:21px}
+.srow b{font-weight:700}
+.pips{display:flex;gap:4px;padding-top:4px}.pips i{width:24px;height:10px;border-radius:5px;background:var(--silver)}
+.s3 .pips i{background:var(--meadow)}.s2 .pips i:nth-child(-n+2){background:var(--sun)}.s1 .pips i:nth-child(1){background:var(--danger)}
+.srow .nx{grid-column:1/-1;color:#7c1f08;background:#a3290b0f;border-radius:6px;padding:6px 9px}
+@media (max-width:640px){.srow{grid-template-columns:1fr 90px}.srow .w{grid-column:1/-1}}
+.drafts{display:flex;flex-direction:column;gap:6px}
+.gate2{max-width:520px;margin:10vh auto 0;text-align:center}
+</style>
+</head>
+<body>
+<div class="wlbar"><div class="wlbar-in"><a class="wlbar-home" href="/" aria-label="Wilderland Explore home"><svg class="wlbar-mark" style="display:block;height:20px" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg></a><!--guides-nav--><nav class="wlguides" aria-label="Staff guides"><a class="hub" href="/guides/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M2 0h5v5H2zM11 0h5v5h-5zM2 7h5v5H2zM11 7h5v5h-5z" fill="currentColor"/></svg>Guides</a><a class="mm" href="/fieldguide/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 12 6 3l3 4 3-6 6 11z" fill="currentColor"/></svg><span>Mentor<span class="lg"> Mindset</span></span></a><a class="bh" href="/behavior/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 1c4 0 5 9 9 9s5-9 9-9v11H0z" fill="currentColor" opacity=".9"/></svg>Behavior</a><a class="ls" aria-current="page" href="/guides/lifeskills/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M1 11 6 2l5 9zM9 11l4-7 4 7z" fill="currentColor"/></svg>Life Skills</a><a class="pc" href="/guides/parents/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M1 1h16v10H1zM1 1l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>Parent<span class="lg"> Comms</span></span></a></nav><!--/guides-nav--><span class="wlbar-auth" data-wl-auth></span></div></div><script>(function(n,a){if(n&&a)n.scrollLeft=a.offsetLeft-n.clientWidth/2+a.offsetWidth/2})(document.querySelector(".wlguides"),document.querySelector(".wlguides [aria-current]"))</script>
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="/guides/lifeskills/"><span>Life Skills</span></a>
+    <nav class="nav-links" aria-label="Life Skills">
+      <a href="/guides/lifeskills/#overview">Overview</a><a href="/guides/lifeskills/#log">Log</a><a href="/guides/lifeskills/#roster">Students and parents</a><a href="/guides/lifeskills/#board">Crew board</a><a href="/guides/lifeskills/builder/" aria-current="page">Lab builder</a>
+    </nav>
+  </div>
+</header>
+<main id="app"><p class="loading">Loading…</p></main>
+<script src="/challenges/data.js"></script>
+<script type="module" src="/auth.js" data-site="labbuilder"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -3,7 +3,9 @@
 // SKILL.md body into skill.txt and add a CHANGELOG line below. It is .txt because GitHub Pages (Jekyll) turns .md into .html. This is a public file: never put real student or family names here.
 
 export const CHANGELOG = [
-  ["2026-11-21", "First version: three modes (newsletters, customer service, events) built on the wilderland-parent-comms skill."]
+  ["2026-11-21", "First version: three modes (newsletters, customer service, events) built on the wilderland-parent-comms skill."],
+  ["2026-11-21", "Starter buttons fill the box unless marked to send; an unfinished template is never sent."],
+  ["2026-11-21", "Conversations save to each person's private history (/guides/history/), where they can be reopened or deleted."]
 ];
 
 // How the page wraps the skill. Sent as part of the system prompt on every call.
@@ -21,6 +23,8 @@ PAGE MECHANICS (important, the page depends on these):
 - Do not use em-dashes anywhere, in or out of the message.
 - Today's date and a calendar are given below. Use the calendar for weekdays; never guess a weekday.`;
 
+// Starter buttons: [label, text] fills the message box for the guide to finish (¦ marks where the cursor lands;
+// otherwise it goes to the end). [label, text, "send"] sends right away.
 export const MODES = {
   newsletter: {
     label: "Newsletters",
@@ -36,7 +40,7 @@ export const MODES = {
     starters: [
       ["Draft from my notes", "Here are my rough notes from this week. Turn them into our weekly update:\n\n"],
       ["Check my newsletter", "Can you check this newsletter before I send it?\n\n"],
-      ["I have no story yet", "I need to send my weekly update but I don't have a good story yet. Help me find one: ask me a few quick questions, then draft it."],
+      ["I have no story yet", "I need to send my weekly update but I don't have a good story yet. Help me find one: ask me a few quick questions, then draft it.", "send"],
       ["Project overview", "Write a project overview for families. The project is: "]
     ],
     look: [
@@ -69,9 +73,9 @@ For Tier 2 and Tier 3, label the draft DRAFT FOR LEADERSHIP REVIEW, keep the rep
 Under the draft, add one line that names the most important move in the reply (for example "Names an owner and a day" or "Asks before explaining") so the guide learns the pattern.`,
     starters: [
       ["Reply to a parent", "A parent sent me this. Help me reply:\n\n"],
-      ["Check my reply", "Here is the parent's message and my draft reply. Can you check it?\n\nParent:\n\n\nMy draft:\n"],
+      ["Check my reply", "Can you check my reply to this parent?\n\nThe parent wrote:\n¦\n\nMy draft reply:\n"],
       ["What tier is this?", "Is this a routine question or a concern I need to log and hand off?\n\n"],
-      ["Practice with a parent", "PRACTICE: Write me a realistic, composite parent email to answer (invent the details, no real names). Make it a moderately hard one. Don't show me a model answer yet. I'll write my reply, then you coach me on it."]
+      ["Practice with a parent", "PRACTICE: Write me a realistic, composite parent email to answer (invent the details, no real names). Make it a moderately hard one. Don't show me a model answer yet. I'll write my reply, then you coach me on it.", "send"]
     ],
     look: [
       ["Thank them first", "Acknowledge within one school day, even if all you can say yet is who will follow up and when."],
@@ -97,7 +101,7 @@ Under the draft, add one line that names the most important move in the reply (f
       ["Announce an event", "Help me announce this event. Here's what I know so far:\n\n"],
       ["Save the date", "I need a short save the date for: "],
       ["Reminder or change", "I need a reminder (or a change) for an event families already know about:\n\n"],
-      ["Spot the gaps", "PRACTICE: Write me a realistic event announcement from a guide that has 4 or 5 real gaps or problems (invent the event, no real names). Don't tell me the problems. I'll list what I find, then you tell me what I caught and what I missed."]
+      ["Spot the gaps", "PRACTICE: Write me a realistic event announcement from a guide that has 4 or 5 real gaps or problems (invent the event, no real names). Don't tell me the problems. I'll list what I find, then you tell me what I caught and what I missed.", "send"]
     ],
     look: [
       ["Send on schedule", "Save the date 3 weeks out (field trip or family event), full announcement 2 weeks out, forms due 5 school days before, reminder 1 to 2 days before."],
@@ -114,4 +118,4 @@ export const PRACTICE = `PRACTICE ROUNDS: When the guide's message starts with "
 2. When they answer, coach them: start with what they did well (specific, one or two bullets), then up to three things to change, most important first, each tied to the skill or protocol. Then show a stronger version inside the message block. For "spot the gaps", list what they caught, what they missed, and why each missed item matters to a parent.
 3. Keep it encouraging and brief. This is practice; nobody is graded.`;
 
-export const PRIVACY = "Leave out last names and anything a family shared in confidence. Conversations stay in this browser tab and are cleared when you close it.";
+export const PRIVACY = "Leave out last names and anything a family shared in confidence. Each conversation is saved to your private history, which only you can see; delete it there anytime.";

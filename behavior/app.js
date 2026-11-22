@@ -4,6 +4,7 @@
 // same relay as the Mentor Mindset Field Guide (address saved in mentorConfig/main).
 import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, addDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import * as D from "./data.js";
+import { coachLog, autosaver } from "/guides/log.js";
 
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const $ = (s, r) => (r || document).querySelector(s);
@@ -343,7 +344,9 @@ function quizView(sec, m) {
 }
 
 /* ---------------- coach ---------------- */
-let thread = [];
+// Each coach conversation is saved to the guide's private history (/guides/log.js, viewable at /guides/history/).
+let thread = [], threadId = null, threadBand = "";
+const saveLog = autosaver(() => user && db ? coachLog(db, user) : null, () => toast("Couldn't save this conversation to your history."));
 VIEWS.coach = sec => {
   head(sec, "Ask the <span>coach</span>", "Describe what happened. The coach separates what the standard requires from the options you can choose, and adds the neurodivergent angle. It knows our policy, not your students.");
   sec.appendChild(card("W-edge", [h("p", { text: "Use first names or initials only. If anyone is unsafe or a student has mentioned self-harm, abuse or being harmed, stop here and follow the Mental Health Crisis Policy with leadership now." })]));
@@ -351,11 +354,11 @@ VIEWS.coach = sec => {
   const ta = h("textarea", { id: "cTa", placeholder: "What happened, who was involved (first names or initials), what you've already tried, and what you're unsure about." });
   const out = h("div", { class: "thread" }), status = h("p", { class: "small" });
   const draw = () => { out.innerHTML = ""; thread.forEach(m => out.appendChild(h("div", { class: "msg " + (m.role === "user" ? "u" : "a"), text: m.content }))); };
-  const send = async () => { const t = ta.value.trim(); if (t.length < 15) { status.textContent = "Add a little more detail."; return; } thread.push({ role: "user", content: (thread.length ? "" : "[" + band.value + "] ") + t }); ta.value = ""; draw(); status.textContent = "Thinking…"; btn.disabled = true; try { const r = await ai(thread, { system: D.COACH, max: 1100 }); thread.push({ role: "assistant", content: r }); status.textContent = ""; } catch (e) { thread.pop(); ta.value = t; status.textContent = aiErr(e); } btn.disabled = false; draw(); };
+  const send = async () => { const t = ta.value.trim(); if (t.length < 15) { status.textContent = "Add a little more detail."; return; } thread.push({ role: "user", content: (thread.length ? "" : "[" + band.value + "] ") + t }); ta.value = ""; draw(); status.textContent = "Thinking…"; btn.disabled = true; try { const r = await ai(thread, { system: D.COACH, max: 1100 }); thread.push({ role: "assistant", content: r }); status.textContent = ""; if (!threadId) { threadId = coachLog(db, user).newId(); threadBand = band.value; } saveLog({ id: threadId, site: "behavior", kind: "coach", messages: thread, meta: { band: threadBand } }); } catch (e) { thread.pop(); ta.value = t; status.textContent = aiErr(e); } btn.disabled = false; draw(); };
   const btn = h("button", { class: "btn", text: "Ask", onclick: send });
-  sec.appendChild(card("", [h("label", { for: "cBand" }, ["Band", band]), h("label", { for: "cTa" }, ["The situation", ta]), h("div", { class: "row" }, [btn, h("button", { class: "btn ghost", text: "Start over", onclick: () => { thread = []; draw(); status.textContent = ""; } })]), status, out]));
+  sec.appendChild(card("", [h("label", { for: "cBand" }, ["Band", band]), h("label", { for: "cTa" }, ["The situation", ta]), h("div", { class: "row" }, [btn, h("button", { class: "btn ghost", text: "Start over", onclick: () => { thread = []; threadId = null; draw(); status.textContent = ""; } }), h("a", { class: "chip", href: "/guides/history/#behavior", text: "Past conversations" })]), status, out]));
   draw();
-  sec.appendChild(card("", [h("p", { class: "small", text: "The coach drafts; you decide. It can be wrong about policy details, so check the Tier ladder before you act on anything it says the standard requires. Conversations aren't saved." })]));
+  sec.appendChild(card("", [h("p", { class: "small", text: "The coach drafts; you decide. It can be wrong about policy details, so check the Tier ladder before you act on anything it says the standard requires. Each conversation is saved to your private history, which only you can see. Delete it there anytime." })]));
 };
 
 /* ---------------- level tracker ---------------- */

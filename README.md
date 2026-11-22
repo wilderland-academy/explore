@@ -105,3 +105,17 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   Parent Concern Protocol are in `guides/parents/data.js` (add a CHANGELOG line there when you change it).
 - `relay/worker.js` now allows 3,000 output tokens (was 1,500) and returns `stop` so the coach can say when a reply was cut off.
   Paste the new worker.js into Cloudflare and Deploy for this to take effect; until then long newsletters may be cut short.
+
+## Conversation history (`/guides/history/`) and the Lab builder (`/guides/lifeskills/builder/`), added Nov 21, 2026
+- **History.** `guides/log.js` saves every AI conversation to Firestore `coachLog/{uid}/threads/{id}`: the Mentor Mindset coach's
+  tent and each scored practice rep (`/fieldguide/`), the Behavior coach (`/behavior/`), the Parent Communication coach and the Lab
+  builder. Only the owner can read, write or delete their threads (admins included: nobody else can). `/guides/history/` lists them
+  with filters, opens one to read or copy, deletes (tap twice), and "Continue" reopens Parent Comms and Lab builder threads
+  (`?t=<id>`). Session room records in the Field Guide are separate and stay where they are (`mentor/{uid}/sessions`).
+- **Lab builder.** Adapted from Ian's "Wilderland Guide Builder" prototype: four ways in (a Life Skill, an idea, a challenge on the
+  site, a plan to review), using the Skill Map and challenges in `challenges/data.js`. Every draft is scored on the K-8 Life Skills
+  Workshop Scorecard (nine indicators, 1 to 3) and pushed toward 3s. The rules are `guides/lifeskills/builder/rules.txt`, written
+  from the Scorecard, the Challenge System doc and the Valley Builders lab; replace them with Ian's `builder-rules.md` if he wants
+  his exact wording (keep the Scorecard and output-order sections, which the page relies on). A "Lab builder" tab appears in the Life
+  Skills sub-nav only inside the staff guides. Guests (Ian) can use it.
+- `firestore.rules` has the new `coachLog` rule; publish it in the Firebase console or history saves will fail.
