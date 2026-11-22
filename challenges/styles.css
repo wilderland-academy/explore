@@ -473,3 +473,4 @@ main{max-width:1180px;margin:0 auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
 /* Guides and Parents: the Life Skills sub-menu (/lifeskills/subnav.js) looks the same as on the tracker pages. */
 .nav-links[data-ls-subnav] a{padding:6px 12px;border-radius:8px}
 .nav-links[data-ls-subnav] a[aria-current="page"]{color:#121213;background:#d5f367;text-decoration:none}
+.coach-find{margin:18px 0 0}

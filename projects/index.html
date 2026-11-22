@@ -245,6 +245,7 @@ textarea.copybox{width:100%;min-height:120px;font:inherit;font-size:14px;border:
         <button id="vglobe" type="button" aria-pressed="false">Globe</button>
       </div>
       <button class="tbtn go" id="wander" type="button">Wander</button>
+      <button class="tbtn" id="coachfind" type="button" hidden><span aria-hidden="true">🦊</span> <span><span class="wide">Find an idea with your </span>AI Coach</span></button>
       <button class="tbtn" id="pack" type="button"><svg class="bm" aria-hidden="true"><use href="#i-bm"/></svg><span><span class="wide">My </span>sparks</span> <span class="n" id="packn">0</span></button>
     </div>
     <div class="search" role="search">
@@ -2500,6 +2501,25 @@ var onTheme = function () { readTheme(); redraw(); };
 if (window.matchMedia) { var mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', onTheme); else if (mq.addListener) mq.addListener(onTheme); }
 new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+// AI Coach helps a student find a project: the "🦊" button, or /projects/?coach=find from the AI Coach page. The coach
+// writes kinds of projects as [[way-id]]; WLCoachLinks turns those into links that open that place on the map.
+window.WLCoachLinks = function (id) { var n = N[id]; return n && n.type === 'way' ? { href: '#' + id, text: n.name } : null; };
+(function () {
+  var btn = document.getElementById('coachfind'), want = /[?&]coach=find\b/.test(location.search);
+  var can = function (r) { return !!(r && (r.role === 'staff' || (r.role === 'student' && r.band && r.band !== 'K–1'))); };
+  var openFinder = function () {
+    var go = function () { window.WLCoach.open({ kind: 'find-project', topicId: 'find', topicTitle: 'Find a project idea' }); };
+    if (window.WLCoach) go(); else document.addEventListener('wl-coach-ready', go, { once: true });
+  };
+  var onRole = function (r) {
+    btn.hidden = !can(r);
+    // ?coach=find stays until the coach closes: the first sign-in on a Chromebook reloads the page once.
+    if (want && can(r)) { want = false; document.addEventListener('wl-coach-closed', function () { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} }, { once: true }); openFinder(); }
+  };
+  btn.addEventListener('click', openFinder);
+  document.addEventListener('wl-role', function (e) { onRole(e.detail); });
+  if (window.wlRole !== undefined) onRole(window.wlRole);
+})();
 // AI Coach for the open spark: the coach gets the spark, the kind of project and the first-hour steps.
 document.addEventListener('click', function (e) {
   var b = e.target.closest('[data-coach-spark]'); if (!b || !st.sp) return;

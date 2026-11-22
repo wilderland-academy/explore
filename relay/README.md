@@ -60,6 +60,12 @@ example, checks their thinking without giving the value, names resources without
 - **Deploy:** paste the new `worker.js` into Cloudflare and Deploy. Until then, academics chats are refused ("bad kind").
   Check that `ALERT_WEBHOOK` is the #alerts channel's webhook (Slack → Apps → Incoming Webhooks).
 
+## Nov 22, 2026: academics gated, finder and conflict coaches, Guide Mentor, book tags
+See "Coach updates, the Guide Mentor…" in the main README. Worker modes now: `coach` (kinds challenge, project, find-challenge,
+find-project, conflict, lesson, and academic for pilot students only), `interest`, `mentor`, `doc`, `booktags`, and the staff tools.
+The Worker needs a KV namespace bound as **DOCS** with keys `handbook` and `behavior-policy` for the Guide Mentor and the Staff
+Handbook page. Without it, the mentor still works from the public documents.
+
 ## Changing things later
 - Staff list: the Admin page. Admin emails are also listed in `worker.js`, `fieldguide/app.js` and `firestore.rules`.
 - Models and size limits: the constants at the top of `worker.js`. The coach's limits are under "Student coach limits".

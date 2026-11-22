@@ -688,6 +688,30 @@
   });
   window.addEventListener('hashchange', fromChallengeHash);
 
+  // ---------- the AI Coach helps a student find a challenge (students' site) ----------
+  // The button shows only for someone who can use the coach. /challenges/?coach=find (from the AI Coach page) opens it
+  // once the student's sign-in is confirmed; the coach asks what they're into and suggests challenges from their band.
+  function openFinder() {
+    var go = function () { window.WLCoach.open({ kind: 'find-challenge', topicId: 'find', topicTitle: 'Find a challenge' }); };
+    if (window.WLCoach) go(); else document.addEventListener('wl-coach-ready', go, { once: true });
+  }
+  function canCoach(r) { return !!(r && (r.role === 'staff' || (r.role === 'student' && r.band && r.band !== 'K–1'))); }
+  var wantFinder = STUDENT && /[?&]coach=find\b/.test(location.search);
+  function finderRole(r) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-coach-only]'), function (el) { el.hidden = !canCoach(r); });
+    if (wantFinder && canCoach(r)) {
+      wantFinder = false;
+      // ?coach=find stays until the coach closes: the first sign-in on a Chromebook reloads the page once.
+      document.addEventListener('wl-coach-closed', function () { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} }, { once: true });
+      openFinder();
+    }
+  }
+  if (STUDENT) {
+    document.addEventListener('wl-role', function (e) { finderRole(e.detail); });
+    if (window.wlRole !== undefined) finderRole(window.wlRole);
+    document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-coach-find]')) openFinder(); });
+  }
+
   // ---------- start ----------
   state.skill = 'EN';
   if (!window.matchMedia('(max-width:820px)').matches) state.sub = S.EN.subs[0] || null;

@@ -213,3 +213,45 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
     Roster rebuilds from the student records every time a staff member opens it and after every save. **After deploying, open the
     Student Roster once** so existing parents get their records.
 - `firestore.rules` has new rules for `labs` and `lsParents`; publish it, and `storage.rules`, in the Firebase console.
+
+## Coach updates, the Guide Mentor 🐲, the Staff Handbook and books from outside the Stacks, added Nov 22, 2026
+
+- **The coach is a fox 🦊.** `coach/coach.js` shows 🦊 in its header and beside its replies. Bumping `INTRO_VERSION` shows the
+  first-time intro to everyone once.
+- **Finding a challenge or a project with the coach.** The AI Coach page's cards open `/challenges/?coach=find` and
+  `/projects/?coach=find`; each page opens the coach (kinds `find-challenge`, `find-project`) once the student's sign-in is
+  confirmed, and both pages have a "🦊 Find … with your AI Coach" button. The coach asks what the student is into, then suggests
+  challenges as `[EN-03.2]` or kinds of projects as `[[paint]]`; the chat turns those into links (a challenge opens beside the coach;
+  a project kind moves the map there via `window.WLCoachLinks` in `projects/index.html`). The Worker builds the list itself from
+  `/challenges/data.js` (the student's band) and the `W(...)` lines in `/projects/`, so a student can't edit it.
+  `projects/index.html` is built from the Atlas source outside this repo: copy the `coachfind` button and the `WLCoachLinks`
+  block into that source before the next rebuild.
+- **Conflict coach** (kind `conflict`, the "Work out a conflict" card on `/coach/`): walks a student through the Behavior Policy:
+  take a beat (RULER), describe what happened without labels, feelings and needs, see their side, plan the talk with Nonviolent
+  Communication ("When I…, I felt…, because I need…, would you be willing…?"), talk privately, own their part, and the 10 "Handle It
+  Yourself" steps. A student saying they're being bullied is the topic here, so the coach still answers, and staff get a high
+  alert (and #alerts). Everything urgent still gets the fixed crisis replies.
+- **Academics is gated (a pilot).** The coach says it doesn't help with academic work. Students can tap "I'm interested" on
+  `/coach/` (Worker mode `interest`: one `academic_interest` alert and one #alerts notice per student). Admins turn the pilot on per
+  student on the Student Roster ("Academics coach pilot", `coachAcademic: true` on the tracker record, or "Turn on the academics
+  pilot" on the interest alert). Only then do the subject buttons show and the Worker accept `kind: "academic"`. A conversation
+  keeps the kind it started with.
+- **Reply check fix.** The academics test failed because the reply checker had only 120 tokens and its JSON got cut off. It now
+  gets 400, is told to answer with JSON only, and the parser takes the last JSON object (or `"ok": true/false`) from the answer.
+  Failures are logged in Cloudflare (Workers → mentor-relay → Logs).
+- **Guide Mentor 🐲** (`guides/mentor/mentor.js`, Worker mode `mentor`, school staff only): one AI that answers from the Staff
+  Handbook and Behavior Policy (stored in Cloudflare KV, binding `DOCS`, keys `handbook` and `behavior-policy`, never in this public
+  repo) plus `/fieldguide/data.js`, `/parents/approach/data.js`, `/parents/athome/data.js`, `/guides/parents/skill.txt` and
+  `/guides/lifeskills/builder/rules.txt` (fetched by the Worker). The documents are sent with prompt caching, so repeat questions are
+  cheap. Open it from the 🐲 button in the Guides top bar on every staff page, the box at the top of `/guides/`, the front door
+  for staff, or `/guides/?mentor`. Conversations save to Your conversations (`coachLog` site `guide`; `?mentor=<id>` continues one).
+  To update the handbook or policy text: Cloudflare → Storage & Databases → KV → the DOCS namespace → edit the key.
+- **Staff Handbook** (`/guides/handbook/`, staff only): the handbook text from the Worker (mode `doc`), with sections, search and
+  "Ask about this 🐲". Admins can upload the original PDF (Firebase Storage `staff/handbook.pdf`, staff-only, rules in
+  `storage.rules`); then everyone gets "Open the original PDF".
+- **Books from outside the Stacks** (`/books/#outside`): searching a title that isn't on the shelves offers "Find books like …".
+  The student names the book; signed in, the Worker (mode `booktags`, school accounts) tags it with the Stacks' own labels (only
+  labels come back, checked against the list the page sends), and the page's own `recs()` finds similar books. Students can also
+  tap what it's like themselves. "I loved it" keeps it on their shelf under "From outside the Stacks" (`ext` in `lantern-stacks`).
+- **Deploy:** paste `relay/worker.js` into the Worker; create the KV namespace, add the two keys, bind it as `DOCS`; publish
+  `firestore.rules` (adds `guide` to coachLog sites) and `storage.rules` (adds `staff/`).

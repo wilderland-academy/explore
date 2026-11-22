@@ -35,6 +35,12 @@
 .wlbar .wlbar-badge{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;margin-left:6px;border-radius:999px;background:#e9a23b;color:#1d1300;font-size:11.5px;font-weight:800}
 .wlbar .wlbar-badge.urgent{background:#ff6b5b;color:#fff}
 .wlbar .wlbar-auth{margin-left:auto;display:flex;align-items:center;flex:none}
+/* The Guide Mentor button (Guides site). Sits at the right, before the sign-in chip. */
+.wlbar .wlbar-mentor{margin-left:auto;display:inline-flex;align-items:center;gap:6px;flex:none;min-height:36px;padding:0 12px 0 8px;border:0;border-radius:999px;background:rgba(213,243,103,.14);color:#f6f8ea;font:600 14.5px/1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;cursor:pointer}
+.wlbar .wlbar-mentor span[aria-hidden]{font-size:20px;line-height:1}
+.wlbar .wlbar-mentor:hover{background:rgba(213,243,103,.26)}
+.wlbar .wlbar-mentor:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
+.wlbar .wlbar-mentor + .wlbar-auth{margin-left:8px}
 .wlbar a:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 /* The site's own name in its header, the same on every site. */
 .wl-title{font:700 22px/1.1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;letter-spacing:-.02em;color:#fff;text-decoration:none;white-space:nowrap}
@@ -49,6 +55,8 @@
   .wlbar .wlbar-sites a{padding:0 9px;font-size:14px;min-height:34px}
   .wl-title{font-size:19px}
   .wlbar .wla>button>span:nth-child(2){display:none}
+  .wlbar .wlbar-mentor{padding:0 8px}
+  .wlbar .wlbar-mentor-t{display:none}
 }
 @media (max-width:360px){.wlbar .wlbar-sites a{padding:0 7px;font-size:13.5px}}
 @media print{.wlbar{display:none}}

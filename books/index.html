@@ -137,6 +137,20 @@ button{font:inherit;cursor:pointer}
 .save.on{background:transparent;color:var(--lamp);box-shadow:inset 0 0 0 1px var(--lamp)}
 .ghost{display:inline-block;text-align:center;font-size:14px;color:var(--paper);background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 14px;text-decoration:none}
 .ghost:hover{border-color:var(--neon);color:var(--neon)} .ghost.sm{font-size:12.5px;padding:6px 10px;margin-top:10px}
+/* A book that isn't on the shelves (#outside): name it, tell us what it's like (or let the AI tag it), see books like it. */
+.hits .out a{flex-direction:row;gap:8px;align-items:center;color:var(--lamp)}
+.outform{display:grid;grid-template-columns:2fr 1.4fr auto;gap:10px;align-items:end;max-width:860px;margin:12px 0 6px}
+.outform label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--dim)}
+.outform input{font:inherit;font-size:16px;color:var(--paper);background:var(--shelf);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.outform button,.obtn{font:600 15px var(--body);border:0;border-radius:10px;background:var(--lamp);color:#0b2b20;padding:12px 16px;cursor:pointer}
+.obtn.alt{background:transparent;color:var(--paper);border:1px solid var(--line)}
+.opick{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.opick .tg{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.opick .tg>span{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);min-width:74px}
+.opick button.tag{cursor:pointer;font:inherit;font-size:13px}
+.opick button.tag[aria-pressed="true"]{background:var(--lamp);color:#0b2b20;border-color:var(--lamp)}
+.omsg{color:var(--dim);font-size:14px;min-height:20px}
+@media (max-width:700px){.outform{grid-template-columns:1fr}}
 
 /* recommendations */
 .next{padding:34px 0 6px;border-top:1px solid var(--line);margin-top:34px}
@@ -941,6 +955,9 @@ try{Object.assign(S,JSON.parse(localStorage.getItem("lantern-stacks")||"{}"))}ca
 S.saved=(S.saved||[]).filter(id=>BY[id]);S.want=(S.want||[]).filter(id=>BY[id]&&!S.saved.includes(id));if(!S.life||typeof S.life!=="object"||Array.isArray(S.life))S.life={};
 const store=()=>{try{localStorage.setItem("lantern-stacks",JSON.stringify(S))}catch(e){}};
 let lens="", uOnly=false, HU=false;
+// Books from outside the Stacks a reader has added (#outside). Kept with their shelf, so they follow them when signed in.
+if(!Array.isArray(S.ext))S.ext=[];
+const OUT={q:"",t:"",a:"",tags:{g:[],th:[],h:[],tr:[],f:[]},age:0,L:0,msg:"",busy:false,idx:-1};
 // A signed-in student's grade band (from /auth.js, which reads their Life Skills tracker record). It only changes where the
 // Stacks starts them: every book stays open to everyone. Remembered on this device as "wl-role", cleared on sign-out.
 const BANDSTART={
@@ -1108,6 +1125,41 @@ function vNew(){
 
 function wantList(){const w=S.want.map(id=>BY[id]);
  return `<h2 id="want">Want to read <span class="ct">${w.length}</span></h2>${w.length?`<ul class="recs">${w.slice().reverse().map(b=>`<li class="rec"><div class="rec-c">${cover(b)}</div><div class="rec-b"><a class="rec-t" href="#book-${b.id}">${esc(b.t)}</a><span class="by">${esc(b.a)}</span>${chips(b)}<p class="lbtns"><button class="ghost sm" data-save="${b.id}">I read it and loved it</button> <button class="ghost sm" data-want="${b.id}">Take off the list</button></p></div></li>`).join("")}</ul>`:`<p class="sub wide">Nothing yet. On any book page, tap “I want to read this” to keep it here for later.</p>`}`}
+// ---------- a book that isn't on the shelves ----------
+const OUTKEYS=[["g","Section"],["f","Feels"],["h","Hero"],["tr","Plot"],["th","About"]];
+function outSeed(){return{id:"__outside",t:OUT.t,a:OUT.a,g:OUT.tags.g,th:OUT.tags.th,h:OUT.tags.h,tr:OUT.tags.tr,f:OUT.tags.f,c:[],nf:[],L:OUT.L,age:OUT.age}}
+function outReset(t){Object.assign(OUT,{idx:-1,t:t||"",a:"",tags:{g:[],th:[],h:[],tr:[],f:[]},age:0,L:0,msg:""})}
+function vOutside(arg){
+ if(arg!==""&&S.ext[+arg]&&OUT.idx!==+arg){const x=S.ext[+arg];Object.assign(OUT,{idx:+arg,t:x.t,a:x.a||"",tags:{g:x.g||[],th:x.th||[],h:x.h||[],tr:x.tr||[],f:x.f||[]},age:x.age||0,L:x.L||0,msg:""})}
+ const any=OUTKEYS.some(([k])=>OUT.tags[k].length),rs=any?recs(outSeed(),"",10):[],saved=!!OUT.t&&S.ext.some(x=>x.t.toLowerCase()===OUT.t.toLowerCase());
+ return `<p class="crumb"><a href="#home">← The Stacks</a></p>
+ <section class="next"><h1 class="h1s">A book that isn't on these shelves</h1>
+ <p class="sub wide">Loved a book we don't have? Name it, and we'll find books here that are like it. If you're signed in, your AI Coach can tell what it's like. Or pick it yourself below.</p>
+ <form class="outform" id="outform"><label>Title<input id="ot" autocomplete="off" maxlength="120" value="${esc(OUT.t)}" placeholder="Wings of Fire"></label><label>Author (if you know it)<input id="oa" autocomplete="off" maxlength="80" value="${esc(OUT.a)}" placeholder="Tui T. Sutherland"></label><button type="submit"${OUT.busy?" disabled":""}>🦊 Find books like it</button></form>
+ <p class="omsg" aria-live="polite">${esc(OUT.msg)}</p>
+ <div class="opick"><p class="fine">What's it like? Tap everything that fits.</p>${OUTKEYS.map(([k,name])=>`<div class="tg"><span>${name}</span>${Object.entries(LABEL[k]).map(([x,lab])=>`<button type="button" class="tag" data-otag="${k}|${x}" aria-pressed="${OUT.tags[k].includes(x)}">${esc(lab)}</button>`).join("")}</div>`).join("")}</div>
+ ${OUT.t&&any?`<p><button class="obtn${saved?" alt":""}" type="button" data-out-save>${saved?"On your shelf ✓ (tap to update)":"I loved it. Put it on my shelf"}</button></p>`:""}
+ ${any?`<h2>If you loved ${OUT.t?"“"+esc(OUT.t)+"”":"it"}</h2>${rs.length?`<ul class="recs">${rs.map(r=>row(r.b,why(r.p,""))).join("")}</ul>`:`<p class="empty">Nothing on the shelves connects at your current settings. Tap a few more things it's like.</p>`}`:`<p class="empty">Tap what it's like above, or use “Find books like it”, to see books here.</p>`}
+ </section>`}
+async function outFind(){
+ OUT.t=($("#ot").value||"").trim();OUT.a=($("#oa").value||"").trim();
+ if(OUT.t.length<2){OUT.msg="Type the book's title first.";keepScroll(route);return}
+ const u=window.wlFirebase&&window.wlFirebase.auth.currentUser;
+ if(!u){OUT.msg="Sign in with your school account and the AI Coach can tell what it's like. Or tap what it's like below.";keepScroll(route);return}
+ OUT.busy=true;OUT.msg="🦊 Looking it up…";keepScroll(route);
+ try{
+  const FS="https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents",tk=await u.getIdToken();
+  const cfg=await (await fetch(FS+"/mentorConfig/main",{headers:{Authorization:"Bearer "+tk}})).json(),relay=cfg.fields.relay.stringValue;
+  const r=await fetch(relay,{method:"POST",headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"},body:JSON.stringify({mode:"booktags",title:OUT.t,author:OUT.a,vocab:Object.fromEntries(OUTKEYS.map(([k])=>[k,LABEL[k]]))})});
+  const j=await r.json();if(!r.ok)throw new Error(j.error||"");
+  if(!j.known){OUT.msg="I don't know that one. Check the spelling, or tap what it's like below.";}
+  else{OUTKEYS.forEach(([k])=>OUT.tags[k]=j[k]||[]);OUT.age=j.age||0;OUT.L=j.L||0;if(j.author&&!OUT.a)OUT.a=j.author;
+   OUT.msg=(j.adult?"That one is written for grown-ups, so here are books for your age with the same feel. ":"")+"Here's what it's like. Tap to change anything that's off.";}
+ }catch(e){OUT.msg=(e.message||"Couldn't look it up just now.")+" Tap what it's like below instead."}
+ OUT.busy=false;keepScroll(route)}
+function outSave(){const x={t:OUT.t.slice(0,120),a:OUT.a.slice(0,80),...OUT.tags,age:OUT.age,L:OUT.L,d:todayISO()};
+ const i=S.ext.findIndex(y=>y.t.toLowerCase()===x.t.toLowerCase());if(i>=0)S.ext[i]=x;else S.ext.push(x);S.ext=S.ext.slice(-60);store();keepScroll(route)}
+function extList(){return S.ext.length?`<h2>From outside the Stacks <span class="ct">${S.ext.length}</span></h2><ul class="recs">${S.ext.map((x,i)=>`<li class="rec"><div class="rec-b"><b class="rec-t">${esc(x.t)}</b><span class="by">${esc(x.a||"")}</span><p class="lbtns"><a class="ghost sm" href="#outside-${i}">Find books like it</a> <button class="ghost sm" data-out-del="${i}">Take off my shelf</button></p></div></li>`).join("")}</ul>`:`<p class="fine"><a href="#outside">Add a book you loved that isn't on these shelves.</a></p>`}
 function vShelf(){
  const sv=S.saved.map(id=>BY[id]); const have=new Set(sv.map(b=>b.g[0])); const haveNF=new Set(sv.flatMap(b=>b.nf)); const g=guessLex();
  return `<section class="shelf"><h1 class="h1s">My shelf</h1>
@@ -1116,8 +1168,8 @@ function vShelf(){
  <h3 class="h3m">Story sections</h3><p class="stamps">${MAPG.map(x=>`<span class="${have.has(x)?"on":""}" style="--h:${HUE[x]}">${LABEL.g[x]}</span>`).join("")}</p>
  <h3 class="h3m">Nonfiction regions</h3><p class="stamps">${Object.keys(NF).map(x=>`<a href="#nf-${x}" class="${haveNF.has(x)?"on":""}" style="--h:${NFHUE[x]}">${NF[x][0]}</a>`).join("")}</p>
  <p class="fine">${have.size} of ${MAPG.length} story sections and ${haveNF.size} of 15 nonfiction regions explored. <a href="#new-ground">Find a way into the rest.</a></p>
- <ul class="recs">${sv.map(b=>`<li class="rec"><div class="rec-c">${cover(b)}</div><div class="rec-b"><a class="rec-t" href="#book-${b.id}">${esc(b.t)}</a><span class="by">${esc(b.a)}</span>${chips(b)}<button class="ghost sm" data-save="${b.id}">Take off my shelf</button></div></li>`).join("")}</ul>${wantList()}`
- :`<p class="sub wide">Nothing here yet. Find a book you loved and tap “I loved this.” Sign in to keep your shelf on any Chromebook. Nobody else sees it.</p><p><a class="ghost" href="#home">Find a book</a></p>${wantList()}`}</section>`}
+ <ul class="recs">${sv.map(b=>`<li class="rec"><div class="rec-c">${cover(b)}</div><div class="rec-b"><a class="rec-t" href="#book-${b.id}">${esc(b.t)}</a><span class="by">${esc(b.a)}</span>${chips(b)}<button class="ghost sm" data-save="${b.id}">Take off my shelf</button></div></li>`).join("")}</ul>${extList()}${wantList()}`
+ :`<p class="sub wide">Nothing here yet. Find a book you loved and tap “I loved this.” Sign in to keep your shelf on any Chromebook. Nobody else sees it.</p><p><a class="ghost" href="#home">Find a book</a></p>${extList()}${wantList()}`}</section>`}
 
 // ---------- the nonfiction universe ----------
 function nfFor(seed,n){return recs(seed,"",n,NFB)}
@@ -1260,6 +1312,7 @@ function route(){const h=location.hash.slice(1)||"home";let html,tab="home";
  else if(h==="for-me"){html=vForMe()}
  else if(h==="new-ground"){html=vNew();tab="new-ground"}
  else if(h==="my-shelf"||h==="want"){html=vShelf();tab="my-shelf"}
+ else if(h==="outside"||h.startsWith("outside-")){html=vOutside(h.slice(8));tab="my-shelf"}
  else if(h==="life"||h.startsWith("life-")){const k=h.slice(5);if(h!==LHASH&&k&&LIFE.some(it=>it.k===k)){LOPEN=k;LFILTER="all";LCOPEN.add(LIFE.find(it=>it.k===k).c)}html=vLife();tab="life"}
  else html=vHome();
  LHASH=h;
@@ -1282,7 +1335,12 @@ function reader(){const L=readerLex();$("#rsum").textContent=(S.age?"Age "+S.age
  $("#r-age").value=S.age||"";$("#r-lex").value=S.lexTxt||(S.lex?fmtL(S.lex):"");$("#r-older").checked=!!S.older;$("#r-up").checked=!!S.up}
 function keepScroll(fn){const y=window.scrollY;fn();window.scrollTo(0,y)}
 
+document.addEventListener("submit",e=>{if(e.target.id==="outform"){e.preventDefault();outFind()}});
 document.addEventListener("click",e=>{
+ if(e.target.closest("[data-out-start]")){outReset(OUT.q)}
+ const ot=e.target.closest("[data-otag]");if(ot){const [k,x]=ot.dataset.otag.split("|");OUT.t=($("#ot")||{}).value||OUT.t;OUT.a=($("#oa")||{}).value||OUT.a;OUT.tags[k]=OUT.tags[k].includes(x)?OUT.tags[k].filter(y=>y!==x):OUT.tags[k].concat(x);keepScroll(route);return}
+ if(e.target.closest("[data-out-save]")){OUT.t=(($("#ot")||{}).value||"").trim()||OUT.t;OUT.a=(($("#oa")||{}).value||"").trim();if(OUT.t)outSave();return}
+ const od=e.target.closest("[data-out-del]");if(od){S.ext.splice(+od.dataset.outDel,1);store();keepScroll(route);return}
  const s=e.target.closest("[data-save]");if(s){const id=s.dataset.save;S.saved=S.saved.includes(id)?S.saved.filter(x=>x!==id):S.saved.concat(id);S.want=S.want.filter(x=>!S.saved.includes(x));store();reader();keepScroll(route);return}
  const wt=e.target.closest("[data-want]");if(wt){const id=wt.dataset.want;S.want=S.want.includes(id)?S.want.filter(x=>x!==id):S.want.concat(id);store();keepScroll(route);return}
  const lo=e.target.closest("[data-lopen]");if(lo){LOPEN=LOPEN===lo.dataset.lopen?null:lo.dataset.lopen;keepScroll(route);if(LOPEN){const el=$("#li-"+LOPEN);if(el&&el.getBoundingClientRect().top<70)el.scrollIntoView({block:"start"})}return}
@@ -1300,7 +1358,8 @@ document.addEventListener("click",e=>{
 document.addEventListener("input",e=>{
  if(e.target.id==="q"){const q=e.target.value.trim().toLowerCase(),box=$("#hits");if(q.length<2){box.hidden=true;return}
   const hit=BOOKS.filter(b=>(b.t+" "+b.a).toLowerCase().includes(q)).slice(0,7);
-  box.innerHTML=hit.length?hit.map(b=>`<li><a href="#book-${b.id}"><b>${esc(b.t)}</b><span>${esc(b.a)}</span></a></li>`).join(""):`<li class="none">Not on these shelves yet. Try a book like it, or ask a guide to add it.</li>`;box.hidden=false}
+  OUT.q=e.target.value.trim();
+  box.innerHTML=(hit.length?hit.map(b=>`<li><a href="#book-${b.id}"><b>${esc(b.t)}</b><span>${esc(b.a)}</span></a></li>`).join(""):`<li class="none">Not on these shelves yet.</li>`)+`<li class="out"><a href="#outside" data-out-start>${hit.length?"Not here? ":""}Find books like “${esc(OUT.q.slice(0,60))}” →</a></li>`;box.hidden=false}
  if(e.target.id==="lq"){const q=e.target.value.trim().toLowerCase(),box=$("#lhits"),k=e.target.dataset.k;if(q.length<2){box.hidden=true;return}
   const hit=BOOKS.filter(b=>(b.t+" "+b.a).toLowerCase().includes(q)).slice(0,6);
   box.innerHTML=hit.length?hit.map(b=>`<li><button data-claim="${k}|${b.id}"><b>${esc(b.t)}</b><span>${esc(b.a)}</span></button></li>`).join(""):`<li class="none">Not in the Stacks. Add it yourself below.</li>`;box.hidden=false}
@@ -1310,7 +1369,7 @@ document.addEventListener("input",e=>{
  if(e.target.id==="r-older"){S.older=e.target.checked;store();keepScroll(route)}
  if(e.target.id==="r-up"){S.up=e.target.checked;store();reader();keepScroll(route)}
 });
-document.addEventListener("keydown",e=>{if(e.target.id==="q"&&e.key==="Enter"){const a=document.querySelector("#hits a");if(a)location.hash=a.getAttribute("href")}
+document.addEventListener("keydown",e=>{if(e.target.id==="q"&&e.key==="Enter"){const a=document.querySelector("#hits a");if(a){if(a.hasAttribute("data-out-start"))outReset(OUT.q);location.hash=a.getAttribute("href")}}
  if((e.target.id==="lt"||e.target.id==="la")&&e.key==="Enter"){const b=document.querySelector("[data-lcustom]");if(b)b.click()}
  if(e.target.id==="lq"&&e.key==="Enter"){const b=document.querySelector("#lhits [data-claim]");if(b)b.click()}});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("lcat")){const c=d.dataset.c;if(d.open)LCOPEN.add(c);else LCOPEN.delete(c)}},true);

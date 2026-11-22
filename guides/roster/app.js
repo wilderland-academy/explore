@@ -18,7 +18,7 @@ const CAT = {
   self_harm: "Self-harm or suicide", harmed_by_others: "May be unsafe or harmed", threat_to_others: "Threat to others", sexual: "Sexual content",
   weapons_danger: "Weapons or dangerous activity", drugs_alcohol: "Drugs or alcohol", bullying_hate: "Bullying or hate", distress: "Upset or struggling",
   personal_info: "Shared personal details", manipulation: "Tried to get around the rules", cheating: "Asked AI to do the work", profanity: "Rude language",
-  off_topic: "Off topic", tampering: "Log tampering", coach_reply_held_back: "Coach reply held back", academic_use: "Used the coach for academics", none: "None"
+  off_topic: "Off topic", tampering: "Log tampering", coach_reply_held_back: "Coach reply held back", academic_use: "Used the coach for academics", academic_interest: "Wants to try the academics coach", none: "None"
 };
 // What to do, shown on urgent alerts. Sources: Utah Code 80-2-602 (everyone must report suspected abuse or neglect
 // immediately to DCFS or law enforcement; telling a school official does not satisfy it, per USBE rule R277-401),
@@ -111,7 +111,7 @@ async function loadAll() {
   ]);
   S.people = {};
   S.ls = ls;
-  ls.forEach(s => { const p = person(pkey(s)); Object.assign(p, { name: s.name || "", band: s.band || "", guide: s.guide || "", sid: s.id, grade: s.grade || "", parents: s.parents || [], school: s.email || "" }); });
+  ls.forEach(s => { const p = person(pkey(s)); Object.assign(p, { name: s.name || "", band: s.band || "", guide: s.guide || "", sid: s.id, grade: s.grade || "", parents: s.parents || [], school: s.email || "", academic: s.coachAcademic === true }); });
   ai.forEach(a => { const p = person(a.email); p.uid = a.uid || a.id; p.coach = a; if (!p.name) p.name = a.name || ""; if (!p.band) p.band = a.band || ""; });
   sites.forEach(d => {
     if (!d.email) return;
@@ -179,6 +179,7 @@ function alertCard(a) {
     ${a.quote ? `<p class="quote">“${esc(a.quote)}”</p>` : ""}
     ${pr && !done ? `<div class="protocol"><b>What to do now</b><ol>${pr.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
     ${done ? `<p class="meta">Reviewed by ${esc(a.reviewedBy || "")} ${esc(when(a.reviewedAt))}${a.note ? ": " + esc(a.note) : ""}</p>` : ""}
+    ${a.category === "academic_interest" && S.admin ? (() => { const p = S.people[key(a.email)] || {}; return p.sid ? (p.academic ? `<p class="meta">Academics pilot is on for this student.</p>` : `<div class="row"><button class="btn" type="button" data-unlock="${esc(p.sid)}">Turn on the academics pilot</button></div>`) : ""; })() : ""}
     <div class="row">${a.chatId ? `<a class="btn ghost" href="#c=${esc(a.chatId)}">Read the conversation</a>` : ""}${done ? "" : `<button class="btn" type="button" data-review="${esc(a.id)}">Mark reviewed</button>`}</div>
     ${done ? "" : `<div hidden data-note-for="${esc(a.id)}"><label class="small" for="n-${esc(a.id)}">What did you do? (saved with the alert)</label><textarea class="note" id="n-${esc(a.id)}" maxlength="500"></textarea><div class="row" style="margin-top:6px"><button class="btn" type="button" data-save-review="${esc(a.id)}">Save as reviewed</button></div></div>`}
   </article>`;
@@ -206,7 +207,7 @@ function vRoster() {
     `<div class="row">${["All", ...BANDS].map(b => `<button class="chip" type="button" data-band="${b}" aria-pressed="${S.band === b}">${b === "All" ? "All bands" : "Grades " + b}</button>`).join("")}<input class="in" type="search" id="q" placeholder="Find a student, parent or guide" value="${esc(S.q)}"><a class="btn" href="#add" style="margin-left:auto">Add a student</a></div>` +
     (show.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>Grades</th><th>Parents</th><th>Field Guide</th><th class="num">AI chats</th><th class="num">Open alerts</th><th>Last AI use</th><th></th></tr></thead><tbody>${show.map(p => {
       const open = p.alerts.filter(a => a.status === "open").length, k = p.sid && !p.school ? "sid:" + p.sid : p.email;
-      return `<tr><td><a href="#s=${encodeURIComponent(k)}">${esc(p.name || p.email)}</a>${p.sid ? "" : ' <span class="meta">· not in the tracker yet</span>'}${p.school ? `<br><span class="meta">${esc(p.school)}</span>` : p.sid ? '<br><span class="meta">no student sign-in</span>' : ""}</td><td>${esc(p.band ? p.band + (p.grade ? " · gr " + p.grade : "") : "—")}</td>` +
+      return `<tr><td><a href="#s=${encodeURIComponent(k)}">${esc(p.name || p.email)}</a>${p.academic ? ' <span class="sev low">academics pilot</span>' : ""}${p.sid ? "" : ' <span class="meta">· not in the tracker yet</span>'}${p.school ? `<br><span class="meta">${esc(p.school)}</span>` : p.sid ? '<br><span class="meta">no student sign-in</span>' : ""}</td><td>${esc(p.band ? p.band + (p.grade ? " · gr " + p.grade : "") : "—")}</td>` +
         `<td class="small">${(p.parents || []).length ? p.parents.map(esc).join("<br>") : '<span class="meta">none linked</span>'}</td><td class="small">${esc(guideNames(p.guide)) || "—"}</td>` +
         `<td class="num">${p.chats.length}</td><td class="num">${open ? `<span class="count">${open}</span>` : "0"}</td><td>${esc(p.coach ? when(p.coach.lastAt) : "—")}</td><td>${p.sid ? `<a href="#edit=${esc(p.sid)}">Edit</a>` : `<a href="#add=${encodeURIComponent(p.email)}">Add</a>`}</td></tr>`;
     }).join("")}</tbody></table></div>` : `<p class="empty">${S.ls.length ? "No students match." : "No students yet. Add your crew, or import a spreadsheet."}</p>`) +
@@ -227,6 +228,7 @@ function vEdit(sid, preEmail) {
       <div class="grid2"><label>Student's school email <span class="hint">(lets them sign in; optional for K–1)</span><input class="in" name="email" type="email" value="${esc(v.email || "")}" placeholder="maya@wilderland.academy"></label>
       <label>Field Guides <span class="hint">(school emails, separated by commas)</span><input class="in" name="guide" value="${esc(v.guide || "")}" placeholder="april@wilderland.academy, shanan@wilderland.academy"></label></div>
       <label>Parent emails <span class="hint">(one per line, up to 6)</span><textarea class="in" name="parents" rows="3" placeholder="one email per line">${esc((v.parents || []).join("\n"))}</textarea></label>
+      <label class="chk"><input type="checkbox" name="coachAcademic"${v.coachAcademic === true ? " checked" : ""}${S.admin ? "" : " disabled"}> Academics coach pilot <span class="hint">(lets this student use the AI Coach for hint-only help with academics; every academics chat is flagged in Slack #alerts${S.admin ? "" : ". Only admins can change this"})</span></label>
       <div class="row"><button class="btn" type="submit">${s ? "Save" : "Add student"}</button><a class="btn ghost" href="${s ? "#s=" + encodeURIComponent(pkey(s)) : "#roster"}">Cancel</a>${s && S.admin ? `<button class="btn danger" type="button" data-del="${esc(s.id)}" style="margin-left:auto">Delete student</button>` : ""}</div>
       <p class="note" id="stu-note" aria-live="polite"></p>
     </form>` + (s ? "" : importPanel());
@@ -243,6 +245,7 @@ async function saveStudent(form) {
   if (parents.length > 6) return say("Up to 6 parent emails per student.");
   if (email && S.ls.some(x => x.email === email && x.id !== sid)) return say("Another student already has that email.");
   const data = { name, band: String(fd.get("band")), grade: String(fd.get("grade") || "").trim(), email, guide, parents, updated: Date.now(), updatedBy: S.me };
+  if (S.admin) data.coachAcademic = fd.get("coachAcademic") === "on";
   const id = sid || newId();
   form.querySelector("[type=submit]").disabled = true; note.className = "note"; note.textContent = "Saving…";
   try {
@@ -328,20 +331,20 @@ async function runImport(btn) {
     S.flash = `Imported ${importPlan.length} students.`; importPlan = []; await loadAll(); location.hash = "#roster"; route();
   } catch (e) { btn.disabled = false; note.className = "note err"; note.textContent = e.message + " Students saved before the problem stay saved; choose the file again to finish."; }
 }
-const KIND = { challenge: "challenge", project: "project", academic: "academics (hint-only)", lesson: "lesson" };
+const KIND = { challenge: "challenge", project: "project", academic: "academics (pilot, hint-only)", lesson: "lesson", conflict: "conflict", "find-challenge": "finding a challenge", "find-project": "finding a project" };
 function chatTopic(c) {
   if (c.kind === "lesson") return "How to use the coach";
   if (c.kind === "challenge" && CH[c.topicId]) return chLink(c.topicId);
-  return esc(c.topicTitle || (c.kind === "academic" ? "Academics" : "—"));
+  return esc(c.topicTitle || ({ academic: "Academics", conflict: "Working out a conflict" }[c.kind] || "—"));
 }
 function chatRow(c) {
   return `<tr><td>${who(c)}</td><td>${chatTopic(c)}<br><span class="meta">${esc(KIND[c.kind] || c.kind)}${c.staffTest ? " · staff test" : ""}</span></td><td class="num">${c.turns || 0}</td><td>${c.level ? sevTag(SEV[c.level]) : ""}${c.reviewed ? ' <span class="meta">reviewed</span>' : ""}</td><td>${esc(when(c.updated))}</td><td><a href="#c=${esc(c.id)}">Read</a></td></tr>`;
 }
 function vChats() {
-  const rows = S.chats.filter(c => S.cf === "academic" ? c.kind === "academic" : S.cf === "review" ? !c.reviewed : true).filter(c => !S.q || ((S.people[key(c.email)] || {}).name + " " + c.email + " " + (c.topicTitle || "") + " " + (c.last || "")).toLowerCase().includes(S.q));
+  const rows = S.chats.filter(c => S.cf === "academic" ? c.kind === "academic" : S.cf === "conflict" ? c.kind === "conflict" : S.cf === "review" ? !c.reviewed : true).filter(c => !S.q || ((S.people[key(c.email)] || {}).name + " " + c.email + " " + (c.topicTitle || "") + " " + (c.last || "")).toLowerCase().includes(S.q));
   return head("All AI conversations", "Every conversation any student has had with the AI Coach, newest first. Students can't delete them. Academics conversations are always flagged for review, here and in Slack #alerts.") + tabs("chats") +
     `<div class="row"><input class="in" type="search" id="q" placeholder="Find a student, challenge or words" value="${esc(S.q)}"></div>` +
-    `<div class="row">${[["all", "All"], ["academic", "Academics"], ["review", "Not reviewed yet"]].map(([k, l]) => `<button class="chip" type="button" data-cf="${k}" aria-pressed="${S.cf === k}">${l}</button>`).join("")}</div>` +
+    `<div class="row">${[["all", "All"], ["conflict", "Conflicts"], ["academic", "Academics"], ["review", "Not reviewed yet"]].map(([k, l]) => `<button class="chip" type="button" data-cf="${k}" aria-pressed="${S.cf === k}">${l}</button>`).join("")}</div>` +
     (rows.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>About</th><th class="num">Messages</th><th>Flag</th><th>Last</th><th></th></tr></thead><tbody>${rows.slice(0, 400).map(chatRow).join("")}</tbody></table></div>` : `<p class="empty">No conversations match.</p>`);
 }
 async function vStudent(k) {
@@ -374,7 +377,7 @@ async function vChat(id) {
     `<div class="convo">${turns.map(t => {
       const flag = t.role === "student" && t.severity && t.severity !== "none";
       const tags = [flag ? `${sevTag(t.severity)} ${esc(CAT[t.flag] || t.flag || "")}` : "", t.scripted ? "fixed safety reply" : "", t.blocked ? "a reply was held back: " + esc(t.blocked) : ""].filter(Boolean).join(" · ");
-      return `<div class="bub ${t.role === "student" ? "student" : "coach"}${flag && SEV.indexOf(t.severity) >= 2 ? " flag" + (t.severity === "urgent" ? " urgent" : "") : ""}"><span class="who">${t.role === "student" ? esc(p.name || "Student") : "AI Coach"} · ${esc(when(t.at))}${tags ? " · " + tags : ""}</span>${esc(t.text)}</div>`;
+      return `<div class="bub ${t.role === "student" ? "student" : "coach"}${flag && SEV.indexOf(t.severity) >= 2 ? " flag" + (t.severity === "urgent" ? " urgent" : "") : ""}"><span class="who">${t.role === "student" ? esc(p.name || "Student") : "AI Coach"} · ${esc(when(t.at))}${tags ? " · " + tags : ""}</span>${esc(t.text).replace(/\[([A-Z]{2}-\d{2}\.\d{1,2})\]/g, (m, id) => CH[id] ? chLink(id) : m)}</div>`;
     }).join("") || '<p class="empty">No messages.</p>'}</div>`;
 }
 
@@ -413,6 +416,12 @@ document.addEventListener("click", async e => {
   if (t.dataset.cf) { S.cf = t.dataset.cf; route(); return; }
   if (t.dataset.del) { deleteStudent(t.dataset.del, t); return; }
   if (t.hasAttribute("data-import")) { runImport(t); return; }
+  if (t.dataset.unlock) {
+    t.disabled = true;
+    try { await commit([{ set: "lsStudents/" + t.dataset.unlock, data: { coachAcademic: true, updated: Date.now(), updatedBy: S.me }, merge: true }]); S.flash = "Academics pilot turned on."; await loadAll(); route(); }
+    catch (x) { t.disabled = false; alert(x.message); }
+    return;
+  }
   if (t.dataset.review) { const n = document.querySelector(`[data-note-for="${t.dataset.review}"]`); if (n) { n.hidden = false; n.querySelector("textarea").focus(); t.hidden = true; } return; }
   if (t.dataset.saveReview) {
     const id = t.dataset.saveReview, note = (document.getElementById("n-" + id) || {}).value || "";

@@ -35,6 +35,21 @@ p{margin:0}
 .mm{--c:#0b6b3a}.bh{--c:#1d4e89}.ls{--c:#015640}.ch{--c:#7a5a00}.pc{--c:#8a2d55}
 .new{align-self:flex-start;font:700 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase;background:#8a2d55;color:#fff;padding:3px 8px;border-radius:99px}
 .note{font-size:14px;color:var(--dim);max-width:70ch}
+/* The Guide Mentor, first thing on the page (above the fold on phones too). */
+.mentor{background:#0f231c;color:#f6f8ea;border-radius:16px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:12px}
+.mentor .top{display:flex;gap:14px;align-items:center}
+.mentor .dragon{width:54px;height:54px;border-radius:14px;background:#d5f367;display:grid;place-items:center;font-size:34px;line-height:1;flex:none}
+.mentor h2{font-family:var(--body);font-size:20px;letter-spacing:0}
+.mentor p{color:#c9d6cd;font-size:14.5px}
+.mentor form{display:flex;gap:8px}
+.mentor input{flex:1;min-width:0;border:0;border-radius:12px;padding:13px 14px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
+.mentor button{border:0;border-radius:12px;background:#d5f367;color:#0b2b20;font:700 15px var(--body);padding:0 16px;cursor:pointer;white-space:nowrap}
+.mentor input:focus-visible,.mentor button:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
+.mentor .chips{display:flex;gap:8px;flex-wrap:wrap}
+.mentor .chips button{background:rgba(255,255,255,.1);color:#f6f8ea;font:600 13.5px var(--body);padding:8px 12px;border-radius:999px}
+.mentor .chips button:hover{background:rgba(255,255,255,.18)}
+@media (max-width:640px){main{padding-top:22px;gap:20px}.mentor .chips button:nth-child(n+3){display:none}}
+.hb{--c:#6b4f1d}
 </style>
 </head>
 <body>
@@ -43,6 +58,13 @@ p{margin:0}
   <header style="display:flex;flex-direction:column;gap:10px">
     <p class="eyebrow">Wilderland staff</p>
     <h1>Everything a guide needs, <span>in one place.</span></h1>
+  </header>
+  <section class="mentor" aria-labelledby="gm-title">
+    <div class="top"><div class="dragon" aria-hidden="true">🐲</div><div><h2 id="gm-title">Ask the Guide Mentor</h2><p>Anything about your work, answered from our Staff Handbook, Behavior Policy and approach. It tells you where the answer comes from.</p></div></div>
+    <form id="gm-form"><label for="gm-q" style="position:absolute;left:-9999px">Your question</label><input id="gm-q" type="text" autocomplete="off" placeholder="What does our policy say about…"><button type="submit">Ask 🐲</button></form>
+    <div class="chips"><button type="button" data-gm="A student keeps disrupting the Lab. What does our policy say to do?">A student keeps disrupting</button><button type="button" data-gm="Help me plan what to say to a parent who is upset.">An upset parent</button><button type="button" data-gm="What's our procedure if a child gets hurt outside?">A child got hurt</button><button type="button" data-gm="Two students are in a conflict. How do I run it the Wilderland way?">Two students in conflict</button></div>
+  </section>
+  <header style="display:flex;flex-direction:column;gap:10px">
     <p class="lede">Guides for the work that matters most: how we mentor, how we hold the line on behavior, how students earn Life Skills, and how we talk with families. The menu at the top follows you through all of them.</p>
   </header>
   <div class="grid">
@@ -51,10 +73,17 @@ p{margin:0}
     <a class="g ls" href="/guides/lifeskills/"><svg class="art" viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><rect width="320" height="120" fill="currentColor" opacity=".09"/><path d="M0 104q120-30 200 2t120-6v20H0z" fill="currentColor" opacity=".22"/><path d="M24 110c70-4 40-34 116-38s58-30 110-34 40-8 48-8" stroke="currentColor" stroke-width="3" stroke-dasharray="1 8" stroke-linecap="round" fill="none"/><circle cx="70" cy="96" r="9" fill="#d5f367" stroke="currentColor" stroke-width="2.5"/><path d="M66 96l3 3 5-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="140" cy="72" r="9" fill="#d5f367" stroke="currentColor" stroke-width="2.5"/><path d="M136 72l3 3 5-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="214" cy="48" r="9" fill="#fff" stroke="currentColor" stroke-width="2.5"/><path d="M298 30V12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M299 12l14 4-14 5z" fill="#d5f367" stroke="currentColor" stroke-width="1.5"/></svg><span class="k">The trail</span><h2>Life Skills</h2><p>Track passes and not-yets, browse every challenge, schedule Labs for families, and build new Labs that score Excellent on the Workshop Scorecard.</p><ul><li>Band overview, with what each student saved</li><li>The Challenges map and the Labs schedule</li><li>Lab builder, with Epic Lab ideas for every band</li></ul><span class="go">Open Life Skills →</span></a>
     <a class="g ch" href="/guides/roster/"><svg class="art" viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><rect width="320" height="120" fill="currentColor" opacity=".09"/><rect x="70" y="14" width="180" height="96" rx="10" fill="#fff" stroke="currentColor" stroke-width="2.5"/><g stroke="currentColor" stroke-width="2.5"><circle cx="96" cy="38" r="9" fill="#d5f367"/><circle cx="96" cy="62" r="9" fill="#fff"/><circle cx="96" cy="86" r="9" fill="#fff"/></g><g fill="currentColor" opacity=".45"><rect x="114" y="34" width="90" height="8" rx="4"/><rect x="114" y="58" width="70" height="8" rx="4"/><rect x="114" y="82" width="80" height="8" rx="4"/></g><circle cx="230" cy="38" r="8" fill="#e9a23b"/></svg><span class="k">Everyone, in one place</span><h2>Student Roster</h2><p>Every student and their parents, their AI Coach conversations, and alerts that need a guide.</p><ul><li>Add students and link parents</li><li>AI Coach alerts, with what to do</li><li>Every AI conversation, and each student's saved sparks and books</li></ul><span class="go">Open the roster →</span></a>
     <a class="g pc" href="/guides/parents/"><svg class="art" viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><rect width="320" height="120" fill="currentColor" opacity=".09"/><path d="M0 120V80h70l10 40zM320 120V80h-70l-10 40z" fill="currentColor" opacity=".55"/><path d="M0 104q20-5 40 0t40 0 40 0 40 0 40 0 40 0 40 0 40 0" stroke="currentColor" stroke-width="2" fill="none" opacity=".35"/><path d="M60 80q100-62 200 0" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M56 80h208" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M90 80V62" stroke="currentColor" stroke-width="1.6"/><path d="M120 80V51" stroke="currentColor" stroke-width="1.6"/><path d="M160 80V47" stroke="currentColor" stroke-width="1.6"/><path d="M200 80V51" stroke="currentColor" stroke-width="1.6"/><path d="M230 80V62" stroke="currentColor" stroke-width="1.6"/><path d="M268 80V58l16-13 16 13v22z" fill="#fff" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><rect x="278" y="62" width="10" height="10" rx="1.5" fill="#d5f367" stroke="currentColor" stroke-width="1.5"/></svg><span class="k">The bridge home</span><h2>Parent Communication</h2><p>A writing coach for messages to families. Get a draft you can send now, plus what would make it stronger.</p><ul><li>Regular newsletters</li><li>Customer service replies</li><li>Event communication</li></ul><span class="go">Open the coach →</span></a>
+    <a class="g hb" href="/guides/handbook/"><svg class="art" viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><rect width="320" height="120" fill="currentColor" opacity=".09"/><path d="M110 22h50c8 0 12 4 12 10v74c0-6-4-9-12-9h-50z" fill="#fff" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M210 22h-50c-8 0-12 4-12 10v74c0-6 4-9 12-9h50z" fill="#fff" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M122 40h30M122 52h30M122 64h24M168 40h30M168 52h30M168 64h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".5"/><path d="M190 18v30l8-6 8 6V18z" fill="#d5f367" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span class="k">The rulebook</span><h2>Staff Handbook</h2><p>Our 2026-27 handbook: conduct, safety, the Two-Adult Rule, mandatory reporting, the classroom and more. Ask the Guide Mentor about any of it.</p><span class="go">Open the handbook →</span></a>
     <a class="g hist" href="/guides/history/"><svg class="art ico" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M6 10h24a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H16l-8 6v-6H6a4 4 0 0 1-4-4V14a4 4 0 0 1 4-4z" fill="#d5f367" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M38 18h4a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4h-2v6l-8-6H22a4 4 0 0 1-4-4v-2" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg><span class="k">Only you can see these</span><h2>Your conversations</h2><p>Every conversation with the Mentor Mindset, Behavior and Parent Communication coaches, and every Lab builder draft. Reopen, copy or delete them.</p><span class="go">Open your history →</span></a>
   </div>
   <p class="note">All of these need your Wilderland school account and a spot on the staff list. If something won't open, ask Alex.</p>
 </main>
+<script>
+// The Guide Mentor: ask from here, from the 🐲 button in the top bar on any staff page, or with /guides/?mentor.
+document.getElementById("gm-form").addEventListener("submit", function (e) { e.preventDefault(); var q = document.getElementById("gm-q"); window.wlOpenMentor(q.value.trim() ? { ask: q.value.trim() } : null); q.value = ""; });
+document.addEventListener("click", function (e) { var b = e.target.closest("[data-gm]"); if (b) window.wlOpenMentor({ ask: b.getAttribute("data-gm") }); });
+(function () { var m = /[?&]mentor(?:=([^&#]+))?/.exec(location.search); if (!m) return; history.replaceState(null, "", location.pathname + location.hash); window.wlOpenMentor(m[1] ? { threadId: decodeURIComponent(m[1]) } : {}); })();
+</script>
 <script type="module" src="/auth.js" data-site="guides"></script>
 </body>
 </html>
