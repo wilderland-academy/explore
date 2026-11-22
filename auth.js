@@ -22,16 +22,30 @@ const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@w
 // Pages that only need to know who is visiting (the front door, the Parents pages, the Students home). Here nobody is
 // ever signed out, so a parent still confirming their email isn't bounced, and no sign-in chip appears if the bar says data-auth="off".
 const SOFT_SITES = ["home", "parents", "students"];
+// Testers, the linked test accounts and each guide's band are listed once, in /wlnav.js (loaded before this file).
+const PEOPLE = window.WLPeople || { TESTERS: [], STAFF_BANDS: {}, TEST: {} };
+const TESTERS = PEOPLE.TESTERS, TEST = PEOPLE.TEST, STAFF_BANDS = PEOPLE.STAFF_BANDS;
+// Test view: a tester who switched (in the bar) to the test guide, student or parent on this device. Only honoured
+// for the tester who set it; anyone else signing in on this device clears it.
+function storedView() { try { const v = JSON.parse(localStorage.getItem("wl-viewas") || "null"); return v && ["guide", "student", "parent"].includes(v.as) && v.by ? v : null; } catch (e) { return null; } }
+function viewFor(u) {
+  const v = storedView(), em = ((u && u.email) || "").toLowerCase();
+  if (!v || !u || !u.emailVerified || v.by !== em || !TESTERS.includes(em)) return null;
+  return { as: v.as, band: ["K–1", "2–4", "5–8"].includes(v.band) ? v.band : "2–4", by: em };
+}
 const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["My progress", "/challenges/#progress"], ["Projects", "/projects/"]];
 
 const me = document.querySelector('script[src$="auth.js"]');
 const SITE = (me && me.dataset.site) || "";
 // What each site keeps in the browser. Add a line here when a new site joins.
 const ALLKEYS = { books: ["lantern-stacks"], challenges: ["wl-picks", "wl-band"], projects: ["atlas-sparks", "atlas-me"], store: ["wl-store"] };
-const KEYS = ALLKEYS[SITE] || [];
+// In a test view only the test student's things are kept (in their own place, testStudents/{uid}/sites/{site}).
+const VIEW0 = storedView();
+const KEYS = VIEW0 && VIEW0.as !== "student" ? [] : ALLKEYS[SITE] || [];
 // Clear every site's saved things from this Chromebook (on sign-out, here or on another site).
 function forgetDevice() { applying = true; origRemove.call(localStorage, "wl-role"); Object.entries(ALLKEYS).forEach(([s, ks]) => { ks.forEach(k => origRemove.call(localStorage, k)); origRemove.call(localStorage, "wl-linked-" + s); }); applying = false; }
-const DOC = uid => `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/databases/(default)/documents/students/${uid}/sites/${SITE}`;
+let view = null;
+const DOC = uid => `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/databases/(default)/documents/${view ? "testStudents" : "students"}/${uid}/sites/${SITE}`;
 
 const app = initializeApp(CONFIG);
 const auth = getAuth(app);
@@ -62,7 +76,7 @@ async function pull() {
 }
 async function push() {
   if (!user || !SITE || !KEYS.length) return;
-  const body = { fields: { data: { stringValue: JSON.stringify(readLocal()) }, updated: { timestampValue: new Date().toISOString() }, email: { stringValue: user.email || "" } } };
+  const body = { fields: { data: { stringValue: JSON.stringify(readLocal()) }, updated: { timestampValue: new Date().toISOString() }, email: { stringValue: view ? TEST.student : user.email || "" }, ...(view ? { test: { booleanValue: true } } : {}) } };
   const r = await fetch(DOC(user.uid), { method: "PATCH", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
   setState(r.ok ? "saved" : "error");
 }
@@ -78,13 +92,14 @@ addEventListener("pagehide", () => { if (pushTimer) { clearTimeout(pushTimer); p
 // accounts existed is lost. After that, the account copy is the true one (so a book removed on one
 // Chromebook doesn't come back from another).
 const LINK = () => "wl-linked-" + SITE;
+const LINKID = () => user.uid + (view ? "#test" : "");
 async function syncOnSignIn() {
   if (!SITE || !KEYS.length) return;
   setState("saving");
   try {
     const remote = await pull(), local = readLocal();
-    const firstHere = localStorage.getItem(LINK()) !== user.uid;
-    if (!remote) { await push(); origSet.call(localStorage, LINK(), user.uid); return; }
+    const firstHere = localStorage.getItem(LINK()) !== LINKID();
+    if (!remote) { await push(); origSet.call(localStorage, LINK(), LINKID()); return; }
     const next = {};
     if (firstHere) {
       new Set([...Object.keys(remote), ...Object.keys(local)]).forEach(k => {
@@ -96,7 +111,7 @@ async function syncOnSignIn() {
     const changed = KEYS.some(k => (next[k] ?? null) !== (local[k] ?? null));
     applying = true;
     KEYS.forEach(k => { if (next[k] == null) origRemove.call(localStorage, k); else origSet.call(localStorage, k, next[k]); });
-    origSet.call(localStorage, LINK(), user.uid);
+    origSet.call(localStorage, LINK(), LINKID());
     applying = false;
     if (KEYS.some(k => (next[k] ?? null) !== (remote[k] ?? null))) await push(); else setState("saved");
     // The page read localStorage when it loaded, so reload once to show the student's saved things.
@@ -132,16 +147,16 @@ function render() {
   const here = location.pathname;
   const links = SITES.map(([n, p]) => `<a href="${p}" class="${here.startsWith(p) ? "here" : ""}">${n}</a>`).join("");
   if (!user && family) {
-    host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${esc((family.email || "?")[0].toUpperCase())}</span><span>Parent</span></button>
-    ${open ? `<div class="menu"><p>Signed in as ${esc(family.email)}, a family account.</p><a href="/parents/lifeskills/">Life Skills tracker</a><a href="/challenges/parents.html">Passing off at home</a><a href="/parents/">Parents home</a><hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
+    host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${view ? "🧪" : esc((family.email || "?")[0].toUpperCase())}</span><span>${view ? "Test parent" : "Parent"}</span></button>
+    ${open ? `<div class="menu"><p>${view ? `Test parent (you're ${esc(family.email)}).` : `Signed in as ${esc(family.email)}, a family account.`}</p><a href="/parents/lifeskills/">Life Skills tracker</a><a href="/challenges/parents.html">Passing off at home</a><a href="/parents/">Parents home</a><hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
     return;
   }
   if (!user) {
     host.innerHTML = `<button class="out" type="button" data-wla="in">Sign in</button>`;
     return;
   }
-  const first = (user.displayName || user.email || "?").trim();
-  host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${user.photoURL ? `<img src="${esc(user.photoURL)}" alt="" referrerpolicy="no-referrer">` : esc(first[0].toUpperCase())}</span><span>${esc(first.split(" ")[0])}</span><span class="st ${state}" title="Saved to your account"></span></button>
+  const first = view ? (view.as === "guide" ? "Test guide" : "Test student") : (user.displayName || user.email || "?").trim();
+  host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${view ? "🧪" : user.photoURL ? `<img src="${esc(user.photoURL)}" alt="" referrerpolicy="no-referrer">` : esc(first[0].toUpperCase())}</span><span>${esc(view ? first : first.split(" ")[0])}</span><span class="st ${state}" title="Saved to your account"></span></button>
   ${open ? `<div class="menu"><p>Signed in as ${esc(user.email)}. What you save here follows you to any Chromebook.</p>${links}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
 }
 host.addEventListener("click", async e => {
@@ -151,8 +166,8 @@ host.addEventListener("click", async e => {
     open = false;
     if (pushTimer) { clearTimeout(pushTimer); await push(); }
     await signOut(auth);
-    // Leave nothing behind for the next person on this Chromebook.
-    forgetDevice();
+    // Leave nothing behind for the next person on this Chromebook (a test view ends too).
+    forgetDevice(); origRemove.call(localStorage, "wl-viewas");
     location.reload(); return;
   }
   if (b.dataset.wla === "in") wlSignIn();
@@ -191,17 +206,49 @@ const FS = `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/dat
 let roleSeq = 0;
 function sendRole(r) {
   window.wlRole = r;
-  try { if (r) origSet.call(localStorage, "wl-role", JSON.stringify({ e: r.email, r: r.role, b: r.band || null, s: r.sid || null })); else origRemove.call(localStorage, "wl-role"); } catch (e) { }
+  try { if (r) origSet.call(localStorage, "wl-role", JSON.stringify({ e: r.email, r: r.role, b: r.band || null, s: r.sid || null, bs: r.bands || null, t: r.test || null, x: r.real || null })); else origRemove.call(localStorage, "wl-role"); } catch (e) { }
   document.dispatchEvent(new CustomEvent("wl-role", { detail: r }));
+}
+// Firestore REST values, for the few writes made here.
+const fv = v => Array.isArray(v) ? { arrayValue: { values: v.map(fv) } } : typeof v === "boolean" ? { booleanValue: v } : typeof v === "number" ? { integerValue: String(v) } : { stringValue: String(v) };
+async function upsert(H, path, data) {
+  const mask = Object.keys(data).map(k => "updateMask.fieldPaths=" + encodeURIComponent(k)).join("&");
+  const r = await fetch(`${FS}/${path}?${mask}`, { method: "PATCH", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, fv(v)])) }) });
+  if (!r.ok) throw new Error("test account " + path + " " + r.status);
+}
+// The three linked test accounts, made (or moved to the chosen band) the first time a tester switches on this visit.
+// Only testers can read or write them (firestore.rules), and every page leaves them out for everyone else.
+async function ensureTest(u, band) {
+  try { if (sessionStorage.getItem("wl-test-ready") === band) return; } catch (e) { }
+  const H = { Authorization: "Bearer " + await u.getIdToken() };
+  await upsert(H, `lsStudents/${TEST.sid}`, { name: TEST.name, band, email: TEST.student, guide: TEST.guide, parents: [TEST.parent], test: true });
+  const b = await fetch(`${FS}/lsBoard/${TEST.sid}`, { headers: H });
+  await upsert(H, `lsBoard/${TEST.sid}`, b.ok ? { name: "Test S.", band, test: true } : { name: "Test S.", band, working: [], passed: [], credits: 0, test: true, updated: Date.now() });
+  await upsert(H, `lsParents/${encodeURIComponent(TEST.parent)}`, { email: TEST.parent, children: [TEST.sid], bands: [band], test: true, updated: Date.now() });
+  try { sessionStorage.setItem("wl-test-ready", band); } catch (e) { }
 }
 async function findRole(u, em) {
   if (!u.emailVerified) return null;
-  if (GUESTS.includes(em)) return { role: "staff", band: null, sid: null };
-  if (!em.endsWith("@" + DOMAIN)) return { role: "parent", band: null, sid: null };
-  if (ADMINS.includes(em)) return { role: "staff", band: null, sid: null };
+  if (view) {
+    try { await ensureTest(u, view.band); } catch (e) { console.warn("Wilderland test accounts:", e); }
+    const t = { test: view.as, real: em, band: view.band };
+    if (view.as === "student") return { ...t, role: "student", sid: TEST.sid, email: TEST.student };
+    if (view.as === "parent") return { ...t, role: "parent", sid: null, bands: [view.band], email: TEST.parent };
+    return { ...t, role: "staff", sid: null, email: TEST.guide };
+  }
+  // Guides start every band choice on their own band; admins and guests without one start on "All" (or 5–8).
+  if (GUESTS.includes(em)) return { role: "staff", band: STAFF_BANDS[em] || null, sid: null };
   const H = { Authorization: "Bearer " + await u.getIdToken() };
+  if (!em.endsWith("@" + DOMAIN)) {
+    // A parent: their children's bands (lsParents, kept by the Student Roster). The youngest child's band comes first.
+    let bands = [];
+    try { const p = await fetch(`${FS}/lsParents/${encodeURIComponent(em)}`, { headers: H }); if (p.ok) { const f = (await p.json()).fields || {}; bands = ((f.bands || {}).arrayValue || {}).values ? f.bands.arrayValue.values.map(x => x.stringValue) : []; } } catch (e) { }
+    bands = ["K–1", "2–4", "5–8"].filter(b => bands.includes(b));
+    return { role: "parent", band: bands[0] || null, bands, sid: null };
+  }
+  if (ADMINS.includes(em)) return { role: "staff", band: STAFF_BANDS[em] || null, sid: null };
   const st = await fetch(`${FS}/staff/${encodeURIComponent(em)}`, { headers: H });
-  if (st.ok) return { role: "staff", band: null, sid: null };
+  if (st.ok) return { role: "staff", band: STAFF_BANDS[em] || null, sid: null };
   if (st.status !== 404) throw new Error("staff " + st.status);
   // A student: their band comes from their Life Skills tracker record (lsStudents, matched by school email).
   let band = null, sid = null;
@@ -224,7 +271,7 @@ async function countAlerts(u) {
     const r = await fetch(`${FS}:runQuery`, { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" },
       body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "aiAlerts" }], where: { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "open" } } }, limit: 100 } }) });
     if (!r.ok) return;
-    const docs = (await r.json()).filter(x => x.document);
+    const docs = (await r.json()).filter(x => x.document && !!(x.document.fields.test || {}).booleanValue === !!view);
     document.dispatchEvent(new CustomEvent("wl-alerts", { detail: { open: docs.length, urgent: docs.filter(x => (x.document.fields.severity || {}).stringValue === "urgent").length } }));
   } catch (e) { /* the badge is a convenience; the Students page always shows the alerts */ }
 }
@@ -232,21 +279,32 @@ async function decideRole(u) {
   const my = ++roleSeq;
   if (!u) { sendRole(null); return; }
   const em = (u.email || "").toLowerCase();
-  // Same account as last time on this device: show the remembered role now, then check it.
-  try { const c = JSON.parse(localStorage.getItem("wl-role") || "null"); if (c && c.e === em) sendRole({ email: em, role: c.r, band: c.b || null, sid: c.s || null }); } catch (e) { }
+  // Same account (and same test view) as last time on this device: show the remembered role now, then check it.
+  try { const c = JSON.parse(localStorage.getItem("wl-role") || "null"); if (c && (c.x || c.e) === em && (c.t || null) === (view ? view.as : null)) sendRole({ email: c.e, role: c.r, band: c.b || null, sid: c.s || null, ...(c.bs ? { bands: c.bs } : {}), ...(c.t ? { test: c.t, real: c.x } : {}) }); } catch (e) { }
   try {
     const r = await findRole(u, em);
     if (my !== roleSeq) return;
     const was = window.wlRole;
     const next = r ? { email: em, ...r } : null;
+    if (next && !next.bands) delete next.bands;
     if (JSON.stringify(was || null) !== JSON.stringify(next)) sendRole(next);
-    if (next && next.role === "staff" && em.endsWith("@" + DOMAIN)) countAlerts(u);
+    if (next && next.role === "staff" && (em.endsWith("@" + DOMAIN) || view)) countAlerts(u);
   } catch (e) { console.warn("Wilderland role:", e); }
 }
 onAuthStateChanged(auth, async u => {
   const em = ((u && u.email) || "").toLowerCase();
   family = null;
+  view = viewFor(u);
+  // Someone else signed in on this device: a test view left behind by a tester ends.
+  if (u && !view && storedView()) origRemove.call(localStorage, "wl-viewas");
   decideRole(u);
+  if (view) {
+    // A tester in a test view may open every site, as that test account. The test parent is a family account.
+    if (view.as === "parent") { family = u; user = null; render(); gate(null); announce(null); return; }
+    const wasT = user; user = u; render(); gate(u); announce(u);
+    if (!wasT && view.as === "student") syncOnSignIn();
+    return;
+  }
   // A confirmed family account: keep it signed in (so the tracker stays open) but treat this page as signed out.
   if (u && (u.emailVerified || SOFT_SITES.includes(SITE)) && !em.endsWith("@" + DOMAIN) && !((GUEST_SITES.includes(SITE) || SOFT_SITES.includes(SITE)) && u.emailVerified && GUESTS.includes(em))) {
     family = u; user = null; render(); gate(null); announce(null); return;

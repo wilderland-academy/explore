@@ -1,6 +1,7 @@
 // Life Skills Tracker (explore.wilderland.academy/lifeskills/)
 // Three views on one page, picked by who signs in:
-//   guides and admins (school account on the staff list): band overview (passed or saved), log passes, the Labs
+//   guides and admins (school account on the staff list): band overview (passed or saved), Validate (one student, or a
+//     group on one challenge, Lab challenges included), the Labs
 //     schedule. Students and parents are added on the Student Roster (/guides/roster/).
 //   students (school account a guide has added): their own record, and the crew board
 //   parents (any verified email a guide has matched to a child): their own children only, and the Labs schedule
@@ -30,6 +31,11 @@ const CONFIG = {
 const DOMAIN = "@wilderland.academy";
 // Keep in step with firestore.rules, auth.js and fieldguide/app.js.
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
+// Testers, the linked test accounts and each guide's band: one list, in /wlnav.js.
+const PEOPLE = window.WLPeople || { TESTERS: [], STAFF_BANDS: {}, TEST: {} };
+const TESTERS = PEOPLE.TESTERS, TEST = PEOPLE.TEST, STAFF_BANDS = PEOPLE.STAFF_BANDS;
+// A tester's test view on this device (set from the bar). Honoured only for the tester who set it.
+function storedView() { try { const v = JSON.parse(localStorage.getItem("wl-viewas") || "null"); return v && ["guide", "student", "parent"].includes(v.as) && v.by ? v : null; } catch (e) { return null; } }
 const EMU = location.hostname === "localhost" && new URLSearchParams(location.search).has("emu");
 // The same tracker runs in all three Explore sites, each with its own top bar: students at /lifeskills/,
 // guides at /guides/lifeskills/, parents at /parents/lifeskills/. route() sends each person to their own site's copy.
@@ -53,7 +59,17 @@ const W = window.WL || { skills: [], comps: {}, ch: [] };
 const BYID = {}; W.ch.forEach(c => BYID[c.id] = c);
 const SKILL = {}; W.skills.forEach(s => SKILL[s.k] = s);
 const SHORT = { EN: "Energy", SG: "Self-Gov.", CG: "Grit", AI: "Adapt.", VC: "Value", SP: "Story", FE: "Fellowship", NL: "Nature" };
-const skillOf = cid => { const c = BYID[cid]; return c ? SKILL[(W.comps[c.c] || {}).k] : null; };
+// Challenges a Lab introduces that aren't on the challenge map. A Lab keeps them in lab.custom ([{ id: "LB-…", t, k, w }]);
+// they join BYID so every list here can use them. Entries for them also carry the title and life skill (ct, k), so a
+// family or student who can't read the Lab still sees what was passed.
+const CUSTOM = {};
+function addCustom(c, lab) {
+  if (!c || !c.id || (BYID[c.id] && !BYID[c.id].custom) || !SKILL[c.k]) return;
+  const bands = lab ? (lab.bands || []) : (c.bands || []);
+  BYID[c.id] = CUSTOM[c.id] = { id: c.id, t: c.t || c.id, k: c.k, w: c.w || "", cr: 1, b: bands[0] || "", bands, custom: true,
+    lab: lab ? lab.id : c.lab || "", labTitle: lab ? lab.title : c.labTitle || "" };
+}
+const skillOf = cid => { const c = BYID[cid]; return !c ? null : c.custom ? SKILL[c.k] : SKILL[(W.comps[c.c] || {}).k]; };
 const colOf = cid => (skillOf(cid) || {}).col || "#4d4d51";
 const BANDS = ["K–1", "2–4", "5–8"];
 const RANKS = {
@@ -102,7 +118,23 @@ const errText = e => {
 };
 
 // ---------- state ----------
-const S = { user: null, email: "", role: null, admin: false, students: {}, entries: {}, boards: {}, mine: [], saved: {}, labs: null, parentBands: [] };
+// test: the tester's test view ("guide" | "student" | "parent"), real: the tester's own email (S.email is the test account's).
+const S = { user: null, email: "", role: null, admin: false, students: {}, entries: {}, boards: {}, mine: [], saved: {}, labs: null, parentBands: [], test: null, real: "", testBand: "" };
+// The band every band choice starts on: a guide's own band, a parent's (youngest) child's, the test accounts' band in a
+// test view. Admins and guests without a band start on All.
+function myBand() {
+  if (S.test) return S.testBand;
+  if (S.role === "staff") return STAFF_BANDS[S.email] || null;
+  if (S.role === "parent") return myBands()[0] || null;
+  if (S.role === "student") { const s = S.students[S.mine[0]]; return s ? s.band : null; }
+  return null;
+}
+let bandsSet = false;
+function setBandDefaults() {
+  if (bandsSet) return; bandsSet = true;
+  const b = myBand();
+  ovBand = b || "All"; calBand = b || "All"; boardBand = null; valBand = b || "All";
+}
 
 // ---------- records: everything a view needs, worked out from a student's entries ----------
 function summary(sid) {
@@ -131,28 +163,35 @@ function summary(sid) {
 async function loadEntries(sid) {
   const snap = await getDocs(collection(db, "lsStudents", sid, "entries"));
   S.entries[sid] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  S.entries[sid].forEach(e => { if (e.ct && !BYID[e.cid]) addCustom({ id: e.cid, t: e.ct, k: e.k, lab: e.lab || "", labTitle: e.labTitle || "" }); });
 }
 async function loadAll() {
   S.students = {}; S.entries = {}; S.boards = {}; S.mine = [];
+  // The test accounts are only for a test view, and a test view only sees them (so nothing real is changed).
+  const keep = x => !!x.test === !!S.test;
+  const testOnly = c => S.test ? query(collection(db, c), where("test", "==", true)) : collection(db, c);
   if (S.role === "staff") {
-    const snap = await getDocs(collection(db, "lsStudents"));
-    snap.forEach(d => S.students[d.id] = { id: d.id, ...d.data() });
+    const snap = await getDocs(testOnly("lsStudents"));
+    snap.forEach(d => { const x = { id: d.id, ...d.data() }; if (keep(x)) S.students[d.id] = x; });
     await Promise.all(Object.keys(S.students).map(loadEntries));
-    const b = await getDocs(collection(db, "lsBoard")); b.forEach(d => S.boards[d.id] = { id: d.id, ...d.data() });
+    const b = await getDocs(testOnly("lsBoard")); b.forEach(d => { const x = { id: d.id, ...d.data() }; if (keep(x)) S.boards[d.id] = x; });
+    // Labs too, for the challenges they introduce (Validate offers them).
+    try { await loadLabs(true); } catch (e) { console.warn("Life Skills: couldn't read Labs", e); }
     await loadSaved();
   } else if (S.role === "student") {
-    const snap = await getDocs(query(collection(db, "lsStudents"), where("email", "==", S.email)));
+    const snap = await getDocs(query(collection(db, "lsStudents"), where("email", "==", S.email), ...(S.test ? [where("test", "==", true)] : [])));
     snap.forEach(d => { S.students[d.id] = { id: d.id, ...d.data() }; S.mine.push(d.id); });
     await Promise.all(S.mine.map(loadEntries));
     const b = await getDocs(collection(db, "lsBoard")); b.forEach(d => S.boards[d.id] = { id: d.id, ...d.data() });
   } else if (S.role === "parent") {
-    const snap = await getDocs(query(collection(db, "lsStudents"), where("parents", "array-contains", S.email)));
-    snap.forEach(d => { S.students[d.id] = { id: d.id, ...d.data() }; S.mine.push(d.id); });
+    const snap = await getDocs(query(collection(db, "lsStudents"), where("parents", "array-contains", S.email), ...(S.test ? [where("test", "==", true)] : [])));
+    snap.forEach(d => { const x = { id: d.id, ...d.data() }; if (!keep(x)) return; S.students[d.id] = x; S.mine.push(d.id); });
     S.mine.sort((a, b) => S.students[a].name.localeCompare(S.students[b].name));
     await Promise.all(S.mine.map(async sid => {
       await loadEntries(sid);
       try { const b = await getDoc(doc(db, "lsBoard", sid)); if (b.exists()) S.boards[sid] = { id: sid, ...b.data() }; } catch (e) { /* board is optional for families */ }
     }));
+    try { await loadLabs(true); } catch (e) { /* not linked yet: the schedule says so */ }
   }
 }
 // What each student saved to their Challenges plan (students/{uid}/sites/challenges, written by /auth.js; staff can
@@ -180,15 +219,24 @@ function savedBySkill(sid) {
 // The crew board copy of a student's passes, rebuilt from their entries after every change.
 function boardDoc(sid) {
   const s = S.students[sid], sum = summary(sid), old = S.boards[sid] || {};
-  return { name: shortName(s.name), band: s.band, working: (old.working || []).filter(c => !sum.passes.some(p => p.cid === c)), passed: sum.passes.map(p => ({ c: p.cid, d: p.date })), credits: sum.trail, updated: Date.now() };
+  return { name: shortName(s.name), band: s.band, working: (old.working || []).filter(c => !sum.passes.some(p => p.cid === c)), passed: sum.passes.map(p => BYID[p.cid] && BYID[p.cid].custom ? { c: p.cid, d: p.date, t: chTitle(p.cid), k: BYID[p.cid].k } : { c: p.cid, d: p.date }), credits: sum.trail, updated: Date.now(), ...(s.test ? { test: true } : {}) };
 }
 async function saveBoard(sid) { const b = boardDoc(sid); await setDoc(doc(db, "lsBoard", sid), b); S.boards[sid] = { id: sid, ...b }; }
 
 // ---------- auth ----------
 async function decideRole(u) {
-  S.user = u; S.email = (u.email || "").toLowerCase(); S.admin = false; S.role = null;
+  S.user = u; S.email = (u.email || "").toLowerCase(); S.admin = false; S.role = null; S.test = null; S.real = S.email; S.testBand = "";
   const school = S.email.endsWith(DOMAIN);
   if (!u.emailVerified) { S.role = "unverified"; return; }
+  const v = storedView();
+  if (v && v.by === S.email && TESTERS.includes(S.email)) {
+    // A test view: this page acts as the test guide, student or parent (see /wlnav.js). /auth.js makes the records.
+    S.test = v.as; S.testBand = ["K–1", "2–4", "5–8"].includes(v.band) ? v.band : "2–4";
+    S.role = v.as === "guide" ? "staff" : v.as;
+    S.email = v.as === "guide" ? TEST.guide : v.as === "student" ? TEST.student : TEST.parent;
+    return;
+  }
+  if (v) { try { localStorage.removeItem("wl-viewas"); } catch (e) { } }
   if (school) {
     S.admin = ADMINS.includes(S.email);
     let staff = S.admin;
@@ -218,7 +266,9 @@ const head = (title, sub) => h("div", { class: "wrap page-head" }, [h("h1", { te
 function navLinks(items) {
   // Items are [id, label, href]. A link to a view on this same page (PATH#view) becomes a plain #view link.
   items = items.map(([id, label, href]) => [id, label, href && href.startsWith(PATH + "#") ? "" : href]);
-  const cur = location.hash.slice(1).split("=")[0] || items[0][0];
+  // Views that sit under another menu item: Labs holds the schedule; Validate was Log.
+  const ALIAS = { schedule: "labs", log: "validate" }, raw = location.hash.slice(1).split("=")[0] || items[0][0];
+  const cur = items.some(x => x[0] === raw) ? raw : ALIAS[raw] || raw;
   const nav = $("#links"); nav.innerHTML = "";
   items.forEach(([id, label, href]) => nav.append(h("a", { href: href || "#" + id, text: label, "aria-current": !href && cur === id ? "page" : null })));
 }
@@ -230,14 +280,14 @@ let menuOpen = false;
 function acct() {
   const box = $("#acct"); box.innerHTML = "";
   if (!S.user) return;
-  const roleName = { staff: S.admin ? "Admin" : "Guide", student: "Student", parent: "Parent", unverified: "Not verified yet" }[S.role] || "";
-  const b = h("button", { type: "button", "aria-expanded": String(menuOpen), text: firstName(S.user.displayName) || S.email.split("@")[0], onclick: () => { menuOpen = !menuOpen; acct(); } });
+  const roleName = S.test ? "Test " + S.test : { staff: S.admin ? "Admin" : "Guide", student: "Student", parent: "Parent", unverified: "Not verified yet" }[S.role] || "";
+  const b = h("button", { type: "button", "aria-expanded": String(menuOpen), text: S.test ? "🧪 Test " + S.test : firstName(S.user.displayName) || S.email.split("@")[0], onclick: () => { menuOpen = !menuOpen; acct(); } });
   box.append(b);
   if (menuOpen) box.append(h("div", { class: "acct-menu" }, [
-    h("p", { text: `${roleName}. Signed in as ${S.email}.` }),
+    h("p", { text: S.test ? `${roleName}. You're ${S.real}; switch back in the bar at the top.` : `${roleName}. Signed in as ${S.email}.` }),
     S.role === "staff" ? h("a", { href: "/fieldguide/", text: "Field Guide" }) : null,
     S.role !== "parent" ? h("a", { href: "/challenges/", text: "Challenges" }) : h("a", { href: "/challenges/parents.html", text: "Passing off at home" }),
-    h("button", { type: "button", text: "Sign out", onclick: async () => { menuOpen = false; await signOut(auth); location.hash = ""; } })
+    h("button", { type: "button", text: "Sign out", onclick: async () => { menuOpen = false; try { localStorage.removeItem("wl-viewas"); } catch (e) { } await signOut(auth); location.hash = ""; } })
   ]));
 }
 // composedPath: the menu button is re-drawn on click, so check the path the click took, not where the target is now.
@@ -328,13 +378,16 @@ function unverified() {
 
 // ---------- shared pieces ----------
 function chTitle(cid) { const c = BYID[cid]; return c ? c.t : cid + " (no longer in the challenge list)"; }
+// A Lab-only challenge opens its Lab (guides and parents can read Labs); everyone else just sees its name.
 // A challenge's title as a link that opens the challenge in a modal over this page (/challenges/modal.js).
 function chLink(cid, text) {
   const t = text == null ? chTitle(cid) : text;
   if (!BYID[cid]) return t;
+  if (BYID[cid].custom) return BYID[cid].lab && (S.labs || []).some(l => l.id === BYID[cid].lab) ? h("a", { href: "#schedule=" + BYID[cid].lab, text: t }) : t;
   return h("a", { class: "wl-ch", href: CHMAP + "#c=" + encodeURIComponent(cid), "data-wl-ch": cid, text: t });
 }
-function chMeta(cid) { const c = BYID[cid], sk = skillOf(cid); return [sk ? sk.n : "", cid, c && c.z === "Epic" ? "Epic" : ""].filter(Boolean).join(", "); }
+function chMeta(cid) { const c = BYID[cid], sk = skillOf(cid); return c && c.custom ? [sk ? sk.n : "", c.labTitle ? "from the " + c.labTitle + " Lab" : "a Lab challenge"].filter(Boolean).join(", ") : [sk ? sk.n : "", cid, c && c.z === "Epic" ? "Epic" : ""].filter(Boolean).join(", "); }
+const inBandOf = (c, band) => !band || (c.custom ? !c.bands.length || c.bands.includes(band) : c.b === band);
 function picker(opts) {
   // A search box for challenges. opts.band narrows the list; opts.onpick(cid)
   const inp = h("input", { class: "in", type: "search", id: opts.id || "chq", placeholder: "Search by words or ID, like “mile” or EN-03.2", autocomplete: "off" });
@@ -344,9 +397,11 @@ function picker(opts) {
     if (q.length < 2) return;
     const words = q.split(/\s+/);
     const band = typeof opts.band === "function" ? opts.band() : opts.band;
-    const hits = W.ch.filter(c => (!band || c.b === band) && (c.id.toLowerCase().startsWith(q) || words.every(w => c.t.toLowerCase().includes(w)))).slice(0, 12);
+    // Lab challenges (not on the map) first: they're what a guide validates at the end of a Lab.
+    const match = c => inBandOf(c, band) && (c.id.toLowerCase().startsWith(q) || words.every(w => c.t.toLowerCase().includes(w) || (c.labTitle || "").toLowerCase().includes(w)));
+    const hits = Object.values(CUSTOM).filter(match).concat(W.ch.filter(match)).slice(0, 12);
     if (!hits.length) res.append(h("p", { class: "empty", style: { padding: "8px 0" }, text: "No challenges match. Try fewer words." }));
-    hits.forEach(c => res.append(h("button", { type: "button", onclick: () => { inp.value = ""; res.innerHTML = ""; opts.onpick(c.id); } }, [h("span", { style: { background: colOf(c.id), borderRadius: "3px" } }), h("span", {}, [c.t, h("small", { text: chMeta(c.id) + ", grades " + c.b })])])));
+    hits.forEach(c => res.append(h("button", { type: "button", onclick: () => { inp.value = ""; res.innerHTML = ""; opts.onpick(c.id); } }, [h("span", { style: { background: colOf(c.id), borderRadius: "3px" } }), h("span", {}, [c.t, h("small", { text: chMeta(c.id) + (c.custom ? (c.bands.length ? ", grades " + c.bands.join(", ") : "") : ", grades " + c.b) })])])));
   };
   inp.addEventListener("input", run);
   return h("div", { class: "pick" }, [inp, res]);
@@ -406,7 +461,7 @@ function record(sid, opts = {}) {
     : h("p", { class: "muted" }, [h("b", { style: { color: "var(--ink)" }, text: `${sum.trail} credits on the grades ${s.band} trail. ` }),
         (sum.nextRank && sum.nextRank[0] === sum.milestone + 4 ? `Next: ${sum.nextRank[1]} at ${sum.nextRank[0]}. ` : `Next milestone at ${sum.milestone + 4}` + (sum.nextRank ? `, then ${sum.nextRank[1]} at ${sum.nextRank[0]}. ` : ". ")) + "Every 4 credits is a milestone, celebrated at Honor Court."]);
   const staffBits = opts.staff ? h("div", { class: "row noprint" }, [
-    h("a", { class: "btn go", href: "#log=" + sid, text: "Log a challenge" }),
+    h("a", { class: "btn go", href: "#validate=" + sid, text: "Validate a challenge" }),
     h("a", { class: "btn", href: ROSTER + "#edit=" + encodeURIComponent(sid), text: "Edit student and parents" }),
     sum.newMilestone ? h("button", { class: "btn", type: "button", text: `Mark milestone ${sum.milestone} celebrated`, onclick: async () => { try { await updateDoc(doc(db, "lsStudents", sid), { celebrated: sum.milestone }); s.celebrated = sum.milestone; toast("Marked. It drops off the new milestones list."); route(); } catch (e) { toast(errText(e)); } } }) : null
   ]) : null;
@@ -574,7 +629,7 @@ function overview() {
       h("div", { class: "row" }, ["All", ...BANDS].map(bandChip)),
       h("div", { class: "row", role: "group", "aria-label": "Show" }, [h("span", { class: "small muted", text: "Show:" }), showChip("passed", "Passed this year"), showChip("saved", "Saved to plan")]),
       h("div", { class: "row" }, [chip("all", `All ${inBand.length} students`), chip("stale", `No pass in 3 weeks (${stale.length})`), chip("open", `Open not yets (${open.length})`), chip("fresh", `New milestones (${fresh.length})`), chip("thin", `Plan short of the goal (${thin.length})`),
-        h("a", { class: "btn go", href: "#log", style: { marginLeft: "auto" }, text: "Log a challenge" })]),
+        h("a", { class: "btn go", href: "#validate", style: { marginLeft: "auto" }, text: "Validate" })]),
       savedView && noSaves ? h("p", { class: "note err", text: "Couldn't read students' saved challenges. The database rules may need publishing (see firestore.rules)." }) : null,
       body,
       rows.length || !all.length ? null : h("p", { class: "empty", text: "No students match." }),
@@ -584,12 +639,143 @@ function overview() {
   ]);
 }
 
-// ---------- guides: log a pass or a not yet ----------
-function logView(pre) {
+// ---------- guides: validate (one student, or a group on one challenge) ----------
+// One student: any challenge, passed or not yet. A group: one challenge (often the end of a Lab) for many students at
+// once, each passed or not yet. Lab challenges that aren't on the map (lab.custom) can be found in both.
+let valMode = "one", valBand = "All";
+function entryFor(cid, result, date, t) {
+  const c = BYID[cid] || {};
+  return { cid, result, date: date || today(), credits: c.cr || 1, by: S.email, byName: S.test ? "Test guide" : firstName(S.user.displayName) || S.email.split("@")[0], created: Date.now(),
+    note: result === "pass" ? String(t.note || "").trim().slice(0, 300) : "", missing: result === "notyet" ? String(t.missing || "").trim().slice(0, 300) : "",
+    practice: result === "notyet" ? String(t.practice || "").trim().slice(0, 300) : "", retry: result === "notyet" ? t.retry || "" : "",
+    ...(c.custom ? { ct: c.t, k: c.k, lab: c.lab || "", labTitle: c.labTitle || "" } : {}) };
+}
+function validateView(arg) {
   const all = Object.values(S.students).sort((a, b) => a.name.localeCompare(b.name));
-  if (!all.length) return h("div", {}, [head("Log a challenge"), h("div", { class: "wrap" }, h("div", { class: "panel" }, [h("p", { text: "Add students to your crew first, on the Student Roster." }), h("div", {}, h("a", { class: "btn go", href: ROSTER + "#add", text: "Add students" }))]))]);
+  if (arg && arg.startsWith("group")) valMode = "group"; else if (arg) valMode = "one";
+  const tab = (id, label) => h("a", { href: id === "one" ? "#validate=one" : "#validate=group", role: "tab", "aria-selected": String(valMode === id), class: "vtab", text: label });
+  const body = !all.length ? h("div", { class: "panel" }, [h("p", { text: "Add students to your crew first, on the Student Roster." }), h("div", {}, h("a", { class: "btn go", href: ROSTER + "#add", text: "Add students" }))])
+    : valMode === "group" ? validateGroup(arg && arg.startsWith("group.") ? arg.slice(6) : "") : validateOne(arg && arg !== "one" ? arg : "");
+  return h("div", {}, [
+    head("Validate", "Record it the day you see it. A pass marks the student's box on the wall; a not yet never goes on the wall, and always says what to practice."),
+    h("section", { class: "band" }, h("div", { class: "wrap stack" }, [h("div", { class: "vtabs", role: "tablist", "aria-label": "Validate" }, [tab("one", "One student"), tab("group", "A group, one challenge")]), body]))
+  ]);
+}
+// Labs near today (two weeks back, one ahead) with challenges, for one-tap picking at the end of a Lab.
+function recentLabs() {
+  const now = today(), from = addDays(now, -14), to = addDays(now, 7);
+  return (S.labs || []).filter(l => labEnd(l) >= from && l.date <= to && ((l.challenges || []).length || (l.custom || []).length) && (valBand === "All" || (l.bands || []).includes(valBand)))
+    .sort((a, b) => Math.abs(daysAgo(labEnd(a))) - Math.abs(daysAgo(labEnd(b))));
+}
+function validateGroup(labId) {
+  const lab = labId ? (S.labs || []).find(l => l.id === labId) : null;
+  if (lab && (lab.bands || []).length === 1) valBand = lab.bands[0];
+  let cid = "", lastPicked = null;
+  // Each student's choice: "" (not in this group), "pass" or "notyet".
+  const mark = {};
+  let q = "";
+  const date = h("input", { class: "in", type: "date", id: "gd", value: lab && labEnd(lab) <= today() ? labEnd(lab) : today(), max: today() });
+  const gNote = h("input", { class: "in", id: "gn", maxlength: "300", placeholder: "Optional. Families see it with each pass." });
+  const gMiss = h("input", { class: "in", id: "gm", maxlength: "300", placeholder: "Fire went out before the water boiled." });
+  const gPrac = h("input", { class: "in", id: "gp", maxlength: "300", placeholder: "Practice building a bigger coal bed at home." });
+  const gRetry = h("input", { class: "in", type: "date", id: "gr", min: today() });
+  const chBox = h("div", { class: "stack" }), stuBox = h("div", { class: "stack" }), nyBox = h("div", { class: "stack" }), note = h("p", { class: "note", "aria-live": "polite" });
+  const saveBtn = h("button", { class: "btn go", type: "button" });
+  nyBox.append(h("p", { class: "small muted", text: "For everyone marked not yet:" }), h("div", { class: "grid2" }, [h("label", { class: "f", for: "gm" }, ["What was missing", gMiss]), h("label", { class: "f", for: "gp" }, ["How to practice", gPrac])]),
+    h("label", { class: "f", for: "gr" }, [h("span", {}, ["Retry on or after ", h("span", { class: "hint", text: "(optional)" })]), gRetry]));
+  const passedOn = (sid, c) => { const p = summary(sid).passes.find(x => x.cid === c); return p ? p.date : ""; };
+  const inBand = s => valBand === "All" || s.band === valBand;
+  const people = () => Object.values(S.students).filter(inBand).sort((a, b) => a.name.localeCompare(b.name));
+  const chosen = () => Object.keys(mark).filter(k => mark[k] && S.students[k]);
+  const drawSave = () => {
+    const n = chosen().length, ny = chosen().filter(k => mark[k] === "notyet").length;
+    saveBtn.textContent = !cid ? "Pick a challenge first" : n ? `Validate ${n} student${n === 1 ? "" : "s"}${ny ? ` (${n - ny} passed, ${ny} not yet)` : ""}` : "Pick students";
+    saveBtn.disabled = !cid || !n;
+    nyBox.hidden = !ny;
+  };
+  const drawCh = () => {
+    chBox.innerHTML = "";
+    if (cid) {
+      chBox.append(h("div", { class: "chosen" }, [h("span", { style: { background: colOf(cid), borderRadius: "3px", alignSelf: "stretch" } }),
+        h("div", {}, [h("div", { class: "small muted", text: chMeta(cid) }), h("div", { text: chTitle(cid) }), (BYID[cid] || {}).w ? h("div", { class: "small muted", text: "How it's shown: " + BYID[cid].w }) : null]),
+        h("button", { class: "btn plain", type: "button", text: "Change", onclick: () => { cid = ""; drawCh(); drawStu(); } })]));
+      return;
+    }
+    const labs = lab ? [lab] : recentLabs().slice(0, 4);
+    labs.forEach(l => {
+      const cs = (l.custom || []).map(c => c.id).concat((l.challenges || []).filter(c => BYID[c]));
+      chBox.append(h("div", { class: "labpick" }, [h("p", { class: "small" }, [h("b", { text: l.title }), h("span", { class: "muted", text: " · " + whenTxt(l) + " · grades " + (l.bands || []).join(", ") })]),
+        h("div", { class: "row" }, cs.map(c => h("button", { class: "chip", type: "button", style: { borderLeft: "4px solid " + colOf(c) }, text: chTitle(c), onclick: () => { cid = c; drawCh(); drawStu(); } })))]));
+    });
+    chBox.append(h("label", { class: "f", for: "gc" }, [labs.length ? "Or search every challenge (Lab challenges included)" : "Search every challenge (Lab challenges included)",
+      picker({ id: "gc", band: () => valBand === "All" ? null : valBand, onpick: c => { cid = c; drawCh(); drawStu(); } })]));
+  };
+  const drawStu = () => {
+    stuBox.innerHTML = "";
+    const list = people().filter(s => !q || s.name.toLowerCase().includes(q));
+    const search = h("input", { class: "in", type: "search", id: "gq", value: q, placeholder: "Find a student", style: { maxWidth: "260px" } });
+    search.addEventListener("input", () => { q = search.value.trim().toLowerCase(); const pos = search.selectionStart; drawStu(); const n = $("#gq"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } });
+    const open = list.filter(s => !(cid && passedOn(s.id, cid)));
+    stuBox.append(h("div", { class: "row" }, [...["All", ...BANDS].map(b => h("button", { class: "chip", type: "button", "aria-pressed": String(valBand === b), text: b === "All" ? "All bands" : "Grades " + b, onclick: () => { valBand = b; drawStu(); drawSave(); } })),
+      h("span", { style: { marginLeft: "auto" } }), search]));
+    stuBox.append(h("div", { class: "row" }, [
+      h("button", { class: "btn", type: "button", text: `Everyone shown passed (${open.length})`, disabled: !open.length, onclick: () => { open.forEach(s => mark[s.id] = "pass"); drawStu(); drawSave(); } }),
+      h("button", { class: "btn plain", type: "button", text: "Clear", onclick: () => { Object.keys(mark).forEach(k => delete mark[k]); drawStu(); drawSave(); } }),
+      h("span", { class: "small muted", text: "Tap a name to add it as passed; tap Not yet for anyone who isn't there yet. Shift-click to add a run of names." })]));
+    if (!list.length) { stuBox.append(h("p", { class: "empty", text: "No students match." })); return; }
+    stuBox.append(h("div", { class: "vgrid" }, list.map((s, i) => {
+      const done = cid ? passedOn(s.id, cid) : "", m = mark[s.id] || "";
+      const toggle = ev => {
+        if (done) return;
+        if (ev.shiftKey && lastPicked != null) { const [a, b] = [Math.min(lastPicked, i), Math.max(lastPicked, i)]; list.slice(a, b + 1).forEach(x => { if (!(cid && passedOn(x.id, cid))) mark[x.id] = "pass"; }); }
+        else mark[s.id] = m ? "" : "pass";
+        lastPicked = i; drawStu(); drawSave();
+      };
+      return h("div", { class: "vrow" + (m ? " " + m : "") + (done ? " done" : "") }, [
+        h("button", { type: "button", class: "vname", "aria-pressed": String(!!m), disabled: !!done, onclick: toggle },
+          [h("span", { class: "vbox", "aria-hidden": "true", text: m === "pass" ? "✓" : m === "notyet" ? "…" : "" }), h("span", {}, [h("b", { text: s.name }), h("small", { text: done ? "Already passed " + fmt(done) : "Grades " + s.band })])]),
+        m ? h("div", { class: "seg small", role: "group", "aria-label": s.name }, [["pass", "Passed"], ["notyet", "Not yet"]].map(([v, l]) => h("button", { type: "button", "aria-pressed": String(m === v), text: l, onclick: () => { mark[s.id] = v; drawStu(); drawSave(); } }))) : null
+      ]);
+    })));
+  };
+  saveBtn.addEventListener("click", async () => {
+    const ids = chosen();
+    note.className = "note err";
+    if (!cid || !ids.length) return;
+    if (ids.some(k => mark[k] === "notyet") && (!gMiss.value.trim() || !gPrac.value.trim())) { note.textContent = "A not yet needs what was missing and how to practice (shared by everyone marked not yet)."; return; }
+    saveBtn.disabled = true; note.className = "note"; note.textContent = "Saving…";
+    try {
+      const before = Object.fromEntries(ids.map(k => [k, summary(k)]));
+      const batch = writeBatch(db), made = [];
+      ids.forEach(k => { const ref = doc(collection(db, "lsStudents", k, "entries")), e = entryFor(cid, mark[k], date.value, { note: gNote.value, missing: gMiss.value, practice: gPrac.value, retry: gRetry.value }); batch.set(ref, e); made.push([k, ref.id, e]); });
+      await batch.commit();
+      made.forEach(([k, id, e]) => { S.entries[k] = (S.entries[k] || []).concat({ id, ...e }); });
+      // The crew board copies, in one more batch.
+      const b2 = writeBatch(db);
+      ids.forEach(k => { const b = boardDoc(k); b2.set(doc(db, "lsBoard", k), b); S.boards[k] = { id: k, ...b }; });
+      await b2.commit();
+      const passed = ids.filter(k => mark[k] === "pass"), ny = ids.length - passed.length;
+      const miles = passed.filter(k => S.students[k].band !== "K–1" && summary(k).milestone > before[k].milestone).map(k => firstName(S.students[k].name));
+      const msg = `Validated ${chTitle(cid)}: ${passed.length} passed${ny ? `, ${ny} not yet` : ""}.` + (miles.length ? ` New milestone for ${miles.join(", ")}: add ${miles.length === 1 ? "them" : "them all"} to the next Honor Court.` : "");
+      note.className = "note ok"; note.textContent = msg; toast(msg);
+      ids.forEach(k => delete mark[k]); drawStu(); drawSave();
+    } catch (x) { note.className = "note err"; note.textContent = errText(x); drawSave(); }
+  });
+  drawCh(); drawStu(); drawSave();
+  return h("div", { class: "panel stack" }, [
+    h("div", { class: "f" }, [h("span", { class: "f", text: "1. The challenge" }), chBox]),
+    h("div", { class: "f" }, [h("span", { text: "2. Who passed" }), stuBox]),
+    nyBox,
+    h("div", { class: "grid2" }, [h("label", { class: "f", for: "gd" }, ["Date", date]), h("label", { class: "f", for: "gn" }, [h("span", {}, ["What stood out ", h("span", { class: "hint", text: "(optional)" })]), gNote])]),
+    h("div", { class: "row" }, [saveBtn]),
+    note
+  ]);
+}
+function validateOne(pre) {
+  const all = Object.values(S.students).sort((a, b) => a.name.localeCompare(b.name));
+
   let sid = pre && S.students[pre] ? pre : "", cid = "", result = "pass";
-  const sel = h("select", { class: "in", id: "ls" }, [h("option", { value: "", text: "Choose a student" }), ...BANDS.map(b => { const ss = all.filter(s => s.band === b); return ss.length ? h("optgroup", { label: "Grades " + b }, ss.map(s => h("option", { value: s.id, text: s.name, selected: s.id === sid }))) : null; })]);
+  const sel = h("select", { class: "in", id: "ls" }, [h("option", { value: "", text: "Choose a student" }), ...BANDS.slice().sort((a, b) => (b === valBand) - (a === valBand)).map(b => { const ss = all.filter(s => s.band === b); return ss.length ? h("optgroup", { label: "Grades " + b }, ss.map(s => h("option", { value: s.id, text: s.name, selected: s.id === sid }))) : null; })]);
   const chosen = h("div");
   const pickBox = h("div");
   const resBox = h("div", { class: "seg" });
@@ -620,30 +806,26 @@ function logView(pre) {
     if (!cid) { note.textContent = "Choose a challenge."; return; }
     if (result === "notyet" && (!tMiss.value.trim() || !tPrac.value.trim())) { note.textContent = "A not yet needs what was missing and how to practice."; return; }
     const before = summary(sid);
-    const e = { cid, result, date: date.value || today(), credits: (BYID[cid] || {}).cr || 1, by: S.email, byName: firstName(S.user.displayName) || S.email.split("@")[0], created: Date.now(),
-      note: result === "pass" ? tStood.value.trim() : "", missing: result === "notyet" ? tMiss.value.trim() : "", practice: result === "notyet" ? tPrac.value.trim() : "", retry: result === "notyet" ? tRetry.value : "" };
+    const e = entryFor(cid, result, date.value, { note: tStood.value, missing: tMiss.value, practice: tPrac.value, retry: tRetry.value });
     try {
       const ref = await addDoc(collection(db, "lsStudents", sid, "entries"), e);
       S.entries[sid] = (S.entries[sid] || []).concat({ id: ref.id, ...e });
       await saveBoard(sid);
       const after = summary(sid), name = firstName(S.students[sid].name);
-      let msg = result === "pass" ? `Logged ${name}'s pass.` : `Logged a not yet for ${name}. The family sees what to practice.`;
+      let msg = result === "pass" ? `Validated ${name}'s pass.` : `Saved a not yet for ${name}. The family sees what to practice.`;
       if (result === "pass" && after.milestone > before.milestone && S.students[sid].band !== "K–1") msg = `Milestone: that's ${name}'s ${ordinal(after.trail)} credit. Add ${name} to the next Honor Court.` + (after.rank !== before.rank ? ` New rank: ${after.rank}.` : "");
       note.className = "note ok"; note.textContent = msg; toast(msg);
       cid = ""; tStood.value = tMiss.value = tPrac.value = tRetry.value = ""; drawChosen();
     } catch (x) { note.textContent = errText(x); }
   };
-  return h("div", {}, [
-    head("Log a challenge", "Log it the day you see it, with the student right there. A pass marks their box on the wall; a not yet never goes on the wall."),
-    h("section", { class: "band" }, h("div", { class: "wrap" }, h("div", { class: "panel stack", style: { maxWidth: "720px" } }, [
+  return h("div", { class: "panel stack", style: { maxWidth: "720px" } }, [
       h("label", { class: "f", for: "ls" }, ["Student", sel]),
       h("div", { class: "f" }, [h("label", { class: "f", for: "lc", text: "Challenge" }), chosen, pickBox]),
       h("div", { class: "f" }, [h("span", { text: "Result" }), resBox]),
       fields,
       h("label", { class: "f", for: "ld" }, ["Date", date]),
-      h("div", { class: "row" }, [h("button", { class: "btn go", type: "button", text: "Log it", onclick: save }), sid ? h("a", { class: "btn plain", href: "#s=" + sid, text: "Open this student's record" }) : null]),
+      h("div", { class: "row" }, [h("button", { class: "btn go", type: "button", text: "Validate", onclick: save }), sid ? h("a", { class: "btn plain", href: "#s=" + sid, text: "Open this student's record" }) : null]),
       note
-    ])))
   ]);
 }
 
@@ -671,7 +853,9 @@ const sizeTxt = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1
 async function loadLabs(force) {
   if (S.labs && !force) return S.labs;
   const snap = await getDocs(collection(db, "labs"));
-  S.labs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.start || "").localeCompare(b.start || ""));
+  // Labs added in a test view are only shown in test views.
+  S.labs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(l => S.test || !l.test).sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.start || "").localeCompare(b.start || ""));
+  S.labs.forEach(l => (l.custom || []).forEach(c => addCustom(c, l)));
   return S.labs;
 }
 // Which bands a parent's view shows: their children's.
@@ -687,7 +871,7 @@ function scheduleView(arg, staff) {
   loadLabs().then(() => {
     box.innerHTML = "";
     if (staff && arg === "new") box.append(labForm(null));
-    else if (staff && arg && arg.startsWith("edit.")) { const l = S.labs.find(x => x.id === arg.slice(5)); box.append(l ? labForm(l) : notFound()); }
+    else if (staff && arg && arg.startsWith("edit.")) { const l = S.labs.find(x => x.id === arg.slice(5)); box.append(!l ? notFound() : canEditLab(l) ? labForm(l) : labDetail(l, staff)); }
     else if (arg) { const l = S.labs.find(x => x.id === arg); box.append(l ? labDetail(l, staff) : notFound()); }
     else box.append(calendar(staff));
   }).catch(e => {
@@ -700,38 +884,64 @@ function scheduleView(arg, staff) {
 }
 const notFound = () => h("div", {}, [head("Lab not found"), h("div", { class: "wrap" }, h("a", { class: "btn", href: "#schedule", text: "Back to the schedule" }))]);
 
+// School days only: Labs never show on a Saturday or Sunday. A Lab that runs several days is one bar across those days
+// with its name once; it breaks only at a weekend (the next week's row), with an arrow showing it carries on.
+const dow = iso => new Date(iso + "T12:00:00").getDay();
+const isWeekend = iso => { const d = dow(iso); return d === 0 || d === 6; };
+const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); const z = new Date(d); z.setMinutes(z.getMinutes() - z.getTimezoneOffset()); return z.toISOString().slice(0, 10); };
+function weekRows(y, m, list, now) {
+  const first = `${y}-${String(m).padStart(2, "0")}-01`, last = addDays(`${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01`, -1);
+  let mon = addDays(first, -((dow(first) + 6) % 7));
+  // A month that starts on a weekend begins with the first school week.
+  if (addDays(mon, 4) < first) mon = addDays(mon, 7);
+  const rows = [];
+  for (; mon <= last; mon = addDays(mon, 7)) {
+    const fri = addDays(mon, 4), days = [0, 1, 2, 3, 4].map(i => addDays(mon, i));
+    const segs = [];
+    list.forEach(l => {
+      const a = l.date > mon ? l.date : mon, b = labEnd(l) < fri ? labEnd(l) : fri;
+      if (a > b) return;
+      segs.push({ l, c0: days.indexOf(a), c1: days.indexOf(b), contL: a > l.date, contR: b < labEnd(l) });
+    });
+    // Stack bars in lanes so they never overlap: longest first, each in the first lane it fits.
+    segs.sort((p, q) => p.c0 - q.c0 || (q.c1 - q.c0) - (p.c1 - p.c0));
+    const lanes = [];
+    segs.forEach(g => { let i = lanes.findIndex(end => end < g.c0); if (i < 0) { i = lanes.length; lanes.push(-1); } lanes[i] = g.c1; g.lane = i; });
+    rows.push({ days, segs, lanes: lanes.length, out: d => d.slice(0, 7) !== first.slice(0, 7), today: d => d === now });
+  }
+  return rows;
+}
 function calendar(staff) {
   const now = todayISO();
   if (!calMonth) calMonth = now.slice(0, 7);
   const [y, m] = calMonth.split("-").map(Number);
-  const first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate(), lead = first.getDay();
+  const first = new Date(y, m - 1, 1);
   const list = labsFor(staff);
-  const iso = d => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   const move = n => { const d = new Date(y, m - 1 + n, 1); calMonth = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); route(); };
-  const cells = [];
-  for (let i = 0; i < lead; i++) cells.push(h("div", { class: "cal-d out", "aria-hidden": "true" }));
-  for (let d = 1; d <= days; d++) {
-    const on = list.filter(l => labOn(l, iso(d)));
-    cells.push(h("div", { class: "cal-d" + (iso(d) === now ? " today" : "") + (on.length ? " has" : "") }, [h("span", { class: "n", text: String(d) }),
-      ...on.slice(0, 3).map(l => h("a", { class: "cal-ev", href: "#schedule=" + l.id, style: { "--c": bandCol(l) }, title: l.title, text: (l.start && l.date === iso(d) ? timeTxt(l.start) + " " : "") + l.title })),
-      on.length > 3 ? h("span", { class: "small muted", text: `+${on.length - 3} more` }) : null]));
-  }
+  const weeks = weekRows(y, m, list, now).map(w => h("div", { class: "cal-wk" }, [
+    ...w.days.map((d, i) => h("div", { class: "cal-d" + (w.out(d) ? " out" : "") + (w.today(d) ? " today" : ""), style: { gridColumn: String(i + 1), gridRow: `1 / span ${w.lanes + 1}` }, "aria-hidden": "true" })),
+    ...w.days.map((d, i) => h("span", { class: "cal-n" + (w.out(d) ? " out" : "") + (w.today(d) ? " today" : ""), style: { gridColumn: String(i + 1) }, text: String(Number(d.slice(8))) })),
+    ...w.segs.map(g => h("a", { class: "cal-bar" + (g.contL ? " cont-l" : "") + (g.contR ? " cont-r" : ""), href: "#schedule=" + g.l.id,
+      style: { "--c": bandCol(g.l), gridColumn: `${g.c0 + 1} / ${g.c1 + 2}`, gridRow: String(g.lane + 2) },
+      title: g.l.title + " · " + whenTxt(g.l), text: (!g.contL && g.l.start ? timeTxt(g.l.start) + " " : "") + g.l.title }))
+  ]));
   const monthName = first.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const inMonth = list.filter(l => l.date.slice(0, 7) <= calMonth && labEnd(l).slice(0, 7) >= calMonth);
   const upcoming = list.filter(l => labEnd(l) >= now), past = list.filter(l => labEnd(l) < now).reverse();
   const bands = staff ? ["All", ...BANDS] : null;
   const kids = staff ? null : myBands();
   return h("div", {}, [
+    staff && PATH === HOMES.staff ? h("div", { class: "wrap labtabs-wrap" }, h("nav", { class: "labtabs", "aria-label": "Labs", html: window.WLLabTabs ? window.WLLabTabs("schedule") : "" })) : null,
     h("div", { class: "wrap page-head" }, h("div", { class: "who" }, [
       h("div", {}, [h("h1", { text: "Life Skill Labs" }), h("p", { text: staff ? "The guide-led Labs for every band. Add a Lab, attach anything parents could use to support it at home, and families see it on their Life Skills page." : `Labs your ${S.mine.length > 1 ? "children are" : "child is"} doing at school${kids.length ? " (grades " + kids.join(", ") + ")" : ""}, and how you can support them at home if you'd like to.` })]),
-      staff ? h("div", { class: "row noprint" }, h("a", { class: "btn go", href: "#schedule=new", text: "Add a Lab" })) : null
+      staff ? h("div", { class: "row noprint" }, [h("a", { class: "btn", href: "#validate=group", text: "Validate a Lab" }), h("a", { class: "btn go", href: "#schedule=new", text: "Add a Lab" })]) : null
     ])),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
       bands ? h("div", { class: "row" }, bands.map(b => h("button", { class: "chip", type: "button", "aria-pressed": String(calBand === b), text: b === "All" ? "All bands" : "Grades " + b, onclick: () => { calBand = b; route(); } }))) : null,
       h("div", { class: "cal-head" }, [h("button", { class: "btn plain", type: "button", "aria-label": "Previous month", text: "←", onclick: () => move(-1) }), h("h2", { class: "h", text: monthName }), h("button", { class: "btn plain", type: "button", "aria-label": "Next month", text: "→", onclick: () => move(1) }),
         calMonth !== now.slice(0, 7) ? h("button", { class: "btn plain", type: "button", text: "This month", onclick: () => { calMonth = now.slice(0, 7); route(); } }) : null]),
-      // Month grid on wide screens; on phones the list for the month below is the calendar.
-      h("div", { class: "cal", role: "presentation" }, [...["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => h("div", { class: "cal-w", text: d })), ...cells]),
+      // Week rows on wide screens; on phones the list for the month below is the calendar.
+      h("div", { class: "cal", role: "presentation" }, [h("div", { class: "cal-wd" }, ["Mon", "Tue", "Wed", "Thu", "Fri"].map(d => h("div", { class: "cal-w", text: d }))), ...weeks]),
       h("div", { class: "cal-list" }, [h("h3", { class: "h", text: "In " + first.toLocaleDateString("en-US", { month: "long" }) }), inMonth.length ? h("div", { class: "items" }, inMonth.map(l => labRow(l, staff))) : h("p", { class: "empty", text: "No Labs this month." })])
     ])),
     h("section", { class: "band tint" }, h("div", { class: "wrap stack" }, [
@@ -741,6 +951,8 @@ function calendar(staff) {
     ]))
   ]);
 }
+// In a test view, real Labs can be read but not changed (only Labs added in a test view can).
+const canEditLab = l => !S.test || !!l.test;
 function bandCol(l) { const b = (l.bands || [])[0]; return b === "K–1" ? "#356B33" : b === "2–4" ? "#2F5D8A" : b === "5–8" ? "#6E4382" : "#015640"; }
 function labRow(l, staff) {
   const extras = [(l.files || []).length + (l.links || []).length ? `${(l.files || []).length + (l.links || []).length} file${(l.files || []).length + (l.links || []).length === 1 ? "" : "s"} or link${(l.files || []).length + (l.links || []).length === 1 ? "" : "s"} for home` : "", l.home ? "home notes" : ""].filter(Boolean);
@@ -749,18 +961,21 @@ function labRow(l, staff) {
       h("div", { class: "t" }, h("a", { href: "#schedule=" + l.id, text: l.title })),
       !staff ? h("div", { class: "small muted", text: (l.bands || []).flatMap(childrenIn).filter((x, i, a) => a.indexOf(x) === i).join(", ") }) : null,
       extras.length ? h("div", { class: "small muted", text: extras.join(" · ") }) : null]),
-    staff ? h("a", { class: "btn", href: "#schedule=edit." + l.id, text: "Edit" }) : h("span")]);
+    staff && canEditLab(l) ? h("a", { class: "btn", href: "#schedule=edit." + l.id, text: "Edit" }) : h("span")]);
 }
 function labDetail(l, staff) {
   const files = l.files || [], links = l.links || [];
   return h("div", {}, [
     h("div", { class: "wrap page-head" }, [h("p", { class: "small" }, h("a", { href: "#schedule", text: "← Labs schedule" })),
       h("div", { class: "who" }, [h("div", {}, [h("h1", { text: l.title }), h("p", { text: [whenTxt(l), "Grades " + (l.bands || []).join(", "), l.where, l.guides ? "With " + l.guides : ""].filter(Boolean).join(" · ") })]),
-        staff ? h("div", { class: "row noprint" }, h("a", { class: "btn go", href: "#schedule=edit." + l.id, text: "Edit this Lab" })) : null])]),
+        staff && canEditLab(l) ? h("div", { class: "row noprint" }, h("a", { class: "btn go", href: "#schedule=edit." + l.id, text: "Edit this Lab" })) : null])]),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
       l.about ? h("div", { class: "panel" }, [h("h2", { class: "h", text: "What we'll do" }), h("p", { class: "pre", text: l.about })]) : null,
-      (l.challenges || []).length ? h("div", { class: "panel" }, [h("h2", { class: "h", text: "Challenges in this Lab" }), savedList(l.challenges.filter(c => BYID[c])),
-        h("p", { class: "small muted", text: "Tap a challenge to see its standard, steps and how it's shown." })]) : null,
+      (l.challenges || []).length || (l.custom || []).length ? h("div", { class: "panel" }, [h("h2", { class: "h", text: "Challenges in this Lab" }),
+        (l.challenges || []).length ? savedList(l.challenges.filter(c => BYID[c])) : null,
+        (l.custom || []).length ? h("ul", { class: "svl" }, l.custom.map(c => h("li", {}, [h("i", { style: { background: (SKILL[c.k] || {}).col || "#4d4d51" } }), h("span", {}, [h("b", { text: c.t }), h("span", { class: "muted", text: " · " + ((SKILL[c.k] || {}).n || "") + (c.w ? ". How it's shown: " + c.w : "") })])]))) : null,
+        (l.challenges || []).length ? h("p", { class: "small muted", text: "Tap a challenge to see its standard, steps and how it's shown." }) : null,
+        staff ? h("div", { class: "row noprint" }, h("a", { class: "btn go", href: "#validate=group." + l.id, text: "Validate students for this Lab" })) : null]) : null,
       h("div", { class: "panel home-support" }, [h("h2", { class: "h", text: "Supporting it at home" }),
         l.home ? h("p", { class: "pre", text: l.home }) : h("p", { class: "muted", text: "Nothing extra needed at home for this one." }),
         files.length || links.length ? h("ul", { class: "files" }, [
@@ -777,6 +992,7 @@ function labForm(l) {
   const f = {
     title: h("input", { class: "in", id: "lt", maxlength: "120", value: l.title || "", placeholder: "Fire-building Lab" }),
     date: h("input", { class: "in", id: "ld", type: "date", value: l.date || "" }),
+    // (Saturdays and Sundays are refused on save.)
     endDate: h("input", { class: "in", id: "le2", type: "date", value: l.endDate || "" }),
     start: h("input", { class: "in", id: "ls1", type: "time", value: l.start || "" }),
     end: h("input", { class: "in", id: "ls2", type: "time", value: l.end || "" }),
@@ -787,6 +1003,20 @@ function labForm(l) {
   };
   const bands = BANDS.map(b => { const c = h("input", { type: "checkbox", value: b, checked: (l.bands || []).includes(b) }); return [b, c]; });
   let chs = (l.challenges || []).slice(), files = (l.files || []).slice(), links = (l.links || []).map(x => ({ ...x })), adds = [], drops = [];
+  // Challenges this Lab introduces that aren't on the challenge map. Each keeps its id once made (entries point at it).
+  let customs = (l.custom || []).map(x => ({ ...x }));
+  const newId = () => "LB-" + Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "abcdefghjkmnpqrstuvwxyz23456789"[b % 31]).join("");
+  const customBox = h("div", { class: "stack" });
+  const drawCustom = () => {
+    customBox.innerHTML = "";
+    customs.forEach((c, i) => {
+      const t = h("input", { class: "in", value: c.t || "", maxlength: "120", placeholder: "Build a fire that boils water in 10 minutes", "aria-label": "Challenge", oninput: e => { c.t = e.target.value; } });
+      const k = h("select", { class: "in", "aria-label": "Life skill", onchange: e => { c.k = e.target.value; } }, [h("option", { value: "", text: "Life skill…" }), ...W.skills.map(x => h("option", { value: x.k, text: x.n, selected: c.k === x.k }))]);
+      const w = h("input", { class: "in", value: c.w || "", maxlength: "200", placeholder: "How it's shown (optional): in front of a guide, start to finish", "aria-label": "How it's shown", oninput: e => { c.w = e.target.value; } });
+      customBox.append(h("div", { class: "customrow" }, [t, k, w, h("button", { class: "btn plain", type: "button", text: "Remove", onclick: () => { customs.splice(i, 1); drawCustom(); } })]));
+    });
+    if (customs.length < 8) customBox.append(h("div", {}, h("button", { class: "btn", type: "button", text: customs.length ? "Add another" : "Add a challenge this Lab introduces", onclick: () => { customs.push({ id: newId(), t: "", k: "", w: "" }); drawCustom(); } })));
+  };
   const chBox = h("div", { class: "stack" }), fileBox = h("div", { class: "stack" }), linkBox = h("div", { class: "stack" });
   const drawCh = () => { chBox.innerHTML = ""; if (chs.length) chBox.append(h("div", { class: "items" }, chs.map(c => h("div", { class: "item" }, [h("span", { class: "bar", style: { background: colOf(c) } }), h("div", {}, [h("div", { class: "meta", text: chMeta(c) }), h("div", { class: "t" }, chLink(c))]), h("button", { class: "btn danger", type: "button", text: "Remove", onclick: () => { chs = chs.filter(x => x !== c); drawCh(); } })])))); if (chs.length < 8) chBox.append(picker({ id: "lch", band: () => { const b = bands.filter(x => x[1].checked).map(x => x[0]); return b.length === 1 ? b[0] : null; }, onpick: c => { if (!chs.includes(c)) chs.push(c); drawCh(); } })); };
   const drawFiles = () => {
@@ -807,7 +1037,7 @@ function labForm(l) {
     });
     if (links.length < 8) linkBox.append(h("div", {}, h("button", { class: "btn", type: "button", text: "Add a link", onclick: () => { links.push({ label: "", url: "" }); drawLinks(); } })));
   };
-  drawCh(); drawFiles(); drawLinks();
+  drawCh(); drawCustom(); drawFiles(); drawLinks();
   const note = h("p", { class: "note", "aria-live": "polite" });
   const say = (t, c) => { note.className = "note " + (c || ""); note.textContent = t; };
   const save = async ev => {
@@ -815,6 +1045,10 @@ function labForm(l) {
     if (title.length < 3) return say("Give the Lab a name.", "err");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return say("Pick the date.", "err");
     if (endDate && endDate < date) return say("The last day is before the first day.", "err");
+    // We don't run Labs on weekends (a Lab may run over one, from a Friday to a Monday).
+    if (isWeekend(date) || (endDate && isWeekend(endDate))) return say("Labs start and end on a school day (Monday to Friday). We don't run Labs on weekends.", "err");
+    const okCustom = customs.filter(c => (c.t || "").trim());
+    if (okCustom.some(c => !SKILL[c.k])) return say("Pick a life skill for each challenge this Lab introduces.", "err");
     if (!picked.length) return say("Pick at least one grade band.", "err");
     if (f.start.value && f.end.value && f.end.value <= f.start.value) return say("The end time is before the start time.", "err");
     const okLinks = links.filter(k => k.url || k.label);
@@ -836,8 +1070,9 @@ function labForm(l) {
       }
       say("Saving…");
       const data = { title, date, endDate: endDate && endDate > date ? endDate : "", start: f.start.value, end: f.end.value, bands: picked, where: f.where.value.trim(), guides: f.guides.value.trim(),
-        about: f.about.value.trim(), home: f.home.value.trim(), challenges: chs.slice(0, 8), files: files.concat(uploaded), links: okLinks.map(k => ({ label: (k.label || "").trim().slice(0, 80), url: k.url.slice(0, 500) })),
-        updated: Date.now(), updatedBy: S.email, ...(isNew ? { created: Date.now(), createdBy: S.email } : {}) };
+        about: f.about.value.trim(), home: f.home.value.trim(), challenges: chs.slice(0, 8),
+        custom: okCustom.slice(0, 8).map(c => ({ id: c.id, t: c.t.trim().replace(/\s+/g, " ").slice(0, 120), k: c.k, w: (c.w || "").trim().slice(0, 200) })), files: files.concat(uploaded), links: okLinks.map(k => ({ label: (k.label || "").trim().slice(0, 80), url: k.url.slice(0, 500) })),
+        updated: Date.now(), updatedBy: S.email, ...(isNew ? { created: Date.now(), createdBy: S.email } : {}), ...((isNew && S.test) || l.test ? { test: true } : {}) };
       await setDoc(doc(db, "labs", id), data, { merge: !isNew });
       S.labs = null; toast(isNew ? "Lab added. Parents in those bands can see it now." : "Saved."); location.hash = "#schedule=" + id;
     } catch (e) {
@@ -864,7 +1099,8 @@ function labForm(l) {
         h("fieldset", { class: "f bands" }, [h("legend", { text: "Grade bands" }), h("div", { class: "row" }, bands.map(([b, c]) => h("label", { class: "chk" }, [c, " Grades " + b])))]),
         h("div", { class: "grid2" }, [h("label", { class: "f", for: "lw" }, ["Where", f.where]), h("label", { class: "f", for: "lg" }, ["Guides running it", f.guides])]),
         h("label", { class: "f", for: "la" }, ["What students will do", f.about]),
-        h("div", { class: "f" }, [h("span", {}, ["Challenges in this Lab ", h("span", { class: "hint", text: "(optional, up to 8)" })]), chBox])
+        h("div", { class: "f" }, [h("span", {}, ["Challenges from the map ", h("span", { class: "hint", text: "(optional, up to 8)" })]), chBox]),
+        h("div", { class: "f" }, [h("span", {}, ["New challenges this Lab introduces ", h("span", { class: "hint", text: "(not on the map; guides can validate them at the end of the Lab)" })]), customBox])
       ]),
       h("div", { class: "panel stack" }, [
         h("h2", { class: "h", text: "For parents: supporting it at home" }),
@@ -886,7 +1122,7 @@ function boardView() {
   // Students start on their own band's crew and can look up at older bands, not down; guides see every band.
   const lockBand = S.role === "student" && mine && BANDS.includes(mine.band) ? mine.band : null;
   const bandChoices = lockBand ? BANDS.slice(BANDS.indexOf(lockBand)) : ["All", ...BANDS];
-  if (!boardBand || !bandChoices.includes(boardBand)) boardBand = mine ? mine.band : "2–4";
+  if (!boardBand || !bandChoices.includes(boardBand)) boardBand = mine ? mine.band : myBand() || "All";
   const list = Object.values(S.boards).filter(b => b.name && (boardBand === "All" || b.band === boardBand))
     .filter(b => !boardQ || b.name.toLowerCase().includes(boardQ) || (b.working || []).concat((b.passed || []).map(p => p.c)).some(c => chTitle(c).toLowerCase().includes(boardQ)))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -922,9 +1158,10 @@ function route() {
   acct();
   if (S.role === "staff") {
     // Inside the staff guides (/guides/lifeskills/), guides also get the Lab builder.
-    navLinks(PATH === HOMES.staff ? SUBNAV.guides : [["overview", "Overview"], ["log", "Log"], ["board", "Crew board"], ["schedule", "Labs schedule"]]);
+    navLinks(PATH === HOMES.staff ? SUBNAV.guides : [["overview", "Overview"], ["validate", "Validate"], ["board", "Crew board"], ["schedule", "Labs schedule"]]);
     if (v === "s") return main(record(arg, { staff: true }));
-    if (v === "log") return main(logView(arg));
+    // "Log" became "Validate"; old #log links still work.
+    if (v === "log" || v === "validate") return main(validateView(arg));
     // Old links to the roster here go to the Student Roster.
     if (v === "roster") { location.replace(ROSTER + (arg ? "#edit=" + arg : "#roster")); return; }
     if (v === "schedule") return main(scheduleView(arg, true));
@@ -953,12 +1190,13 @@ addEventListener("hashchange", () => { route(); scrollTo(0, 0); });
 const TEAM = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];
 function tellRole() {
   let d = null;
-  if (S.user && TEAM.includes(S.email) && S.role !== "unverified") d = { role: "staff", band: null };
-  else if (S.role === "staff" || S.role === "parent") d = { role: S.role, band: null };
+  if (S.user && !S.test && TEAM.includes(S.email) && S.role !== "unverified") d = { role: "staff", band: myBand() };
+  else if (S.role === "staff") d = { role: "staff", band: myBand() };
+  else if (S.role === "parent") d = { role: "parent", band: myBand(), bands: myBands() };
   else if (S.role === "student") { const bands = [...new Set(S.mine.map(id => S.students[id] && S.students[id].band).filter(Boolean))]; d = { role: "student", band: bands.length === 1 ? bands[0] : null, sid: S.mine.length === 1 ? S.mine[0] : null }; }
-  if (d) d = { email: S.email, ...d };
+  if (d) d = { email: S.email, ...d, ...(S.test ? { test: S.test, real: S.real } : {}) };
   window.wlRole = d;
-  try { if (d) localStorage.setItem("wl-role", JSON.stringify({ e: d.email, r: d.role, b: d.band, s: d.sid || null })); else localStorage.removeItem("wl-role"); } catch (e) { }
+  try { if (d) localStorage.setItem("wl-role", JSON.stringify({ e: d.email, r: d.role, b: d.band, s: d.sid || null, bs: d.bands || null, t: d.test || null, x: d.real || null })); else localStorage.removeItem("wl-role"); } catch (e) { }
   document.dispatchEvent(new CustomEvent("wl-role", { detail: d }));
 }
 
@@ -978,6 +1216,7 @@ async function start(u) {
     acct(); return main([head("Can't open the tracker", e.code === "permission-denied" ? "The database rules for the tracker aren't published yet, or this account isn't allowed in. Tell Alex." : "Check your connection and reload the page.")]);
   }
   if (my !== seq) return;
+  setBandDefaults();
   tellRole();
   route();
 }

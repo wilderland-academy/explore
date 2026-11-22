@@ -206,19 +206,33 @@ a.wl-ch{color:var(--forest);text-decoration:underline;text-underline-offset:2px}
 .sklbl{font:700 13px/18px var(--font-sans);letter-spacing:.04em;text-transform:uppercase}
 
 /* Life Skill Labs schedule */
+/* Labs (guides): Schedule | Lab builder */
+.labtabs{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--mist)}
+.labtabs a{padding:8px 16px;border-radius:999px;color:var(--slate);text-decoration:none;font-weight:600;font-size:15px;line-height:20px}
+.labtabs a:hover{color:var(--ink)}
+.labtabs a[aria-current=page]{background:var(--white);color:var(--forest);box-shadow:0 1px 3px #0000001f}
+.labtabs-wrap{padding-top:18px}
 .cal-head{display:flex;align-items:center;gap:8px}
 .cal-head h2{min-width:200px;text-align:center}
-.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+/* The Labs month: school days only (Monday to Friday), one row per week. A Lab that runs several days is one bar
+   across those days, named once; it breaks only at a weekend (a new row). */
+.cal{display:flex;flex-direction:column;gap:4px}
+.cal-wd{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
 .cal-w{font:700 12px/16px var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted);padding:4px 6px}
-.cal-d{min-height:104px;background:var(--mist);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
-.cal-d.out{background:transparent}
-.cal-d .n{font-size:13px;line-height:16px;font-weight:700;color:var(--fg-muted)}
+.cal-wk{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:min-content;column-gap:4px;row-gap:4px;min-height:96px;padding-bottom:6px}
+.cal-d{grid-row:1/-1;background:var(--mist);border-radius:10px;min-width:0;min-height:96px}
+.cal-d.out{background:transparent;box-shadow:inset 0 0 0 1px #4d4d5114}
 .cal-d.today{box-shadow:inset 0 0 0 2px var(--forest)}
-.cal-d.today .n{color:var(--forest)}
-.cal-ev{display:block;font-size:12.5px;line-height:16px;padding:3px 6px;border-radius:6px;background:var(--white);border-left:3px solid var(--c);color:var(--ink);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cal-ev:hover{text-decoration:underline}
+.cal-n{grid-row:1;align-self:start;padding:6px 8px 0;font-size:13px;line-height:16px;font-weight:700;color:var(--fg-muted);z-index:1;pointer-events:none}
+.cal-n.out{opacity:.45}
+.cal-n.today{color:var(--forest)}
+.cal-bar{z-index:1;margin:0 4px;display:block;font-size:12.5px;line-height:16px;padding:4px 8px;border-radius:6px;background:var(--white);border-left:4px solid var(--c);color:var(--ink);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 2px #0000001a}
+.cal-bar.cont-l{border-left-style:dashed;border-top-left-radius:0;border-bottom-left-radius:0}
+.cal-bar.cont-r{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
+.cal-bar.cont-r::after{content:" \2192";color:var(--fg-muted)}
+.cal-bar:hover{text-decoration:underline}
 .cal-list{display:none}
-@media (max-width:760px){.cal,.cal-w{display:none}.cal-list{display:flex;flex-direction:column;gap:10px}.cal-head h2{min-width:0;flex:1}}
+@media (max-width:760px){.cal{display:none}.cal-list{display:flex;flex-direction:column;gap:10px}.cal-head h2{min-width:0;flex:1}}
 .pre{white-space:pre-wrap}
 .files{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .files li::before{content:"📎";margin-right:8px}
@@ -231,3 +245,31 @@ fieldset.bands legend{padding:0;margin-bottom:6px;font-weight:600}
 div.f{display:flex;flex-direction:column;gap:6px}
 div.f>span:first-child{font:600 14px/19.6px var(--font-sans)}
 div.f span.hint{font-weight:400;color:var(--fg-muted)}
+/* Validate: one student, or a group on one challenge */
+.vtabs{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--mist);align-self:flex-start}
+.vtab{padding:9px 16px;border-radius:999px;color:var(--slate);text-decoration:none;font-weight:600;font-size:15px;line-height:20px}
+.vtab[aria-selected=true]{background:var(--white);color:var(--forest);box-shadow:0 1px 3px #0000001f}
+.labpick{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:var(--radius-sm,10px);background:var(--lime-tint)}
+.labpick .chip{background:var(--white);text-align:left}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.vrow{display:flex;flex-direction:column;gap:6px;padding:6px;border-radius:12px;background:var(--mist);border:2px solid transparent}
+.vrow.pass{background:var(--lime-tint);border-color:var(--meadow)}
+.vrow.notyet{background:var(--sun-tint);border-color:#e9a23b}
+.vrow.done{opacity:.6}
+.vname{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:6px;border-radius:8px;min-height:44px}
+.vname:disabled{cursor:default}
+.vname:focus-visible{outline:3px solid var(--forest)}
+.vname b{display:block;font-weight:600;line-height:20px}
+.vname small{display:block;color:var(--fg-muted,#4d4d51);font-size:13px;line-height:17px}
+.vbox{flex:none;width:24px;height:24px;border-radius:6px;border:2px solid var(--silver);display:grid;place-items:center;font-weight:800;background:var(--white);color:var(--forest)}
+.vrow.pass .vbox{background:var(--meadow);border-color:var(--meadow);color:var(--white)}
+.vrow.notyet .vbox{background:#e9a23b;border-color:#e9a23b;color:var(--white)}
+.vrow .seg.small{gap:6px}
+.vrow .seg.small button{min-height:34px;padding:4px 8px;font-size:13.5px}
+/* A Lab's own challenges (not on the map) in the Lab form */
+.customrow{display:grid;grid-template-columns:2fr 1fr 2fr auto;gap:8px;align-items:center}
+@media (max-width:760px){.customrow{grid-template-columns:1fr}.vgrid{grid-template-columns:1fr 1fr}}
+@media (max-width:420px){.vgrid{grid-template-columns:1fr}}
+/* Chips and plain buttons inside a grey panel need a white face to read as buttons. */
+.panel .chip:not([aria-pressed="true"]){background:var(--white)}
+.panel .vgrid ~ * .chip{background:var(--white)}

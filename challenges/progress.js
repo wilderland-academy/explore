@@ -17,7 +17,10 @@ const goalFor = band => band === "K–1" ? 3 : 2;
 const yearStart = () => { const d = new Date(), y = d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1; return y + "-08-01"; };
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = iso => { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
-const skillOf = cid => { const c = BYID[cid]; return c ? SK[W.comps[c.c].k] : null; };
+// Challenges a Lab introduced that aren't on the map: their entries (ct, k) and board copies (t, k) carry the name and
+// life skill. They show by name but don't open on the map.
+function addCustom(id, t, k) { if (id && t && SK[k] && !BYID[id]) BYID[id] = { id, t, k, cr: 1, custom: true }; }
+const skillOf = cid => { const c = BYID[cid]; return !c ? null : c.custom ? SK[c.k] : SK[W.comps[c.c].k]; };
 const title = cid => (BYID[cid] || {}).t || cid;
 const colOf = cid => (skillOf(cid) || {}).col || "#999";
 const icon = n => '<svg class="ic" aria-hidden="true"><use href="/challenges/icons.svg#i-' + n + '"/></svg>';
@@ -51,6 +54,13 @@ async function list(path) {
     page = j.nextPageToken || "";
   } while (page);
   return out;
+}
+// Testers who can't read the whole board (outside guests) see just the test accounts.
+async function testBoards() {
+  const r = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" },
+    body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "lsBoard" }], where: { fieldFilter: { field: { fieldPath: "test" }, op: "EQUAL", value: { booleanValue: true } } } } }) });
+  if (!r.ok) throw new Error("board " + r.status);
+  return (await r.json()).filter(x => x.document).map(x => docOf(x.document));
 }
 async function saveWorking(sid, working) {
   const body = { fields: { working: { arrayValue: { values: working.map(c => ({ stringValue: c })) } }, updated: { integerValue: String(Date.now()) } } };
@@ -122,7 +132,7 @@ function drawProgress() {
     return `<li><span class="sw" style="background:${k.col}"></span><span class="nm">${esc(k.n)}</span><span class="dots" style="color:${k.col}" aria-label="${Math.min(n, goal)} of ${goal}">${Array.from({ length: goal }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("")}${n > goal ? `<b>+${n - goal}</b>` : ""}</span></li>`;
   }).join("");
   const working = (board.working || []).filter(c => BYID[c]);
-  const row = (cid, extra, del) => `<li><span class="bar" style="background:${colOf(cid)}"></span><div><button class="plink" type="button" data-open="${cid}">${esc(title(cid))}</button>${extra || ""}</div>${del ? `<button class="x" type="button" data-unwork="${cid}" aria-label="Stop working on ${esc(title(cid))}">${icon("x")}</button>` : ""}</li>`;
+  const row = (cid, extra, del) => `<li><span class="bar" style="background:${colOf(cid)}"></span><div>${(BYID[cid] || {}).custom ? `<span class="plink">${esc(title(cid))}</span>` : `<button class="plink" type="button" data-open="${cid}">${esc(title(cid))}</button>`}${extra || ""}</div>${del ? `<button class="x" type="button" data-unwork="${cid}" aria-label="Stop working on ${esc(title(cid))}">${icon("x")}</button>` : ""}</li>`;
   prog.innerHTML = `<div class="wrap prog">
     <div class="prog-head"><p class="eyebrow">My progress</p><h2 id="progress-title">${esc(firstName(me.name) || "Your")}${firstName(me.name) ? "'s" : ""} trail</h2>
       <p class="muted">Grades ${esc(band)}${me.guide ? " · Field Guide: " + esc(me.guide) : ""}. Your guide records each pass and not yet.</p></div>
@@ -144,7 +154,7 @@ function drawCrew() {
   const people = C.boards.filter(b => b.name && b.band === crewBand)
     .filter(b => !crewQ || b.name.toLowerCase().includes(crewQ) || (b.working || []).concat((b.passed || []).map(p => p.c)).some(c => title(c).toLowerCase().includes(crewQ)))
     .sort((a, b) => (b.id === C.sid) - (a.id === C.sid) || a.name.localeCompare(b.name));
-  const li = (c, extra) => BYID[c] ? `<li><i style="background:${colOf(c)}"></i><span><button class="plink" type="button" data-open="${c}">${esc(title(c))}</button>${extra ? `<span class="muted small"> · ${esc(extra)}</span>` : ""}</span></li>` : "";
+  const li = (c, extra) => BYID[c] ? `<li><i style="background:${colOf(c)}"></i><span>${BYID[c].custom ? `<span class="plink">${esc(title(c))}</span>` : `<button class="plink" type="button" data-open="${c}">${esc(title(c))}</button>`}${extra ? `<span class="muted small"> · ${esc(extra)}</span>` : ""}</span></li>` : "";
   const cards = people.map(b => {
     const passed = (b.passed || []).slice().sort((x, y) => (y.d || "").localeCompare(x.d || ""));
     const ranks = RANKS[b.band] || [], rank = ranks.filter(r => r[0] <= (b.credits || 0)).pop();
@@ -180,8 +190,13 @@ async function load(r) {
   if (!r.sid) return notAdded(r.email);
   if (C && C.sid === r.sid) return;
   try {
-    const [meDoc, entries, boards] = await Promise.all([get(`/lsStudents/${r.sid}`), list(`/lsStudents/${r.sid}/entries`), list("/lsBoard")]);
+    // The test student (a tester's test view) and real students never see each other on the crew board.
+    const crewBoards = () => list("/lsBoard").then(bs => bs.filter(b => !!b.test === !!r.test))
+      .catch(e => { if (!r.test) throw e; return testBoards(); });
+    const [meDoc, entries, boards] = await Promise.all([get(`/lsStudents/${r.sid}`), list(`/lsStudents/${r.sid}/entries`), crewBoards()]);
     if (my !== seq) return;
+    entries.forEach(e => addCustom(e.cid, e.ct, e.k));
+    boards.forEach(b => (b.passed || []).forEach(p => addCustom(p.c, p.t, p.k)));
     const me = docOf(meDoc), board = boards.find(b => b.id === r.sid) || { working: [], passed: [] };
     C = { sid: r.sid, me, entries, boards, board, sum: summary(me, entries) };
     drawProgress(); drawCrew(); setStatus();

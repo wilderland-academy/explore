@@ -71,3 +71,9 @@ Handbook page. Without it, the mentor still works from the public documents.
 - Models and size limits: the constants at the top of `worker.js`. The coach's limits are under "Student coach limits".
 - The coach's rules, the screener and the fixed crisis replies: `coachSystem`, `SCREEN_SYSTEM`, `OUTPUT_SYSTEM` and `SCRIPTS` in `worker.js`.
 - To switch the AI off: delete the relay address on the Admin page, or delete the Worker.
+
+## Nov 22, 2026: test student
+Testers (the `TESTERS` list) can send `as: "student"` with coach and interest requests. The Worker then treats them exactly
+like the test student (`lsStudents/test-student`): same screening, limits and academics pilot, `staffTest` off. Everything it
+writes is marked `test: true` (the daily count is `aiStudents/test-{uid}`), and test alerts are never posted to Slack.
+Anyone else's `as` is ignored. Deploy with `firestore.rules` from the same change.

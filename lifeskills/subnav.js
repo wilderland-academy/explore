@@ -5,13 +5,13 @@
 // The tracker reads window.WLSubnav and draws its own links, because some of its items are views on the same page.
 (function () {
   var L = {
+    // Labs holds the schedule and the Lab builder (tabs inside it: WLLabTabs below).
     guides: [
       ["overview", "Overview", "/guides/lifeskills/#overview"],
       ["challenges", "Challenges", "/guides/challenges/"],
-      ["schedule", "Labs schedule", "/guides/lifeskills/#schedule"],
-      ["log", "Log", "/guides/lifeskills/#log"],
-      ["board", "Crew board", "/guides/lifeskills/#board"],
-      ["build", "Lab builder", "/guides/lifeskills/builder/"]
+      ["labs", "Labs", "/guides/lifeskills/#schedule"],
+      ["validate", "Validate", "/guides/lifeskills/#validate"],
+      ["board", "Crew board", "/guides/lifeskills/#board"]
     ],
     // Parents: the tracker adds one tab per child before these.
     parents: [
@@ -21,7 +21,15 @@
     ]
   };
   window.WLSubnav = L;
+  // Inside Labs (guides): Schedule and Lab builder. <nav data-ls-labtabs data-current="schedule|build"></nav>
+  var LABTABS = [["schedule", "Schedule", "/guides/lifeskills/#schedule"], ["build", "Lab builder", "/guides/lifeskills/builder/"]];
+  window.WLLabTabs = function (cur) {
+    return LABTABS.map(function (x) { return '<a href="' + x[2] + '"' + (x[0] === cur ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("");
+  };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  Array.prototype.forEach.call(document.querySelectorAll("[data-ls-labtabs]"), function (nav) {
+    nav.classList.add("labtabs"); nav.setAttribute("aria-label", "Labs"); nav.innerHTML = window.WLLabTabs(nav.getAttribute("data-current") || "");
+  });
   Array.prototype.forEach.call(document.querySelectorAll("[data-ls-subnav]"), function (nav) {
     var site = nav.getAttribute("data-ls-subnav"), cur = nav.getAttribute("data-current") || "";
     var items = (site === "parents" ? [["child", "My child", "/parents/lifeskills/"]] : []).concat(L[site] || []);

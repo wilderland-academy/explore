@@ -264,7 +264,7 @@ async function sendMsg(text, again) {
   chips([]); busy(true);
   try {
     const r = await fetch(await relayUrl(), { method: "POST", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "coach", kind: st.kind, chatId: st.chatId || "", topicId: st.topicId || "", topicTitle: st.topicTitle || "", context: st.context || "", message: text }) });
+      body: JSON.stringify(asTest({ mode: "coach", kind: st.kind, chatId: st.chatId || "", topicId: st.topicId || "", topicTitle: st.topicTitle || "", context: st.context || "", message: text })) });
     const j = await r.json().catch(() => ({}));
     busy(false);
     if (!r.ok) { note(j.error || "Something went wrong. Try again in a minute."); chips(r.status === 409 ? [] : ["Try again"]); if (r.status !== 409 && r.status !== 429) st.retry = text; return; }
@@ -345,8 +345,10 @@ document.addEventListener("click", e => { const b = e.target.closest('.wlc-chip[
 // Who may use it: school accounts that are students in grades 2–8, or staff (to try it out).
 function canUse(r) { return !!(r && (r.role === "staff" || (r.role === "student" && r.band !== "K–1"))); }
 // Other relay requests from student pages (the academics-pilot "I'm interested" button). Returns { ok, status, data }.
+// A tester viewing the site as the test student: the relay treats them as that student (and keeps it as test data).
+function asTest(body) { const r = window.wlRole; return r && r.test === "student" ? { ...body, as: "student" } : body; }
 async function call(body) {
-  const r = await fetch(await relayUrl(), { method: "POST", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const r = await fetch(await relayUrl(), { method: "POST", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify(asTest(body)) });
   return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
 }
 window.WLCoach = { open, close, canUse, docked, WHY, call, FOX };

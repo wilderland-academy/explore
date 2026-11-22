@@ -25,7 +25,13 @@ const fmtDate = ts => { const t = ms(ts); return t ? new Date(t).toLocaleDateStr
 const daysAgo = ts => { const t = ms(ts); return t ? Math.floor((Date.now() - t) / 864e5) : null; };
 function toast(t) { document.querySelectorAll(".toast").forEach(x => x.remove()); const m = h("div", { class: "toast", text: t }); document.body.appendChild(m); setTimeout(() => m.remove(), 4500); }
 const STRENGTH = { strong: "strong evidence", moderate: "moderate evidence", mixed: "mixed evidence", thin: "thin evidence" };
-let band = local.get("bg-band", "up");
+// The guide's band in this file's own spelling (K-1, 2-4, 5-8), or "all" for admins and guests without one.
+const myKey = all => ({ "K–1": "K-1", "2–4": "2-4", "5–8": "5-8" }[window.wlBand ? window.wlBand({ all }) : "All"] || (all ? "all" : "5-8"));
+// Start on the guide's own policy: K–1 guides on K–1, everyone else on grades 2–8 (from /wlnav.js). A choice made
+// here holds until the page is left.
+const myPolicy = () => window.wlBand && window.wlBand() === "K–1" ? "k1" : "up";
+let band = myPolicy(), bandPicked = false;
+document.addEventListener("wl-role", () => { if (!bandPicked && myPolicy() !== band) { band = myPolicy(); drawBand(); if (typeof route === "function") route(); } });
 const isK1 = () => band === "k1";
 const B = (o, k) => isK1() && k ? Object.assign({}, o, k) : o;
 const k1Box = t => t ? h("div", { class: "k1note" }, [h("b", { text: "K–1" }), h("span", { text: t })]) : null;
@@ -34,7 +40,7 @@ function drawBand() {
   const w = $("#bandsw"); if (!w) return; w.innerHTML = "";
   w.append(h("span", { text: "Policy for" }), ...[["up", "Grades 2–8"], ["k1", "K–1"]].map(([k, t]) => h("button", { "aria-pressed": String(band === k), text: t, onclick: () => setBand(k) })));
 }
-function setBand(k) { band = k; local.set("bg-band", k); drawBand(); route(); }
+function setBand(k) { band = k; bandPicked = true; local.set("bg-band", k); drawBand(); route(); }
 const ndBox = t => t ? h("div", { class: "nd" }, [h("b", { text: "Different wiring" }), h("span", { text: t })]) : null;
 const trapBox = t => t ? h("div", { class: "trap" }, [h("b", { text: "Watch out" }), h("span", { text: t })]) : null;
 const refLinks = ids => ids && ids.length ? h("div", { class: "refs" }, ids.filter(id => D.REFS[id]).map(id => { const r = D.REFS[id]; return h("a", { class: "ref", href: r.u, target: "_blank", rel: "noopener", text: "📚 " + r.t + " · " + STRENGTH[r.s] }); })) : null;
@@ -350,7 +356,8 @@ const saveLog = autosaver(() => user && db ? coachLog(db, user) : null, () => to
 VIEWS.coach = sec => {
   head(sec, "Ask the <span>coach</span>", "Describe what happened. The coach separates what the standard requires from the options you can choose, and adds the neurodivergent angle. It knows our policy, not your students.");
   sec.appendChild(card("W-edge", [h("p", { text: "Use first names or initials only. If anyone is unsafe or a student has mentioned self-harm, abuse or being harmed, stop here and follow the Mental Health Crisis Policy with leadership now." })]));
-  const band = h("select", { id: "cBand" }, ["Grades 2–4", "Grades 5–8", "K–1 (lower campus)"].map(t => h("option", { text: t })));
+  const mine = { "2–4": "Grades 2–4", "5–8": "Grades 5–8", "K–1": "K–1 (lower campus)" }[window.wlBand ? window.wlBand() : "5–8"];
+  const band = h("select", { id: "cBand" }, ["Grades 2–4", "Grades 5–8", "K–1 (lower campus)"].map(t => h("option", { text: t, selected: t === mine })));
   const ta = h("textarea", { id: "cTa", placeholder: "What happened, who was involved (first names or initials), what you've already tried, and what you're unsure about." });
   const out = h("div", { class: "thread" }), status = h("p", { class: "small" });
   const draw = () => { out.innerHTML = ""; thread.forEach(m => out.appendChild(h("div", { class: "msg " + (m.role === "user" ? "u" : "a"), text: m.content }))); };
@@ -379,6 +386,8 @@ VIEWS.tracker = async (sec, sub) => {
   head(sec, "Level <span>tracker</span>", "Each student's Freedom Levels across the four domains, with the reason behind every move. Staff only. Levels are shared with each student privately at their one-on-one, never posted.");
   const list = h("div", { class: "grid g3" }), q = h("input", { type: "search", placeholder: "Search students", id: "trQ" }), chips = h("div", { class: "chips" });
   let f = local.get("bg-tr-f", { band: "all", mine: false, due: false });
+  // The band filter always starts on the guide's own band (All for admins).
+  f.band = { "K–1": "K-1", "2–4": "2-4", "5–8": "5-8" }[window.wlBand ? window.wlBand({ all: true }) : "All"] || "all";
   sec.appendChild(card("noprint", [h("div", { class: "row" }, [h("a", { class: "btn", style: "text-decoration:none", href: "#tracker/review", text: "Weekly review" }), h("a", { class: "btn ghost", style: "text-decoration:none", href: "#tracker/add", text: "Add students" })]), h("label", { for: "trQ" }, ["Find a student", q]), chips]));
   sec.appendChild(list);
   let all = [];
@@ -398,7 +407,7 @@ VIEWS.tracker = async (sec, sub) => {
 async function addView(sec) {
   back(sec, "#tracker", "Tracker");
   head(sec, "Add <span>students</span>", "Everyone starts at Level 3 in all four domains.");
-  const names = h("textarea", { id: "aN", placeholder: "One student per line. First name and last initial is enough." }), band = h("select", { id: "aB" }, [["2-4", "Grades 2–4"], ["5-8", "Grades 5–8"], ["K-1", "K–1"]].map(o => h("option", { value: o[0], text: o[1] }))), guide = h("input", { type: "email", id: "aG", value: me() }), note = h("p", { class: "small" });
+  const names = h("textarea", { id: "aN", placeholder: "One student per line. First name and last initial is enough." }), band = h("select", { id: "aB" }, [["2-4", "Grades 2–4"], ["5-8", "Grades 5–8"], ["K-1", "K–1"]].map(o => h("option", { value: o[0], text: o[1], selected: o[0] === myKey(false) ? "" : false }))), guide = h("input", { type: "email", id: "aG", value: me() }), note = h("p", { class: "small" });
   sec.appendChild(card("", [h("label", { for: "aN" }, ["Students", names]), h("label", { for: "aB" }, ["Band", band]), h("label", { for: "aG" }, ["Field Guide's email", guide]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Add", onclick: async () => {
     const list = names.value.split("\n").map(s => s.trim()).filter(Boolean); if (!list.length) { note.textContent = "Add at least one name."; return; }
     const existing = (await loadStudents()).map(s => (s.name || "").toLowerCase());
@@ -453,7 +462,7 @@ async function studentView(sec, id) {
   const hist = card("", [h("h3", { text: "History" })]); sec.appendChild(hist);
   try { const snap = await getDocs(query(collection(db, "flStudents", id, "history"), orderBy("at", "desc"), limit(80))); if (snap.empty) hist.appendChild(h("p", { class: "dim", text: "No reviews yet." })); snap.forEach(x => { const e = x.data(), d = D.DOMAINS.find(y => y.id === e.domain); const what = e.kind === "hold" ? (e.domain === "all" ? "held in every domain" : "held at " + e.from) : e.kind === "pending" ? "Level 4 requested" : e.kind === "confirm" ? "Level 4 confirmed" : e.kind === "cancel" ? "Level 4 request withdrawn" : e.from + " → " + e.to; hist.appendChild(h("div", { style: "border-bottom:1px solid var(--line);padding:8px 0" }, [h("b", { text: fmtDate(e.at) + " · " + (d ? d.name : e.domain === "all" ? "Weekly review" : e.domain) + " · " + what }), e.why ? h("p", { class: "dim", text: e.why }) : null, e.next ? h("p", { class: "small", text: "Next: " + e.next }) : null, h("p", { class: "small", text: "by " + (e.byName || e.byEmail || "") })])); }); } catch (e) { hist.appendChild(h("p", { class: "dim", text: "Couldn't load history." })); }
   // edit
-  const band = h("select", null, [["2-4", "Grades 2–4"], ["5-8", "Grades 5–8"], ["K-1", "K–1"]].map(o => h("option", { value: o[0], text: o[1], selected: s.band === o[0] ? "" : false }))), gd = h("input", { type: "email", value: s.guide || "" }), nm = h("input", { type: "text", value: s.name || "", maxlength: 60 });
+  const band = h("select", null, [["2-4", "Grades 2–4"], ["5-8", "Grades 5–8"], ["K-1", "K–1"]].map(o => h("option", { value: o[0], text: o[1], selected: (s.band || { "K–1": "K-1", "2–4": "2-4", "5–8": "5-8" }[window.wlBand ? window.wlBand() : "5–8"]) === o[0] ? "" : false }))), gd = h("input", { type: "email", value: s.guide || "" }), nm = h("input", { type: "text", value: s.name || "", maxlength: 60 });
   sec.appendChild(h("details", { class: "card noprint" }, [h("summary", { text: "Edit or archive" }), h("label", null, ["Name", nm]), h("label", null, ["Band", band]), h("label", null, ["Field Guide's email", gd]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Save", onclick: async () => { const g2 = gd.value.trim().toLowerCase(); await updateDoc(doc(db, "flStudents", id), { name: nm.value.trim().slice(0, 60) || s.name, band: band.value, guide: g2, guideName: g2 === me() ? myName() : (g2 === s.guide ? s.guideName : g2.split("@")[0]), updatedAt: Date.now() }); cache.students = null; route(); } }), confirmTap(h("button", { class: "btn ghost", text: "Archive (left school)" }), "archive", async () => { await updateDoc(doc(db, "flStudents", id), { archived: true, updatedAt: Date.now() }); cache.students = null; location.hash = "#tracker"; })])]));
   sec.appendChild(h("button", { class: "chip noprint", style: "align-self:flex-start", text: "🖨 Print a private coaching card", onclick: () => print() }));
 }
@@ -498,7 +507,7 @@ VIEWS.townhall = async (sec, sub) => {
   if (sub === "agenda") return agendaView(sec);
   head(sec, "Town <span>Hall</span>", "What students have asked to bring to Town Hall. Put good items on an agenda with a student-safe title, reply to the rest, and record what the community decided.");
   sec.appendChild(h("div", { class: "grid g2" }, [card("S-edge", [tag("S", "Standard"), h("h3", { text: "What Town Halls are for" }), ul(["System-level and group concerns, run by students.", "Not individual discipline, and never public shaming.", "A specific student can be discussed. Keep it on solving the problem together, not on the behavior, and tell the student first.", "3 or more concerns about the same student: the guide and class president may convene a restorative Town Hall about impact and repair.", "Concerns about a person can also go to a Peace Talk or a guide first."]), openLink("townhallnames")]), card("T-edge", [tag("T", "Toolkit"), h("h3", { text: "Running it well" }), ul(D.TH_GUIDE), refLinks(["townhall", "rc"])])]));
-  let tab = local.get("bg-th-tab", "new"), band = local.get("bg-th-band", "all");
+  let tab = local.get("bg-th-tab", "new"), band = myKey(true); // starts on the guide's own band each visit
   const tabs = h("div", { class: "chips" }), bands = h("div", { class: "chips" }), list = h("div", { class: "grid", style: "gap:10px" });
   sec.append(card("noprint", [h("div", { class: "row" }, [h("a", { class: "btn", style: "text-decoration:none", href: "#townhall/agenda", text: "Build an agenda" })]), tabs, bands]), list);
   try { await loadTH(true); } catch (e) { list.appendChild(h("p", { class: "dim", text: "Couldn't load Town Hall items. The database rules may not be published yet." })); return; }
@@ -536,7 +545,7 @@ async function agendaView(sec) {
   const dates = [...new Set(cache.agenda.map(a => a.meeting).filter(Boolean))].sort().reverse();
   let pick = local.get("bg-th-date", "") || dates[0] || "";
   const sel = h("select", { id: "agD" }, dates.map(d => h("option", { value: d, text: d, selected: d === pick ? "" : false }))), out = h("div", { class: "view", style: "padding-top:0" });
-  const addT = h("input", { type: "text", maxlength: 160, placeholder: "Add an item yourself (no names)" }), addD = h("input", { type: "date" }), addB = h("select", null, [["5-8", "5–8"], ["2-4", "2–4"], ["K-1", "K–1"], ["", "All upper campus"]].map(o => h("option", { value: o[0], text: o[1] })));
+  const addT = h("input", { type: "text", maxlength: 160, placeholder: "Add an item yourself (no names)" }), addD = h("input", { type: "date" }), addB = h("select", null, [["5-8", "5–8"], ["2-4", "2–4"], ["K-1", "K–1"], ["", "All upper campus"]].map(o => h("option", { value: o[0], text: o[1], selected: o[0] === myKey(false) ? "" : false })));
   sec.appendChild(card("noprint", [dates.length ? h("label", { for: "agD" }, ["Meeting", sel]) : h("p", { class: "dim", text: "No meetings yet. Put an item on an agenda, or add one below." }), h("details", null, [h("summary", { text: "Add an item directly" }), h("label", null, ["Title", addT]), h("label", null, ["Meeting date", addD]), h("label", null, ["Band", addB]), h("button", { class: "btn", style: "align-self:flex-start", text: "Add", onclick: async () => { if (!addD.value || addT.value.trim().length < 6) { toast("Add a title and a date."); return; } try { await addDoc(collection(db, "townhallAgenda"), { title: addT.value.trim(), meeting: addD.value, band: addB.value, itemId: "", status: "upcoming", outcome: "", created: Date.now(), by: me() }); local.set("bg-th-date", addD.value); route(); } catch (e) { toast("Couldn't save."); } } })])]));
   const draw = () => {
     out.innerHTML = ""; if (!pick) return; const items = cache.agenda.filter(a => a.meeting === pick).sort((a, b) => ms(a.created) - ms(b.created));

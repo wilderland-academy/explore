@@ -18,6 +18,11 @@ const ORIGINS = ["https://explore.wilderland.academy"];   // sites allowed to ca
 const DOMAIN = "@wilderland.academy";
 const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];   // outside guests allowed to use the staff tools
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
+// Testers can use the coach as the test student (body.as = "student"): same rules, screening and limits as a student,
+// with everything saved marked test: true (hidden from everyone but testers) and no Slack notices. Keep in step with /wlnav.js.
+const TESTERS = ["alex@wilderland.academy", "shanan@wilderland.academy", "sarah@wilderland.academy", "courtney@wilderland.academy",
+  "ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];
+const TEST = { sid: "test-student", email: "test.student@wilderland.academy", name: "Test Student" };
 const MODELS = { quick: "claude-haiku-5-5", deep: "claude-sonnet-5-5" };
 const MAX_OUT = 3000;        // most tokens Claude may write per staff call
 const MAX_IN_CHARS = 90000;  // largest request accepted
@@ -307,7 +312,8 @@ async function alertStaff(env, token, a, id = rid()) {
   // Asking for answers in an academics chat (raised to "cheating", medium) also goes to Slack: it's what the review is for.
   const answers = a.category === "cheating";
   const wants = a.category === "academic_interest";
-  if (env.ALERT_WEBHOOK && (a.severity === "urgent" || a.severity === "high" || academic || answers || wants)) {
+  // Test alerts stay on the site, where only testers see them.
+  if (env.ALERT_WEBHOOK && !a.test && (a.severity === "urgent" || a.severity === "high" || academic || answers || wants)) {
     // Only what staff need to know to act fast; the full conversation stays on the site (never the student's words here).
     const link = `https://explore.wilderland.academy/guides/roster/${a.chatId ? "#c=" + a.chatId : "#alerts"}`;
     const text = wants
@@ -353,7 +359,12 @@ async function projectList() {
 }
 
 async function coach(req, env, who, token, staff, body, out) {
-  if (!who.email.endsWith(DOMAIN)) return out(403, { error: "The coach is for Wilderland school accounts." });
+  const T = body.as === "student" && TESTERS.includes(who.email);
+  if (T) { who = { ...who, email: TEST.email, name: TEST.name }; staff = false; }
+  const TX = T ? { test: true } : {};
+  // The daily count for the test student is kept apart from the tester's own.
+  const statId = T ? "test-" + who.uid : who.uid;
+  if (!T && !who.email.endsWith(DOMAIN)) return out(403, { error: "The coach is for Wilderland school accounts." });
   let kind = KINDS.includes(body.kind) ? body.kind : "";
   if (!kind) return out(400, { error: "bad kind" });
   let message = typeof body.message === "string" ? body.message.replace(/\s+/g, " ").trim() : "";
@@ -366,7 +377,7 @@ async function coach(req, env, who, token, staff, body, out) {
 
   // Who is this student? Their band comes from the Life Skills tracker (read with their own sign-in).
   let rec = null;
-  try { const r = await fsWhere("lsStudents", [["email", who.email]], token, 3); if (r.length === 1) rec = r[0]; } catch (e) { rec = null; }
+  try { if (T) { rec = await fsGet(`lsStudents/${TEST.sid}`, token); if (rec && rec.test !== true) rec = null; } else { const r = await fsWhere("lsStudents", [["email", who.email]], token, 3); if (r.length === 1) rec = r[0]; } } catch (e) { rec = null; }
   const band = rec && rec.band || "";
   if (!staff && band === "K–1") return out(403, { error: "The AI Coach is for grades 2 to 8. Your guide will help you with challenges." });
   // A family can ask for the coach to be off for their child: an admin sets coachOff: true on the tracker record.
@@ -378,14 +389,14 @@ async function coach(req, env, who, token, staff, body, out) {
 
   // Daily limit.
   const day = new Date().toLocaleDateString("en-CA", { timeZone: "America/Denver" });
-  const me = await fsGet(`aiStudents/${who.uid}`, token);
+  const me = await fsGet(`aiStudents/${statId}`, token);
   const used = me && me.day === day ? me.count || 0 : 0;
   if (used >= DAILY_MESSAGES) return out(429, { error: "That's all the coaching for today. Great work! Take a break and come back tomorrow, or ask your guide." });
 
   // The conversation, and its past turns that this Worker signed.
   let chatId = typeof body.chatId === "string" && /^[a-f0-9]{24}$/.test(body.chatId) ? body.chatId : "";
   let chat = chatId ? await fsGet(`aiChats/${chatId}`, token) : null;
-  if (chatId && (!chat || chat.uid !== who.uid)) return out(403, { error: "That conversation isn't yours." });
+  if (chatId && (!chat || chat.uid !== who.uid || !!chat.test !== T)) return out(403, { error: "That conversation isn't yours." });
   // A conversation keeps the kind it started with.
   if (chat && KINDS.includes(chat.kind)) kind = chat.kind;
   if (kind === "academic" && !academicOK) return out(403, { error: "The AI Coach doesn't help with academic work yet. We're trying it with a few students first. If you'd like to be one of them, tap \"I'm interested\" on the AI Coach page or tell your guide." });
@@ -396,7 +407,7 @@ async function coach(req, env, who, token, staff, body, out) {
       if (t.role !== "student" && t.role !== "coach") continue;
       if (t.sig !== await sign(env, turnBody({ chatId, uid: who.uid, role: t.role, at: t.at, text: t.text }))) {
         // One alert per forged line (a fixed id, so later messages don't repeat it).
-        try { await alertStaff(env, token, { uid: who.uid, email: who.email, name, band, chatId, category: "tampering", severity: "medium", reason: "A line in this conversation was not written by the coach or through the coach page. The coach ignores it.", quote: String(t.text || "").slice(0, 200), turnId: t.id }, "tamper-" + t.id); } catch (e) { /* already reported */ }
+        try { await alertStaff(env, token, { ...TX, uid: who.uid, email: who.email, name, band, chatId, category: "tampering", severity: "medium", reason: "A line in this conversation was not written by the coach or through the coach page. The coach ignores it.", quote: String(t.text || "").slice(0, 200), turnId: t.id }, "tamper-" + t.id); } catch (e) { /* already reported */ }
         continue;
       }
       history.push(t);
@@ -424,22 +435,22 @@ async function coach(req, env, who, token, staff, body, out) {
   const now = Date.now();
   if (!chat) {
     chatId = rid();
-    chat = { uid: who.uid, email: who.email, name, band, kind, topicId, topicTitle, created: now, updated: now, turns: 0, level: 0, last: "", staffTest: staff };
+    chat = { uid: who.uid, email: who.email, name, band, kind, topicId, topicTitle, created: now, updated: now, turns: 0, level: 0, last: "", staffTest: staff, ...TX };
     await fsCreate("aiChats", chatId, chat, token);
   }
   const userTurn = { chatId, uid: who.uid, role: "student", at: now, text: message };
-  await fsCreate("aiTurns", rid(), { ...userTurn, email: who.email, flag: s.severity === "none" ? "" : s.category, severity: s.severity, sig: await sign(env, turnBody(userTurn)) }, token);
-  if (me) await fsPatch(`aiStudents/${who.uid}`, me.day === day ? { count: used + 1, lastAt: now } : { day, count: 1, lastAt: now }, token);
-  else await fsCreate("aiStudents", who.uid, { uid: who.uid, email: who.email, name, band, day, count: 1, firstAt: now, lastAt: now }, token);
+  await fsCreate("aiTurns", rid(), { ...userTurn, ...TX, email: who.email, flag: s.severity === "none" ? "" : s.category, severity: s.severity, sig: await sign(env, turnBody(userTurn)) }, token);
+  if (me) await fsPatch(`aiStudents/${statId}`, me.day === day ? { count: used + 1, lastAt: now } : { day, count: 1, lastAt: now }, token);
+  else await fsCreate("aiStudents", statId, { uid: who.uid, email: who.email, name, band, day, count: 1, firstAt: now, lastAt: now, ...TX }, token);
 
   // Asking for answers in an academics chat is what the review is for: raise it so a guide looks soon.
   if (kind === "academic" && s.category === "cheating" && rank(s.severity) < rank("medium")) s = { ...s, severity: "medium", reason: s.reason || "Asked the coach for answers in an academics chat." };
   // Alert staff now, before any reply, so a serious message is never left unreported.
-  if (rank(s.severity) >= rank("medium")) await alertStaff(env, token, { uid: who.uid, email: who.email, name, band, chatId, category: s.category, severity: s.severity, reason: s.reason, quote: s.quote || message.slice(0, 200), staffTest: staff });
+  if (rank(s.severity) >= rank("medium")) await alertStaff(env, token, { ...TX, uid: who.uid, email: who.email, name, band, chatId, category: s.category, severity: s.severity, reason: s.reason, quote: s.quote || message.slice(0, 200), staffTest: staff });
   // Every academics conversation is reviewed by staff: one alert (and one #alerts Slack notice) per conversation per day,
   // so a student can't keep one long chat going to avoid review. The fixed id makes a second try that day a no-op.
   if (kind === "academic") {
-    try { await alertStaff(env, token, { uid: who.uid, email: who.email, name, band, chatId, category: "academic_use", severity: "low", reason: "Used the AI Coach for academics" + (topicTitle ? " (" + topicTitle + ")" : "") + ". Read the conversation to check it stayed hints and learning.", quote: message.slice(0, 200), topic: topicTitle, staffTest: staff }, "academic-" + chatId + "-" + day); }
+    try { await alertStaff(env, token, { ...TX, uid: who.uid, email: who.email, name, band, chatId, category: "academic_use", severity: "low", reason: "Used the AI Coach for academics" + (topicTitle ? " (" + topicTitle + ")" : "") + ". Read the conversation to check it stayed hints and learning.", quote: message.slice(0, 200), topic: topicTitle, staffTest: staff }, "academic-" + chatId + "-" + day); }
     catch (e) { /* already alerted for this conversation today */ }
   }
 
@@ -478,10 +489,10 @@ async function coach(req, env, who, token, staff, body, out) {
   // 5. Save the coach's turn, update the conversation, and alert staff when needed.
   const at2 = Date.now();
   const coachTurn = { chatId, uid: who.uid, role: "coach", at: at2, text: reply };
-  await fsCreate("aiTurns", rid(), { ...coachTurn, email: who.email, scripted, blocked, sig: await sign(env, turnBody(coachTurn)) }, token);
+  await fsCreate("aiTurns", rid(), { ...coachTurn, ...TX, email: who.email, scripted, blocked, sig: await sign(env, turnBody(coachTurn)) }, token);
   const level = Math.max(chat.level || 0, rank(sev), blocked ? rank("medium") : 0);
   await fsPatch(`aiChats/${chatId}`, { updated: at2, turns: (chat.turns || 0) + 1, level, last: message.slice(0, 140) }, token);
-  if (blocked) await alertStaff(env, token, { uid: who.uid, email: who.email, name, band, chatId, category: "coach_reply_held_back", severity: "medium", reason: "The safety check stopped a coach reply: " + blocked, quote: message.slice(0, 200), staffTest: staff });
+  if (blocked) await alertStaff(env, token, { ...TX, uid: who.uid, email: who.email, name, band, chatId, category: "coach_reply_held_back", severity: "medium", reason: "The safety check stopped a coach reply: " + blocked, quote: message.slice(0, 200), staffTest: staff });
 
   return out(200, { chatId, reply, next, redacted: red.hit, used: used + 1, limit: DAILY_MESSAGES });
 }
@@ -489,14 +500,16 @@ async function coach(req, env, who, token, staff, body, out) {
 // ---------------------------------------------------------------------------------------------------------------
 // "I'm interested" in the academics pilot: one alert (and one #alerts notice) per student, ever.
 // ---------------------------------------------------------------------------------------------------------------
-async function interest(env, who, token, out) {
-  if (!who.email.endsWith(DOMAIN)) return out(403, { error: "For Wilderland school accounts." });
+async function interest(env, who, token, out, body = {}) {
+  const T = body.as === "student" && TESTERS.includes(who.email);
+  if (T) who = { ...who, email: TEST.email, name: TEST.name };
+  if (!T && !who.email.endsWith(DOMAIN)) return out(403, { error: "For Wilderland school accounts." });
   let rec = null;
-  try { const r = await fsWhere("lsStudents", [["email", who.email]], token, 3); if (r.length === 1) rec = r[0]; } catch (e) { rec = null; }
+  try { if (T) rec = await fsGet(`lsStudents/${TEST.sid}`, token); else { const r = await fsWhere("lsStudents", [["email", who.email]], token, 3); if (r.length === 1) rec = r[0]; } } catch (e) { rec = null; }
   const name = (rec && rec.name) || who.name || who.email.split("@")[0], band = rec && rec.band || "";
   try {
-    await alertStaff(env, token, { uid: who.uid, email: who.email, name, band, chatId: "", category: "academic_interest", severity: "low",
-      reason: "Would like to join the AI Coach academics pilot. To unlock it, edit the student on the Student Roster.", quote: "" }, "interest-" + who.uid);
+    await alertStaff(env, token, { ...(T ? { test: true } : {}), uid: who.uid, email: who.email, name, band, chatId: "", category: "academic_interest", severity: "low",
+      reason: "Would like to join the AI Coach academics pilot. To unlock it, edit the student on the Student Roster.", quote: "" }, (T ? "interest-test-" : "interest-") + who.uid);
   } catch (e) { /* already asked */ }
   return out(200, { ok: true });
 }
@@ -603,7 +616,7 @@ export default {
     let body; try { body = JSON.parse(raw); } catch (e) { return out(400, { error: "bad JSON" }); }
     const staff = await isStaff(who.email, token);
 
-    if (body.mode === "interest") return await interest(env, who, token, out);
+    if (body.mode === "interest") return await interest(env, who, token, out, body);
     if (body.mode === "mentor") { try { return await mentor(env, who, token, staff, body, out); } catch (e) { return out(500, { error: String(e.message || e).slice(0, 200) }); } }
     if (body.mode === "doc") return await docFor(env, who, staff, body, out);
     if (body.mode === "booktags") return await booktags(env, who, body, out);
