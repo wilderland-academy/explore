@@ -31,7 +31,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .trail{position:sticky;top:0;z-index:30;background:rgba(8,20,15,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
 .trail nav{display:flex;flex-wrap:wrap;gap:6px;padding:9px 18px}
 @media (max-width:700px){.trail{position:static}}
-@media (max-width:520px){.wl-ls span{display:none}.wlbar .wl-ls{padding:8px 4px!important;font-size:13px!important}}
+
 .trail nav::-webkit-scrollbar{display:none}
 .trail a{flex:none;text-decoration:none;color:var(--dim);font:600 13.5px/1 var(--body);padding:9px 12px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
 .trail a[aria-current=page]{background:var(--lamp);color:#0b2b20;border-color:var(--lamp)}
@@ -147,7 +147,7 @@ details summary{cursor:pointer;font-weight:700}
 </style>
 </head>
 <body>
-<div class="wlbar"><div class="wlbar-in"><a class="wlbar-home" href="/" aria-label="Wilderland Explore home"><svg class="wlbar-mark" style="display:block;height:20px" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg></a><nav class="wlguides" aria-label="Staff guides"><a class="hub" href="/guides/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M2 0h5v5H2zM11 0h5v5h-5zM2 7h5v5H2zM11 7h5v5h-5z" fill="currentColor"/></svg>Guides</a><a class="mm" aria-current="page" href="/fieldguide/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 12 6 3l3 4 3-6 6 11z" fill="currentColor"/></svg><span>Mentor<span class="lg"> Mindset</span></span></a><a class="bh" href="/behavior/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 1c4 0 5 9 9 9s5-9 9-9v11H0z" fill="currentColor" opacity=".9"/></svg>Behavior</a><a class="ls" href="/guides/lifeskills/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M1 11 6 2l5 9zM9 11l4-7 4 7z" fill="currentColor"/></svg>Life Skills</a><a class="pc" href="/guides/parents/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M1 1h16v10H1zM1 1l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>Parent<span class="lg"> Comms</span></span></a></nav><span class="wlbar-auth" data-wl-auth></span></div></div><script>(function(n,a){if(n&&a)n.scrollLeft=a.offsetLeft-n.clientWidth/2+a.offsetWidth/2})(document.querySelector(".wlguides"),document.querySelector(".wlguides [aria-current]"))</script>
+<div class="wlbar" data-wlnav="guides" data-current="mentor"></div><script src="/wlnav.js"></script>
 <div class="trail" id="trail" hidden><nav id="nav" aria-label="Field guide stops"></nav></div>
 <main class="wrap" id="app">
   <section class="view"><div class="card gate"><h2>Wilderland staff area</h2><p class="dim" id="gateMsg">Checking who's here…</p></div></section>

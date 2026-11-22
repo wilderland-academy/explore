@@ -29,8 +29,11 @@ const DOMAIN = "@wilderland.academy";
 // Keep in step with firestore.rules, auth.js and fieldguide/app.js.
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const EMU = location.hostname === "localhost" && new URLSearchParams(location.search).has("emu");
-// The same tracker also runs inside the staff guides at /guides/lifeskills/ (with the staff menu on top).
-const BASE = (location.pathname.startsWith("/guides/lifeskills") ? "/guides/lifeskills/" : "/lifeskills/") + (EMU ? "?emu" : "");
+// The same tracker runs in all three Explore sites, each with its own top bar: students at /lifeskills/,
+// guides at /guides/lifeskills/, parents at /parents/lifeskills/. route() sends each person to their own site's copy.
+const HOMES = { staff: "/guides/lifeskills/", student: "/lifeskills/", parent: "/parents/lifeskills/" };
+const PATH = location.pathname.startsWith("/guides/lifeskills") ? HOMES.staff : location.pathname.startsWith("/parents/lifeskills") ? HOMES.parent : HOMES.student;
+const BASE = PATH + (EMU ? "?emu" : "");
 const HOME = location.origin + BASE;
 const LINK_KEY = "wl-ls-link-email";
 
@@ -684,10 +687,12 @@ function route() {
   if (!S.user) return signedOut();
   if (S.role === "unverified") return unverified();
   const [v, arg] = location.hash.slice(1).split("=");
+  // Signed in on another site's copy (a parent following an old /lifeskills/ link, say): move to their own.
+  if (HOMES[S.role] && HOMES[S.role] !== PATH) { location.replace(HOMES[S.role] + location.search + location.hash); return; }
   acct();
   if (S.role === "staff") {
     // Inside the staff guides (/guides/lifeskills/), guides also get the Lab builder.
-    navLinks([["overview", "Overview"], ["log", "Log"], ["roster", "Students and parents"], ["board", "Crew board"], ...(BASE.startsWith("/guides/") ? [["build", "Lab builder", "/guides/lifeskills/builder/"]] : [])]);
+    navLinks([["overview", "Overview"], ["log", "Log"], ["roster", "Students and parents"], ["board", "Crew board"], ...(PATH === HOMES.staff ? [["build", "Lab builder", "/guides/lifeskills/builder/"]] : [])]);
     if (v === "s") return main(record(arg, { staff: true }));
     if (v === "log") return main(logView(arg));
     if (v === "roster") return main(rosterView(arg));

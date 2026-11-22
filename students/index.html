@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wilderland Explore</title>
+<meta name="description" content="Everything a Wilderland student uses in one place: books, challenges, projects, the library, Basecamp, the camp store and the suggestion box. One sign-in for all of it.">
+<meta name="theme-color" content="#015640">
+<link rel="icon" href="/books/f/icon.png"><link rel="apple-touch-icon" href="/books/f/icon-180.png">
+<link rel="stylesheet" href="/wl.css">
+<style>
+@font-face{font-family:"Uncut Sans";src:url(/books/f/us-700.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(900px 500px at 15% -10%,rgba(213,243,103,.12),transparent 70%),#08140f;color:#f6f8ea;font:400 16px/1.55 Inter,system-ui,sans-serif}
+.in{max-width:1120px;margin:0 auto;padding:0 20px}
+h1{font:700 clamp(34px,5vw,58px)/1.02 "Uncut Sans",Inter,sans-serif;letter-spacing:-.03em;margin:48px 0 10px;max-width:14ch}
+h1 span{color:#d5f367}
+.lede{max-width:56ch;color:#c9d6cc;font-size:18px;margin:0 0 30px}
+h2{font:700 13px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#c7f1ee;margin:34px 0 12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.cards.big{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{display:flex;flex-direction:column;border-radius:18px;background:#0f231c;border:1px solid #28493d;color:inherit;text-decoration:none;overflow:hidden;transition:border-color .15s,transform .15s}
+.card:hover{border-color:#d5f367;transform:translateY(-2px)}
+.card .pic{aspect-ratio:16/10;background:#16302a;position:relative;overflow:hidden}
+.card .pic img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.card:hover .pic img{transform:scale(1.03)}
+.card .pic::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(15,35,28,.85))}
+.card .tag{position:absolute;left:12px;top:12px;z-index:1;font:600 11px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#0b2b20;background:#d5f367;padding:6px 9px;border-radius:999px}
+.card .tag.out{color:#fff;background:rgba(1,86,64,.9)}
+.card .body{padding:14px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card b{font:700 22px/1.1 "Uncut Sans",Inter,sans-serif;letter-spacing:-.02em}
+.card p{margin:0;color:#a9bbb0;font-size:14.5px}
+.card i{font-style:normal;margin-top:auto;padding-top:8px;color:#d5f367;font-weight:600;font-size:14px}
+footer{color:#7f978b;font-size:13px;padding:40px 0}
+@media (max-width:640px){h1{margin-top:30px}.cards{grid-template-columns:1fr 1fr;gap:10px}.card b{font-size:17px}.card p{display:none}.card .body{padding:10px 12px 12px}.card i{font-size:13px;padding-top:4px}.card .tag{font-size:10px;left:8px;top:8px}}
+.card .lock{display:block;margin-top:6px;font-size:12.5px;color:#a9bbb0;font-style:normal}
+</style>
+</head>
+<body>
+<div class="wlbar" data-wlnav="students"></div><script src="/wlnav.js"></script>
+<main class="in">
+<h1>Where will you go <span>next?</span></h1>
+<p class="lede">Everything you use at Wilderland, in one place. Sign in once with your school Google account and what you save follows you to any Chromebook.</p>
+
+<h2>Explore</h2>
+<div class="cards big">
+<a class="card" href="/books/"><div class="pic"><img src="/img/books.jpg" alt="" loading="eager"><span class="tag">Read</span></div><div class="body"><b>Find Your Next Book</b><p>936 books mapped by what you already love, plus your Life List of ways a book can change your life.</p><i>Open the Lantern Stacks →</i></div></a>
+<a class="card" href="/challenges/"><div class="pic"><img src="/img/challenges.jpg" alt=""><span class="tag">Do</span></div><div class="body"><b>Challenges</b><p>Every Wilderland life-skills challenge. Pick yours, practice, then show your guide you can do it.</p><i>Pick a challenge →</i></div></a>
+<a class="card" href="/projects/"><div class="pic"><img src="/img/projects.jpg" alt=""><span class="tag">Make</span></div><div class="body"><b>Projects</b><p>A map of real projects people started, many of them kids, to spark a passion project of your own.</p><i>Get a spark →</i></div></a>
+</div>
+
+<h2>Your school</h2>
+<div class="cards">
+<a class="card" href="https://library.wilderland.academy/"><div class="pic"><img src="/img/library.jpg" alt=""><span class="tag out">Borrow</span></div><div class="body"><b>Treebeard Library</b><p>Search the shelves, check books out, and see what's due.</p><i>Open the library →</i></div></a>
+<a class="card" href="https://my.wilderland.academy/"><div class="pic"><img src="/img/basecamp.jpg" alt=""><span class="tag out">Track</span></div><div class="body"><b>Basecamp</b><p>Your dashboard: app progress, blazes earned, and your week in one place.</p><i>Open Basecamp →</i></div></a>
+<a class="card" href="/store/"><div class="pic"><img src="/img/store.jpg" alt=""><span class="tag">Earn</span></div><div class="body"><b>Camp Store</b><p>Almost 200 things worth saving your blazes for, from basketballs to owl pellets. Nothing that breaks by Tuesday.</p><i>See the store →</i><small class="lock">🔒 Sign in with your school account</small></div></a>
+<a class="card" href="/suggest/"><div class="pic"><img src="/img/suggest.jpg" alt=""><span class="tag">Speak up</span></div><div class="body"><b>Suggestion Box</b><p>What would make Wilderland better? Post it, vote on others, and watch guides answer.</p><i>Add an idea →</i><small class="lock">🔒 Sign in with your school account</small></div></a>
+</div>
+</main>
+<footer class="in">Wilderland Academy · Eden, Utah</footer>
+<script type="module" src="/auth.js"></script>
+</body>
+</html>

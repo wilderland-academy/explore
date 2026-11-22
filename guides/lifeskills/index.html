@@ -13,7 +13,6 @@
 <link rel="stylesheet" href="/lifeskills/styles.css">
 <style>
 /* Inside the staff guides: the staff menu is the top bar, so the tracker's own forest bar becomes a slim sub-bar. */
-.wlbar{background:#2a1d2b}
 .nav-in{min-height:56px}
 .brand img{display:none}
 .brand span{border-left:0;padding-left:0}
@@ -21,7 +20,7 @@
 </style>
 </head>
 <body>
-<div class="wlbar"><div class="wlbar-in"><a class="wlbar-home" href="/" aria-label="Wilderland Explore home"><svg class="wlbar-mark" style="display:block;height:20px" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg></a><!--guides-nav--><nav class="wlguides" aria-label="Staff guides"><a class="hub" href="/guides/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M2 0h5v5H2zM11 0h5v5h-5zM2 7h5v5H2zM11 7h5v5h-5z" fill="currentColor"/></svg>Guides</a><a class="mm" href="/fieldguide/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 12 6 3l3 4 3-6 6 11z" fill="currentColor"/></svg><span>Mentor<span class="lg"> Mindset</span></span></a><a class="bh" href="/behavior/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M0 1c4 0 5 9 9 9s5-9 9-9v11H0z" fill="currentColor" opacity=".9"/></svg>Behavior</a><a class="ls" aria-current="page" href="/guides/lifeskills/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M1 11 6 2l5 9zM9 11l4-7 4 7z" fill="currentColor"/></svg>Life Skills</a><a class="pc" href="/guides/parents/"><svg viewBox="0 0 18 12" aria-hidden="true"><path d="M1 1h16v10H1zM1 1l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>Parent<span class="lg"> Comms</span></span></a></nav><!--/guides-nav--></div></div><script>(function(n,a){if(n&&a)n.scrollLeft=a.offsetLeft-n.clientWidth/2+a.offsetWidth/2})(document.querySelector(".wlguides"),document.querySelector(".wlguides [aria-current]"))</script>
+<div class="wlbar" data-wlnav="guides" data-current="lifeskills" data-auth="off"></div><script src="/wlnav.js"></script>
 <header class="nav">
   <div class="nav-in">
     <a class="brand" href="/guides/lifeskills/"><img src="/challenges/img/wilderland-logo.png" width="240" height="30" alt="Wilderland Academy"><span>Life Skills</span></a>
@@ -34,7 +33,7 @@
   <div class="wrap">
     <a href="/challenges/">Challenges</a>
     <a href="/challenges/parents.html">Passing off at home</a>
-    <a href="/">Wilderland Explore</a>
+    <a href="/guides/">Guides home</a>
     <small>© 2026 Wilderland Academy</small>
   </div>
 </footer>
