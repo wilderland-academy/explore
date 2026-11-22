@@ -941,6 +941,14 @@ try{Object.assign(S,JSON.parse(localStorage.getItem("lantern-stacks")||"{}"))}ca
 S.saved=(S.saved||[]).filter(id=>BY[id]);S.want=(S.want||[]).filter(id=>BY[id]&&!S.saved.includes(id));if(!S.life||typeof S.life!=="object"||Array.isArray(S.life))S.life={};
 const store=()=>{try{localStorage.setItem("lantern-stacks",JSON.stringify(S))}catch(e){}};
 let lens="", uOnly=false, HU=false;
+// A signed-in student's grade band (from /auth.js, which reads their Life Skills tracker record). It only changes where the
+// Stacks starts them: every book stays open to everyone. Remembered on this device as "wl-role", cleared on sign-out.
+const BANDSTART={
+ "K–1":{ids:["mercy","dogman","hilo","mth","junieb","ivybean","calvin","sidewalk","badguys","bone"],age:7,L:450},
+ "2–4":{ids:["dogman","badguys","mth","isurvived","treehouse","bone","lastkids","amulet","ivan","winn"],age:9,L:700}};
+const bandOf=r=>r&&r.role==="student"&&BANDSTART[r.band]?r.band:null;
+let BAND=null;try{const c=JSON.parse(localStorage.getItem("wl-role")||"null");BAND=c&&c.r==="student"&&BANDSTART[c.b]?c.b:null}catch(e){}
+document.addEventListener("wl-role",e=>{const b=bandOf(e.detail);if(b===BAND)return;BAND=b;if((location.hash.slice(1)||"home")==="home")route()});
 
 function guessLex(){const a=S.saved.map(id=>BY[id]).filter(b=>b.lc!=="GN"&&b.L).map(b=>b.L).sort((x,y)=>x-y);if(a.length<2)return 0;const m=a.length>>1;return a.length%2?a[m]:Math.round((a[m-1]+a[m])/20)*10}
 const readerLex=()=>+S.lex||guessLex();
@@ -1013,6 +1021,11 @@ function forMe(b){const L=readerLex();if(!ageOK(b))return false;
 const byFor=(a,b)=>(b.pop+b.gw*.6)-(a.pop+a.gw*.6)||((a.L||0)-(b.L||0));
 function readerDesc(){const L=readerLex();return [S.age?"age "+S.age:"",L?(S.lex?"":"about ")+fmtL(L):""].filter(Boolean).join(", ")}
 function forYou(){const L=readerLex();
+ if(!S.age&&!L&&BAND){const st=BANDSTART[BAND],first=st.ids.map(id=>BY[id]).filter(Boolean);
+  const more=BOOKS.filter(b=>!first.includes(b)&&!isNF(b)&&b.age<=st.age&&(b.L||0)<=st.L).sort(byPop);
+  return `<section class="shelf foryou"><h2>Good places to start for grades ${BAND}</h2>
+ <p class="sub">Books lots of readers your age love. Every book in the Stacks is still yours to explore. <button class="linkbtn" data-open-reader>Set my age and level</button> to get a shelf made for you.</p>
+ ${rail(first.concat(more).slice(0,26))}</section>`}
  if(!S.age&&!L)return `<section class="foryou empty"><div><h2>Find books at your level or higher</h2><p>Tell the Stacks your age and your Lexile measure. This shelf will fill with books that stretch you without going past what is right for your age.</p></div><button class="save" data-open-reader>Set my age and level</button></section>`;
  const l=BOOKS.filter(forMe).sort(byFor),fic=l.filter(b=>!isNF(b)),nf=l.filter(isNF);
  return `<section class="shelf foryou"><h2>${L?"At your level or higher, right for your age":"Right for your age"}</h2>
@@ -1026,7 +1039,7 @@ function vForMe(){const L=readerLex();if(!S.age&&!L)return vHome();
 
 // ---------- views ----------
 function vHome(){
- const starts=["hp1","lightning","wimpy","dogman","hunger","wonder","hatchet","wildrobot","phm","crossover"].map(id=>BY[id]);
+ const starts=(BAND?BANDSTART[BAND].ids.slice(0,8):["hp1","lightning","wimpy","dogman","hunger","wonder","hatchet","wildrobot","phm","crossover"]).map(id=>BY[id]).filter(Boolean);
  return `<section class="hero"><div><p class="eyebrow">Open all night · ${BOOKS.length} books · nothing here is assigned</p>
  <h1>Every dot is a book. <em>One of them is your next favorite.</em></h1></div>
  <div class="hero-s"><div class="search"><label for="q">Search by title or author</label><input id="q" type="search" autocomplete="off" placeholder="Name a book you loved"><ul id="hits" class="hits" hidden></ul></div>
