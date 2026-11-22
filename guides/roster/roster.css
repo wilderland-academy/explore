@@ -1,4 +1,4 @@
-/* Guides › Students: AI Coach alerts, every student conversation, and what students have saved. */
+/* Guides › Student Roster (was Guides › Students): roster, AI Coach alerts, every student conversation. */
 @font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
 :root{color-scheme:light;--paper:#f5f1ea;--sheet:#fffdf9;--line:#ddd3c4;--ink:#231b24;--dim:#625a63;--green:#015640;
   --urgent:#b3261e;--urgent-bg:#fdecea;--high:#b25e00;--high-bg:#fff1df;--medium:#7a5a00;--medium-bg:#fbf5dc;--low:#55606a;--low-bg:#eef0f2;
@@ -54,3 +54,17 @@ a{color:var(--green)}
 .empty{background:var(--sheet);border:1px dashed var(--line);border-radius:12px;padding:16px;color:var(--dim)}
 textarea.note{width:100%;min-height:60px;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:14.5px}
 .crumb{font-size:14px}
+/* Student Roster additions */
+.tblwrap{overflow-x:auto;border-radius:12px}
+.tblwrap .tbl{min-width:760px}
+.form{gap:14px}
+.form label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:14.5px}
+.form .hint{font-weight:400;color:var(--dim)}
+.form .in{min-width:0;width:100%}
+.form textarea.in{resize:vertical}
+.btn.danger{background:none;color:var(--urgent);text-decoration:underline}
+.note{font-size:14px;color:var(--dim);min-height:20px}
+.note.err{color:var(--urgent)}
+.flash{background:#e6efe9;border-radius:10px;padding:10px 14px;font-weight:600}
+a.wl-ch{color:var(--green)}
+@media (max-width:640px){.in{min-width:0;width:100%}}

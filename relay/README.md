@@ -27,9 +27,9 @@ Open https://explore.wilderland.academy/fieldguide/#admin, paste the address und
 ## 5. The student AI Coach (added Nov 21, 2026)
 The same Worker answers students' AI Coach chats (requests with `mode: "coach"`). Nothing extra to set up beyond
 publishing the latest `/firestore.rules` and pasting the latest `worker.js`. Optional:
-- **ALERT_WEBHOOK** (Settings → Variables and Secrets → Secret): a Google Chat or Slack incoming-webhook address. Urgent and
+- **ALERT_WEBHOOK** (Settings → Variables and Secrets → Secret): the Slack incoming-webhook address for **#alerts**. Urgent and
   high alerts post a one-line notice there (category, student, grades, and a link; never the student's words), so
-  someone sees them even when nobody has the site open.
+  someone sees them even when nobody has the site open. It also gets a notice for every academics conversation (see below).
 - **Turning the coach off for one student:** in the Firebase console, open that student's `lsStudents` record and add the
   field `coachOff` = true (boolean).
 
@@ -47,6 +47,18 @@ How it keeps students safe, in the order it runs:
 8. A second check reads the reply before the student sees it. If it fails or can't run, the student gets a safe fallback
    and staff get an alert.
 9. The coach's reply is saved. Students can add to their log but can't edit or delete it (see `firestore.rules`).
+
+## Academics, hint-only (added Nov 22, 2026)
+Students can also ask the coach about schoolwork (`kind: "academic"`, started from the subject buttons on `/coach/`). The
+coach never gives the answer: it asks what they tried, gives one hint at a time, re-explains the basic idea with its own
+example, checks their thinking without giving the value, names resources without links, and won't help on a test.
+- `coachSystem(band, "academic")` adds those rules; `OUTPUT_SYSTEM` gets `academic="yes"` and holds back any reply that
+  hands over the answer (the student sees a neutral reply, staff get a "coach reply held back" alert).
+- Every academics conversation gets one `academic_use` alert (low) and one Slack notice in #alerts per conversation per day
+  (alert id `academic-<chatId>-<day>`, so a long-running chat is reviewed again each day it's used).
+- Asking for answers in an academics chat is raised from low to medium (`cheating`) and also posts to #alerts.
+- **Deploy:** paste the new `worker.js` into Cloudflare and Deploy. Until then, academics chats are refused ("bad kind").
+  Check that `ALERT_WEBHOOK` is the #alerts channel's webhook (Slack → Apps → Incoming Webhooks).
 
 ## Changing things later
 - Staff list: the Admin page. Admin emails are also listed in `worker.js`, `fieldguide/app.js` and `firestore.rules`.

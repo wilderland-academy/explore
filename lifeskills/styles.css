@@ -176,3 +176,58 @@ table.ov a.stu:hover{text-decoration:underline}
 .foot small{color:var(--lime);font-size:14px}
 .loading{padding:80px 0;text-align:center;color:var(--fg-muted)}
 @media print{.nav,.foot,.noprint{display:none!important}.band{padding-block:12px}}
+
+/* Saved to plan: counts in the overview table, the list that opens from them, and the phone cards */
+.svb{border:0;cursor:pointer;min-width:44px;height:32px;padding:0 8px;border-radius:999px;font:700 14px/1 var(--font-sans);background:transparent;color:var(--fg-muted);box-shadow:inset 0 0 0 1.5px #4d4d5159}
+.svb.some{color:var(--ink);box-shadow:inset 0 0 0 2px var(--c)}
+.svb.met{background:var(--c);color:var(--white);box-shadow:none}
+.svb[aria-expanded="true"]{outline:3px solid var(--c);outline-offset:2px}
+.svpop{position:absolute;z-index:60;width:min(340px,calc(100vw - 16px));background:var(--white);color:var(--ink);border-radius:14px;padding:12px 14px;box-shadow:0 12px 36px rgba(1,40,30,.22),0 0 0 1px #4d4d511f;font-size:15px;line-height:22px}
+.svpop .svh{margin-bottom:8px;font-size:14px;color:var(--fg-muted)}
+.svpop .svh b{color:var(--ink)}
+.svl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.svl li{display:flex;gap:10px;align-items:flex-start;line-height:21px}
+.svl i{flex:none;width:4px;align-self:stretch;border-radius:2px}
+a.wl-ch{color:var(--forest);text-decoration:underline;text-underline-offset:2px}
+.ovcards{display:flex;flex-direction:column;gap:12px}
+.ovcard{background:var(--white);border-radius:var(--radius-lg);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.ovcard a.stu{font-weight:700;color:var(--ink);text-decoration:none;font-size:17px}
+.ovskills{display:flex;flex-direction:column}
+.ovsk{border-top:1px solid #4d4d511a}
+.ovsk summary{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;list-style:none}
+.ovsk summary::-webkit-details-marker{display:none}
+.ovsk summary i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.ovsk summary span{flex:1}
+.ovsk summary b{font-size:14px;padding:2px 10px;border-radius:999px;box-shadow:inset 0 0 0 1.5px #4d4d5159}
+.ovsk summary b.met{background:var(--c);color:var(--white);box-shadow:none}
+.ovsk summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--fg-muted);border-bottom:2px solid var(--fg-muted);transform:rotate(45deg);margin:0 4px 4px 2px}
+.ovsk[open] summary::after{transform:rotate(-135deg);margin-bottom:0}
+.ovsk > :not(summary){margin:0 0 12px 20px}
+.sklbl{font:700 13px/18px var(--font-sans);letter-spacing:.04em;text-transform:uppercase}
+
+/* Life Skill Labs schedule */
+.cal-head{display:flex;align-items:center;gap:8px}
+.cal-head h2{min-width:200px;text-align:center}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-w{font:700 12px/16px var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-muted);padding:4px 6px}
+.cal-d{min-height:104px;background:var(--mist);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.cal-d.out{background:transparent}
+.cal-d .n{font-size:13px;line-height:16px;font-weight:700;color:var(--fg-muted)}
+.cal-d.today{box-shadow:inset 0 0 0 2px var(--forest)}
+.cal-d.today .n{color:var(--forest)}
+.cal-ev{display:block;font-size:12.5px;line-height:16px;padding:3px 6px;border-radius:6px;background:var(--white);border-left:3px solid var(--c);color:var(--ink);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-ev:hover{text-decoration:underline}
+.cal-list{display:none}
+@media (max-width:760px){.cal,.cal-w{display:none}.cal-list{display:flex;flex-direction:column;gap:10px}.cal-head h2{min-width:0;flex:1}}
+.pre{white-space:pre-wrap}
+.files{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.files li::before{content:"📎";margin-right:8px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
+fieldset.bands{border:0;padding:0;margin:0}
+fieldset.bands legend{padding:0;margin-bottom:6px;font-weight:600}
+.chk{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;background:var(--white);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--forest)}
+.linkrow .in{flex:1;min-width:180px}
+div.f{display:flex;flex-direction:column;gap:6px}
+div.f>span:first-child{font:600 14px/19.6px var(--font-sans)}
+div.f span.hint{font-weight:400;color:var(--fg-muted)}

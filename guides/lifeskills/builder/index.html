@@ -84,14 +84,13 @@ textarea{min-height:110px;resize:vertical}
 <header class="nav">
   <div class="nav-in">
     <a class="brand" href="/guides/lifeskills/"><span>Life Skills</span></a>
-    <nav class="nav-links" aria-label="Life Skills">
-      <a href="/guides/lifeskills/#overview">Overview</a><a href="/guides/lifeskills/#log">Log</a><a href="/guides/lifeskills/#roster">Students and parents</a><a href="/guides/lifeskills/#board">Crew board</a><a href="/guides/lifeskills/builder/" aria-current="page">Lab builder</a>
-    </nav>
+    <nav class="nav-links" aria-label="Life Skills" data-ls-subnav="guides" data-current="build"></nav><script src="/lifeskills/subnav.js"></script>
   </div>
 </header>
 <main id="app"><p class="loading">Loading…</p></main>
 <script src="/challenges/data.js"></script>
 <script type="module" src="/auth.js" data-site="labbuilder"></script>
 <script type="module" src="app.js"></script>
+<script src="/challenges/modal.js"></script>
 </body>
 </html>

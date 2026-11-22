@@ -91,7 +91,7 @@ function skills() {
     const x = D.SKILLS.find(y => y.k === sel);
     detail.style.setProperty("--c", x.col);
     detail.innerHTML = "";
-    detail.append(h("h3", { class: "ap-big" }, [icon(x.i), " " + x.n]), h("p", { text: x.d }), h("div", { class: "ap-ex" }, x.ex.map(e => h("div", { class: e[1] === me ? "me" : "" }, [h("i", { text: "Grades " + e[1] + (e[1] === me ? " · your child" : "") }), h("p", { text: "“" + e[2] + "”" }), h("a", { class: "small", href: "/challenges/", text: e[0] })]))));
+    detail.append(h("h3", { class: "ap-big" }, [icon(x.i), " " + x.n]), h("p", { text: x.d }), h("div", { class: "ap-ex" }, x.ex.map(e => h("div", { class: e[1] === me ? "me" : "" }, [h("i", { text: "Grades " + e[1] + (e[1] === me ? " · your child" : "") }), h("p", { text: "“" + e[2] + "”" }), h("a", { class: "small wl-ch", href: "/parents/challenges/#c=" + e[0], "data-wl-ch": e[0], text: "See this challenge (" + e[0] + ")" })]))));
   };
   redraws.push(draw); draw();
   s.append(pick, detail);

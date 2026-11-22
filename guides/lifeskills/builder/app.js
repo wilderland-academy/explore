@@ -134,7 +134,7 @@ function existingFor(id) {
   const list = byComp[id] || [];
   if (!list.length) return el("div", { class: "box gap", text: "No challenges on the site for this ability yet. Anything you build here fills a real gap." });
   return el("details", {}, el("summary", { text: `${list.length} challenge${list.length > 1 ? "s" : ""} already on the site for this ability` }),
-    el("div", { class: "rows", style: "margin-top:8px" }, list.map(c => el("div", { class: "r", style: "cursor:default" }, el("span", { class: "t", text: c.t }), el("span", { class: "cn", text: `${c.b} · ${c.z}` })))));
+    el("div", { class: "rows", style: "margin-top:8px" }, list.map(c => el("div", { class: "r", style: "cursor:default" }, el("span", { class: "t" }, el("a", { class: "wl-ch", href: "/guides/challenges/#c=" + c.id, "data-wl-ch": c.id, text: c.t })), el("span", { class: "cn", text: `${c.b} · ${c.z}` })))));
 }
 function ideaPanel() {
   const ta = el("textarea", { id: "idea", placeholder: "e.g. Kids test the creek water above and below the barn and figure out what's changing it.", oninput: e => { st.idea = e.target.value; } });
@@ -187,7 +187,7 @@ function step2() {
   const p = el("div", { class: "panel" });
   if (st.way === "review") p.append(el("p", {}, el("b", { text: "Reviewing " }), "your plan against the scorecard."));
   else if (st.way === "epic") p.append(el("p", {}, el("b", { text: "Starting from: " }), epicBy[st.epic].title, el("br"), el("b", { text: "Skills: " }), epicBy[st.epic].skills.map(compLabel).join("; ")));
-  else p.append(el("p", {}, el("b", { text: "Skill: " }), compLabel(st.comp), st.ch ? el("span", {}, el("br"), el("b", { text: "From: " }), st.ch.t) : null));
+  else p.append(el("p", {}, el("b", { text: "Skill: " }), compLabel(st.comp), st.ch ? el("span", {}, el("br"), el("b", { text: "From: " }), el("a", { class: "wl-ch", href: "/guides/challenges/#c=" + st.ch.id, "data-wl-ch": st.ch.id, text: st.ch.t })) : null));
   if (st.way === "epic") p.append(el("p", { class: "note", text: "Change the band, the time or the notes to fit your crew (number of kids, adults you can count on, budget, season). The builder keeps the feat and the high bar unless you tell it otherwise." }));
   if (st.way !== "review" && st.way !== "existing" && st.way !== "epic") p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: "What are we making?" }), el("div", { class: "chips" }, TYPES.map(t => chip(t, st.type === t, () => { st.type = t; draw(); }, { disabled: t === "Project" && st.band === "K–1" ? true : null })))));
   p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: st.way === "review" ? "Age band (optional)" : "Age band" }), el("div", { class: "chips" }, BANDS.map(b => chip(b, st.band === b, () => { st.band = b; if (b === "K–1" && st.type === "Project") st.type = "Skill Lab"; draw(); })))));

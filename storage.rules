@@ -1,0 +1,21 @@
+rules_version = '2';
+// Firebase Storage rules for explore.wilderland.academy. Paste into Firebase console → Storage → Rules.
+// Storage needs the project on the Blaze (pay-as-you-go) plan; usage this small stays in the no-cost tier.
+// Only the Life Skill Labs schedule uses Storage: files guides attach to a Lab for parents (labs/{labId}/{file}).
+service firebase.storage {
+  match /b/{bucket}/o {
+    function verified() { return request.auth != null && request.auth.token.email_verified == true; }
+    function me() { return request.auth.token.email.lower(); }
+    function school() { return verified() && me().matches('.*@wilderland[.]academy$'); }
+    // Keep in step with the admin list in firestore.rules.
+    function isAdmin() { return school() && me() in ['alex@wilderland.academy', 'sarah@wilderland.academy', 'shanan@wilderland.academy', 'april@wilderland.academy', 'scott@wilderland.academy']; }
+    function staff() { return isAdmin() || (school() && firestore.exists(/databases/(default)/documents/staff/$(me()))); }
+    function linkedParent() { return verified() && firestore.exists(/databases/(default)/documents/lsParents/$(me())); }
+
+    match /labs/{labId}/{file} {
+      allow read: if staff() || linkedParent();
+      allow create, update: if staff() && request.resource.size < 20 * 1024 * 1024;
+      allow delete: if staff();
+    }
+  }
+}

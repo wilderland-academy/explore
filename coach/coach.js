@@ -1,28 +1,48 @@
 // Wilderland AI Coach: the chat panel students open from a challenge, a project spark, or /coach/.
+// It opens as a side panel beside the page (a bottom panel on phones), never over it, so students see both at once.
 // All the safety work happens in the relay Worker (relay/worker.js): it screens each message, removes personal
 // details, answers serious messages with fixed words, checks each reply, logs everything for guides, and alerts staff.
 // This file only draws the chat and walks students through using it.
-//   WLCoach.open({ kind: "challenge" | "project" | "lesson", topicId, topicTitle, context, starters: [..] })
+//   WLCoach.open({ kind: "challenge" | "project" | "academic" | "lesson", topicId, topicTitle, context, starters: [..] })
+//   "academic" is hint-only help with schoolwork; the Worker alerts staff in Slack for every academic conversation.
 //   WLCoach.open({ chatId })            reopen a past conversation
 //   opts.first: a message to send as soon as the chat opens (from a starter button on the page)
 // Needs /auth.js on the page (window.wlFirebase). Only school accounts can use it; K–1 students can't (guide-led).
 const FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
 const INTRO_KEY = "wl-coach-intro";
+// Bump when the first-time intro changes, so every student sees the new version once.
+const INTRO_VERSION = "2";
+const KINDS = ["challenge", "project", "academic", "lesson"];
+const TOPIC_NAMES = { lesson: "How to use your coach", academic: "Help with academics" };
 
 const css = `
-.wlc-back{position:fixed;inset:0;background:rgba(10,30,22,.45);z-index:80;opacity:0;transition:opacity .2s}
-.wlc-back.on{opacity:1}
-.wlc{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);background:#fbfcf6;color:#14231c;z-index:81;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(0,0,0,.25);transform:translateX(100%);transition:transform .25s ease;font:400 16px/1.5 Inter,"Uncut Sans",system-ui,sans-serif}
+:root{--wlc-w:min(420px,40vw);--wlc-h:min(62vh,560px)}
+/* The coach sits beside the page, never over it: the page narrows (wide screens) or gets room at the bottom (phones),
+   with no dark backdrop, so a student can read the challenge and talk to the coach at the same time. */
+html.wlc-docked body{margin-right:var(--wlc-w);transition:margin-right .25s ease}
+.wlc{position:fixed;top:0;right:0;bottom:0;width:var(--wlc-w);background:#fbfcf6;color:#14231c;z-index:81;display:flex;flex-direction:column;border-left:1px solid #d6dfcb;transform:translateX(100%);transition:transform .25s ease;font:400 16px/1.5 Inter,"Uncut Sans",system-ui,sans-serif}
 .wlc.on{transform:none}
+/* A challenge or other sheet that was open stays open, moved into the space left of the coach. */
+dialog.wlc-beside[open]{position:fixed;inset:16px calc(var(--wlc-w) + 16px) 16px 16px;margin:auto;max-height:calc(100vh - 32px);z-index:70;box-shadow:0 10px 40px rgba(1,40,30,.22)}
+@media (max-width:860px){
+  html.wlc-docked body{margin-right:0;padding-bottom:var(--wlc-h)}
+  .wlc{top:auto;left:0;width:100%;height:var(--wlc-h);border-left:0;border-top:1px solid #d6dfcb;border-radius:18px 18px 0 0;transform:translateY(100%);box-shadow:0 -8px 30px rgba(0,0,0,.14)}
+  .wlc.big{height:calc(100% - 52px)}
+  .wlc .wlc-head{border-radius:18px 18px 0 0}
+  dialog.wlc-beside[open]{inset:0 0 var(--wlc-h) 0;width:100vw;max-width:100vw;height:auto;max-height:none;border-radius:0}
+}
+@media (min-width:861px){.wlc-size{display:none}}
 .wlc *{box-sizing:border-box}
 .wlc-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#01412f;color:#fff}
 .wlc-head .av{width:34px;height:34px;border-radius:10px;background:#d5f367;display:grid;place-items:center;flex:none}
 .wlc-head .av svg{width:22px;height:22px}
 .wlc-head .t{flex:1;min-width:0}
-.wlc-head b{display:block;font-size:16px;line-height:1.2}
+.wlc-head b{display:block;font-size:16px;line-height:1.2;color:#fff}
 .wlc-head span{display:block;font-size:13px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wlc-x{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:22px;line-height:1;flex:none}
-.wlc-x:focus-visible,.wlc button:focus-visible,.wlc textarea:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
+.wlc-head .wlc-topic-link{all:unset;cursor:pointer;display:block;font-size:13px;color:#e9f4d0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:underline;text-underline-offset:2px}
+.wlc-x,.wlc-size{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:22px;line-height:1;flex:none}
+.wlc-size{font-size:16px}
+.wlc-x:focus-visible,.wlc-size:focus-visible,.wlc button:focus-visible,.wlc textarea:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 .wlc-ai{margin:0;padding:8px 14px;background:#eef4d6;font-size:13px;color:#34463c;border-bottom:1px solid #dfe6cc}
 .wlc-log{flex:1;overflow-y:auto;padding:16px 14px 8px;display:flex;flex-direction:column;gap:10px}
 .wlc-m{max-width:88%;padding:10px 13px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15.5px}
@@ -36,8 +56,10 @@ const css = `
 @keyframes wlcb{0%,80%,100%{opacity:.25}40%{opacity:1}}
 .wlc-intro{background:#fff;border:1px solid #e1e7d6;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
 .wlc-intro h3{margin:0;font-size:18px}
-.wlc-intro ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.wlc-intro h4{margin:4px 0 0;font-size:15px}
+.wlc-intro ol,.wlc-intro ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
 .wlc-intro li b{display:block}
+.wlc-intro .why{background:#f2f8dc;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:15px}
 .wlc-chips{display:flex;flex-wrap:wrap;gap:8px;padding:4px 14px 10px}
 .wlc-chip{border:1.5px solid #015640;background:#fff;color:#015640;border-radius:999px;padding:7px 13px;font:600 14px/1.2 inherit;cursor:pointer;text-align:left}
 .wlc-chip:hover{background:#eef4d6}
@@ -50,7 +72,7 @@ const css = `
 .wlc-hint a{color:#015640}
 .wlc-btn{border:0;border-radius:12px;background:#d5f367;color:#0b2b20;font:700 15px inherit;padding:11px 16px;cursor:pointer;align-self:flex-start}
 .wlc-btn.ghost{background:#eef1ea}
-@media (prefers-reduced-motion:reduce){.wlc,.wlc-back{transition:none}.wlc-typing i{animation:none}}
+@media (prefers-reduced-motion:reduce){.wlc,html.wlc-docked body{transition:none}.wlc-typing i{animation:none}}
 `;
 const BOT = '<svg viewBox="0 0 24 24" fill="none" stroke="#01412f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>';
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -58,6 +80,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&a
 const STARTERS = {
   challenge: ["Help me make a plan", "Explain how to start", "Quiz me on it", "I'm stuck", "Am I ready to show my guide?"],
   project: ["Help me pick a version", "Break it into small steps", "What can I do today?", "I'm stuck"],
+  academic: ["I don't get this idea", "Give me a hint, not the answer", "Check my thinking", "Quiz me on the basics", "Where can I learn this?"],
   lesson: ["What is an AI coach?", "Let's start the lesson"]
 };
 
@@ -86,33 +109,62 @@ async function query(coll, filters) {
 function mount() {
   if (el) return;
   const s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
-  const back = document.createElement("div"); back.className = "wlc-back"; back.hidden = true;
-  const box = document.createElement("section"); box.className = "wlc"; box.hidden = true;
-  box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true"); box.setAttribute("aria-labelledby", "wlc-title");
-  box.innerHTML = `<div class="wlc-head"><div class="av">${BOT}</div><div class="t"><b id="wlc-title">AI Coach</b><span id="wlc-topic"></span></div><button class="wlc-x" type="button" aria-label="Close the coach">×</button></div>
+  // A side panel (complementary region), not a modal dialog: the page beside it stays readable and usable.
+  const box = document.createElement("aside"); box.className = "wlc"; box.hidden = true;
+  box.setAttribute("aria-labelledby", "wlc-title");
+  box.innerHTML = `<div class="wlc-head"><div class="av">${BOT}</div><div class="t"><b id="wlc-title">AI Coach</b><span id="wlc-topic"></span></div><button class="wlc-size" type="button" aria-label="Make the coach bigger" aria-pressed="false">⤢</button><button class="wlc-x" type="button" aria-label="Close the coach">×</button></div>
     <p class="wlc-ai">I'm an AI, not a person, and I can make mistakes. Your guides can read our chats. Never type your full name, address, phone or passwords.</p>
     <div class="wlc-log" id="wlc-log" aria-live="polite"></div>
     <div class="wlc-chips" id="wlc-chips"></div>
     <div class="wlc-foot"><form class="wlc-row" id="wlc-form"><label class="sr-wlc" for="wlc-in" style="position:absolute;left:-9999px">Message your coach</label><textarea id="wlc-in" rows="1" maxlength="800" placeholder="Ask your coach…"></textarea><button class="wlc-send" type="submit">Send</button></form>
     <p class="wlc-hint">Good questions say what you're working on, what you tried, and what help you want. <a href="/coach/">All my chats</a></p></div>`;
-  document.body.append(back, box);
-  el = { back, box, log: box.querySelector("#wlc-log"), chips: box.querySelector("#wlc-chips"), form: box.querySelector("#wlc-form"), input: box.querySelector("#wlc-in"), send: box.querySelector(".wlc-send"), topic: box.querySelector("#wlc-topic") };
+  document.body.append(box);
+  el = { box, log: box.querySelector("#wlc-log"), chips: box.querySelector("#wlc-chips"), form: box.querySelector("#wlc-form"), input: box.querySelector("#wlc-in"), send: box.querySelector(".wlc-send"), topic: box.querySelector("#wlc-topic") };
   box.querySelector(".wlc-x").addEventListener("click", close);
-  back.addEventListener("click", close);
-  box.addEventListener("keydown", e => {
-    if (e.key === "Escape") { e.preventDefault(); close(); }
-    if (e.key === "Tab") { const f = [...box.querySelectorAll("button,textarea,a[href]")].filter(x => !x.disabled && x.offsetParent); if (!f.length) return; if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); } }
-  });
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && !box.hidden && !box.contains(document.activeElement)) close(); });
+  // Phones only: grow the coach to (almost) full height and back. On wide screens it is always full height beside the page.
+  box.querySelector(".wlc-size").addEventListener("click", e => { const big = box.classList.toggle("big"); e.currentTarget.setAttribute("aria-pressed", String(big)); e.currentTarget.setAttribute("aria-label", big ? "Make the coach smaller" : "Make the coach bigger"); });
+  box.addEventListener("keydown", e => { if (e.key === "Escape") { e.preventDefault(); close(); } });
   el.input.addEventListener("input", () => { el.input.style.height = "auto"; el.input.style.height = Math.min(140, el.input.scrollHeight) + "px"; });
   el.input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); el.form.requestSubmit(); } });
   el.form.addEventListener("submit", e => { e.preventDefault(); sendMsg(el.input.value); });
   el.chips.addEventListener("click", e => { const b = e.target.closest("[data-say]"); if (b) sendMsg(b.getAttribute("data-say")); });
   el.log.addEventListener("click", e => {
     const b = e.target.closest("[data-intro-ok]");
-    if (b) { try { localStorage.setItem(INTRO_KEY, "1"); } catch (x) { } b.closest(".wlc-intro").remove(); greet(); }
+    if (b) { try { localStorage.setItem(INTRO_KEY, INTRO_VERSION); } catch (x) { } b.closest(".wlc-intro").remove(); greet(); }
   });
 }
+
+// ---- Beside the page ----
+// A modal dialog (showModal) makes everything else on the page inert, which would freeze the coach. While the coach is
+// open, any sheet the page opens is shown as a plain (non-modal) dialog in the space beside the coach instead, and a
+// sheet that was already open is moved there. When the coach closes, those sheets go back to normal.
+const realShowModal = HTMLDialogElement.prototype.showModal;
+const docked = () => document.documentElement.classList.contains("wlc-docked");
+HTMLDialogElement.prototype.showModal = function () {
+  if (!docked()) return realShowModal.call(this);
+  this.classList.add("wlc-beside");
+  if (!this.open) this.show();
+};
+function sheetsBeside() {
+  document.querySelectorAll("dialog[open]").forEach(d => {
+    let modal = false; try { modal = d.matches(":modal"); } catch (e) { modal = true; }
+    if (!modal) return;
+    d.dataset.wlcKeep = "1"; d.close(); delete d.dataset.wlcKeep;
+    d.classList.add("wlc-beside"); d.show();
+  });
+}
+function sheetsBack() {
+  document.querySelectorAll("dialog.wlc-beside").forEach(d => {
+    d.classList.remove("wlc-beside");
+    if (d.open) { d.dataset.wlcKeep = "1"; d.close(); delete d.dataset.wlcKeep; realShowModal.call(d); }
+  });
+}
+// Escape only closes a non-modal dialog when it has focus inside; keep that working for sheets beside the coach.
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape" || !docked()) return;
+  const d = document.activeElement && document.activeElement.closest && document.activeElement.closest("dialog.wlc-beside[open]");
+  if (d) { e.preventDefault(); d.close(); }
+});
 
 function bubble(role, text) {
   const d = document.createElement("div");
@@ -137,10 +189,19 @@ function busy(on) {
   if (!on && t) t.remove();
 }
 
+// Why ask the coach instead of (or before) a guide. Shown in the first-time intro and on /coach/.
+const WHY = `<div class="why"><b>Why ask an AI Coach?</b>
+  <ul><li><b>It's always there.</b>Your guides help a whole crew. The coach can help you right now, even when every guide is busy, or at home.</li>
+  <li><b>It knows a little about almost everything.</b>Knots, budgets, birds, speeches, fractions: you can ask about any challenge, Lab or project.</li>
+  <li><b>Your guide is still the one who passes you.</b>Show your guide when you're ready, and ask them about anything big, risky or personal.</li></ul></div>`;
 function intro() {
-  // First time on this device: four things to know before the first chat. Short, with a big button.
+  // First time on this device: why use it, what it helps with, and four things to know. Short, with a big button.
   const d = document.createElement("div"); d.className = "wlc-intro";
-  d.innerHTML = `<h3>Meet your AI Coach</h3><ol>
+  d.innerHTML = `<h3>Meet your AI Coach</h3>${WHY}
+    <h4>What it helps with</h4>
+    <ul><li><b>Challenges, Life Skill Labs and projects:</b> plans, practice, next steps, getting unstuck.</li>
+    <li><b>Academics, the learning way:</b> hints, questions that help you think, a re-explain of the basics, and where to learn more. It never just gives you the answer. Guides check every academics chat.</li></ul>
+    <h4>Four things to remember</h4><ol>
     <li><b>I'm a computer program, not a person.</b>I guess what words come next. I can be wrong, so check big things with your guide.</li>
     <li><b>You do the thinking.</b>I won't do your work for you. I'll ask questions and give hints so you get better.</li>
     <li><b>Keep private things private.</b>Never type your full name, address, phone, school or passwords.</li>
@@ -148,12 +209,13 @@ function intro() {
     <button class="wlc-btn" type="button" data-intro-ok>Got it, let's go</button>`;
   el.log.appendChild(d);
   chips([]);
-  setTimeout(() => d.querySelector("button").focus(), 50);
+  setTimeout(() => { d.querySelector("button").focus({ preventScroll: true }); el.log.scrollTop = 0; }, 50);
 }
 function greet() {
   const k = st.kind;
   const hello = k === "lesson" ? "Hi! I'm your AI Coach. Want a 3-minute lesson on how to get the most out of me? Tap a button below or type a question."
     : k === "project" ? "Hi! Let's work on your project. Tap a button below to start, or tell me what you're thinking."
+    : k === "academic" ? "Hi! Tell me the subject and what you're stuck on. I'll help you figure it out with hints and questions. I won't give you the answer, and your guides look at every academics chat."
     : "Hi! Let's work on this challenge. Tap a button below to start, or ask me anything about it.";
   bubble("coach", hello);
   // Opened from a starter button on the page: send that message straight away.
@@ -199,34 +261,48 @@ async function open(opts) {
   if (!user()) { if (window.wlSignIn) window.wlSignIn(); return; }
   if (role && role.role === "student" && role.band === "K–1") { alert("The AI Coach is for grades 2 to 8. Your guide will help you with challenges."); return; }
   if (role && role.role === "parent") { alert("The AI Coach is for students, signed in with their school account."); return; }
-  st = { kind: opts.kind || "challenge", chatId: opts.chatId || "", topicId: opts.topicId || "", topicTitle: opts.topicTitle || "", context: opts.context || "", starters: opts.starters || null, first: opts.first || "", busy: false, retry: "" };
+  const wasOpen = !el.box.hidden;
+  st = { kind: KINDS.includes(opts.kind) ? opts.kind : "challenge", chatId: opts.chatId || "", topicId: opts.topicId || "", topicTitle: opts.topicTitle || "", context: opts.context || "", starters: opts.starters || null, first: opts.first || "", busy: false, retry: "", lastFocus: wasOpen && st ? st.lastFocus : document.activeElement };
   el.log.innerHTML = ""; chips([]);
-  el.back.hidden = el.box.hidden = false;
-  requestAnimationFrame(() => { el.back.classList.add("on"); el.box.classList.add("on"); });
-  document.documentElement.style.overflow = "hidden";
-  st.lastFocus = document.activeElement;
+  el.box.hidden = false;
+  document.documentElement.classList.add("wlc-docked");
+  sheetsBeside();
+  requestAnimationFrame(() => el.box.classList.add("on"));
+  // Pages that draw to fit their width (the Projects map) redraw on resize.
+  setTimeout(() => dispatchEvent(new Event("resize")), 280);
   if (st.chatId) {
     el.topic.textContent = "Loading…";
     try {
       const { chat, turns } = await loadChat(st.chatId);
       if (chat) { st.kind = chat.kind; st.topicId = chat.topicId || ""; st.topicTitle = chat.topicTitle || ""; }
-      el.topic.textContent = st.topicTitle || (st.kind === "lesson" ? "How to use your coach" : "");
+      topicLine();
       turns.forEach(t => bubble(t.role === "student" ? "me" : "coach", t.text));
       note("You can keep going where you left off.");
       chips(STARTERS[st.kind] ? STARTERS[st.kind].slice(0, 3) : []);
     } catch (e) { note("Couldn't load that conversation."); }
   } else {
-    el.topic.textContent = st.topicTitle || (st.kind === "lesson" ? "How to use your coach" : "");
-    let seen = false; try { seen = localStorage.getItem(INTRO_KEY) === "1"; } catch (e) { }
+    topicLine();
+    let seen = false; try { seen = localStorage.getItem(INTRO_KEY) === INTRO_VERSION; } catch (e) { }
     if (seen) greet(); else intro();
   }
   setTimeout(() => { if (!el.log.querySelector("[data-intro-ok]")) el.input.focus(); }, 80);
 }
+// The topic under the coach's name. A challenge's title is a link that opens the challenge beside the coach.
+function topicLine() {
+  const title = st.topicTitle || TOPIC_NAMES[st.kind] || "";
+  el.topic.innerHTML = "";
+  if (st.kind === "challenge" && st.topicId && window.WLChallenge) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "wlc-topic-link"; b.textContent = title;
+    b.title = "Open this challenge"; b.addEventListener("click", () => window.WLChallenge.open(st.topicId));
+    el.topic.appendChild(b);
+  } else el.topic.textContent = title;
+}
 function close() {
   if (!el || el.box.hidden) return;
-  el.back.classList.remove("on"); el.box.classList.remove("on");
-  document.documentElement.style.overflow = "";
-  setTimeout(() => { el.back.hidden = el.box.hidden = true; }, 250);
+  el.box.classList.remove("on", "big");
+  document.documentElement.classList.remove("wlc-docked");
+  sheetsBack();
+  setTimeout(() => { el.box.hidden = true; dispatchEvent(new Event("resize")); }, 250);
   if (st && st.lastFocus && document.contains(st.lastFocus)) st.lastFocus.focus();
   document.dispatchEvent(new CustomEvent("wl-coach-closed", { detail: { chatId: st && st.chatId } }));
 }
@@ -235,5 +311,5 @@ document.addEventListener("click", e => { const b = e.target.closest('.wlc-chip[
 
 // Who may use it: school accounts that are students in grades 2–8, or staff (to try it out).
 function canUse(r) { return !!(r && (r.role === "staff" || (r.role === "student" && r.band !== "K–1"))); }
-window.WLCoach = { open, close, canUse };
+window.WLCoach = { open, close, canUse, docked, WHY };
 document.dispatchEvent(new CustomEvent("wl-coach-ready"));

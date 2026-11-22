@@ -44,6 +44,11 @@ p{margin:0}
 .btn{border:0;border-radius:12px;background:var(--lime);color:#0b2b20;font:700 15px Inter,sans-serif;padding:11px 16px;cursor:pointer}
 .small{font-size:14px;color:var(--dim)}
 .small a{color:var(--green)}
+.subj{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--green);background:#fff;color:var(--green);border-radius:999px;padding:8px 14px;font:600 15px/1.2 Inter,sans-serif;cursor:pointer}
+.chip:hover{background:#eef4d6}
+.chip:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.rules.why li{background:#fff;border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -51,7 +56,7 @@ p{margin:0}
 <main>
   <header>
     <h1>Your AI Coach</h1>
-    <p class="lede">Help with your challenges and projects. It asks questions and gives hints so you get better, and it never does the work for you.</p>
+    <p class="lede">Help with your challenges, Life Skill Labs and projects, and hint-only help with academics. It asks questions and gives hints so you get better, and it never does the work for you. It opens beside the page, so you can see your work and the coach at the same time.</p>
   </header>
 
   <div class="cards">
@@ -59,6 +64,29 @@ p{margin:0}
     <a class="card" href="/challenges/"><span class="k">Challenges</span><b>Coach me on a challenge</b><p>Open any challenge and tap <b style="font:inherit;font-weight:700">Ask the AI Coach</b>. Plan it, practice it, get unstuck.</p><i>Go to Challenges →</i></a>
     <a class="card" href="/projects/"><span class="k">Projects</span><b>Coach me on a project</b><p>Open a spark and tap <b style="font:inherit;font-weight:700">Plan it with your AI Coach</b> to pick a version and make steps.</p><i>Go to Projects →</i></a>
   </div>
+
+  <section class="acad">
+    <h2>Stuck on academics?</h2>
+    <p class="small" style="margin:6px 0 12px;max-width:66ch">The coach helps you learn it: a hint, a question that gets you thinking, the basics explained another way, or where to learn more. It won't give you the answer, and it won't help on a test. Your guides read every academics chat. Pick a subject:</p>
+    <div class="subj">
+      <button class="chip" type="button" data-acad="Math">Math</button>
+      <button class="chip" type="button" data-acad="Reading">Reading</button>
+      <button class="chip" type="button" data-acad="Writing">Writing</button>
+      <button class="chip" type="button" data-acad="Science">Science</button>
+      <button class="chip" type="button" data-acad="Social studies">Social studies</button>
+      <button class="chip" type="button" data-acad="A language">A language</button>
+      <button class="chip" type="button" data-acad="Something else">Something else</button>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="margin-bottom:12px">Why ask an AI Coach, not just a guide?</h2>
+    <ul class="rules why">
+      <li><b>It's always there.</b>Your guides help a whole crew at once. The coach can help you right now: when every guide is busy, before school, or at home.</li>
+      <li><b>It knows something about almost everything.</b>Knots, budgets, birds, speeches, fractions. Whatever your challenge, Lab or project is about, you can ask.</li>
+      <li><b>Your guide still matters most.</b>Only a guide (or a parent, for some challenges) can pass you. Take anything big, risky or personal to a real adult.</li>
+    </ul>
+  </section>
 
   <section>
     <h2 style="margin-bottom:12px">Four things to remember</h2>
@@ -97,14 +125,16 @@ async function load(r) {
     if (!q.ok) throw new Error(q.status);
     const chats = (await q.json()).filter(x => x.document).map(x => ({ id: x.document.name.split("/").pop(), ...Object.fromEntries(Object.entries(x.document.fields || {}).map(([k, v]) => [k, val(v)])) }))
       .sort((a, b) => (b.updated || 0) - (a.updated || 0));
-    const staffNote = r && r.role === "staff" ? '<p class="small" style="margin-bottom:10px">You are staff, so these are your own test chats. Every student conversation is on <a href="/guides/students/">Guides › Students</a>.</p>' : "";
-    box.innerHTML = staffNote + (chats.length ? '<ul class="chats">' + chats.map(c => `<li><button type="button" data-chat="${c.id}"><span class="ic" aria-hidden="true">${c.kind === "project" ? "P" : c.kind === "lesson" ? "?" : "C"}</span><span class="tx"><span class="tt">${esc(c.topicTitle || (c.kind === "lesson" ? "How to use your coach" : "Chat"))}</span><span class="ls">You: ${esc(c.last || "")}</span></span><span class="dt">${esc(when(c.updated || c.created || Date.now()))}</span></button></li>`).join("") + "</ul>"
+    const staffNote = r && r.role === "staff" ? '<p class="small" style="margin-bottom:10px">You are staff, so these are your own test chats. Every student conversation is on <a href="/guides/roster/">Guides › Student Roster</a>.</p>' : "";
+    box.innerHTML = staffNote + (chats.length ? '<ul class="chats">' + chats.map(c => `<li><button type="button" data-chat="${c.id}"><span class="ic" aria-hidden="true">${c.kind === "project" ? "P" : c.kind === "lesson" ? "?" : c.kind === "academic" ? "A" : "C"}</span><span class="tx"><span class="tt">${esc(c.topicTitle || (c.kind === "lesson" ? "How to use your coach" : c.kind === "academic" ? "Academics" : "Chat"))}</span><span class="ls">You: ${esc(c.last || "")}</span></span><span class="dt">${esc(when(c.updated || c.created || Date.now()))}</span></button></li>`).join("") + "</ul>"
       : '<p class="empty">No chats yet. Start with the lesson above, or open a challenge and tap Ask the AI Coach.</p>');
   } catch (e) { box.innerHTML = '<p class="msg">Couldn\'t load your chats. Reload the page to try again.</p>'; }
 }
 document.addEventListener("click", e => {
   const c = e.target.closest("[data-chat]");
   if (c && window.WLCoach) { window.WLCoach.open({ chatId: c.getAttribute("data-chat") }); return; }
+  const a = e.target.closest("[data-acad]");
+  if (a && window.WLCoach) { window.WLCoach.open({ kind: "academic", topicId: "academic", topicTitle: a.getAttribute("data-acad") === "Something else" ? "Academics" : a.getAttribute("data-acad") }); return; }
   if (e.target.closest("[data-lesson]") && window.WLCoach) window.WLCoach.open({ kind: "lesson", topicId: "lesson", topicTitle: "How to use your coach" });
 });
 document.addEventListener("wl-role", e => load(e.detail));
@@ -113,5 +143,6 @@ if (window.wlRole !== undefined) load(window.wlRole);
 setTimeout(() => { if (box.textContent.trim() === "Loading…" && !(window.wlFirebase && window.wlFirebase.auth.currentUser)) load(null); }, 4000);
 </script>
 <script type="module" src="/auth.js" data-site="coach"></script>
+<script src="/challenges/modal.js"></script>
 </body>
 </html>

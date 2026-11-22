@@ -21,17 +21,17 @@
     guides: { name: "Guides", home: "/guides/", label: "Guides", tabs: [
       { id: "mentor", label: "Mentor Mindset", href: "/fieldguide/" },
       { id: "behavior", label: "Behavior", href: "/behavior/" },
+      // Challenges, the Labs schedule and the Lab builder live inside Life Skills (its sub-menu: /lifeskills/subnav.js).
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
-      { id: "challenges", label: "Challenges", href: "/guides/challenges/" },
+      { id: "roster", label: "Student Roster", href: "/guides/roster/" },
       { id: "parentcomms", label: "Parent Comms", href: "/guides/parents/" },
-      { id: "students", label: "Students", href: "/guides/students/" },
       BASECAMP] },
     parents: { name: "Parents", home: "/parents/", label: "Parents", tabs: [
       { id: "athome", label: "At Home", href: "/parents/athome/" },
       { id: "approach", label: "Our Approach", href: "/parents/approach/" },
       { id: "fieldnotes", label: "Field Notes", href: "/parents/series/" },
+      // Challenges and the Labs schedule are inside Life Skills.
       { id: "lifeskills", label: "Life Skills", href: "/parents/lifeskills/" },
-      { id: "challenges", label: "Challenges", href: "/parents/challenges/" },
       BASECAMP] }
   };
   // "wlbar-logo", not the old "wlbar-mark": an old cached wl.css hid .wlbar-mark on desktop.
@@ -46,7 +46,7 @@
   var site = SITES[key], cur = bar.getAttribute("data-current") || "";
   var tabs = site.tabs.map(function (t) {
     if (t.out) return '<a class="wlbar-ext" href="' + t.href + '" target="_blank" rel="noopener" aria-label="' + esc(t.label) + ' (opens in a new tab)">' + esc(t.label) + ARROW + "</a>";
-    return '<a href="' + t.href + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "students" ? ' data-wl-alerts' : "") + ">" + esc(t.label) + "</a>";
+    return '<a href="' + t.href + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.label) + "</a>";
   }).join("");
 
   // Who may switch to which site. Staff (and team guests) see all three; parents see theirs and the students' site;
@@ -117,7 +117,7 @@
   draw();
   bar.setAttribute("data-wlnav-done", "");
   document.addEventListener("wl-role", function (e) { apply(e.detail); });
-  // Open AI Coach alerts, shown as a count on the Guides "Students" tab (sent by /auth.js and /guides/students/).
+  // Open AI Coach alerts, shown as a count on the Guides "Student Roster" tab (sent by /auth.js and /guides/roster/).
   var alerts = null;
   function paintAlerts() {
     var a = bar.querySelector("[data-wl-alerts]"); if (!a) return;
