@@ -278,3 +278,12 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   two weeks are one tap, and search includes Lab challenges), tap the students who passed (or "Everyone shown passed"), mark any
   not yets, save once. Entries for Lab challenges carry `ct` (title) and `k` (life skill), and the crew board copy carries `t` and
   `k`, so students and families see them by name. Old `#log` links still open Validate.
+
+## Search (⌘K / Ctrl+K), added Nov 22, 2026
+Every page has a 🔍 **Search** button in the top bar; ⌘K (Mac) or Ctrl+K opens it anywhere, and "/" opens it when you're not
+typing. `/wlnav.js` loads `/search.js` the first time. It finds pages, challenges, books and project ideas for everyone (read
+from `/challenges/data.js`, `/books/` and `/projects/`, so new items show up without any extra step), plus, for staff, students
+(to their Student Roster page), Labs, Behavior Guide topics and Staff Handbook sections by their full text (read from the relay,
+never stored in the site); parents also find their children's Labs. Students see only Students pages and their own band and
+older; test accounts show only in test views. Staff can send what they typed to the Guide Mentor. Add a page to the search in
+the `PAGES` list at the top of `/search.js`.
