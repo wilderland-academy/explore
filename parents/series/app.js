@@ -37,10 +37,18 @@ function grid() {
   const v = h("section", { class: "view" });
   v.appendChild(h("h1", { html: "Field <span>Notes</span>" }));
   v.appendChild(h("p", { class: "lede", text: "The books, podcasts and talks behind Wilderland. Each one has the big ideas, where you'll see them at school, questions to talk about at home, and one thing to try this week." }));
-  v.appendChild(h("p", { class: "dim", text: "New here? Start with these three books. Short on time? Most podcasts and talks run under 45 minutes." }));
+  v.appendChild(h("p", { class: "dim", text: "New here? Start with these three: one to read, one to listen to, one to watch. Most podcasts and talks run under 45 minutes." }));
   // start here
   v.appendChild(h("h2", { text: "Start here" }));
   v.appendChild(h("div", { class: "fn-grid fn-start" }, D.START.map(id => tile(byId[id], true))));
+  // the questions families ask most
+  v.appendChild(h("h2", { id: "questions", text: "The questions families ask us most" }));
+  v.appendChild(h("p", { class: "dim", text: "Some of what we do is unusual, and families ask about it. For each, here's what we read, including at least one piece that pushes back." }));
+  Object.entries(D.ASK_GROUPS).forEach(([gk, [title, lede]]) => {
+    v.appendChild(h("h3", { id: "ask-" + gk, class: "fn-askh", text: title }));
+    v.appendChild(h("p", { class: "dim", text: lede }));
+    v.appendChild(h("div", { class: "fn-reads" }, D.ASKS.filter(r => r.g === gk).map(readCard)));
+  });
   // filters
   v.appendChild(h("h2", { text: "Read, listen, watch" }));
   v.appendChild(h("p", { class: "dim", text: "A short shelf of other books we love, plus podcasts and talks our team keeps sharing." }));
@@ -58,7 +66,7 @@ function grid() {
     const hits = D.ITEMS.filter(x => (method !== "all" || !D.START.includes(x.id)) && (kind === "all" || D.KINDS[x.kind] === kind) && (method === "all" || x.here.some(([k]) => k === method)));
     note.textContent = method === "all" ? "" : D.METHODS[method].n + ": " + D.METHODS[method].d;
     g.innerHTML = "";
-    hits.forEach(x => g.appendChild(tile(x)));
+    mix(hits).forEach(x => g.appendChild(tile(x)));
     if (!hits.length) g.appendChild(card("", [h("p", { text: "Nothing in that combination. Try “All.”" })]));
   };
   draw();
@@ -67,12 +75,24 @@ function grid() {
   Object.entries(D.READ_GROUPS).forEach(([gk, [title, lede]]) => {
     v.appendChild(h("h2", { id: "read-" + gk, text: title }));
     v.appendChild(h("p", { class: "dim", text: lede }));
-    v.appendChild(h("div", { class: "fn-reads" }, D.READS.filter(r => r.g === gk).map(r => h("a", { class: "fn-read", href: r.url, target: "_blank", rel: "noopener" }, [
-      h("span", { class: "fn-src", text: [r.src, r.d].filter(Boolean).join(" · ") }), h("b", { text: r.t }), r.by ? h("span", { class: "fn-by", text: r.by }) : null, h("p", { text: r.why }), h("span", { class: "fn-go", text: r.go || "Read it ↗" })
-    ]))));
+    v.appendChild(h("div", { class: "fn-reads" }, D.READS.filter(r => r.g === gk).map(readCard)));
   });
-  v.appendChild(card("", [h("p", { html: `More books we love are on our <a href="${D.INSPIRATION}" target="_blank" rel="noopener">Inspiration list</a>; look for them at the Weber County Library or on Libby. For how it all fits together at school, see <a href="/families/approach/">Our Approach</a>.` })]));
+  v.appendChild(card("", [h("p", { html: `More books we love are on our <a href="${D.INSPIRATION}" target="_blank" rel="noopener">Inspiration list</a>; look for them at the Weber County Library or on Libby. For how it all fits together at school, see <a href="/parents/approach/">Our Approach</a>.` })]));
   app.appendChild(v);
+}
+
+// One linked card for a lighter read (READS) or a question-topic piece (ASKS).
+function readCard(r) {
+  return h("a", { class: "fn-read", href: r.url, target: "_blank", rel: "noopener" }, [
+    h("span", { class: "fn-src", text: [r.src, r.d].filter(Boolean).join(" · ") }), h("b", { text: r.t }), r.by ? h("span", { class: "fn-by", text: r.by }) : null, h("p", { text: r.why }), h("span", { class: "fn-go", text: r.go || "Read it ↗" })
+  ]);
+}
+// Interleave books, listens and watches so one kind never fills the top of the shelf. Order within a kind is kept.
+function mix(list) {
+  const by = {}; list.forEach(x => (by[D.KINDS[x.kind]] ||= []).push(x));
+  const lanes = ["Listen", "Books", "Watch"].map(k => by[k] || []), out = [];
+  while (lanes.some(l => l.length)) lanes.forEach(l => { if (l.length) out.push(l.shift()); });
+  return out;
 }
 
 function entry(x) {

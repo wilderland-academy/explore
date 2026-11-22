@@ -4,61 +4,46 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wilderland Explore</title>
-<meta name="description" content="Everything a Wilderland student uses in one place: books, challenges, projects, the library, Basecamp, the camp store and the suggestion box. One sign-in for all of it.">
-<meta name="theme-color" content="#015640">
-<link rel="icon" href="books/f/icon.png"><link rel="apple-touch-icon" href="books/f/icon-180.png">
+<meta name="description" content="Wilderland Academy's Explore sites: one for students, one for guides, one for parents.">
+<meta name="theme-color" content="#01412f">
+<link rel="icon" href="/books/f/icon.png"><link rel="apple-touch-icon" href="/books/f/icon-180.png">
 <link rel="stylesheet" href="/wl.css">
 <style>
-@font-face{font-family:"Uncut Sans";src:url(books/f/us-700.woff2) format("woff2");font-weight:700;font-display:swap}
-@font-face{font-family:"Inter";src:url(books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
+/* The front door: three sites, one for each kind of visitor. Same dark look as the Students home. */
+@font-face{font-family:"Uncut Sans";src:url(/books/f/us-700.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:radial-gradient(900px 500px at 15% -10%,rgba(213,243,103,.12),transparent 70%),#08140f;color:#f6f8ea;font:400 16px/1.55 Inter,system-ui,sans-serif}
 .in{max-width:1120px;margin:0 auto;padding:0 20px}
-h1{font:700 clamp(34px,5vw,58px)/1.02 "Uncut Sans",Inter,sans-serif;letter-spacing:-.03em;margin:48px 0 10px;max-width:14ch}
+h1{font:700 clamp(36px,5.6vw,62px)/1.02 "Uncut Sans",Inter,sans-serif;letter-spacing:-.03em;margin:56px 0 12px;max-width:16ch}
 h1 span{color:#d5f367}
-.lede{max-width:56ch;color:#c9d6cc;font-size:18px;margin:0 0 30px}
-h2{font:700 13px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#c7f1ee;margin:34px 0 12px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.cards.big{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-.card{display:flex;flex-direction:column;border-radius:18px;background:#0f231c;border:1px solid #28493d;color:inherit;text-decoration:none;overflow:hidden;transition:border-color .15s,transform .15s}
-.card:hover{border-color:#d5f367;transform:translateY(-2px)}
-.card .pic{aspect-ratio:16/10;background:#16302a;position:relative;overflow:hidden}
-.card .pic img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
-.card:hover .pic img{transform:scale(1.03)}
-.card .pic::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(15,35,28,.85))}
-.card .tag{position:absolute;left:12px;top:12px;z-index:1;font:600 11px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#0b2b20;background:#d5f367;padding:6px 9px;border-radius:999px}
-.card .tag.out{color:#fff;background:rgba(1,86,64,.9)}
-.card .body{padding:14px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
-.card b{font:700 22px/1.1 "Uncut Sans",Inter,sans-serif;letter-spacing:-.02em}
-.card p{margin:0;color:#a9bbb0;font-size:14.5px}
-.card i{font-style:normal;margin-top:auto;padding-top:8px;color:#d5f367;font-weight:600;font-size:14px}
-footer{color:#7f978b;font-size:13px;padding:40px 0}
-@media (max-width:640px){h1{margin-top:30px}.cards{grid-template-columns:1fr 1fr;gap:10px}.card b{font-size:17px}.card p{display:none}.card .body{padding:10px 12px 12px}.card i{font-size:13px;padding-top:4px}.card .tag{font-size:10px;left:8px;top:8px}}
-.card .lock{display:block;margin-top:6px;font-size:12.5px;color:#a9bbb0;font-style:normal}
+.lede{max-width:52ch;color:#c9d6cc;font-size:18px;margin:0 0 34px}
+.doors{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.door{display:flex;flex-direction:column;gap:12px;min-height:280px;padding:26px 24px 22px;border-radius:20px;background:#0f231c;border:1px solid #28493d;border-top:6px solid var(--c);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+.door:hover{border-color:var(--c);transform:translateY(-2px)}
+.door:focus-visible{outline:3px solid #d5f367;outline-offset:3px}
+.door .who{font:700 12px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+.door b{font:700 34px/1.05 "Uncut Sans",Inter,sans-serif;letter-spacing:-.02em}
+.door p{margin:0;color:#a9bbb0;font-size:15.5px}
+.door ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.door li{font-size:13px;color:#d9e4dc;background:#16302a;border-radius:999px;padding:5px 10px}
+.door i{font-style:normal;margin-top:auto;color:var(--c);font-weight:600}
+.s{--c:#d5f367}.g{--c:#7fd6a8}.p{--c:#ffb59f}
+footer{color:#7f978b;font-size:13px;padding:44px 0}
+@media (max-width:860px){.doors{grid-template-columns:1fr}.door{min-height:0}h1{margin-top:34px}}
 </style>
 </head>
 <body>
-<div class="wlbar"><div class="wlbar-in"><a class="wlbar-home" href="/" aria-label="Wilderland Explore home"><svg class="wlbar-full" viewBox="1000 480 4380 640" aria-hidden="true"><path d="M2978.14 706L2915.94 495.091H2979.79L3008.63 624.849H3010.28L3044.47 495.091H3094.72L3128.91 625.261H3130.56L3159.39 495.091H3223.24L3161.04 706H3106.26L3070.42 588.188H3068.77L3032.93 706H2978.14ZM3353.85 495.091V706H3296.59V495.091H3353.85ZM3435.8 706V495.091H3493.05V659.864H3578.32V706H3435.8ZM3737.43 706H3656.28V495.091H3736.61C3758.3 495.091 3777.04 499.313 3792.84 507.758C3808.69 516.134 3820.92 528.217 3829.5 544.008C3838.15 559.73 3842.47 578.576 3842.47 600.545C3842.47 622.515 3838.18 641.395 3829.6 657.186C3821.02 672.908 3808.87 684.991 3793.14 693.436C3777.42 701.812 3758.85 706 3737.43 706ZM3713.54 657.392H3735.37C3745.81 657.392 3754.7 655.71 3762.04 652.346C3769.46 648.982 3775.09 643.18 3778.93 634.942C3782.85 626.703 3784.8 615.238 3784.8 600.545C3784.8 585.853 3782.81 574.388 3778.83 566.149C3774.92 557.911 3769.15 552.109 3761.53 548.745C3753.98 545.381 3744.71 543.699 3733.72 543.699H3713.54V657.392ZM3923.78 706V495.091H4075.78V541.227H3981.03V577.477H4067.95V623.614H3981.03V659.864H4075.37V706H3923.78ZM4158.99 706V495.091H4250.02C4265.68 495.091 4279.37 497.94 4291.11 503.638C4302.85 509.337 4311.98 517.541 4318.51 528.251C4325.03 538.962 4328.29 551.8 4328.29 566.767C4328.29 581.871 4324.93 594.607 4318.2 604.974C4311.54 615.341 4302.17 623.167 4290.08 628.454C4278.07 633.74 4264.03 636.384 4247.96 636.384H4193.59V591.895H4236.43C4243.16 591.895 4248.89 591.071 4253.63 589.423C4258.43 587.707 4262.11 584.995 4264.65 581.288C4267.26 577.58 4268.56 572.74 4268.56 566.767C4268.56 560.725 4267.26 555.817 4264.65 552.04C4262.11 548.196 4258.43 545.381 4253.63 543.596C4248.89 541.742 4243.16 540.815 4236.43 540.815H4216.24V706H4158.99ZM4282.57 609.196L4335.29 706H4273.09L4221.6 609.196H4282.57ZM4407.51 706V495.091H4464.76V659.864H4550.03V706H4407.51ZM4682.78 706H4620.99L4690.6 495.091H4768.87L4838.49 706H4776.7L4730.56 553.173H4728.91L4682.78 706ZM4671.24 622.79H4787.41V665.631H4671.24V622.79ZM5096.1 495.091V706H5048.31L4972.11 595.19H4970.87V706H4913.61V495.091H4962.22L5037.19 605.489H5038.84V495.091H5096.1ZM5259.14 706H5177.99V495.091H5258.32C5280.01 495.091 5298.76 499.313 5314.55 507.758C5330.41 516.134 5342.63 528.217 5351.21 544.008C5359.86 559.73 5364.18 578.576 5364.18 600.545C5364.18 622.515 5359.89 641.395 5351.31 657.186C5342.73 672.908 5330.58 684.991 5314.86 693.436C5299.13 701.812 5280.56 706 5259.14 706ZM5235.25 657.392H5257.08C5267.52 657.392 5276.41 655.71 5283.75 652.346C5291.17 648.982 5296.8 643.18 5300.64 634.942C5304.56 626.703 5306.51 615.238 5306.51 600.545C5306.51 585.853 5304.52 574.388 5300.54 566.149C5296.63 557.911 5290.86 552.109 5283.24 548.745C5275.69 545.381 5266.42 543.699 5255.43 543.699H5235.25V657.392Z" fill="white"/><path d="M3272.38 1105H3210.59L3280.21 894.091H3358.47L3428.09 1105H3366.3L3320.16 952.173H3318.52L3272.38 1105ZM3260.85 1021.79H3377.01V1064.63H3260.85V1021.79ZM3690.21 973.182H3632.12C3631.71 968.376 3630.61 964.016 3628.83 960.103C3627.11 956.19 3624.71 952.826 3621.62 950.011C3618.6 947.127 3614.93 944.93 3610.6 943.42C3606.27 941.841 3601.37 941.051 3595.87 941.051C3586.26 941.051 3578.13 943.385 3571.47 948.054C3564.88 952.723 3559.86 959.416 3556.43 968.136C3553.07 976.855 3551.38 987.325 3551.38 999.545C3551.38 1012.45 3553.1 1023.27 3556.53 1031.99C3560.04 1040.64 3565.08 1047.16 3571.67 1051.55C3578.26 1055.88 3586.19 1058.04 3595.46 1058.04C3600.75 1058.04 3605.48 1057.39 3609.67 1056.08C3613.86 1054.71 3617.5 1052.75 3620.59 1050.21C3623.68 1047.67 3626.18 1044.62 3628.11 1041.05C3630.1 1037.41 3631.44 1033.32 3632.12 1028.79L3690.21 1029.2C3689.52 1038.13 3687.01 1047.23 3682.69 1056.5C3678.36 1065.69 3672.22 1074.21 3664.25 1082.03C3656.36 1089.79 3646.58 1096.04 3634.9 1100.78C3623.23 1105.51 3609.67 1107.88 3594.23 1107.88C3574.86 1107.88 3557.49 1103.73 3542.12 1095.42C3526.81 1087.12 3514.69 1074.89 3505.76 1058.76C3496.91 1042.63 3492.48 1022.89 3492.48 999.545C3492.48 976.065 3497.01 956.293 3506.07 940.227C3515.13 924.093 3527.36 911.907 3542.73 903.668C3558.11 895.361 3575.28 891.207 3594.23 891.207C3607.54 891.207 3619.8 893.027 3630.99 896.665C3642.18 900.304 3652 905.625 3660.44 912.628C3668.89 919.562 3675.69 928.11 3680.83 938.271C3685.98 948.432 3689.11 960.069 3690.21 973.182ZM3819.27 1105H3757.48L3827.09 894.091H3905.36L3974.98 1105H3913.19L3867.05 952.173H3865.4L3819.27 1105ZM3807.73 1021.79H3923.9V1064.63H3807.73V1021.79ZM4131.25 1105H4050.1V894.091H4130.43C4152.12 894.091 4170.86 898.313 4186.66 906.758C4202.51 915.134 4214.74 927.217 4223.32 943.008C4231.97 958.73 4236.29 977.576 4236.29 999.545C4236.29 1021.52 4232 1040.4 4223.42 1056.19C4214.84 1071.91 4202.69 1083.99 4186.96 1092.44C4171.24 1100.81 4152.67 1105 4131.25 1105ZM4107.36 1056.39H4129.19C4139.63 1056.39 4148.52 1054.71 4155.86 1051.35C4163.28 1047.98 4168.91 1042.18 4172.75 1033.94C4176.67 1025.7 4178.62 1014.24 4178.62 999.545C4178.62 984.853 4176.63 973.388 4172.65 965.149C4168.74 956.911 4162.97 951.109 4155.35 947.745C4147.8 944.381 4138.53 942.699 4127.54 942.699H4107.36V1056.39ZM4317.6 1105V894.091H4469.6V940.227H4374.85V976.477H4461.77V1022.61H4374.85V1058.86H4469.19V1105H4317.6ZM4552.81 894.091H4624.07L4673.09 1013.55H4675.56L4724.58 894.091H4795.85V1105H4739.82V983.068H4738.18L4691.22 1103.35H4657.44L4610.48 982.244H4608.83V1105H4552.81V894.091ZM4869.14 894.091H4932.99L4974.18 979.773H4975.83L5017.02 894.091H5080.87L5003.43 1038.68V1105H4946.58V1038.68L4869.14 894.091Z" fill="white"/><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg><svg class="wlbar-mark" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg></a><nav class="wlbar-sites" aria-label="Wilderland Explore"><a href="/books/">Books</a><a href="/challenges/">Challenges</a><a href="/projects/">Projects</a><a href="/store/">Store</a><a href="/suggest/">Ideas</a></nav><span class="wlbar-auth" data-wl-auth></span></div></div>
+<div class="wlbar" data-wlnav="home" data-auth="off"></div><script src="/wlnav.js"></script>
 <main class="in">
-<h1>Where will you go <span>next?</span></h1>
-<p class="lede">Everything you use at Wilderland, in one place. Sign in once with your school Google account and what you save follows you to any Chromebook.</p>
-
-<h2>Explore</h2>
-<div class="cards big">
-<a class="card" href="books/"><div class="pic"><img src="img/books.jpg" alt="" loading="eager"><span class="tag">Read</span></div><div class="body"><b>Find Your Next Book</b><p>936 books mapped by what you already love, plus your Life List of ways a book can change your life.</p><i>Open the Lantern Stacks →</i></div></a>
-<a class="card" href="challenges/"><div class="pic"><img src="img/challenges.jpg" alt=""><span class="tag">Do</span></div><div class="body"><b>Challenges</b><p>Every Wilderland life-skills challenge. Pick yours, practice, then show your guide you can do it.</p><i>Pick a challenge →</i></div></a>
-<a class="card" href="projects/"><div class="pic"><img src="img/projects.jpg" alt=""><span class="tag">Make</span></div><div class="body"><b>Projects</b><p>A map of real projects people started, many of them kids, to spark a passion project of your own.</p><i>Get a spark →</i></div></a>
-</div>
-
-<h2>Your school</h2>
-<div class="cards">
-<a class="card" href="https://library.wilderland.academy/"><div class="pic"><img src="img/library.jpg" alt=""><span class="tag out">Borrow</span></div><div class="body"><b>Treebeard Library</b><p>Search the shelves, check books out, and see what's due.</p><i>Open the library →</i></div></a>
-<a class="card" href="https://my.wilderland.academy/"><div class="pic"><img src="img/basecamp.jpg" alt=""><span class="tag out">Track</span></div><div class="body"><b>Basecamp</b><p>Your dashboard: app progress, blazes earned, and your week in one place.</p><i>Open Basecamp →</i></div></a>
-<a class="card" href="store/"><div class="pic"><img src="img/store.jpg" alt=""><span class="tag">Earn</span></div><div class="body"><b>Camp Store</b><p>Almost 200 things worth saving your blazes for, from basketballs to owl pellets. Nothing that breaks by Tuesday.</p><i>See the store →</i><small class="lock">🔒 Sign in with your school account</small></div></a>
-<a class="card" href="suggest/"><div class="pic"><img src="img/suggest.jpg" alt=""><span class="tag">Speak up</span></div><div class="body"><b>Suggestion Box</b><p>What would make Wilderland better? Post it, vote on others, and watch guides answer.</p><i>Add an idea →</i><small class="lock">🔒 Sign in with your school account</small></div></a>
+<h1>Welcome to <span>Wilderland Explore.</span></h1>
+<p class="lede">Three sites, one for each of us. Pick yours.</p>
+<div class="doors">
+  <a class="door s" href="/students/"><span class="who">For students</span><b>Students</b><p>Find your next book, pick a challenge, track your Life Skills trail, and spark a project.</p><ul><li>Books</li><li>Challenges</li><li>Life Skills</li><li>Projects</li><li>Store</li></ul><i>Go to Students →</i></a>
+  <a class="door g" href="/guides/"><span class="who">For guides and staff</span><b>Guides</b><p>Everything a guide needs: mentoring, behavior, Life Skills, and writing to families.</p><ul><li>Mentor Mindset</li><li>Behavior</li><li>Life Skills</li><li>Parent Comms</li></ul><i>Go to Guides →</i></a>
+  <a class="door p" href="/parents/"><span class="who">For parents and families</span><b>Parents</b><p>How school works, what to do at home, the ideas behind it, and your child's Life Skills progress.</p><ul><li>At Home</li><li>Our Approach</li><li>Field Notes</li><li>Life Skills</li></ul><i>Go to Parents →</i></a>
 </div>
 </main>
-<footer class="in">Wilderland Academy · Eden, Utah</footer>
-<script type="module" src="/auth.js"></script>
+<footer class="in">Wilderland Academy · Eden, Utah · <a href="https://my.wilderland.academy/" style="color:inherit">Basecamp, the academic portal ↗</a></footer>
 </body>
 </html>

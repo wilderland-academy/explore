@@ -10,9 +10,26 @@ Student sites for Wilderland Academy, served at https://explore.wilderland.acade
 
 ## Shared look
 
-Every page links `/wl.css` in its `<head>` and starts `<body>` with the same `.wlbar` markup: the Wilderland logo (links to this home page), the Books / Challenges / Projects tabs, and the sign-in slot (`data-wl-auth`). Mark the current site's tab with `aria-current="page"`. Give each site's own name the `wl-title` class so the names match. Keep one `data-wl-auth` per page, inside the bar.
+Explore is four sites under one domain, with one top bar shared by all of them:
+- `/`: the front door. Three choices: Students, Guides, Parents.
+- **Students** (home `/students/`): Books, Challenges, Life Skills (`/lifeskills/`), Projects, Store, Ideas.
+- **Guides** (home `/guides/`): Mentor Mindset (`/fieldguide/`), Behavior, Life Skills (`/guides/lifeskills/`), Parent Comms.
+- **Parents** (home `/parents/`): At Home, Our Approach, Field Notes (`/parents/series/`), Life Skills (`/parents/lifeskills/`).
+- Every site also links Basecamp (`https://my.wilderland.academy/`), the academic portal. It's a separate website, so its tab
+  sits after a thin rule, has an arrow and opens in a new tab.
 
-`projects/index.html` is built from the Atlas source (`build.js`), which adds the bar itself.
+**The bar.** Every page links `/wl.css` and starts `<body>` with
+`<div class="wlbar" data-wlnav="students" data-current="books"></div><script src="/wlnav.js"></script>`.
+`/wlnav.js` holds every site's tabs in one list, so the bar is identical everywhere: the logo mark only (no wordmark, no site
+name), which goes to the current site's own home; that site's tabs; Basecamp; and the sign-in slot (`data-wl-auth`, left out
+with `data-auth="off"` on pages with their own account menu, like the Life Skills tracker). The site's home isn't a tab, because
+the logo goes there. To add or rename a tab, edit `wlnav.js`, nowhere else. Same colors on every site: don't restyle `.wlbar`
+on a page.
+
+`projects/index.html` is built from the Atlas source (`build.js`, kept outside this repo). When you rebuild it, swap its bar for
+the two-line `wlnav.js` markup above (`data-wlnav="students" data-current="projects"`).
+
+The old `/families/` addresses forward to `/parents/` (`families/*/index.html`), keeping any `#section` link.
 
 ## Pages added Nov 16, 2026
 - `/` landing page: image cards for Books, Challenges, Projects, Treebeard Library, Basecamp, Camp Store and the Suggestion Box (`img/`).
@@ -29,14 +46,14 @@ Add `data-gated class="wl-pending"` to `<body>`, put the page in an element with
 - AI features go through the Cloudflare Worker in `relay/` (setup in `relay/README.md`). The Worker address is saved in Firestore `mentorConfig/main`, not in code.
 - `firestore.rules` has new rules for all of the above; paste the file into the Firebase console to publish them.
 
-## Wilderland at Home (`/families/`)
+## Wilderland at Home (`/parents/athome/`, was `/families/`)
 Parent site: daily routine by grade band and schedule, reading and math at home, the Mentor Mindset for parents,
 hard moments at home, links to Challenges / Atlas of Sparks / Lantern Stacks, the twelve Partnership Guide practices,
-and who to ask. Static, no sign-in. Unlisted: `noindex`, and not linked from any student page. Keep it that way.
-Content lives in `families/data.js`; sources are the Lower and Upper Campus Parent Handbooks, the Parent Partnership
+and who to ask. Static, no sign-in. `noindex`, linked from the Explore front door and the Parents home, never from a student
+page. Content lives in `parents/athome/data.js`; sources are the Lower and Upper Campus Parent Handbooks, the Parent Partnership
 Guide, the Parent Education Night packet and `challenges/parents.html`. Choices families make are stored in their browser only.
 Full time and part time are different commitments and the "Your part at home" stop must keep them visibly different
-(`WEEK` in `families/data.js`, side-by-side compare table). Full time: school runs app work and Life Skills; home is reading
+(`WEEK` in `parents/athome/data.js`, side-by-side compare table). Full time: school runs app work and Life Skills; home is reading
 and a weekly look. Part time: on home weekdays the family runs app work to target and Life Skills challenge work; school
 assigns and tracks it but does not supervise it. Say "weekday" or "home weekday", never "school day".
 
@@ -52,24 +69,27 @@ Not linked from the landing page. Same staff list as the Field Guide; school acc
 - `/suggest/` now has a Town Hall mode: students send agenda items, see their own items' status and the upcoming agenda.
 - `firestore.rules` has the new rules; paste the file into the Firebase console to publish them.
 
-## Our Approach (`/families/approach/`) and Field Notes (`/families/series/`)
+## Our Approach (`/parents/approach/`) and Field Notes (`/parents/series/`)
 Two more parent pages beside At Home, same rules: static, no sign-in, `noindex`, not linked from student pages, shared
-`families/families.css` and header tabs, and the grade band a family picks (localStorage `wl-family-prof`) carries across.
+`parents/parents.css` and the shared bar, and the grade band a family picks (localStorage `wl-family-prof`) carries across.
 - **Our Approach** is one long page with a sticky section menu (anchor links + scroll spy; the menu stays sticky on phones
   as a single scrolling row). It deliberately goes beyond the Parent Education Night packet, which most families have seen:
   pillars toggle, how guides help and give feedback, mornings up close, Life Skills with one sample challenge per band
   (copied from `challenges/data.js` by ID; update `SKILLS` if one is renamed or cut), evidence rated by strength, glossary,
   and a short refresher of the packet at the end. Only SETTLED practice from The Three Pillars goes here.
-- **Field Notes** is the parent education series. Three featured books (`START`: 10 to 25, The Self-Driven Child,
-  Free-Range Kids), a short shelf of other books, and podcasts and talks, each a full entry in `ITEMS`: big ideas,
+- **Field Notes** is the parent education series. "Start here" is one book, one podcast and one talk (`START`); the shelf
+  below interleaves books, listens and watches so books don't stack up at the top. Then a short shelf of other books, and podcasts and talks, each a full entry in `ITEMS`: big ideas,
   where you'll see it at Wilderland (tags from `METHODS`, which must be real practices), where we part ways, worth
   knowing, questions to talk about and one thing to try. Entries open at `#<id>`. Books come only from
   wilderland.academy/inspiration, and only ones Alex has read; keep the shelf short. Podcasts and talks come from what
   the team has shared (Slack #inspiration and #alpha-inspiration). Big ideas for an episode must come from its own
   description or transcript.
+- **The questions families ask most** sit right under Start here: rewards and motivation, screens with a purpose, and
+  Montessori (`ASK_GROUPS` and `ASKS`, same one-card format as `READS`). Each topic keeps at least one piece that pushes back.
+  These cards may point to books and sources that aren't on the Inspiration list; say whose source it is and keep facts to what it says.
 - Lighter reading lives in `READS` (one linked card each, grouped by `READ_GROUPS`: the microschool movement, Alpha
   from both sides, research). Keep facts and numbers to what the article itself says, and keep the critical pieces.
-  Content is in `families/series/data.js`.
+  Content is in `parents/series/data.js`.
 
 ## Life Skills Tracker (`/lifeskills/`, added Nov 18, 2026)
 Pass records for the Life Skills challenges, separate from academics. Built on the Wilderland Academy design system
@@ -119,3 +139,9 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   his exact wording (keep the Scorecard and output-order sections, which the page relies on). A "Lab builder" tab appears in the Life
   Skills sub-nav only inside the staff guides. Guests (Ian) can use it.
 - `firestore.rules` has the new `coachLog` rule; publish it in the Firebase console or history saves will fail.
+
+## Parents Life Skills (`/parents/lifeskills/`) and the site restructure, added Nov 21, 2026
+- The Life Skills tracker runs in all three sites with each site's bar: students `/lifeskills/`, guides `/guides/lifeskills/`,
+  parents `/parents/lifeskills/`. Same `lifeskills/app.js`; it sends each signed-in person to their own site's copy (a parent
+  who follows an old `/lifeskills/` link lands on `/parents/lifeskills/`), and emailed sign-in links return to the same copy.
+- The student landing page moved from `/` to `/students/`; `/` is now the front door.

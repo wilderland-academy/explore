@@ -128,7 +128,7 @@ function render() {
   const links = SITES.map(([n, p]) => `<a href="${p}" class="${here.startsWith(p) ? "here" : ""}">${n}</a>`).join("");
   if (!user && family) {
     host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${esc((family.email || "?")[0].toUpperCase())}</span><span>Parent</span></button>
-    ${open ? `<div class="menu"><p>Signed in as ${esc(family.email)}, a family account.</p><a href="/lifeskills/">Life Skills tracker</a><a href="/challenges/parents.html">Passing off at home</a><hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
+    ${open ? `<div class="menu"><p>Signed in as ${esc(family.email)}, a family account.</p><a href="/parents/lifeskills/">Life Skills tracker</a><a href="/challenges/parents.html">Passing off at home</a><a href="/parents/">Parents home</a><hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
     return;
   }
   if (!user) {

@@ -1,4 +1,5 @@
-// Field Notes: the parent education series. Three featured books, a short shelf of others from Wilderland's
+// Field Notes: the parent education series. A mixed "Start here" (one book, one podcast, one talk), the questions
+// families ask most (ASKS), a short shelf of books from Wilderland's
 // Inspiration list (https://wilderland.academy/inspiration), and podcasts and talks the team has shared and stands behind
 // (many from Slack #inspiration and #alpha-inspiration). Full entries live in ITEMS; lighter reading lives in READS.
 // Each full entry: why it matters to us, big ideas, where you'll see it at Wilderland (METHODS), where we part ways,
@@ -289,23 +290,41 @@ export const ITEMS = [
     know: { t: "The film leans on the “factory model” story of how schools began, which education historians dispute. Some critics also felt it sold project-based learning without enough doubt.", src: ["Background and critiques on Wikipedia", "https://en.wikipedia.org/wiki/Most_Likely_to_Succeed_(film)"] },
     ask: ["Which student in the film reminded you of your child?", "What would your child build if they had a whole semester?"],
     tryit: "Watch it as a family (older kids) and ask your child what project they'd pick.",
-    link: ["Where to watch", "https://www.whatschoolcouldbe.org/most-likely-to-succeed"] },
-
-  { id: "death-of-recess", theme: "free", kind: "Video", len: "Documentary", t: "The Death of Recess", sub: "Documentary, Angel Studios", by: "Spencer Taylor",
-    why: "A documentary on how school pushed out play, movement and time outdoors, and the schools bringing them back.",
-    ideas: [
-      "Many schools have cut or ended daily recess as testing and schedules took over.",
-      "The film presents research that movement and hands-on learning help memory, emotional health and development.",
-      "It looks at alternatives, including outdoor education models."
-    ],
-    here: [["nature", "A daily nature walk and afternoons mostly outdoors."], ["risk", "Real play, with skills taught first."]],
-    ask: ["How much free time outdoors did you get in a school day? How much does your child get?"],
-    tryit: "Ask your child to show you their favorite spot outside at school, and what they do there.",
-    link: ["Watch on Angel", "https://www.angel.com/watch/death-of-recess"] }
+    link: ["Where to watch", "https://www.whatschoolcouldbe.org/most-likely-to-succeed"] }
 ];
 
-// the three to start with, in order
-export const START = ["10-to-25", "self-driven-child", "free-range-kids"];
+// the three to start with, in order: one to read, one to listen to, one to watch
+export const START = ["10-to-25", "foe-mentor", "lythcott-haims-ted"];
+
+// The questions families ask us most, answered with outside reading. Shown near the top of Field Notes, before the
+// shelf. Each topic keeps at least one piece that pushes back. Keep facts to what each source itself says.
+export const ASK_GROUPS = {
+  rewards: ["Rewards and motivation", "Students earn blazes for their work and can spend them at the Camp Store. Some families worry that rewards crowd out a love of learning. Here's the research that started that worry, and the case Alpha makes for rewards."],
+  screens: ["Screens with a purpose", "In grades 2–8, mornings run on mastery apps on Chromebooks. The case for screens used on purpose, from the school whose model we borrow, and a serious warning about AI that does children's thinking for them."],
+  montessori: ["Montessori", "Montessori is the foundation of our K–1 program. The best evidence on how it works for young children, and a school that, like us, blends Montessori with mastery apps."]
+};
+export const ASKS = [
+  { g: "rewards", t: "Intrinsic Motivation, Extrinsic Motivation and the Process of Learning", src: "Bing Nursery School, Stanford", by: "Christine VanDeVelde Luskin, on a lecture by Mark Lepper", d: "2003", url: "https://bingschool.stanford.edu/news/mark-lepper-intrinsic-motivation-extrinsic-motivation-and-process-learning",
+    why: "The classic research behind the worry. In Lepper's \u201cmagic markers\u201d study, preschoolers who expected an award for drawing later chose to draw about half as much. But Lepper says rewards are neither good nor bad, and offers four questions to ask, including whether a reward feels like a bribe or a bonus." },
+  { g: "rewards", t: "Motivation's Biggest Myth: Why \u201cIntrinsic vs. Extrinsic\u201d Is a Lie", src: "Future of Education", by: "MacKenzie Price, Alpha School co-founder", d: "September 2025", url: "https://futureofeducation.substack.com/p/why-intrinsic-vs-extrinsic-is-a-lie",
+    why: "Alpha's case that rewards can unlock a love of learning rather than replace it, citing newer studies. Price argues rewards work when they're immediate, matter to the child and leave the child some say. She runs the school she's describing." },
+  { g: "rewards", t: "4 (Controversial) Motivation Systems that Actually Work", src: "Alpha School", by: "MacKenzie Price", d: "October 2025", url: "https://alpha.school/?p=8676",
+    why: "How Alpha uses time, privileges, a school currency and game-like progress, and why. Wilderland uses some of this, like blazes and the Camp Store, and not all of it." },
+  { g: "screens", t: "What Happens When Four-Year-Olds Use AI to Learn?", src: "Future of Education podcast", by: "MacKenzie Price with Mallory, who leads Alpha's pre-K program", d: "November 2026 · 36 min", url: "https://podcasts.apple.com/us/podcast/what-happens-when-four-year-olds-use-ai-to-learn/id1673109764?i=1000803122901", go: "Listen ↗",
+    why: "The newest episode. What screen time done on purpose looks like for the youngest learners: which subjects, how long, clear expectations, and why it sits inside a loving room with high standards." },
+  { g: "screens", t: "Not All Screen Time Is Equal", src: "Future of Education", by: "MacKenzie Price", d: "May 2026", url: "https://futureofeducation.substack.com/p/not-all-screen-time-is-equal",
+    why: "Seven things parents get wrong about screens. The core distinction: scrolling social media is one thing, and adaptive learning software that meets a child at their level is another. Avoiding screens entirely, Price argues, doesn't prepare kids for the world they'll work in." },
+  { g: "screens", t: "The Risks of AI in Schools Outweigh the Benefits, Report Says", src: "NPR", d: "January 2026", url: "https://www.npr.org/2026/01/14/nx-s1-5674741/ai-schools-education",
+    why: "The other side, on a Brookings report: when chatbots hand kids answers, kids stop thinking for themselves. Worth reading for the line it draws between chatbots that hand kids answers and mastery apps that check what a child has actually learned." },
+  { g: "montessori", t: "Does AI Belong in a Montessori Classroom?", src: "Future of Education podcast", by: "MacKenzie Price with Anna Smiley, lead guide at Montessorium", d: "July 2026 · 32 min", url: "https://podcasts.apple.com/us/podcast/future-of-education-podcast/id1673109764?i=1000775399596", go: "Listen ↗",
+    why: "Montessorium is the school closest to what we're building in K–1: a real Montessori room where the learning app is one more work on the shelf. The app shows where a child is stuck, and the guide brings out the Montessori lesson for exactly that gap." },
+  { g: "montessori", t: "Guided Play in Pre-K Yields Better Outcomes at a Lower Cost", src: "Brookings", by: "Angeline Lillard & Kathy Hirsh-Pasek", d: "November 2025", url: "https://www.brookings.edu/articles/guided-play-in-pre-k-yields-better-outcomes-at-a-lower-cost-the-promise-of-public-montessori-schools/",
+    why: "The lead researcher explains the first national randomized study of public Montessori (24 schools, 588 children, published in PNAS). By the end of kindergarten, children who won a Montessori spot read better and had stronger memory, self-control and social understanding. Written by the study's own authors." },
+  { g: "montessori", t: "Montessori Preschool Elevates and Equalizes Child Outcomes", src: "Frontiers in Psychology", by: "Angeline Lillard and colleagues", d: "2017", url: "https://www.frontiersin.org/articles/10.3389/fpsyg.2017.01783/full",
+    why: "An earlier lottery study that followed children in two public Montessori schools in Hartford, Connecticut, for three years from age 3. As the title says, Montessori raised outcomes and narrowed the gaps between children." },
+  { g: "montessori", t: "Montessori: The Science Behind the Genius", src: "Book, Oxford University Press", by: "Angeline Lillard", d: "3rd edition, 2017", url: "https://www.montessori-science.org/", go: "About the book ↗",
+    why: "The book to read if you read one. Lillard, a psychologist at the University of Virginia, sets Maria Montessori's ideas beside a century of child-development research, showing where science backs her up and where it's mixed. It won the Cognitive Development Society Book Award." }
+];
 
 // Lighter reading: one card each, linking out. g = which group it shows in.
 export const READS = [

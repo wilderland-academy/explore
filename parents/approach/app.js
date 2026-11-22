@@ -28,7 +28,7 @@ function intro() {
   const s = h("section", { class: "ap-sec ap-intro", id: "top" });
   s.appendChild(h("h1", { html: "Our <span>approach</span>" }));
   s.appendChild(h("p", { class: "lede", text: "You heard the overview at Parent Education Night. This page goes a layer deeper: how our three pillars work together, what guides do and deliberately don't do, what Life Skills challenges really look like, and the research behind it, including where it runs out." }));
-  s.appendChild(h("p", { class: "dim", html: "Need the overview again? Skip to the <a href=\"#refresher\">one-minute refresher</a>. Want to go further? The <a href=\"/families/series/\">Field Notes</a> series walks through the books, podcasts and talks that shaped Wilderland." }));
+  s.appendChild(h("p", { class: "dim", html: "Need the overview again? Skip to the <a href=\"#refresher\">one-minute refresher</a>. Want to go further? The <a href=\"/parents/series/\">Field Notes</a> series walks through the books, podcasts and talks that shaped Wilderland." }));
   return s;
 }
 
@@ -61,7 +61,7 @@ function help() {
     card("", [h("h3", { text: "Four rules for help" }), pairs(D.HELP_RULES)]),
     card("", [h("h3", { text: "Four rules for feedback" }), pairs(D.FEEDBACK_RULES)])
   ]));
-  s.appendChild(card("", [h("p", { html: "These work at home too. Try the <a href=\"/families/#mentor\">Mentor Mindset at home</a>." })]));
+  s.appendChild(card("", [h("p", { html: "These work at home too. Try the <a href=\"/parents/athome/#mentor\">Mentor Mindset at home</a>." })]));
   return s;
 }
 
@@ -75,7 +75,7 @@ function mornings() {
     box.appendChild(h("div", { class: "scroll" }, [h("table", null, [h("thead", null, [h("tr", null, [h("th", { text: "" }), h("th", { text: k1 ? "Grades K–1" : "Grades 2–8" })])]), h("tbody", null, D.TOOLS.map(t => h("tr", null, [h("th", { text: t.area }), h("td", { text: k1 ? t.k1 : t.up })])))])]));
     if (!prof.band) box.appendChild(h("p", { class: "small", text: "Showing grades 2–8. Pick K–1 for the lower campus." }));
   }));
-  s.appendChild(card("", [h("p", { html: "What to do at home, and what to leave to school, is on <a href=\"/families/#week\">your part at home</a>." })]));
+  s.appendChild(card("", [h("p", { html: "What to do at home, and what to leave to school, is on <a href=\"/parents/athome/#week\">your part at home</a>." })]));
   return s;
 }
 
@@ -123,7 +123,7 @@ function words() {
 function refresher() {
   const s = sec("refresher", "The one-minute <span>refresher</span>", "The Parent Education Night overview, condensed.");
   s.appendChild(pairs(D.REFRESHER));
-  s.appendChild(card("", [h("p", { html: "Next: <a href=\"/families/series/\">Field Notes</a>, the books, podcasts and talks behind Wilderland, with big ideas, questions to talk about, and where you'll see each one at school." })]));
+  s.appendChild(card("", [h("p", { html: "Next: <a href=\"/parents/series/\">Field Notes</a>, the books, podcasts and talks behind Wilderland, with big ideas, questions to talk about, and where you'll see each one at school." })]));
   return s;
 }
 

@@ -1,5 +1,5 @@
 /* Wilderland Explore: the shared top bar used on every page under explore.wilderland.academy.
-   Pages link this file in <head> and paste the same .wlbar markup at the top of <body>. */
+   Pages link this file in <head>; /wlnav.js draws the bar (see that file). Same bar, same colors, on every site. */
 @font-face{font-family:"WL Uncut";src:url(/challenges/fonts/uncut-sans-semibold.woff2) format("woff2");font-weight:600;font-display:swap}
 @font-face{font-family:"WL Uncut";src:url(/challenges/fonts/uncut-sans-bold.woff2) format("woff2");font-weight:700;font-display:swap}
 .wlbar{background:#01412f;color:#fff;border-bottom:1px solid rgba(255,255,255,.12);font:600 15px/1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;position:relative;z-index:40}
@@ -8,20 +8,22 @@
 .wlbar .wlbar-in{display:flex;flex-wrap:nowrap;margin:0;align-items:center;gap:6px 18px;min-height:52px;padding:0 20px;max-width:none}
 .wlbar .wlbar-home{padding:0;margin:0;display:flex;align-items:center;flex:none;color:#fff;text-decoration:none;border-radius:6px}
 .wlbar .wlbar-home svg{display:block;height:22px;width:auto}
-.wlbar .wlbar-home .wlbar-mark{display:none}
 .wlbar .wlbar-sites{display:flex;flex-wrap:nowrap;align-items:center;gap:2px;margin:0 0 0 8px;padding:0;background:none;border:0;position:static;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .wlbar .wlbar-sites::-webkit-scrollbar{display:none}
 .wlbar .wlbar-sites a{display:inline-flex;margin:0;border:0;box-shadow:none;font-weight:600;font-size:15px;line-height:1;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;color:rgba(255,255,255,.8);text-decoration:none;white-space:nowrap}
 .wlbar .wlbar-sites a:hover{color:#fff;background:rgba(255,255,255,.08)}
 .wlbar .wlbar-sites a[aria-current="page"]{color:#0b2b20;background:#d5f367}
+/* Links that leave Explore (Basecamp): set apart by a thin rule, with an arrow. */
+.wlbar .wlbar-sites a.wlbar-ext{gap:5px;margin-left:8px;position:relative;color:rgba(255,255,255,.72)}
+.wlbar .wlbar-sites a.wlbar-ext::before{content:"";position:absolute;left:-6px;top:9px;bottom:9px;border-left:1px solid rgba(255,255,255,.25)}
+.wlbar .wlbar-out{width:11px;height:11px;flex:none;opacity:.85}
 .wlbar .wlbar-auth{margin-left:auto;display:flex;align-items:center;flex:none}
 .wlbar a:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 /* The site's own name in its header, the same on every site. */
 .wl-title{font:700 22px/1.1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;letter-spacing:-.02em;color:#fff;text-decoration:none;white-space:nowrap}
 @media (max-width:640px){
   .wlbar .wlbar-in{padding:0 12px;gap:4px 8px;min-height:48px}
-  .wlbar .wlbar-home .wlbar-full{display:none}
-  .wlbar .wlbar-home .wlbar-mark{display:block;height:18px}
+  .wlbar .wlbar-home svg{height:18px}
   .wlbar .wlbar-sites{margin-left:0;gap:0}
   .wlbar .wlbar-sites a{padding:0 9px;font-size:14px;min-height:34px}
   .wl-title{font-size:19px}
@@ -42,17 +44,3 @@ body[data-gated].wl-pending .wl-wait{display:block}
 .wl-gate small{display:block;margin-top:14px;color:#7f978b;font-size:13px}
 .wl-wait{text-align:center;color:#a9bbb0;padding:60px 20px;font:400 15px Inter,system-ui,sans-serif}
 
-/* Staff guide menu, inside the dark top bar on every staff page: /guides/ (hub), /fieldguide/, /behavior/ and
-   /guides/parents/. Same markup on each page, current page marked aria-current. On narrow screens it scrolls
-   sideways and the long words (class "lg") drop. */
-.wlbar .wlguides{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:3px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.wlbar .wlguides::-webkit-scrollbar{display:none}
-.wlbar .wlguides a{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 14px 0 11px;border-radius:999px;color:rgba(255,255,255,.78);text-decoration:none;font-weight:600;font-size:15px;white-space:nowrap;flex:none}
-.wlbar .wlguides a:hover{color:#fff;background:rgba(255,255,255,.08)}
-.wlbar .wlguides svg{width:18px;height:12px;flex:none}
-.wlbar .wlguides a[aria-current=page]{background:#fff;color:#102a46}
-.wlbar .wlguides a.mm[aria-current=page]{background:#d5f367;color:#0b2b20}
-.wlbar .wlguides a.pc[aria-current=page]{background:#f6e4ec;color:#5c1636}
-.wlbar .wlguides small{font:700 10px/1 Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
-@media (max-width:1020px){.wlbar .wlguides a{padding:0 11px 0 9px;font-size:14px;gap:6px}.wlbar .wlguides .lg{display:none}}
-@media (max-width:640px){.wlbar .wlguides{margin-left:0}.wlbar .wlguides a{padding:0 9px;font-size:13.5px;gap:5px}.wlbar .wlguides small,.wlbar .wlguides svg{display:none}}
