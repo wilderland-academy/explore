@@ -18,7 +18,10 @@
     try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* keep in memory */ }
   }
 
-  var state = { band: load('wl-band', '5–8'), skill: null, sub: null, q: '', f: { home: false, epic: false, lab: false, any: false } };
+  // Every visit starts on the visitor's own band (a guide's band, a parent's child's, a student's own; admins 5–8),
+  // from /wlnav.js. A band picked on this page holds until they leave it.
+  var state = { band: window.wlBand ? window.wlBand() : '5–8', skill: null, sub: null, q: '', f: { home: false, epic: false, lab: false, any: false } };
+  var bandPicked = false;
   if (['K–1', '2–4', '5–8'].indexOf(state.band) < 0) state.band = '5–8';
   var picks = load('wl-picks', []).filter(function (id) { return BYID[id]; });
   // A signed-in student (band from their Life Skills tracker record, via /auth.js) always starts in their own grade band
@@ -559,7 +562,7 @@
     }
     if (t.dataset.band) {
       if (!bandOpen(t.dataset.band)) return;
-      state.band = t.dataset.band; save('wl-band', state.band);
+      state.band = t.dataset.band; save('wl-band', state.band); bandPicked = true;
       if (state.skill && state.sub && !S[state.skill]) state.sub = null;
       state.sub = null; renderAll(); return;
     }
@@ -655,6 +658,12 @@
   // The role remembered on this device draws the right band at once; the signed-in account confirms it.
   try { var rc = JSON.parse(localStorage.getItem('wl-role') || 'null'); if (rc && rc.r === 'student') setLock(rc.b); } catch (e) {}
   document.addEventListener('wl-role', function (e) {
+    // Guides and parents: once the account confirms its band, start there (unless they've already picked one).
+    if (!lockFrom(e.detail) && !locked && !bandPicked && window.wlBand && window.wlBand() !== state.band) {
+      state.band = window.wlBand(); state.sub = null;
+      if (state.skill && !window.matchMedia('(max-width:820px)').matches) state.sub = (structure()[state.skill].subs[0] || null);
+      renderAll(); return;
+    }
     if (!setLock(lockFrom(e.detail))) return;
     // Keep an open challenge open (a link straight to it, say) if it's still in the student's bands: refresh it in
     // place rather than closing and reopening it.

@@ -13,10 +13,16 @@ const pairs = (rows, cls) => h("div", { class: cls || "ap-pairs" }, rows.map(r =
 
 const store = { get(k, d) { try { const v = localStorage.getItem("wl-family-" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem("wl-family-" + k, JSON.stringify(v)); } catch (e) { } } };
 let prof = store.get("prof", { band: "", sched: "" });
+// Every visit starts on the family's own child's band (from the parent's account via /wlnav.js; the youngest child if
+// they have several), or on every band for staff and visitors. A band picked here holds until the page is left.
+const roleBand = () => ({ "K–1": "k1", "2–4": "g24", "5–8": "g58" })[window.wlBand ? window.wlBand({ all: true }) : "All"] || "";
+let bandPicked = false;
+prof.band = roleBand();
+document.addEventListener("wl-role", () => { if (!bandPicked && roleBand() !== prof.band) { prof.band = roleBand(); redraws.forEach(f => f()); } });
 const bandKey = () => prof.band === "k1" ? "K–1" : prof.band === "g24" ? "2–4" : prof.band === "g58" ? "5–8" : "";
 const redraws = [];
 function bandChips() {
-  return h("div", { class: "chips", role: "group", "aria-label": "Your child's grades" }, Object.entries(D.BANDS).map(([k, v]) => h("button", { class: "chip", "aria-pressed": String(prof.band === k), text: v, onclick: () => { prof.band = prof.band === k ? "" : k; store.set("prof", prof); redraws.forEach(f => f()); } })));
+  return h("div", { class: "chips", role: "group", "aria-label": "Your child's grades" }, Object.entries(D.BANDS).map(([k, v]) => h("button", { class: "chip", "aria-pressed": String(prof.band === k), text: v, onclick: () => { prof.band = prof.band === k ? "" : k; bandPicked = true; store.set("prof", prof); redraws.forEach(f => f()); } })));
 }
 // a block that re-renders itself when the band changes
 function live(render) { const box = h("div", { class: "ap-live" }); const f = () => { box.innerHTML = ""; render(box); }; redraws.push(f); f(); return box; }

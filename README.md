@@ -255,3 +255,26 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   tap what it's like themselves. "I loved it" keeps it on their shelf under "From outside the Stacks" (`ext` in `lantern-stacks`).
 - **Deploy:** paste `relay/worker.js` into the Worker; create the KV namespace, add the two keys, bind it as `DOCS`; publish
   `firestore.rules` (adds `guide` to coachLog sites) and `storage.rules` (adds `staff/`).
+
+## Test accounts, band defaults, Labs and Validate, added Nov 22, 2026
+- **Test view (testers only).** Alex, Shanan, Sarah, Courtney and Ian (all three of his addresses) get a 🧪 **Test view** button in
+  the top bar. It switches this device to the **test guide**, **test student** or **test parent**, in a band you pick; a yellow strip
+  says so on every page, with "Back to my account". The three are linked: `lsStudents/test-student` (guide
+  `test.guide@wilderland.academy`, parent `test.parent@example.com`), its `lsBoard` copy and `lsParents/test.parent@example.com`,
+  all with `test: true`. `/auth.js` makes them the first time someone switches. Every page leaves `test` records out for everyone
+  else (tracker, roster, crew boards, alert badge, Labs added in a test view), and a test view sees only test records, so nothing
+  real changes: real Labs are read-only there. The test student's saved things live in `testStudents/{uid}/sites/{site}`; their AI
+  Coach chats go through the relay with `as: "student"` and are marked `test` (never posted to Slack). The lists of testers are in
+  `/wlnav.js` (pages), `relay/worker.js` and `firestore.rules` (`tester()`); keep them in step. Shared staff tools (Behavior, Field
+  Guide) are still the real ones in the test guide view.
+- **Bands.** Every K–1 / 2–4 / 5–8 choice starts on the visitor's band: guides from `STAFF_BANDS` in `/wlnav.js` (Chelse and Jessica
+  K–1, Shanan and April 2–4, Scott and Sarah 5–8), students from their tracker record, parents from their children (the youngest
+  first, via `lsParents`). Admins and guests without a band start on All where a page has it, otherwise 5–8. Pages read it with
+  `window.wlBand({ all: true })`; a band picked on a page holds until the visitor leaves it.
+- **Labs.** In Guides › Life Skills, **Labs** holds the schedule and the Lab builder (tabs at the top of each). The month shows
+  school days only (Monday to Friday); a Lab over several days is one bar with its name once, breaking only at a weekend. Labs
+  can't start or end on a Saturday or Sunday. A Lab can introduce challenges that aren't on the map (`lab.custom`, ids `LB-…`).
+- **Validate** (was Log): one student, or **a group, one challenge**, for the end of a Lab: pick the challenge (the Labs of the last
+  two weeks are one tap, and search includes Lab challenges), tap the students who passed (or "Everyone shown passed"), mark any
+  not yets, save once. Entries for Lab challenges carry `ct` (title) and `k` (life skill), and the crew board copy carries `t` and
+  `k`, so students and families see them by name. Old `#log` links still open Validate.

@@ -15,12 +15,18 @@ const ext = (text, href) => h("a", { href, target: "_blank", rel: "noopener", te
 /* ---------- saved in this browser only ---------- */
 const store = { get(k, d) { try { const v = localStorage.getItem("wl-family-" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem("wl-family-" + k, JSON.stringify(v)); } catch (e) { } } };
 let prof = store.get("prof", { band: "", sched: "" });
+// Every visit starts on the family's own child's band (from the parent's account via /wlnav.js; the youngest child if
+// they have several), or on every band for staff and visitors. A band picked here holds until the page is left.
+const roleBand = () => ({ "K–1": "k1", "2–4": "g24", "5–8": "g58" })[window.wlBand ? window.wlBand({ all: true }) : "All"] || "";
+let bandPicked = false;
+prof.band = roleBand();
+document.addEventListener("wl-role", () => { if (!bandPicked && roleBand() !== prof.band) { prof.band = roleBand(); route(); } });
 const isUp = () => prof.band === "g24" || prof.band === "g58";
 
 // Grade band and schedule picker. Re-renders the current view on change.
 function picker(compact) {
   const wrap = h("div", { class: compact ? "showing" : "prof" });
-  const group = (key, opts) => h("div", { class: "chips", role: "group" }, Object.entries(opts).map(([k, v]) => h("button", { class: "chip", "aria-pressed": String(prof[key] === k), text: v, onclick: () => { prof[key] = prof[key] === k ? "" : k; store.set("prof", prof); route(); } })));
+  const group = (key, opts) => h("div", { class: "chips", role: "group" }, Object.entries(opts).map(([k, v]) => h("button", { class: "chip", "aria-pressed": String(prof[key] === k), text: v, onclick: () => { prof[key] = prof[key] === k ? "" : k; bandPicked = true; store.set("prof", prof); route(); } })));
   if (compact) {
     if (!prof.band) { wrap.append(h("span", { text: "Pick your child's grades to see just what applies:" }), group("band", D.BANDS)); return wrap; }
     wrap.append(h("span", { text: "Showing" }), h("b", { text: D.BANDS[prof.band] + (prof.sched ? ", " + D.SCHED[prof.sched].toLowerCase() : "") }), h("a", { href: "#home", text: "change" }));
@@ -65,7 +71,7 @@ VIEWS.home = sec => {
 VIEWS.week = sec => {
   head(sec, "Your <span>part</span> at home", "Short, daily, predictable practice beats long, occasional sessions. Pick your child's grades and schedule to see what home covers, what school covers, and a week that works.");
   const pick = h("div", { class: "prof" });
-  const grp = (key, opts) => h("div", { class: "chips", role: "group" }, Object.entries(opts).map(([k, v]) => h("button", { class: "chip", "aria-pressed": String(prof[key] === k), text: v, onclick: () => { prof[key] = prof[key] === k ? "" : k; store.set("prof", prof); route(); } })));
+  const grp = (key, opts) => h("div", { class: "chips", role: "group" }, Object.entries(opts).map(([k, v]) => h("button", { class: "chip", "aria-pressed": String(prof[key] === k), text: v, onclick: () => { prof[key] = prof[key] === k ? "" : k; bandPicked = true; store.set("prof", prof); route(); } })));
   pick.append(h("b", { text: "Grades" }), grp("band", D.BANDS), h("b", { text: "Schedule" }), grp("sched", D.SCHED), h("p", { class: "small", text: "Saved on this device only." }));
   sec.appendChild(pick);
   if (!prof.band || !prof.sched) { sec.appendChild(card("", [h("p", { text: !prof.band && !prof.sched ? "Choose your child's grades and whether they attend full time or part time. The routine is different for each." : !prof.band ? "Now choose your child's grades." : "Now choose full time or part time. Home looks different for each." })])); return; }

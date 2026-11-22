@@ -96,18 +96,23 @@ const firstName = n => String(n || "").trim().split(/\s+/)[0] || "";
 const chLink = id => window.WLChallenge ? window.WLChallenge.link(id, (CH[id] || {}).t || id) : esc((CH[id] || {}).t || id);
 
 // ---------- state ----------
-const S = { cf: "all", me: "", admin: false, alerts: [], chats: [], people: {}, ls: [], myBands: [], band: "All", q: "", showDone: false, books: null, loaded: false, flash: "" };
+const S = { test: null, cf: "all", me: "", admin: false, alerts: [], chats: [], people: {}, ls: [], myBands: [], band: "All", q: "", showDone: false, books: null, loaded: false, flash: "" };
 const key = e => String(e || "").toLowerCase();
+// Admins turn on the academics pilot; in a test view, the test guide can too (for the test student only).
+const canPilot = () => S.admin || !!S.test;
 // Students without a school email (K–1) are keyed by their tracker record id.
 const pkey = s => s.email ? key(s.email) : "sid:" + s.id;
 function person(email) {
   const k = key(email);
   return S.people[k] || (S.people[k] = { email: k, name: "", band: "", guide: "", uid: "", sid: "", grade: "", parents: [], school: "", picks: [], sparks: [], saved: [], want: [], chats: [], alerts: [], coach: null });
 }
+// A tester's test view (the test guide) sees only the test accounts; everyone else never sees them.
+const testWhere = { fieldFilter: { field: { fieldPath: "test" }, op: "EQUAL", value: { booleanValue: true } } };
+const fetchAll = c => S.test ? runQuery({ from: [{ collectionId: c }], where: testWhere }) : list(c).then(xs => xs.filter(x => !x.test));
 async function loadAll() {
   const [alerts, chats, ls, ai, sites] = await Promise.all([
-    list("aiAlerts"), list("aiChats"), list("lsStudents"), list("aiStudents"),
-    runQuery({ from: [{ collectionId: "sites", allDescendants: true }] }).catch(() => [])
+    fetchAll("aiAlerts"), fetchAll("aiChats"), fetchAll("lsStudents"), fetchAll("aiStudents"),
+    runQuery({ from: [{ collectionId: "sites", allDescendants: true }], ...(S.test ? { where: testWhere } : {}) }).then(xs => xs.filter(x => !!x.test === !!S.test)).catch(() => [])
   ]);
   S.people = {};
   S.ls = ls;
@@ -129,14 +134,15 @@ async function loadAll() {
   S.myBands = [...new Set(ls.filter(s => String(s.guide || "").toLowerCase().split(/[\s,;]+/).includes(S.me)).map(s => s.band).filter(Boolean))];
   S.loaded = true;
   badge();
-  syncParents().catch(e => console.warn("Roster: couldn't update parent access", e));
+  if (!S.test) syncParents().catch(e => console.warn("Roster: couldn't update parent access", e));
 }
 // lsParents/{email}: one record per linked parent, so the Labs schedule (and its files) can check a parent is linked
 // without reading every student. Rebuilt from the student records; only what differs is written.
 async function syncParents() {
   const want = {};
   S.ls.forEach(s => (s.parents || []).forEach(e => { e = key(e); const w = want[e] || (want[e] = { email: e, children: [], bands: [] }); w.children.push(s.id); if (s.band && !w.bands.includes(s.band)) w.bands.push(s.band); }));
-  const have = Object.fromEntries((await list("lsParents")).map(d => [d.id, d]));
+  // The test parent's record is kept by /auth.js, not here.
+  const have = Object.fromEntries((await list("lsParents")).filter(d => !d.test).map(d => [d.id, d]));
   const same = (a, b) => JSON.stringify((a || []).slice().sort()) === JSON.stringify((b || []).slice().sort());
   const ws = [];
   Object.values(want).forEach(w => { const h = have[w.email]; if (!h || !same(h.children, w.children) || !same(h.bands, w.bands)) ws.push({ set: "lsParents/" + w.email, data: { ...w, updated: Date.now() } }); });
@@ -179,7 +185,7 @@ function alertCard(a) {
     ${a.quote ? `<p class="quote">“${esc(a.quote)}”</p>` : ""}
     ${pr && !done ? `<div class="protocol"><b>What to do now</b><ol>${pr.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
     ${done ? `<p class="meta">Reviewed by ${esc(a.reviewedBy || "")} ${esc(when(a.reviewedAt))}${a.note ? ": " + esc(a.note) : ""}</p>` : ""}
-    ${a.category === "academic_interest" && S.admin ? (() => { const p = S.people[key(a.email)] || {}; return p.sid ? (p.academic ? `<p class="meta">Academics pilot is on for this student.</p>` : `<div class="row"><button class="btn" type="button" data-unlock="${esc(p.sid)}">Turn on the academics pilot</button></div>`) : ""; })() : ""}
+    ${a.category === "academic_interest" && canPilot() ? (() => { const p = S.people[key(a.email)] || {}; return p.sid ? (p.academic ? `<p class="meta">Academics pilot is on for this student.</p>` : `<div class="row"><button class="btn" type="button" data-unlock="${esc(p.sid)}">Turn on the academics pilot</button></div>`) : ""; })() : ""}
     <div class="row">${a.chatId ? `<a class="btn ghost" href="#c=${esc(a.chatId)}">Read the conversation</a>` : ""}${done ? "" : `<button class="btn" type="button" data-review="${esc(a.id)}">Mark reviewed</button>`}</div>
     ${done ? "" : `<div hidden data-note-for="${esc(a.id)}"><label class="small" for="n-${esc(a.id)}">What did you do? (saved with the alert)</label><textarea class="note" id="n-${esc(a.id)}" maxlength="500"></textarea><div class="row" style="margin-top:6px"><button class="btn" type="button" data-save-review="${esc(a.id)}">Save as reviewed</button></div></div>`}
   </article>`;
@@ -228,7 +234,7 @@ function vEdit(sid, preEmail) {
       <div class="grid2"><label>Student's school email <span class="hint">(lets them sign in; optional for K–1)</span><input class="in" name="email" type="email" value="${esc(v.email || "")}" placeholder="maya@wilderland.academy"></label>
       <label>Field Guides <span class="hint">(school emails, separated by commas)</span><input class="in" name="guide" value="${esc(v.guide || "")}" placeholder="april@wilderland.academy, shanan@wilderland.academy"></label></div>
       <label>Parent emails <span class="hint">(one per line, up to 6)</span><textarea class="in" name="parents" rows="3" placeholder="one email per line">${esc((v.parents || []).join("\n"))}</textarea></label>
-      <label class="chk"><input type="checkbox" name="coachAcademic"${v.coachAcademic === true ? " checked" : ""}${S.admin ? "" : " disabled"}> Academics coach pilot <span class="hint">(lets this student use the AI Coach for hint-only help with academics; every academics chat is flagged in Slack #alerts${S.admin ? "" : ". Only admins can change this"})</span></label>
+      <label class="chk"><input type="checkbox" name="coachAcademic"${v.coachAcademic === true ? " checked" : ""}${canPilot() ? "" : " disabled"}> Academics coach pilot <span class="hint">(lets this student use the AI Coach for hint-only help with academics; every academics chat is flagged in Slack #alerts${S.admin ? "" : ". Only admins can change this"})</span></label>
       <div class="row"><button class="btn" type="submit">${s ? "Save" : "Add student"}</button><a class="btn ghost" href="${s ? "#s=" + encodeURIComponent(pkey(s)) : "#roster"}">Cancel</a>${s && S.admin ? `<button class="btn danger" type="button" data-del="${esc(s.id)}" style="margin-left:auto">Delete student</button>` : ""}</div>
       <p class="note" id="stu-note" aria-live="polite"></p>
     </form>` + (s ? "" : importPanel());
@@ -245,12 +251,12 @@ async function saveStudent(form) {
   if (parents.length > 6) return say("Up to 6 parent emails per student.");
   if (email && S.ls.some(x => x.email === email && x.id !== sid)) return say("Another student already has that email.");
   const data = { name, band: String(fd.get("band")), grade: String(fd.get("grade") || "").trim(), email, guide, parents, updated: Date.now(), updatedBy: S.me };
-  if (S.admin) data.coachAcademic = fd.get("coachAcademic") === "on";
+  if (canPilot()) data.coachAcademic = fd.get("coachAcademic") === "on";
   const id = sid || newId();
   form.querySelector("[type=submit]").disabled = true; note.className = "note"; note.textContent = "Saving…";
   try {
     if (s) await commit([{ set: "lsStudents/" + id, data, merge: true }, { set: "lsBoard/" + id, data: { name: shortName(name), band: data.band, updated: Date.now() }, merge: true }]);
-    else await commit([{ set: "lsStudents/" + id, data: { ...data, celebrated: 0, created: Date.now() }, create: true }, { set: "lsBoard/" + id, data: { name: shortName(name), band: data.band, working: [], passed: [], credits: 0, updated: Date.now() } }]);
+    else await commit([{ set: "lsStudents/" + id, data: { ...data, celebrated: 0, created: Date.now(), ...(S.test ? { test: true } : {}) }, create: true }, { set: "lsBoard/" + id, data: { name: shortName(name), band: data.band, working: [], passed: [], credits: 0, updated: Date.now(), ...(S.test ? { test: true } : {}) } }]);
     S.flash = s ? `Saved ${firstName(name)}.` : `Added ${firstName(name)}.`;
     await loadAll(); location.hash = "#s=" + encodeURIComponent(email || "sid:" + id);
   } catch (e) { form.querySelector("[type=submit]").disabled = false; say(e.message); }
@@ -325,7 +331,7 @@ async function runImport(btn) {
       const data = { name: x.ex ? x.ex.name : x.name, band: x.band, grade: x.grade, email: x.email, parents: x.parents, updated: Date.now(), updatedBy: S.me };
       if (x.guide !== null) data.guide = x.guide;
       if (x.ex) ws.push({ set: "lsStudents/" + id, data, merge: true }, { set: "lsBoard/" + id, data: { name: shortName(data.name), band: data.band, updated: Date.now() }, merge: true });
-      else ws.push({ set: "lsStudents/" + id, data: { guide: "", ...data, celebrated: 0, created: Date.now() }, create: true }, { set: "lsBoard/" + id, data: { name: shortName(data.name), band: data.band, working: [], passed: [], credits: 0, updated: Date.now() } });
+      else ws.push({ set: "lsStudents/" + id, data: { guide: "", ...data, celebrated: 0, created: Date.now(), ...(S.test ? { test: true } : {}) }, create: true }, { set: "lsBoard/" + id, data: { name: shortName(data.name), band: data.band, working: [], passed: [], credits: 0, updated: Date.now(), ...(S.test ? { test: true } : {}) } });
     });
     await commit(ws);
     S.flash = `Imported ${importPlan.length} students.`; importPlan = []; await loadAll(); location.hash = "#roster"; route();
@@ -401,7 +407,10 @@ async function start(r) {
   const app = $("#app"), u = window.wlFirebase && window.wlFirebase.auth.currentUser;
   if (!u) { app.innerHTML = head("Student Roster") + `<p class="empty">Sign in with your Wilderland staff account. <button class="btn" type="button" data-wl-signin>Sign in</button></p>`; return; }
   if (!r || r.role !== "staff" || !String(r.email || u.email).toLowerCase().endsWith("@wilderland.academy")) { app.innerHTML = head("Student Roster") + `<p class="empty">This page is for Wilderland staff.</p>`; return; }
-  S.me = key(u.email); S.admin = ADMINS.includes(S.me);
+  // In a test view this page is the test guide's (r.email is the test guide's address).
+  S.test = r.test || null; S.me = key(S.test ? r.email : u.email); S.admin = !S.test && ADMINS.includes(S.me);
+  // Start on this guide's own band (All for admins without one).
+  if (!S.bandSet && window.wlBand) { S.band = window.wlBand({ all: true }); S.bandSet = true; }
   try { await loadAll(); }
   catch (e) { app.innerHTML = head("Student Roster") + `<p class="empty">${e.status === 403 ? "The database rules for the AI Coach aren't published yet, or your account isn't on the staff list. Tell Alex." : "Couldn't load. Check your connection and reload."}</p>`; return; }
   route();

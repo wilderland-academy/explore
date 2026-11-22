@@ -21,7 +21,13 @@ let db, user = null, relay = "", RULES = "", log = null, seq = 0, ctl = null;
 const W = window.WL || { skills: [], comps: {}, ch: [] };
 const skillBy = Object.fromEntries(W.skills.map(s => [s.k, s]));
 const byComp = {}; for (const c of W.ch) (byComp[c.c] ||= []).push(c);
-const st = { way: null, skill: null, sub: null, comp: null, idea: "", matches: null, ch: null, chAct: null, type: null, band: null, time: "", notes: "", plan: "", q: "", qBand: "", epic: null, eBand: "" };
+// Band choices start on the guide's own band (from /wlnav.js; admins 5–8, or All where a list has it). Choosing an
+// existing challenge or an idea still moves the band to fit it, until the guide picks a band themselves.
+const myB = () => window.wlBand ? window.wlBand() : "5–8";
+const myAll = () => { const b = window.wlBand ? window.wlBand({ all: true }) : "All"; return b === "All" ? "" : b; };
+const st = { way: null, skill: null, sub: null, comp: null, idea: "", matches: null, ch: null, chAct: null, type: null, band: myB(), bandPicked: false, time: "", notes: "", plan: "", q: "", qBand: myAll(), epic: null, eBand: myAll() };
+// The account's band may arrive after the page has started (first visit on this device).
+document.addEventListener("wl-role", () => { if (!st.bandPicked && !st.way) { st.band = myB(); st.qBand = myAll(); st.eBand = myAll(); } });
 const epicBy = Object.fromEntries(EPICS.map(e => [e.id, e]));
 let turns = [], lastDraft = "", threadId = null, busy = false, status = "", stop = "", recentCache = null;
 const save = autosaver(() => log, () => { status = "Couldn't save this draft to your history. Copy it before you leave."; drawOut(); });
@@ -156,7 +162,7 @@ async function matchIdea(btn, note) {
     const j = JSON.parse((r.text.match(/\{[\s\S]*\}/) || ["{}"])[0]);
     st.matches = (j.matches || []).filter(m => W.comps[m.id]).slice(0, 3);
     if (TYPES.includes(j.type) && !st.type) st.type = j.type;
-    if (BANDS.includes(j.band) && !st.band) st.band = j.band;
+    if (BANDS.includes(j.band) && !st.bandPicked) st.band = j.band;
     draw();
     const n = $("#ideaNote"); if (n) n.textContent = st.matches.length ? (j.note || "Pick the one that fits what you want kids to get better at.") : "No clear match. Try describing what the kids would actually do.";
   } catch (e) { btn.disabled = false; note.textContent = e instanceof SyntaxError ? "The match came back unreadable. Try again." : errCopy(e); }
@@ -172,7 +178,7 @@ function existingPanel() {
     let list = W.ch.filter(c => (!st.qBand || c.b === st.qBand) && words.every(w => (c.t + " " + compLabel(c.c)).toLowerCase().includes(w)));
     if (st.ch) list = [st.ch, ...list.filter(c => c !== st.ch)];
     results.replaceChildren(el("p", { class: "note", text: `${list.length} challenge${list.length === 1 ? "" : "s"}${list.length > 25 ? ", showing 25. Search to narrow it down." : ""}` }),
-      ...list.slice(0, 25).map(c => el("button", { class: "r", type: "button", "aria-pressed": String(st.ch === c), onclick: () => { st.ch = c; st.comp = c.c; if (!st.band) st.band = c.b; draw(); } }, el("span", { class: "t", text: c.t }), el("span", { class: "cn", text: `${c.b} · ${c.z}${c.lab ? " · Lab" : ""}` }), el("span", { class: "s", text: compLabel(c.c) }))));
+      ...list.slice(0, 25).map(c => el("button", { class: "r", type: "button", "aria-pressed": String(st.ch === c), onclick: () => { st.ch = c; st.comp = c.c; if (!st.bandPicked) st.band = c.b; draw(); } }, el("span", { class: "t", text: c.t }), el("span", { class: "cn", text: `${c.b} · ${c.z}${c.lab ? " · Lab" : ""}` }), el("span", { class: "s", text: compLabel(c.c) }))));
   };
   q.addEventListener("input", render); band.addEventListener("change", render); render();
   const p = el("div", { class: "panel" }, el("div", { class: "grid2x" }, el("div", { class: "field" }, el("label", { class: "lbl", for: "chq", text: "Search challenges" }), q), el("div", { class: "field" }, el("label", { class: "lbl", for: "chb", text: "Age band" }), band)), results);
@@ -190,7 +196,7 @@ function step2() {
   else p.append(el("p", {}, el("b", { text: "Skill: " }), compLabel(st.comp), st.ch ? el("span", {}, el("br"), el("b", { text: "From: " }), el("a", { class: "wl-ch", href: "/guides/challenges/#c=" + st.ch.id, "data-wl-ch": st.ch.id, text: st.ch.t })) : null));
   if (st.way === "epic") p.append(el("p", { class: "note", text: "Change the band, the time or the notes to fit your crew (number of kids, adults you can count on, budget, season). The builder keeps the feat and the high bar unless you tell it otherwise." }));
   if (st.way !== "review" && st.way !== "existing" && st.way !== "epic") p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: "What are we making?" }), el("div", { class: "chips" }, TYPES.map(t => chip(t, st.type === t, () => { st.type = t; draw(); }, { disabled: t === "Project" && st.band === "K–1" ? true : null })))));
-  p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: st.way === "review" ? "Age band (optional)" : "Age band" }), el("div", { class: "chips" }, BANDS.map(b => chip(b, st.band === b, () => { st.band = b; if (b === "K–1" && st.type === "Project") st.type = "Skill Lab"; draw(); })))));
+  p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: st.way === "review" ? "Age band (optional)" : "Age band" }), el("div", { class: "chips" }, BANDS.map(b => chip(b, st.band === b, () => { st.band = b; st.bandPicked = true; if (b === "K–1" && st.type === "Project") st.type = "Skill Lab"; draw(); })))));
   const n = [];
   if (st.band === "K–1" && st.type === "Challenge" && st.way !== "review") n.push(el("div", { class: "box warn", text: "K–1 students don't run Challenges on their own. The builder will make it guide-led (the guide runs it, each child shows the skill alone), or switch to a Skill Lab." }));
   if (st.band === "2–4" && st.type === "Project") n.push(el("div", { class: "box warn", text: "Projects for 2–4 are by exception: the student asks, and the guide and a parent agree. Otherwise a Challenge or Lab builds the skills first." }));
@@ -348,6 +354,6 @@ function recent() {
   return sec;
 }
 function restart() {
-  Object.assign(st, { way: null, skill: null, sub: null, comp: null, idea: "", matches: null, ch: null, chAct: null, type: null, band: null, time: "", notes: "", plan: "", q: "", qBand: "", epic: null, eBand: "" });
+  Object.assign(st, { way: null, skill: null, sub: null, comp: null, idea: "", matches: null, ch: null, chAct: null, type: null, band: myB(), bandPicked: false, time: "", notes: "", plan: "", q: "", qBand: myAll(), epic: null, eBand: myAll() });
   turns = []; lastDraft = ""; threadId = null; status = ""; stop = ""; draw(); scrollTo({ top: 0, behavior: "smooth" });
 }

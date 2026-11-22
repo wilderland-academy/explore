@@ -119,10 +119,12 @@ async function load(r) {
   try {
     const q = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" },
       body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "aiChats" }], where: { fieldFilter: { field: { fieldPath: "uid" }, op: "EQUAL", value: { stringValue: u.uid } } }, limit: 200 } }) });
+    // A tester sees only the chats for the view they're in (the test student's, or their own staff tries).
+    const isTest = !!(r && r.test);
     if (my !== seq) return;
     if (!q.ok) throw new Error(q.status);
     const chats = (await q.json()).filter(x => x.document).map(x => ({ id: x.document.name.split("/").pop(), ...Object.fromEntries(Object.entries(x.document.fields || {}).map(([k, v]) => [k, val(v)])) }))
-      .sort((a, b) => (b.updated || 0) - (a.updated || 0));
+      .filter(c => !!c.test === isTest).sort((a, b) => (b.updated || 0) - (a.updated || 0));
     const staffNote = r && r.role === "staff" ? '<p class="small" style="margin-bottom:10px">You are staff, so these are your own test chats. Every student conversation is on <a href="/guides/roster/">Guides › Student Roster</a>.</p>' : "";
     box.innerHTML = staffNote + (chats.length ? '<ul class="chats">' + chats.map(c => `<li><button type="button" data-chat="${c.id}"><span class="ic" aria-hidden="true">${{ project: "P", "find-project": "P", lesson: "?", academic: "A", conflict: "🤝", "find-challenge": "C" }[c.kind] || "C"}</span><span class="tx"><span class="tt">${esc(c.topicTitle || ({ lesson: "How to use your coach", academic: "Academics", conflict: "Working out a conflict", "find-challenge": "Finding a challenge", "find-project": "Finding a project" }[c.kind] || "Chat"))}</span><span class="ls">You: ${esc(c.last || "")}</span></span><span class="dt">${esc(when(c.updated || c.created || Date.now()))}</span></button></li>`).join("") + "</ul>"
       : '<p class="empty">No chats yet. Start with the lesson above, or open a challenge and tap Ask the AI Coach.</p>');
@@ -150,7 +152,9 @@ async function pilot(r) {
   if (!u || !r || r.role !== "student") return;
   try {
     const q = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" },
-      body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "lsStudents" }], where: { fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: String(u.email || "").toLowerCase() } } }, limit: 2 } }) });
+      body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "lsStudents" }], where: r.test
+        ? { compositeFilter: { op: "AND", filters: [{ fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: r.email } } }, { fieldFilter: { field: { fieldPath: "test" }, op: "EQUAL", value: { booleanValue: true } } }] } }
+        : { fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: String(u.email || "").toLowerCase() } } }, limit: 2 } }) });
     const rows = (await q.json()).filter(x => x.document);
     const on = rows.length === 1 && rows[0].document.fields.coachAcademic && rows[0].document.fields.coachAcademic.booleanValue === true;
     if (!on) return;

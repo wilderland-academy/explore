@@ -201,12 +201,14 @@ async function loadTownHall(){
       ${x.note?`<div class="note"><b>Guides:</b> ${esc(x.note)}</div>`:""}${x.outcome?`<div class="note"><b>Decided:</b> ${esc(x.outcome)}</div>`:""}</li>`).join(""):`<li class="hint">You haven't sent any yet.</li>`;
   }catch(e){console.warn(e);$("#thMine").innerHTML=`<li class="hint">Couldn't load your items${e.code==="permission-denied"?" (the database rules for Town Hall aren't published yet)":""}.</li>`}
 }
+// "Your group" starts on the student's own band (from /wlnav.js).
+const myGroup=()=>({"K–1":"K-1","2–4":"2-4","5–8":"5-8"})[window.wlBand?window.wlBand():"5–8"]||"5-8";
 function renderTownHallForm(){
   $("#posth").textContent="Send something to Town Hall";
   $("#postbody").innerHTML=modeTabs()+`<p class="hint" style="margin:0 0 10px">Town Hall is where students talk through things that affect everyone and vote on what to do. Only guides see what you send here. They'll put good items on the agenda or reply to you.</p>
   <textarea id="tht" maxlength="${TH_MAX}" placeholder="What should we talk about, and why does it matter?"></textarea>
   <div class="thf"><label>What kind of item?<select id="thk">${Object.entries(TH_KINDS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label>
-  <label>Your group<select id="thb"><option value="5-8">Grades 5–8</option><option value="2-4">Grades 2–4</option><option value="K-1">K–1</option></select></label></div>
+  <label>Your group<select id="thb">${[["5-8","Grades 5–8"],["2-4","Grades 2–4"],["K-1","K–1"]].map(([v,t])=>`<option value="${v}"${v===myGroup()?" selected":""}>${t}</option>`).join("")}</select></label></div>
   <div id="thpeople" class="hint" hidden>If this is about one person, a guide will help privately first, maybe with a Peace Talk. Town Hall is never for getting someone in trouble.</div>
   <div id="thchk" class="check" hidden></div>
   <div class="row"><button class="btn" id="thsend" disabled>Send to Town Hall</button><span class="hint">Sending as ${esc(first(user))}</span><span class="n" id="thn">0 / ${TH_MAX}</span></div>`;

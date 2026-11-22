@@ -42,6 +42,21 @@
 .wlbar .wlbar-mentor:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 .wlbar .wlbar-mentor + .wlbar-auth{margin-left:8px}
 .wlbar a:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
+/* Test view (testers only): the switch in the bar and the strip under it while viewing as a test account. */
+.wlbar .wlbar-test{position:relative;flex:none;margin-left:auto}
+.wlbar .wlbar-test + .wlbar-auth{margin-left:8px}
+.wlbar .wlbar-mentor + .wlbar-test{margin-left:8px}
+.wlbar .wlbar-testbtn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px 0 9px;border:1px dashed rgba(255,255,255,.35);border-radius:999px;background:none;color:#f6f8ea;font:600 14px/1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.wlbar .wlbar-testbtn span[aria-hidden]{font-size:16px}
+.wlbar .wlbar-testbtn.on{background:#f3c84b;color:#2b1d00;border:1px solid #f3c84b}
+.wlbar .wlbar-testbtn:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
+.wlbar .wlbar-testmenu{left:auto;right:0;min-width:230px}
+.wlbar .wlbar-testbands{display:flex;gap:6px;padding:2px 8px 8px}
+.wlbar .wlbar-testbands button{flex:1;min-height:34px;border-radius:8px;border:1px solid #28493d;background:none;color:#f6f8ea;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer}
+.wlbar .wlbar-testbands button[aria-pressed=true]{background:#d5f367;color:#0b2b20;border-color:#d5f367}
+.wlbar .wlbar-menu p.wlbar-testnote{text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;line-height:1.4;margin-top:4px}
+.wlbar .wlbar-banner{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:8px 20px;background:#f3c84b;color:#2b1d00;font:500 14px/1.4 Inter,system-ui,sans-serif}
+.wlbar .wlbar-banner button{border:0;border-radius:999px;padding:7px 12px;background:#2b1d00;color:#fff;font:600 13.5px/1 Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
 /* The site's own name in its header, the same on every site. */
 .wl-title{font:700 22px/1.1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;letter-spacing:-.02em;color:#fff;text-decoration:none;white-space:nowrap}
 @media (max-width:640px){
@@ -57,6 +72,9 @@
   .wlbar .wla>button>span:nth-child(2){display:none}
   .wlbar .wlbar-mentor{padding:0 8px}
   .wlbar .wlbar-mentor-t{display:none}
+  .wlbar .wlbar-testbtn{padding:0 8px}
+  .wlbar .wlbar-test-t{display:none}
+  .wlbar .wlbar-banner{padding:8px 12px;font-size:13px}
 }
 @media (max-width:360px){.wlbar .wlbar-sites a{padding:0 7px;font-size:13.5px}}
 @media print{.wlbar{display:none}}

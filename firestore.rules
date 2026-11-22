@@ -6,6 +6,12 @@ service cloud.firestore {
     function school() { return request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower().matches('.*@wilderland[.]academy$'); }
     // Outside guests: allowed in the staff Field Guide only. Student data above and below still requires school().
     function guest() { return request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower() in ['ian@silverlineventures.com', 'online@bodyform.com', 'ian.silverberg@gmail.com']; }
+    // Testers: may switch to the linked test guide, test student and test parent (see /wlnav.js). They can read and
+    // write only the test accounts' records (test == true, ids below), which every page hides from everyone else.
+    function tester() { return request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower() in [
+      'alex@wilderland.academy', 'shanan@wilderland.academy', 'sarah@wilderland.academy', 'courtney@wilderland.academy',
+      'ian@silverlineventures.com', 'online@bodyform.com', 'ian.silverberg@gmail.com'
+    ]; }
     function isAdmin() { return school() && request.auth.token.email.lower() in [
       'alex@wilderland.academy', 'sarah@wilderland.academy', 'shanan@wilderland.academy',
       'april@wilderland.academy', 'scott@wilderland.academy'
@@ -14,6 +20,10 @@ service cloud.firestore {
     // Each student's saved things from the Explore sites (shelf, Life List, challenge plan, sparks, store list).
     match /students/{uid}/{doc=**} {
       allow read, write: if school() && request.auth.uid == uid;
+    }
+    // The test student's saved things, kept apart from the tester's own.
+    match /testStudents/{uid}/{doc=**} {
+      allow read, write: if tester() && request.auth.uid == uid;
     }
 
     // The Suggestion Box.
@@ -132,30 +142,33 @@ service cloud.firestore {
     function lsStudent(sid) { return get(/databases/$(database)/documents/lsStudents/$(sid)).data; }
     function lsSelf(sid) { return school() && lsStudent(sid).email == me(); }
     function lsParent(sid) { return verified() && me() in lsStudent(sid).parents; }
+    function testStudent(sid) { return tester() && lsStudent(sid).test == true; }
     match /lsStudents/{sid} {
       allow read: if staffSchool()
         || (school() && resource.data.email == me())
-        || (verified() && me() in resource.data.parents);
+        || (verified() && me() in resource.data.parents)
+        || (tester() && resource.data.test == true);
       // Only guides and admins write student records, which is where parents are matched to children.
-      allow create, update: if staffSchool()
+      // Testers write the test student.
+      allow create, update: if (staffSchool() || (tester() && sid == 'test-student' && request.resource.data.test == true))
         && request.resource.data.name is string && request.resource.data.name.size() <= 60
         && request.resource.data.band in ['K–1', '2–4', '5–8']
         && request.resource.data.email is string
         && request.resource.data.parents is list && request.resource.data.parents.size() <= 6;
       allow delete: if isAdmin();
       match /entries/{eid} {
-        allow read: if staffSchool() || lsSelf(sid) || lsParent(sid);
-        allow create, update: if staffSchool()
+        allow read: if staffSchool() || lsSelf(sid) || lsParent(sid) || testStudent(sid);
+        allow create, update: if (staffSchool() || testStudent(sid))
           && request.resource.data.result in ['pass', 'notyet']
           && request.resource.data.cid is string && request.resource.data.cid.size() <= 12
           && request.resource.data.date is string;
-        allow delete: if staffSchool();
+        allow delete: if staffSchool() || testStudent(sid);
       }
     }
     // The crew board: short names, what each student is working on and has passed. No not yets, notes or emails.
     match /lsBoard/{sid} {
-      allow read: if school() || lsParent(sid);
-      allow create, update: if staffSchool();
+      allow read: if school() || lsParent(sid) || (tester() && resource.data.test == true);
+      allow create, update: if staffSchool() || (tester() && sid == 'test-student' && request.resource.data.test == true);
       // A student may change only their own working list (3 at most).
       allow update: if lsSelf(sid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['working', 'updated'])
@@ -166,8 +179,8 @@ service cloud.firestore {
     // Which parents may see the Labs schedule: one record per parent email a guide has linked to a child, kept in step
     // by the Student Roster (/guides/roster/) whenever a student's parents change. Bands are their children's bands.
     match /lsParents/{email} {
-      allow read: if staffSchool() || (verified() && me() == email);
-      allow create, update: if staffSchool()
+      allow read: if staffSchool() || (verified() && me() == email) || (tester() && resource.data.test == true);
+      allow create, update: if (staffSchool() || (tester() && email == 'test.parent@example.com' && request.resource.data.test == true))
         && request.resource.data.children is list && request.resource.data.children.size() <= 12
         && request.resource.data.bands is list;
       allow delete: if staffSchool();
@@ -176,9 +189,11 @@ service cloud.firestore {
     // Guides write it. Linked parents read it (the page shows each family only their children's bands; Lab details
     // aren't private, so the rule doesn't filter by band). Files live in Storage under labs/{id}/ (storage.rules).
     function lsLinkedParent() { return verified() && exists(/databases/$(database)/documents/lsParents/$(me())); }
+    // Testers read Labs in test views; Labs added in a test view are marked test (and shown only in test views).
     match /labs/{id} {
-      allow read: if staffSchool() || lsLinkedParent();
-      allow create, update: if staffSchool()
+      allow read: if staffSchool() || lsLinkedParent() || tester();
+      allow create, update: if (staffSchool() || (tester() && request.resource.data.test == true))
+        && (!('custom' in request.resource.data) || (request.resource.data.custom is list && request.resource.data.custom.size() <= 8))
         && request.resource.data.title is string && request.resource.data.title.size() >= 3 && request.resource.data.title.size() <= 120
         && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && request.resource.data.bands is list && request.resource.data.bands.size() >= 1 && request.resource.data.bands.size() <= 3
@@ -187,47 +202,49 @@ service cloud.firestore {
         && request.resource.data.files is list && request.resource.data.files.size() <= 20
         && request.resource.data.links is list && request.resource.data.links.size() <= 8
         && request.resource.data.challenges is list && request.resource.data.challenges.size() <= 8;
-      allow delete: if staffSchool();
+      allow delete: if staffSchool() || (tester() && resource.data.test == true);
     }
 
     // ---- Student AI Coach (/coach/, inside Challenges and Projects; staff view at /guides/roster/) ----
     // The relay Worker writes all of these with the student's own sign-in, after it has screened the message.
     // Students can add to their own log but never change or delete it; every staff member can read every conversation.
+    // A tester's chats as the test student are marked test, written with the tester's own sign-in.
     match /aiChats/{chatId} {
-      allow read: if staffSchool() || (school() && resource.data.uid == request.auth.uid);
-      allow create: if school() && request.resource.data.uid == request.auth.uid
+      allow read: if staffSchool() || (school() && resource.data.uid == request.auth.uid) || (tester() && resource.data.uid == request.auth.uid);
+      allow create: if (school() || (tester() && request.resource.data.test == true)) && request.resource.data.uid == request.auth.uid
         && request.resource.data.level == 0 && request.resource.data.turns == 0;
       // The Worker updates the running totals; the flag level can only go up.
-      allow update: if school() && resource.data.uid == request.auth.uid
+      allow update: if (school() || tester()) && resource.data.uid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updated', 'turns', 'level', 'last'])
         && request.resource.data.level >= resource.data.level
         && request.resource.data.turns == resource.data.turns + 1;
-      // Staff mark a conversation reviewed.
-      allow update: if staffSchool()
+      // Staff mark a conversation reviewed (testers, a test one).
+      allow update: if (staffSchool() || (tester() && resource.data.test == true))
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewed', 'reviewedBy', 'reviewedAt']);
       allow delete: if isAdmin();
     }
     match /aiTurns/{id} {
-      allow read: if staffSchool() || (school() && resource.data.uid == request.auth.uid);
-      allow create: if school() && request.resource.data.uid == request.auth.uid
+      allow read: if staffSchool() || (school() && resource.data.uid == request.auth.uid) || (tester() && resource.data.uid == request.auth.uid);
+      allow create: if (school() || (tester() && request.resource.data.test == true)) && request.resource.data.uid == request.auth.uid
         && request.resource.data.role in ['student', 'coach']
         && request.resource.data.text is string && request.resource.data.text.size() <= 4000;
       allow update: if false;
       allow delete: if isAdmin();
     }
     match /aiAlerts/{id} {
-      allow read: if staffSchool();
-      allow create: if school() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'open';
-      allow update: if staffSchool()
+      allow read: if staffSchool() || (tester() && resource.data.test == true);
+      allow create: if (school() || (tester() && request.resource.data.test == true)) && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'open';
+      allow update: if (staffSchool() || (tester() && resource.data.test == true))
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'note', 'reviewedBy', 'reviewedAt'])
         && request.resource.data.status in ['open', 'reviewed'];
       allow delete: if isAdmin();
     }
     // Daily message count per student (the Worker enforces the limit).
+    // The test student's count is aiStudents/test-{tester's uid}.
     match /aiStudents/{uid} {
-      allow read: if staffSchool() || (school() && request.auth.uid == uid);
-      allow create: if school() && request.auth.uid == uid && request.resource.data.count == 1;
-      allow update: if school() && request.auth.uid == uid
+      allow read: if staffSchool() || (school() && request.auth.uid == uid) || (tester() && (uid == 'test-' + request.auth.uid || resource.data.test == true));
+      allow create: if ((school() && request.auth.uid == uid) || (tester() && uid == 'test-' + request.auth.uid)) && request.resource.data.count == 1;
+      allow update: if ((school() && request.auth.uid == uid) || (tester() && uid == 'test-' + request.auth.uid))
         && (request.resource.data.count == resource.data.count + 1
             || (request.resource.data.day > resource.data.day && request.resource.data.count == 1));
     }
