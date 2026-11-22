@@ -8,6 +8,9 @@
 .wlbar .wlbar-in{display:flex;flex-wrap:nowrap;margin:0;align-items:center;gap:6px 18px;min-height:52px;padding:0 20px;max-width:none}
 .wlbar .wlbar-home{padding:0;margin:0;display:flex;align-items:center;flex:none;color:#fff;text-decoration:none;border-radius:6px}
 .wlbar .wlbar-home svg{display:block;height:22px;width:auto}
+.wlbar .wlbar-home{gap:10px}
+.wlbar .wlbar-home .wlbar-logo{display:block!important}
+.wlbar .wlbar-site{font:700 19px/1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;letter-spacing:-.01em;color:#fff;white-space:nowrap;padding-right:6px;border-right:1px solid rgba(255,255,255,.22);margin-right:2px}
 .wlbar .wlbar-sites{display:flex;flex-wrap:nowrap;align-items:center;gap:2px;margin:0 0 0 8px;padding:0;background:none;border:0;position:static;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .wlbar .wlbar-sites::-webkit-scrollbar{display:none}
 .wlbar .wlbar-sites a{display:inline-flex;margin:0;border:0;box-shadow:none;font-weight:600;font-size:15px;line-height:1;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;color:rgba(255,255,255,.8);text-decoration:none;white-space:nowrap}
@@ -24,6 +27,8 @@
 @media (max-width:640px){
   .wlbar .wlbar-in{padding:0 12px;gap:4px 8px;min-height:48px}
   .wlbar .wlbar-home svg{height:18px}
+  .wlbar .wlbar-home{gap:7px}
+  .wlbar .wlbar-site{font-size:16px;padding-right:5px}
   .wlbar .wlbar-sites{margin-left:0;gap:0}
   .wlbar .wlbar-sites a{padding:0 9px;font-size:14px;min-height:34px}
   .wl-title{font-size:19px}
