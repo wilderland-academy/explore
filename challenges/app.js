@@ -16,6 +16,10 @@
   var state = { band: load('wl-band', '5–8'), skill: null, sub: null, q: '', f: { home: false, epic: false, lab: false, any: false } };
   if (['K–1', '2–4', '5–8'].indexOf(state.band) < 0) state.band = '5–8';
   var picks = load('wl-picks', []).filter(function (id) { return BYID[id]; });
+  // A signed-in student sees only their own grade band (from their Life Skills tracker record, via /auth.js).
+  // Saved picks from another band are kept in storage but not shown while locked.
+  var locked = null, hiddenPicks = [];
+  function savePicks() { save('wl-picks', picks.concat(hiddenPicks)); }
 
   // ---------- helpers ----------
   function esc(s) {
@@ -357,7 +361,7 @@
   var detail = document.getElementById('detail');
   var lastFocus = null;
   function openDetail(id) {
-    var c = BYID[id]; if (!c) return;
+    var c = BYID[id]; if (!c || (locked && c.b !== locked)) return;
     var comp = D.comps[c.c], s = SK[comp.k];
     var on = picks.indexOf(c.id) >= 0;
     var h = '<button class="icon-btn d-close" data-close aria-label="Close">' + icon('x') + '</button>' +
@@ -417,7 +421,7 @@
     var i = picks.indexOf(id);
     if (on && i < 0) picks.push(id);
     if (!on && i >= 0) picks.splice(i, 1);
-    save('wl-picks', picks);
+    savePicks();
     refreshPicks();
   }
   function refreshPicks() {
@@ -480,6 +484,8 @@
     S = structure();
     Array.prototype.forEach.call(document.querySelectorAll('.band'), function (b) {
       b.setAttribute('aria-pressed', String(b.dataset.band === state.band));
+      b.hidden = !!locked && b.dataset.band !== locked;
+      b.disabled = !!locked;
     });
     document.getElementById('k1-note').hidden = !guideMode();
     document.getElementById('year').hidden = guideMode();
@@ -522,6 +528,7 @@
       return;
     }
     if (t.dataset.band) {
+      if (locked) return;
       state.band = t.dataset.band; save('wl-band', state.band);
       if (state.skill && state.sub && !S[state.skill]) state.sub = null;
       state.sub = null; renderAll(); return;
@@ -562,7 +569,7 @@
       if (!picks.length) { toast('Save a challenge to your plan first'); return; }
       copyText(planLink(), 'Plan link copied. Paste it anywhere to keep it.'); return;
     }
-    if (t.id === 'clear-picks') { picks = []; save('wl-picks', picks); refreshPicks(); toast('Plan cleared'); return; }
+    if (t.id === 'clear-picks') { picks = []; savePicks(); refreshPicks(); toast('Plan cleared'); return; }
   });
   [detail, picksDlg].forEach(function (d) {
     d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
@@ -593,9 +600,33 @@
     var m = /^#plan=([A-Z0-9.,\-]*)$/.exec(location.hash);
     if (!m) return;
     var ids = m[1].split(',').filter(function (id) { return BYID[id]; });
-    if (ids.length) { picks = ids; save('wl-picks', picks); setTimeout(function () { toast('Your plan is loaded'); }, 400); }
+    if (ids.length) { picks = ids; savePicks(); setTimeout(function () { toast('Your plan is loaded'); }, 400); }
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
   })();
+
+  // ---------- one grade band for a signed-in student ----------
+  var BANDS = ['K–1', '2–4', '5–8'];
+  function setLock(b) {
+    b = BANDS.indexOf(b) >= 0 ? b : null;
+    if (b === locked) return false;
+    picks = picks.concat(hiddenPicks); hiddenPicks = [];
+    locked = b;
+    if (b) {
+      state.band = b; save('wl-band', b); state.sub = null;
+      hiddenPicks = picks.filter(function (id) { return BYID[id].b !== b; });
+      picks = picks.filter(function (id) { return BYID[id].b === b; });
+    }
+    return true;
+  }
+  function lockFrom(r) { return r && r.role === 'student' ? r.band : null; }
+  // The role remembered on this device draws the right band at once; the signed-in account confirms it.
+  try { var rc = JSON.parse(localStorage.getItem('wl-role') || 'null'); if (rc && rc.r === 'student') setLock(rc.b); } catch (e) {}
+  document.addEventListener('wl-role', function (e) {
+    if (!setLock(lockFrom(e.detail))) return;
+    if (detail.open && locked) detail.close();
+    if (state.skill && !state.sub && !window.matchMedia('(max-width:820px)').matches) state.sub = (structure()[state.skill].subs[0] || null);
+    renderAll();
+  });
 
   // ---------- start ----------
   state.skill = 'EN';

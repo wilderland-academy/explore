@@ -17,6 +17,11 @@ const DOMAIN = "wilderland.academy";
 // Outside guests (Ian) who may open the staff Field Guide, the Guides hub and the Parent Communication coach only (no student site). Keep in step with worker.js, firestore.rules and fieldguide/app.js.
 const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];
 const GUEST_SITES = ["fieldguide", "guides", "parentcomms", "history", "labbuilder"];
+// Admins are staff without a staff/{email} record. Keep in step with fieldguide/app.js, lifeskills/app.js and firestore.rules.
+const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
+// Pages that only need to know who is visiting (the front door, the Parents pages, the Students home). Here nobody is
+// ever signed out, so a parent still confirming their email isn't bounced, and no sign-in chip appears if the bar says data-auth="off".
+const SOFT_SITES = ["home", "parents", "students"];
 const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["Projects", "/projects/"], ["Life Skills tracker", "/lifeskills/"]];
 
 const me = document.querySelector('script[src$="auth.js"]');
@@ -25,7 +30,7 @@ const SITE = (me && me.dataset.site) || "";
 const ALLKEYS = { books: ["lantern-stacks"], challenges: ["wl-picks", "wl-band"], projects: ["atlas-sparks", "atlas-me"], store: ["wl-store"] };
 const KEYS = ALLKEYS[SITE] || [];
 // Clear every site's saved things from this Chromebook (on sign-out, here or on another site).
-function forgetDevice() { applying = true; Object.entries(ALLKEYS).forEach(([s, ks]) => { ks.forEach(k => origRemove.call(localStorage, k)); origRemove.call(localStorage, "wl-linked-" + s); }); applying = false; }
+function forgetDevice() { applying = true; origRemove.call(localStorage, "wl-role"); Object.entries(ALLKEYS).forEach(([s, ks]) => { ks.forEach(k => origRemove.call(localStorage, k)); origRemove.call(localStorage, "wl-linked-" + s); }); applying = false; }
 const DOC = uid => `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/databases/(default)/documents/students/${uid}/sites/${SITE}`;
 
 const app = initializeApp(CONFIG);
@@ -169,20 +174,69 @@ document.addEventListener("click", e => { if (e.target.closest("[data-wl-signin]
 document.addEventListener("click", e => { if (open && !host.contains(e.target)) { open = false; render(); } });
 
 function mount() {
+  // Pages whose bar has no sign-in slot (data-auth="off") only need the role: no chip.
+  if (document.querySelector('[data-wlnav][data-auth="off"]')) return;
   const slot = document.querySelector("[data-wl-auth]");
   if (slot) slot.appendChild(host); else { host.classList.add("float"); document.body.appendChild(host); }
   render();
 }
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount); else mount();
 
+
+// ---------- who is visiting: staff, student (and their band), or parent ----------
+// Announced as a "wl-role" event that /wlnav.js uses for the site switcher and to keep students on the Students site,
+// and that a site can use to narrow what it shows (Challenges shows a student only their own grade band).
+// Remembered on this device as "wl-role" so the next page can show it at once; cleared on sign-out.
+const FS = `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/databases/(default)/documents`;
+let roleSeq = 0;
+function sendRole(r) {
+  window.wlRole = r;
+  try { if (r) origSet.call(localStorage, "wl-role", JSON.stringify({ e: r.email, r: r.role, b: r.band || null })); else origRemove.call(localStorage, "wl-role"); } catch (e) { }
+  document.dispatchEvent(new CustomEvent("wl-role", { detail: r }));
+}
+async function findRole(u, em) {
+  if (!u.emailVerified) return null;
+  if (GUESTS.includes(em)) return { role: "staff", band: null };
+  if (!em.endsWith("@" + DOMAIN)) return { role: "parent", band: null };
+  if (ADMINS.includes(em)) return { role: "staff", band: null };
+  const H = { Authorization: "Bearer " + await u.getIdToken() };
+  const st = await fetch(`${FS}/staff/${encodeURIComponent(em)}`, { headers: H });
+  if (st.ok) return { role: "staff", band: null };
+  if (st.status !== 404) throw new Error("staff " + st.status);
+  // A student: their band comes from their Life Skills tracker record (lsStudents, matched by school email).
+  let band = null;
+  try {
+    const q = await fetch(`${FS}:runQuery`, { method: "POST", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "lsStudents" }], where: { fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: em } } }, limit: 5 } }) });
+    if (q.ok) {
+      const bands = [...new Set((await q.json()).map(x => x.document && x.document.fields && x.document.fields.band && x.document.fields.band.stringValue).filter(Boolean))];
+      if (bands.length === 1) band = bands[0];
+    }
+  } catch (e) { /* no band: the student sees every band until a guide adds them to the tracker */ }
+  return { role: "student", band };
+}
+async function decideRole(u) {
+  const my = ++roleSeq;
+  if (!u) { sendRole(null); return; }
+  const em = (u.email || "").toLowerCase();
+  // Same account as last time on this device: show the remembered role now, then check it.
+  try { const c = JSON.parse(localStorage.getItem("wl-role") || "null"); if (c && c.e === em) sendRole({ email: em, role: c.r, band: c.b || null }); } catch (e) { }
+  try {
+    const r = await findRole(u, em);
+    if (my !== roleSeq) return;
+    const was = window.wlRole;
+    const next = r ? { email: em, ...r } : null;
+    if (JSON.stringify(was || null) !== JSON.stringify(next)) sendRole(next);
+  } catch (e) { console.warn("Wilderland role:", e); }
+}
 onAuthStateChanged(auth, async u => {
   const em = ((u && u.email) || "").toLowerCase();
   family = null;
+  decideRole(u);
   // A confirmed family account: keep it signed in (so the tracker stays open) but treat this page as signed out.
-  if (u && u.emailVerified && !em.endsWith("@" + DOMAIN) && !(GUEST_SITES.includes(SITE) && GUESTS.includes(em))) {
+  if (u && (u.emailVerified || SOFT_SITES.includes(SITE)) && !em.endsWith("@" + DOMAIN) && !((GUEST_SITES.includes(SITE) || SOFT_SITES.includes(SITE)) && u.emailVerified && GUESTS.includes(em))) {
     family = u; user = null; render(); gate(null); announce(null); return;
   }
-  if (u && !((em.endsWith("@" + DOMAIN) && u.emailVerified) || (GUEST_SITES.includes(SITE) && u.emailVerified && GUESTS.includes(em)))) {
+  if (u && !SOFT_SITES.includes(SITE) && !((em.endsWith("@" + DOMAIN) && u.emailVerified) || (GUEST_SITES.includes(SITE) && u.emailVerified && GUESTS.includes(em)))) {
     await signOut(auth); msg("Please sign in with your @" + DOMAIN + " school account."); user = null; render(); gate(null); announce(null); return;
   }
   // Signed out (maybe on another site): don't leave the last student's things for the next person.

@@ -152,3 +152,12 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   parents `/parents/lifeskills/`. Same `lifeskills/app.js`; it sends each signed-in person to their own site's copy (a parent
   who follows an old `/lifeskills/` link lands on `/parents/lifeskills/`), and emailed sign-in links return to the same copy.
 - The student landing page moved from `/` to `/students/`; `/` is now the front door.
+
+## Who sees what: the site switcher and student bands, added Nov 21, 2026
+
+- **Roles.** `/auth.js` works out who is signed in and announces it as a `wl-role` event (`{ role, band }`): **staff** (the admins in `auth.js`, anyone with a `staff/{email}` record, and the team guests), **student** (any other school account; their band comes from their Life Skills tracker record, matched by school email), or **parent** (a confirmed personal email). The Life Skills tracker pages announce the same event from their own sign-in. The role is remembered on the device as `wl-role` so the next page draws at once, and cleared on sign-out.
+- **Switcher.** In `/wlnav.js`, staff get a menu on the site name to switch between Students, Guides and Parents. Parents get Parents and Students. Students get no switcher.
+- **Where each role may be.** Students are sent to the Students site from the front door, the Guides site and the Parents site. Parents are sent to the Parents site from the front door and the Guides site. Signed-out visitors see what they saw before.
+- **Bands.** On Challenges, a signed-in student sees only their own band: the band buttons are hidden, search and the year view stay inside that band, and saved picks from another band are kept but not shown. On the tracker's Crew board, students see only their own band. A student not yet in the tracker has no band, so they still see every band until a guide adds them.
+- **Pages that only need the role** (front door, Parents pages, Students home) load `/auth.js` with `data-site="home" | "parents" | "students"`. These never sign anyone out, and show no sign-in chip when the bar has `data-auth="off"`.
+- **Limits.** This steers the screen only. All challenge text is still in `/challenges/data.js`, so a determined student could read it. Private things (tracker records, coaching history, staff tools) are protected by `firestore.rules`, not by these redirects.
