@@ -310,6 +310,25 @@ function signedOut() {
     box.innerHTML = ""; box.append(parentForm(tab, t => { tab = t; draw(); }));
   };
   draw();
+  // On the Parents site the family sign-in comes first: any Google account (most families have one; we don't give
+  // parents school accounts), or an email link or password. Staff sign in with the school account below it.
+  if (PATH === HOMES.parent) return main([
+    head("Life Skills", "Every challenge your child has passed, what they're working on, the Labs coming up, and how to support it all at home."),
+    h("section", { class: "band" }, h("div", { class: "wrap signin" }, [
+      h("div", { class: "panel stack" }, [
+        h("h2", { class: "h", text: "Parents and families" }),
+        h("p", { class: "muted", text: "Sign in with the email address you gave the school. Your child's guide links it to your child." }),
+        h("div", {}, h("button", { class: "btn go gbtn", type: "button", onclick: () => google(false), html: GLOGO + "<span>Continue with Google</span>" })),
+        h("p", { class: "small muted", text: "Any Google account works, like Gmail. No Google account? Use your email instead:" }),
+        tabs, box
+      ]),
+      h("div", { class: "panel" }, [
+        h("h2", { class: "h", text: "Wilderland staff" }),
+        h("p", { class: "muted", text: "Guides and admins: use your Wilderland school account." }),
+        h("div", {}, h("button", { class: "btn", type: "button", onclick: () => google(true), text: "Continue with school Google" }))
+      ])
+    ]))
+  ]);
   main([
     head("Life Skills Tracker", "Every challenge your child has passed, what they're working on, and what to practice next. Guides record each pass the day it happens."),
     h("section", { class: "band" }, h("div", { class: "wrap signin" }, [
@@ -500,10 +519,37 @@ function record(sid, opts = {}) {
       h("h2", { class: "h", text: `Feats (${sum.passes.length})` }),
       sum.passes.length ? h("div", { class: "items" }, sum.passes.map(e => entryRow(e, "pass"))) : h("p", { class: "empty", text: "No passes yet. The first one is the hardest." }),
       opts.parent ? h("p", { class: "small muted" }, ["Each feat is a challenge shown to a guide in person, or passed off at home by the rules in ", h("a", { href: "/challenges/parents.html", text: "Passing off at home" }), ". Not yets always say what to practice and when to try again."]) : null
-    ]))
+    ])),
+    opts.parent ? homeSupport(sid) : null
   ]);
 }
 
+// Families: how to support it at home. The child's next Labs (with the guides' notes for home) and challenges they can
+// pass off at home: what they're working on first, then the life skills furthest from this year's goal.
+function homeSupport(sid) {
+  const s = S.students[sid], sum = summary(sid), goal = goalFor(s.band), now = today();
+  const labs = (S.labs || []).filter(l => (l.bands || []).includes(s.band) && labEnd(l) >= now).slice(0, 3);
+  const passed = new Set(sum.passes.map(p => p.cid)), working = ((S.boards[sid] || {}).working || []).filter(c => BYID[c] && !passed.has(c));
+  const need = W.skills.slice().sort((a, b) => (sum.per[a.k] || 0) - (sum.per[b.k] || 0)).filter(k => (sum.per[k.k] || 0) < goal);
+  const home = working.filter(c => BYID[c].h);
+  need.forEach(k => { if (home.length >= 6) return; const c = W.ch.find(x => x.b === s.band && x.h && !passed.has(x.id) && !home.includes(x.id) && (skillOf(x.id) || {}).k === k.k); if (c) home.push(c.id); });
+  const name = firstName(s.name);
+  return h("section", { class: "band tint" }, h("div", { class: "wrap stack" }, [
+    h("h2", { class: "h", text: "Supporting " + name + " at home" }),
+    h("div", { class: "grid2" }, [
+      h("div", { class: "panel stack" }, [h("h3", { class: "h", text: "Coming up in Labs" }),
+        labs.length ? h("div", { class: "items" }, labs.map(l => h("div", { class: "item" }, [h("span", { class: "bar", style: { background: bandCol(l) } }),
+          h("div", {}, [h("div", { class: "meta" }, h("b", { text: whenTxt(l) })), h("div", { class: "t" }, h("a", { href: "#schedule=" + l.id, text: l.title })),
+            l.home ? h("div", { class: "small muted", text: l.home.length > 160 ? l.home.slice(0, 160) + "…" : l.home }) : null,
+            (l.files || []).length + (l.links || []).length ? h("div", { class: "small muted", text: "Has files or links for home" }) : null]), h("span")]))) : h("p", { class: "empty", text: "No Labs scheduled yet for grades " + s.band + "." }),
+        h("div", {}, h("a", { class: "btn", href: "#schedule", text: "All Labs" }))]),
+      h("div", { class: "panel stack" }, [h("h3", { class: "h", text: "Challenges to try at home" }),
+        h("p", { class: "small muted", text: home.length ? `These can be passed off at home with you. ${working.some(c => BYID[c].h) ? "The first are what " + name + " is working on; the rest" : "They"} are in the life skills where ${name} has the fewest passes this year.` : "" }),
+        home.length ? savedList(home) : h("p", { class: "empty", text: name + " has met the year goal everywhere a home challenge fits. Nice work." }),
+        h("div", { class: "row" }, [h("a", { class: "btn", href: "/parents/challenges/", text: "Browse all challenges" }), h("a", { class: "btn plain", href: "/challenges/parents.html", text: "How passing off at home works" })])])
+    ])
+  ]));
+}
 // Staff view of one student: what they saved to their Challenges plan, by life skill.
 function savedPanel(sid) {
   const by = savedBySkill(sid), n = Object.values(by).reduce((a, l) => a + l.length, 0);
@@ -1154,8 +1200,11 @@ function route() {
   const [v, arg] = location.hash.slice(1).split("=");
   // Signed in on another site's copy (a parent following an old /lifeskills/ link, say): move to their own.
   if (S.role === "student") { location.replace("/challenges/#progress"); return; }
-  if (HOMES[S.role] && HOMES[S.role] !== PATH) { location.replace(HOMES[S.role] + location.search + location.hash); return; }
+  // Staff on the Parents site's copy get a parent preview (any student's family view) instead of being moved.
+  const preview = S.role === "staff" && PATH === HOMES.parent;
+  if (!preview && HOMES[S.role] && HOMES[S.role] !== PATH) { location.replace(HOMES[S.role] + location.search + location.hash); return; }
   acct();
+  if (preview) return parentRoute(v, arg, true);
   if (S.role === "staff") {
     // Inside the staff guides (/guides/lifeskills/), guides also get the Lab builder.
     navLinks(PATH === HOMES.staff ? SUBNAV.guides : [["overview", "Overview"], ["validate", "Validate"], ["board", "Crew board"], ["schedule", "Labs schedule"]]);
@@ -1174,14 +1223,31 @@ function route() {
     if (v === "board") return main(boardView());
     return main(record(S.mine[0], { self: true }));
   }
-  if (S.role === "parent") {
-    if (!S.mine.length) { $("#links").innerHTML = ""; return main([head("Your account is ready", "We haven't linked it to your child yet. Ask your child's Field Guide to add this email to your child's record: " + S.email + ". Then reload this page."), h("div", { class: "wrap" }, h("a", { class: "btn go", href: "/challenges/parents.html", text: "How passing off at home works" }))]); }
-    navLinks(S.mine.map(id => ["c=" + id, firstName(S.students[id].name)]).concat(SUBNAV.parents));
-    if (v === "schedule") { document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#schedule" ? "page" : "false")); return main(scheduleView(arg, false)); }
-    const sid = v === "c" && S.mine.includes(arg) ? arg : S.mine[0];
-    document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#c=" + sid ? "page" : "false"));
-    return main(record(sid, { parent: true }));
+  if (S.role === "parent") return parentRoute(v, arg, false);
+}
+// The family view: a tab per child (their record, plus how to support it at home), the Labs schedule for their bands,
+// Challenges and Passing off at home. preview: a staff member on /parents/lifeskills/ sees one student's family view.
+let previewSid = "";
+function parentRoute(v, arg, preview) {
+  if (preview) {
+    const all = Object.values(S.students).sort((a, b) => a.name.localeCompare(b.name));
+    if (!all.length) { $("#links").innerHTML = ""; return main(head("Parent preview", "Add students on the Student Roster first; then you can see any family's view here.")); }
+    if (v === "c" && S.students[arg]) previewSid = arg;
+    if (!S.students[previewSid]) { const b = myBand(); previewSid = (all.find(s => s.band === b) || all[0]).id; }
+    S.mine = [previewSid];
   }
+  if (!S.mine.length) { $("#links").innerHTML = ""; return main([head("Your account is ready", "We haven't linked it to your child yet. Ask your child's Field Guide to add this email to your child's record: " + S.email + ". Then reload this page."), h("div", { class: "wrap" }, h("a", { class: "btn go", href: "/challenges/parents.html", text: "How passing off at home works" }))]); }
+  navLinks(S.mine.map(id => ["c=" + id, firstName(S.students[id].name)]).concat(SUBNAV.parents));
+  if (v === "schedule") { document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#schedule" ? "page" : "false")); return main(scheduleView(arg, false)); }
+  const sid = v === "c" && S.mine.includes(arg) ? arg : S.mine[0];
+  document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#c=" + sid ? "page" : "false"));
+  return main([preview ? previewBar(sid) : null, record(sid, { parent: true })]);
+}
+function previewBar(sid) {
+  const all = Object.values(S.students).sort((a, b) => a.name.localeCompare(b.name));
+  const sel = h("select", { class: "in", id: "pvs", "aria-label": "Student", style: { maxWidth: "280px" }, onchange: e => { location.hash = "#c=" + e.target.value; } },
+    BANDS.map(b => { const ss = all.filter(s => s.band === b); return ss.length ? h("optgroup", { label: "Grades " + b }, ss.map(s => h("option", { value: s.id, text: s.name, selected: s.id === sid }))) : null; }));
+  return h("div", { class: "wrap", style: { paddingTop: "16px" } }, h("div", { class: "pvbar" }, [h("span", {}, [h("b", { text: "Parent preview. " }), "This is what this student's family sees on Life Skills (parents see only their own children). "]), sel]));
 }
 addEventListener("hashchange", () => { route(); scrollTo(0, 0); });
 

@@ -1134,7 +1134,7 @@ function vOutside(arg){
  const any=OUTKEYS.some(([k])=>OUT.tags[k].length),rs=any?recs(outSeed(),"",10):[],saved=!!OUT.t&&S.ext.some(x=>x.t.toLowerCase()===OUT.t.toLowerCase());
  return `<p class="crumb"><a href="#home">← The Stacks</a></p>
  <section class="next"><h1 class="h1s">A book that isn't on these shelves</h1>
- <p class="sub wide">Loved a book we don't have? Name it, and we'll find books here that are like it. If you're signed in, your AI Coach can tell what it's like. Or pick it yourself below.</p>
+ <p class="sub wide">Loved a book we don't have? Name it, and we'll find books here that are like it. If you're signed in, Mr. Fox can tell what it's like. Or pick it yourself below.</p>
  <form class="outform" id="outform"><label>Title<input id="ot" autocomplete="off" maxlength="120" value="${esc(OUT.t)}" placeholder="Wings of Fire"></label><label>Author (if you know it)<input id="oa" autocomplete="off" maxlength="80" value="${esc(OUT.a)}" placeholder="Tui T. Sutherland"></label><button type="submit"${OUT.busy?" disabled":""}>🦊 Find books like it</button></form>
  <p class="omsg" aria-live="polite">${esc(OUT.msg)}</p>
  <div class="opick"><p class="fine">What's it like? Tap everything that fits.</p>${OUTKEYS.map(([k,name])=>`<div class="tg"><span>${name}</span>${Object.entries(LABEL[k]).map(([x,lab])=>`<button type="button" class="tag" data-otag="${k}|${x}" aria-pressed="${OUT.tags[k].includes(x)}">${esc(lab)}</button>`).join("")}</div>`).join("")}</div>
@@ -1145,7 +1145,7 @@ async function outFind(){
  OUT.t=($("#ot").value||"").trim();OUT.a=($("#oa").value||"").trim();
  if(OUT.t.length<2){OUT.msg="Type the book's title first.";keepScroll(route);return}
  const u=window.wlFirebase&&window.wlFirebase.auth.currentUser;
- if(!u){OUT.msg="Sign in with your school account and the AI Coach can tell what it's like. Or tap what it's like below.";keepScroll(route);return}
+ if(!u){OUT.msg="Sign in with your school account and Mr. Fox can tell what it's like. Or tap what it's like below.";keepScroll(route);return}
  OUT.busy=true;OUT.msg="🦊 Looking it up…";keepScroll(route);
  try{
   const FS="https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents",tk=await u.getIdToken();

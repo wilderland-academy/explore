@@ -1,9 +1,9 @@
 // Guides › Student Roster (/guides/roster/, was /guides/students/): every student and their parents (add, edit, import
-// from a spreadsheet), AI Coach alerts, and every student conversation with the coach.
+// from a spreadsheet), Mr. Fox alerts, and every student conversation with the coach.
 // Saved challenges live on the Life Skills overview (/guides/lifeskills/); a student's page here links to them and
 // keeps their saved project sparks and books.
 // Who sees what (enforced by firestore.rules; this page only arranges it):
-//   - Every staff member: the roster, all alerts and all AI Coach conversations. Any staff member can add or edit a
+//   - Every staff member: the roster, all alerts and all Mr. Fox conversations. Any staff member can add or edit a
 //     student and link parents (the same rule as the Life Skills tracker); only admins delete a student.
 //   - Saved sparks and books: admins see every student; other staff see the grade bands of the students they guide
 //     (from the "guide" field on each student's Life Skills tracker record).
@@ -192,7 +192,7 @@ function alertCard(a) {
 }
 function vAlerts() {
   const open = S.alerts.filter(a => a.status === "open"), done = S.alerts.filter(a => a.status !== "open");
-  return head("Alerts", "When a student's message to the AI Coach is worrying or breaks the rules, it shows up here. Urgent ones come with what to do. Every staff member sees every alert.") + tabs("alerts") +
+  return head("Alerts", "When a student's message to Mr. Fox is worrying or breaks the rules, it shows up here. Urgent ones come with what to do. Every staff member sees every alert.") + tabs("alerts") +
     (open.length ? `<div class="list">${open.map(alertCard).join("")}</div>` : `<p class="empty">No open alerts. Nice.</p>`) +
     (done.length ? `<details${S.showDone ? " open" : ""} data-done><summary class="small">Reviewed (${done.length})</summary><div class="list" style="margin-top:12px">${done.slice(0, 100).map(alertCard).join("")}</div></details>` : "");
 }
@@ -201,14 +201,14 @@ function scope() {
   const bands = S.admin ? BANDS : S.myBands;
   return { bands };
 }
-// The roster: every student in the tracker, plus anyone who has used the AI Coach but isn't in the tracker yet.
+// The roster: every student in the tracker, plus anyone who has used Mr. Fox but isn't in the tracker yet.
 function vRoster() {
   const all = Object.values(S.people).filter(p => p.sid || p.chats.length || p.alerts.length);
   const show = all.filter(p => (S.band === "All" || p.band === S.band) && (!S.q || [p.name, p.email, p.school, p.guide, ...(p.parents || [])].join(" ").toLowerCase().includes(S.q)))
     .sort((a, b) => (BANDS.indexOf(a.band) + 1 || 9) - (BANDS.indexOf(b.band) + 1 || 9) || (a.name || a.email).localeCompare(b.name || b.email));
   const nParents = new Set(S.ls.flatMap(x => (x.parents || []).map(key))).size;
   const guideNames = g => emails(g).map(x => x.split("@")[0].replace(/^./, c => c.toUpperCase())).join(", ");
-  return head("Student Roster", `${S.ls.length} students and ${nParents} linked parent${nParents === 1 ? "" : "s"}. Open a student for their parents, AI Coach conversations, alerts and saved sparks and books. Their Life Skills record and saved challenges are in <a href="/guides/lifeskills/">Life Skills</a>.`) + tabs("roster") +
+  return head("Student Roster", `${S.ls.length} students and ${nParents} linked parent${nParents === 1 ? "" : "s"}. Open a student for their parents, Mr. Fox conversations, alerts and saved sparks and books. Their Life Skills record and saved challenges are in <a href="/guides/lifeskills/">Life Skills</a>.`) + tabs("roster") +
     (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") +
     `<div class="row">${["All", ...BANDS].map(b => `<button class="chip" type="button" data-band="${b}" aria-pressed="${S.band === b}">${b === "All" ? "All bands" : "Grades " + b}</button>`).join("")}<input class="in" type="search" id="q" placeholder="Find a student, parent or guide" value="${esc(S.q)}"><a class="btn" href="#add" style="margin-left:auto">Add a student</a></div>` +
     (show.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>Grades</th><th>Parents</th><th>Field Guide</th><th class="num">AI chats</th><th class="num">Open alerts</th><th>Last AI use</th><th></th></tr></thead><tbody>${show.map(p => {
@@ -234,7 +234,7 @@ function vEdit(sid, preEmail) {
       <div class="grid2"><label>Student's school email <span class="hint">(lets them sign in; optional for K–1)</span><input class="in" name="email" type="email" value="${esc(v.email || "")}" placeholder="maya@wilderland.academy"></label>
       <label>Field Guides <span class="hint">(school emails, separated by commas)</span><input class="in" name="guide" value="${esc(v.guide || "")}" placeholder="april@wilderland.academy, shanan@wilderland.academy"></label></div>
       <label>Parent emails <span class="hint">(one per line, up to 6)</span><textarea class="in" name="parents" rows="3" placeholder="one email per line">${esc((v.parents || []).join("\n"))}</textarea></label>
-      <label class="chk"><input type="checkbox" name="coachAcademic"${v.coachAcademic === true ? " checked" : ""}${canPilot() ? "" : " disabled"}> Academics coach pilot <span class="hint">(lets this student use the AI Coach for hint-only help with academics; every academics chat is flagged in Slack #alerts${S.admin ? "" : ". Only admins can change this"})</span></label>
+      <label class="chk"><input type="checkbox" name="coachAcademic"${v.coachAcademic === true ? " checked" : ""}${canPilot() ? "" : " disabled"}> Academics coach pilot <span class="hint">(lets this student use Mr. Fox for hint-only help with academics; every academics chat is flagged in Slack #alerts${S.admin ? "" : ". Only admins can change this"})</span></label>
       <div class="row"><button class="btn" type="submit">${s ? "Save" : "Add student"}</button><a class="btn ghost" href="${s ? "#s=" + encodeURIComponent(pkey(s)) : "#roster"}">Cancel</a>${s && S.admin ? `<button class="btn danger" type="button" data-del="${esc(s.id)}" style="margin-left:auto">Delete student</button>` : ""}</div>
       <p class="note" id="stu-note" aria-live="polite"></p>
     </form>` + (s ? "" : importPanel());
@@ -348,7 +348,7 @@ function chatRow(c) {
 }
 function vChats() {
   const rows = S.chats.filter(c => S.cf === "academic" ? c.kind === "academic" : S.cf === "conflict" ? c.kind === "conflict" : S.cf === "review" ? !c.reviewed : true).filter(c => !S.q || ((S.people[key(c.email)] || {}).name + " " + c.email + " " + (c.topicTitle || "") + " " + (c.last || "")).toLowerCase().includes(S.q));
-  return head("All AI conversations", "Every conversation any student has had with the AI Coach, newest first. Students can't delete them. Academics conversations are always flagged for review, here and in Slack #alerts.") + tabs("chats") +
+  return head("All AI conversations", "Every conversation any student has had with Mr. Fox, newest first. Students can't delete them. Academics conversations are always flagged for review, here and in Slack #alerts.") + tabs("chats") +
     `<div class="row"><input class="in" type="search" id="q" placeholder="Find a student, challenge or words" value="${esc(S.q)}"></div>` +
     `<div class="row">${[["all", "All"], ["conflict", "Conflicts"], ["academic", "Academics"], ["review", "Not reviewed yet"]].map(([k, l]) => `<button class="chip" type="button" data-cf="${k}" aria-pressed="${S.cf === k}">${l}</button>`).join("")}</div>` +
     (rows.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>About</th><th class="num">Messages</th><th>Flag</th><th>Last</th><th></th></tr></thead><tbody>${rows.slice(0, 400).map(chatRow).join("")}</tbody></table></div>` : `<p class="empty">No conversations match.</p>`);
@@ -361,7 +361,7 @@ async function vStudent(k) {
   const sec = (t, items, empty) => `<section class="card"><h3>${t}</h3>${items.length ? `<ul class="items">${items.join("")}</ul>` : `<p class="muted small">${empty}</p>`}</section>`;
   const ls = p.sid ? `/guides/lifeskills/#s=${encodeURIComponent(p.sid)}` : "";
   return (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") + `<p class="crumb"><a href="#roster">← Roster</a></p>` +
-    head(esc(p.name || p.email), `${p.band ? "Grades " + esc(p.band) + (p.grade ? ", grade " + esc(p.grade) : "") + " · " : ""}${esc(p.school || (p.sid ? "no student sign-in" : p.email))}${p.guide ? " · Guide: " + esc(p.guide) : ""}${p.coach ? ` · AI Coach: ${p.coach.count || 0} messages on ${esc(p.coach.day || "")}` : ""}`) +
+    head(esc(p.name || p.email), `${p.band ? "Grades " + esc(p.band) + (p.grade ? ", grade " + esc(p.grade) : "") + " · " : ""}${esc(p.school || (p.sid ? "no student sign-in" : p.email))}${p.guide ? " · Guide: " + esc(p.guide) : ""}${p.coach ? ` · Mr. Fox: ${p.coach.count || 0} messages on ${esc(p.coach.day || "")}` : ""}`) +
     `<div class="row">${p.sid ? `<a class="btn" href="#edit=${esc(p.sid)}">Edit student and parents</a><a class="btn ghost" href="${ls}">Life Skills record</a>` : `<a class="btn" href="#add=${encodeURIComponent(p.email)}">Add to the roster</a>`}</div>` +
     (p.sid ? `<section class="card"><h3>Parents (${(p.parents || []).length})</h3>${(p.parents || []).length ? `<ul class="items">${p.parents.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : `<p class="muted small">No parents linked yet. <a href="#edit=${esc(p.sid)}">Add their emails</a>.</p>`}</section>` : "") +
     (p.alerts.filter(a => a.status === "open").length ? `<div class="list">${p.alerts.filter(a => a.status === "open").map(alertCard).join("")}</div>` : "") +
@@ -371,7 +371,7 @@ async function vStudent(k) {
       ${sec(`Books on their shelf (${p.saved.length})`, p.saved.map(id => `<li>${esc(books[id] || id)}</li>`), "None saved.")}
       ${sec(`Books they want to read (${p.want.length})`, p.want.map(id => `<li>${esc(books[id] || id)}</li>`), "None yet.")}
     </div>` : `<p class="empty">This student is outside your grade band, so their saved things aren't shown. Their AI conversations are below.</p>`) +
-    `<section style="display:flex;flex-direction:column;gap:10px"><h2>AI Coach conversations (${p.chats.length})</h2>${p.chats.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>About</th><th class="num">Messages</th><th>Flag</th><th>Last</th><th></th></tr></thead><tbody>${p.chats.sort((a, b) => b.updated - a.updated).map(chatRow).join("")}</tbody></table></div>` : `<p class="empty">No conversations.</p>`}</section>`;
+    `<section style="display:flex;flex-direction:column;gap:10px"><h2>Mr. Fox conversations (${p.chats.length})</h2>${p.chats.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>About</th><th class="num">Messages</th><th>Flag</th><th>Last</th><th></th></tr></thead><tbody>${p.chats.sort((a, b) => b.updated - a.updated).map(chatRow).join("")}</tbody></table></div>` : `<p class="empty">No conversations.</p>`}</section>`;
 }
 async function vChat(id) {
   const c = S.chats.find(x => x.id === id);
@@ -383,7 +383,7 @@ async function vChat(id) {
     `<div class="convo">${turns.map(t => {
       const flag = t.role === "student" && t.severity && t.severity !== "none";
       const tags = [flag ? `${sevTag(t.severity)} ${esc(CAT[t.flag] || t.flag || "")}` : "", t.scripted ? "fixed safety reply" : "", t.blocked ? "a reply was held back: " + esc(t.blocked) : ""].filter(Boolean).join(" · ");
-      return `<div class="bub ${t.role === "student" ? "student" : "coach"}${flag && SEV.indexOf(t.severity) >= 2 ? " flag" + (t.severity === "urgent" ? " urgent" : "") : ""}"><span class="who">${t.role === "student" ? esc(p.name || "Student") : "AI Coach"} · ${esc(when(t.at))}${tags ? " · " + tags : ""}</span>${esc(t.text).replace(/\[([A-Z]{2}-\d{2}\.\d{1,2})\]/g, (m, id) => CH[id] ? chLink(id) : m)}</div>`;
+      return `<div class="bub ${t.role === "student" ? "student" : "coach"}${flag && SEV.indexOf(t.severity) >= 2 ? " flag" + (t.severity === "urgent" ? " urgent" : "") : ""}"><span class="who">${t.role === "student" ? esc(p.name || "Student") : "Mr. Fox"} · ${esc(when(t.at))}${tags ? " · " + tags : ""}</span>${esc(t.text).replace(/\[([A-Z]{2}-\d{2}\.\d{1,2})\]/g, (m, id) => CH[id] ? chLink(id) : m)}</div>`;
     }).join("") || '<p class="empty">No messages.</p>'}</div>`;
 }
 
@@ -412,7 +412,7 @@ async function start(r) {
   // Start on this guide's own band (All for admins without one).
   if (!S.bandSet && window.wlBand) { S.band = window.wlBand({ all: true }); S.bandSet = true; }
   try { await loadAll(); }
-  catch (e) { app.innerHTML = head("Student Roster") + `<p class="empty">${e.status === 403 ? "The database rules for the AI Coach aren't published yet, or your account isn't on the staff list. Tell Alex." : "Couldn't load. Check your connection and reload."}</p>`; return; }
+  catch (e) { app.innerHTML = head("Student Roster") + `<p class="empty">${e.status === 403 ? "The database rules for Mr. Fox aren't published yet, or your account isn't on the staff list. Tell Alex." : "Couldn't load. Check your connection and reload."}</p>`; return; }
   route();
 }
 

@@ -1,8 +1,8 @@
-// Wilderland Guide Mentor 🐲: one AI for guides that knows the Staff Handbook, the Behavior Policy and how Wilderland
+// Wilderland Trail Partner 🐲: one AI for guides that knows the Staff Handbook, the Behavior Policy and how Wilderland
 // works (the Field Guide, Our Approach, At Home, Parent Comms rules, the Lab builder rules). Staff only.
-// It opens as a side panel beside the page (a bottom panel on phones), like the students' AI Coach, from:
+// It opens as a side panel beside the page (a bottom panel on phones), like the students' Mr. Fox, from:
 //   - the 🐲 button in the Guides top bar on every staff page (/wlnav.js loads this file on first click),
-//   - the "Ask the Guide Mentor" button at the top of /guides/ and on the front door for staff,
+//   - the "Ask Trail Partner" button at the top of /guides/ and on the front door for staff,
 //   - /guides/?mentor (and ?mentor=<thread id> from Your conversations to continue one).
 // The knowledge lives in the relay Worker (mode "mentor"); the handbook and policy are never sent from or stored in
 // this public site. Conversations are saved to the staff member's own history (coachLog, site "guide").
@@ -97,9 +97,9 @@ function mount() {
   if (el) return;
   const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
   const box = document.createElement("aside"); box.className = "wgm"; box.hidden = true; box.setAttribute("aria-labelledby", "wgm-t");
-  box.innerHTML = `<div class="wgm-head"><div class="wgm-av" aria-hidden="true">${DRAGON}</div><div class="t"><b id="wgm-t">Guide Mentor</b><span>Knows our handbook, behavior policy and approach</span></div><button class="wgm-new" type="button" aria-label="Start a new conversation" title="New conversation">＋</button><button class="wgm-size" type="button" aria-label="Make the mentor bigger">⤢</button><button class="wgm-x" type="button" aria-label="Close the Guide Mentor">×</button></div>
+  box.innerHTML = `<div class="wgm-head"><div class="wgm-av" aria-hidden="true">${DRAGON}</div><div class="t"><b id="wgm-t">Trail Partner</b><span>Knows our handbook, behavior policy and approach</span></div><button class="wgm-new" type="button" aria-label="Start a new conversation" title="New conversation">＋</button><button class="wgm-size" type="button" aria-label="Make the mentor bigger">⤢</button><button class="wgm-x" type="button" aria-label="Close Trail Partner">×</button></div>
     <div class="wgm-log" aria-live="polite"></div>
-    <div class="wgm-foot"><form class="wgm-row"><label for="wgm-in" style="position:absolute;left:-9999px">Ask the Guide Mentor</label><textarea id="wgm-in" rows="1" maxlength="6000" placeholder="Ask anything about your work…"></textarea><button class="wgm-send" type="submit">Send</button></form>
+    <div class="wgm-foot"><form class="wgm-row"><label for="wgm-in" style="position:absolute;left:-9999px">Ask Trail Partner</label><textarea id="wgm-in" rows="1" maxlength="6000" placeholder="Ask anything about your work…"></textarea><button class="wgm-send" type="submit">Send</button></form>
     <p class="wgm-hint">AI can be wrong. Check anything about safety or the law with an admin. Saved to <a href="/guides/history/">your conversations</a>, which only you can see.</p></div>`;
   document.body.append(box);
   el = { box, log: box.querySelector(".wgm-log"), form: box.querySelector("form"), input: box.querySelector("textarea"), send: box.querySelector(".wgm-send") };
@@ -116,7 +116,7 @@ function draw() {
   el.log.innerHTML = "";
   if (!msgs.length) {
     const d = document.createElement("div"); d.className = "wgm-intro";
-    d.innerHTML = `<b>${DRAGON} Hi! I'm the Guide Mentor.</b><p style="margin:0">Ask me anything about your work. I answer from the Staff Handbook, the Behavior Policy, the Mentor Mindset Field Guide, Our Approach, At Home, and the Parent Comms and Lab builder rules, and I'll tell you which one I'm using.</p><div class="wgm-chips">${STARTERS.map(s => `<button class="wgm-chip" type="button" data-ask="${esc(s)}">${esc(s)}</button>`).join("")}</div>`;
+    d.innerHTML = `<b>${DRAGON} Hi! I'm Trail Partner.</b><p style="margin:0">Ask me anything about your work. I answer from the Staff Handbook, the Behavior Policy, the Mentor Mindset Field Guide, Our Approach, At Home, and the Parent Comms and Lab builder rules, and I'll tell you which one I'm using.</p><div class="wgm-chips">${STARTERS.map(s => `<button class="wgm-chip" type="button" data-ask="${esc(s)}">${esc(s)}</button>`).join("")}</div>`;
     el.log.append(d);
   }
   msgs.forEach(m => bubble(m.role, m.content, m.err));
@@ -152,7 +152,7 @@ async function ask(text) {
     const r = await fetch(await relayUrl(u), { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" }, body: JSON.stringify({ mode: "mentor", messages: history }) });
     const j = await r.json().catch(() => ({}));
     t.remove();
-    if (!r.ok) { const m = { role: "assistant", content: r.status === 403 ? "The Guide Mentor is for Wilderland staff accounts." : j.error || "Something went wrong. Try again in a minute.", err: true }; msgs.push(m); bubble("assistant", m.content, true); }
+    if (!r.ok) { const m = { role: "assistant", content: r.status === 403 ? "Trail Partner is for Wilderland staff accounts." : j.error || "Something went wrong. Try again in a minute.", err: true }; msgs.push(m); bubble("assistant", m.content, true); }
     else {
       msgs.push({ role: "assistant", content: j.text + (j.stop === "max_tokens" ? "\n\n(That answer was cut short. Ask me to keep going.)" : "") });
       bubble("assistant", msgs[msgs.length - 1].content);
@@ -160,7 +160,7 @@ async function ask(text) {
     }
   } catch (e) {
     t.remove();
-    const m = { role: "assistant", content: e.message === "no relay" ? "The AI isn't switched on yet. Tell Alex." : "Couldn't reach the Guide Mentor. Check your connection and try again.", err: true };
+    const m = { role: "assistant", content: e.message === "no relay" ? "The AI isn't switched on yet. Tell Alex." : "Couldn't reach Trail Partner. Check your connection and try again.", err: true };
     msgs.push(m); bubble("assistant", m.content, true);
   }
   busy = false; el.send.disabled = false; save(); el.input.focus();

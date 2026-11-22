@@ -53,11 +53,11 @@ mark{background:#f6e58d;border-radius:3px}
 <main>
   <p class="eyebrow">Wilderland staff</p>
   <h1>Staff Handbook</h1>
-  <p class="lede">Our handbook for guides, mentors, apprentices and regular volunteers: effective July 2026, reviewed every year. Have a question about it? Ask the Guide Mentor 🐲, which answers from this handbook and tells you which section it used.</p>
+  <p class="lede">Our handbook for guides, mentors, apprentices and regular volunteers: effective July 2026, reviewed every year. Have a question about it? Ask Trail Partner 🐲, which answers from this handbook and tells you which section it used.</p>
   <div class="bar">
     <label for="hq" style="position:absolute;left:-9999px">Search the handbook</label>
     <input class="in" id="hq" type="search" placeholder="Search the handbook, like “phones” or “field trip”">
-    <button class="btn" type="button" data-ask-hb>Ask the Guide Mentor 🐲</button>
+    <button class="btn" type="button" data-ask-hb>Ask Trail Partner 🐲</button>
     <a class="btn ghost hidden" id="pdf" target="_blank" rel="noopener">Open the original PDF ↗</a>
     <label class="btn ghost hidden" id="up">Upload the PDF<input type="file" accept="application/pdf" hidden></label>
   </div>
@@ -95,7 +95,7 @@ function draw() {
   const shown = sections.filter(s => !q || (s.title + " " + s.blocks.join(" ")).toLowerCase().includes(q));
   let toc = "", pi = 0;
   sections.forEach(s => { while (pi < PARTS.length && PARTS[pi][0] <= s.n) { toc += `<p class="part">${esc(PARTS[pi][1])}</p>`; pi++; } toc += `<a href="#s${s.n}">${s.n}. ${esc(s.title)}</a>`; });
-  app.innerHTML = `<div class="wrap"><nav class="toc" aria-label="Sections">${toc}</nav><article>${shown.length ? shown.map(s => `<section class="s" id="s${s.n}"><h2><span>${s.n}. ${esc(s.title)}</span><button type="button" data-ask="${s.n}">Ask about this 🐲</button></h2>${body(s, q)}</section>`).join("") : `<p class="empty" style="margin-top:18px">Nothing in the handbook matches “${esc(q)}”. Try the Guide Mentor: it also knows the Behavior Policy and our approach.</p>`}</article></div>`;
+  app.innerHTML = `<div class="wrap"><nav class="toc" aria-label="Sections">${toc}</nav><article>${shown.length ? shown.map(s => `<section class="s" id="s${s.n}"><h2><span>${s.n}. ${esc(s.title)}</span><button type="button" data-ask="${s.n}">Ask about this 🐲</button></h2>${body(s, q)}</section>`).join("") : `<p class="empty" style="margin-top:18px">Nothing in the handbook matches “${esc(q)}”. Try Trail Partner: it also knows the Behavior Policy and our approach.</p>`}</article></div>`;
 }
 async function relayUrl(t) { const r = await fetch(FS + "/mentorConfig/main", { headers: { Authorization: "Bearer " + t } }); const j = await r.json(); return j.fields.relay.stringValue; }
 async function start(r) {

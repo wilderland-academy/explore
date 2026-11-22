@@ -245,7 +245,7 @@ textarea.copybox{width:100%;min-height:120px;font:inherit;font-size:14px;border:
         <button id="vglobe" type="button" aria-pressed="false">Globe</button>
       </div>
       <button class="tbtn go" id="wander" type="button">Wander</button>
-      <button class="tbtn" id="coachfind" type="button" hidden><span aria-hidden="true">🦊</span> <span><span class="wide">Find an idea with your </span>AI Coach</span></button>
+      <button class="tbtn" id="coachfind" type="button" hidden><span aria-hidden="true">🦊</span> <span><span class="wide">Find an idea with your </span>Mr. Fox</span></button>
       <button class="tbtn" id="pack" type="button"><svg class="bm" aria-hidden="true"><use href="#i-bm"/></svg><span><span class="wide">My </span>sparks</span> <span class="n" id="packn">0</span></button>
     </div>
     <div class="search" role="search">
@@ -2242,9 +2242,9 @@ function renderSpark() {
     '<div class="sec"><h3>Your first hour</h3><ol class="steps">' +
     '<li><b>Look around (15 minutes).</b> Find two or three examples of people who did something like this. Try the links at the bottom of this page. Notice what you like.</li>' +
     '<li><b>Try a tiny version (30 minutes).</b> ' + esc(S.tiny) + '</li>' +
-    '<li><b>Plan the rest.</b> Use the AI coach below to break your project into small steps, then show the plan to your guide.</li>' +
+    '<li><b>Plan the rest.</b> Use Mr. Fox below to break your project into small steps, then show the plan to your guide.</li>' +
     '<li><b>Aim for the showcase.</b> Decide what you will have to show at the next showcase, even if the whole project is not finished yet.</li></ol></div>' +
-    '<div class="sec coach"><h3>Plan it with your AI Coach</h3>' +
+    '<div class="sec coach"><h3>Plan it with Mr. Fox</h3>' +
     '<p>Your coach asks a few questions about you, then helps you pick a version of this project and break it into small steps. It gives ideas and hints. You do the making.</p>' +
     '<div class="acts coachstarts">' + ['Help me pick a version', 'Break it into small steps', 'What can I do today?', 'I\'m stuck'].map(function (q) {
       return '<button class="btn ghost" type="button" data-coach-spark="' + esc(q) + '">' + esc(q) + '</button>';
@@ -2501,7 +2501,7 @@ var onTheme = function () { readTheme(); redraw(); };
 if (window.matchMedia) { var mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', onTheme); else if (mq.addListener) mq.addListener(onTheme); }
 new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
-// AI Coach helps a student find a project: the "🦊" button, or /projects/?coach=find from the AI Coach page. The coach
+// Mr. Fox helps a student find a project: the "🦊" button, or /projects/?coach=find from Mr. Fox's page. The coach
 // writes kinds of projects as [[way-id]]; WLCoachLinks turns those into links that open that place on the map.
 window.WLCoachLinks = function (id) { var n = N[id]; return n && n.type === 'way' ? { href: '#' + id, text: n.name } : null; };
 (function () {
@@ -2520,7 +2520,7 @@ window.WLCoachLinks = function (id) { var n = N[id]; return n && n.type === 'way
   document.addEventListener('wl-role', function (e) { onRole(e.detail); });
   if (window.wlRole !== undefined) onRole(window.wlRole);
 })();
-// AI Coach for the open spark: the coach gets the spark, the kind of project and the first-hour steps.
+// Mr. Fox for the open spark: the coach gets the spark, the kind of project and the first-hour steps.
 document.addEventListener('click', function (e) {
   var b = e.target.closest('[data-coach-spark]'); if (!b || !st.sp) return;
   var sp = st.sp, n = N[sp.src], t = sparkAt(sp.src, sp.i), w = n.type === 'way' ? n : n.W, S = START[n.R.id] || { tiny: '' };

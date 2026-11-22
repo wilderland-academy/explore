@@ -1,4 +1,4 @@
-// Wilderland AI Coach: the chat panel students open from a challenge, a project spark, or /coach/.
+// Wilderland Mr. Fox: the chat panel students open from a challenge, a project spark, or /coach/.
 // It opens as a side panel beside the page (a bottom panel on phones), never over it, so students see both at once.
 // All the safety work happens in the relay Worker (relay/worker.js): it screens each message, removes personal
 // details, answers serious messages with fixed words, checks each reply, logs everything for guides, and alerts staff.
@@ -122,7 +122,7 @@ function mount() {
   // A side panel (complementary region), not a modal dialog: the page beside it stays readable and usable.
   const box = document.createElement("aside"); box.className = "wlc"; box.hidden = true;
   box.setAttribute("aria-labelledby", "wlc-title");
-  box.innerHTML = `<div class="wlc-head"><div class="av" aria-hidden="true">${FOX}</div><div class="t"><b id="wlc-title">AI Coach</b><span id="wlc-topic"></span></div><button class="wlc-size" type="button" aria-label="Make the coach bigger" aria-pressed="false">⤢</button><button class="wlc-x" type="button" aria-label="Close the coach">×</button></div>
+  box.innerHTML = `<div class="wlc-head"><div class="av" aria-hidden="true">${FOX}</div><div class="t"><b id="wlc-title">Mr. Fox</b><span id="wlc-topic"></span></div><button class="wlc-size" type="button" aria-label="Make the coach bigger" aria-pressed="false">⤢</button><button class="wlc-x" type="button" aria-label="Close the coach">×</button></div>
     <p class="wlc-ai">I'm an AI, not a person, and I can make mistakes. Your guides can read our chats. Never type your full name, address, phone or passwords.</p>
     <div class="wlc-log" id="wlc-log" aria-live="polite"></div>
     <div class="wlc-chips" id="wlc-chips"></div>
@@ -219,14 +219,14 @@ function busy(on) {
 }
 
 // Why ask the coach instead of (or before) a guide. Shown in the first-time intro and on /coach/.
-const WHY = `<div class="why"><b>Why ask an AI Coach?</b>
+const WHY = `<div class="why"><b>Why ask Mr. Fox, an AI coach,?</b>
   <ul><li><b>It's always there.</b>Your guides help a whole crew. The coach can help you right now, even when every guide is busy, or at home.</li>
   <li><b>It knows a little about almost everything.</b>Knots, budgets, birds, speeches, fractions: you can ask about any challenge, Lab or project.</li>
   <li><b>Your guide is still the one who passes you.</b>Show your guide when you're ready, and ask them about anything big, risky or personal.</li></ul></div>`;
 function intro() {
   // First time on this device: why use it, what it helps with, and four things to know. Short, with a big button.
   const d = document.createElement("div"); d.className = "wlc-intro";
-  d.innerHTML = `<h3>Meet your AI Coach</h3>${WHY}
+  d.innerHTML = `<h3>Meet Mr. Fox</h3>${WHY}
     <h4>What it helps with</h4>
     <ul><li><b>Challenges, Life Skill Labs and projects:</b> plans, practice, next steps, getting unstuck.</li>
     <li><b>Working out a conflict:</b> calming down, seeing the other side, and planning what to say, the Wilderland way.</li>
@@ -243,7 +243,7 @@ function intro() {
 }
 function greet() {
   const k = st.kind;
-  const hello = k === "lesson" ? "Hi! I'm your AI Coach. Want a 3-minute lesson on how to get the most out of me? Tap a button below or type a question."
+  const hello = k === "lesson" ? "Hi! I'm Mr. Fox. Want a 3-minute lesson on how to get the most out of me? Tap a button below or type a question."
     : k === "project" ? "Hi! Let's work on your project. Tap a button below to start, or tell me what you're thinking."
     : k === "academic" ? "Hi! Tell me the subject and what you're stuck on. I'll help you figure it out with hints and questions. I won't give you the answer, and your guides look at every academics chat."
     : k === "find-challenge" ? "Hi! Let's find a challenge you'll actually want to do. What are you into lately? A hobby, something you want to try, or something you want to get better at?"
@@ -292,8 +292,8 @@ async function open(opts) {
   mount();
   const role = window.wlRole;
   if (!user()) { if (window.wlSignIn) window.wlSignIn(); return; }
-  if (role && role.role === "student" && role.band === "K–1") { alert("The AI Coach is for grades 2 to 8. Your guide will help you with challenges."); return; }
-  if (role && role.role === "parent") { alert("The AI Coach is for students, signed in with their school account."); return; }
+  if (role && role.role === "student" && role.band === "K–1") { alert("Mr. Fox is for grades 2 to 8. Your guide will help you with challenges."); return; }
+  if (role && role.role === "parent") { alert("Mr. Fox is for students, signed in with their school account."); return; }
   const wasOpen = !el.box.hidden;
   st = { kind: KINDS.includes(opts.kind) ? opts.kind : "challenge", chatId: opts.chatId || "", topicId: opts.topicId || "", topicTitle: opts.topicTitle || "", context: opts.context || "", starters: opts.starters || null, first: opts.first || "", busy: false, retry: "", lastFocus: wasOpen && st ? st.lastFocus : document.activeElement };
   el.log.innerHTML = ""; chips([]);

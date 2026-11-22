@@ -89,7 +89,7 @@
 
   function open(id) {
     id = String(id || "").trim();
-    // On the Challenges page, use its own sheet (save to plan, AI Coach, progress).
+    // On the Challenges page, use its own sheet (save to plan, Mr. Fox, progress).
     if (window.WLC && window.WLC.open && document.getElementById("detail")) { window.WLC.open(id); return; }
     mount();
     var body = dlg.querySelector("#wlch-body");
