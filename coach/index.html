@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Coach · Wilderland</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#01412f">
+<link rel="icon" href="/books/f/icon.png">
+<link rel="stylesheet" href="/wl.css">
+<style>
+@font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Uncut Sans";src:url(/books/f/us-700.woff2) format("woff2");font-weight:700;font-display:swap}
+:root{--ink:#14231c;--dim:#56665c;--line:#dfe6d6;--paper:#f7f9f1;--card:#fff;--green:#01412f;--lime:#d5f367}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.55 Inter,system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:36px 18px 80px;display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:"Uncut Sans",Inter,system-ui,sans-serif;letter-spacing:-.02em;line-height:1.12;margin:0}
+h1{font-size:clamp(30px,5vw,46px)} h2{font-size:24px}
+p{margin:0}
+.lede{font-size:18px;color:var(--dim);max-width:60ch;margin-top:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{display:flex;flex-direction:column;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;text-decoration:none;color:inherit;text-align:left;font:inherit;cursor:pointer}
+.card:hover{border-color:var(--green)}
+.card .k{font:700 11.5px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--green)}
+.card b{font:700 20px/1.2 "Uncut Sans",Inter,sans-serif}
+.card p{color:var(--dim);font-size:15px}
+.card i{font-style:normal;font-weight:600;color:var(--green);margin-top:auto}
+.card.lead{background:var(--green);color:#fff;border-color:var(--green)}
+.card.lead .k,.card.lead i{color:var(--lime)} .card.lead p{color:#d8e6dc}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;list-style:none;padding:0;margin:0}
+.rules li{background:#eef4d6;border-radius:14px;padding:14px 16px;font-size:15px}
+.rules b{display:block;font-size:16px;margin-bottom:2px}
+.chats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.chats button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:14px;align-items:center;width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.chats button:hover{border-color:var(--green)}
+.chats button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.chats .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:#eef4d6;color:var(--green);flex:none;font-weight:700}
+.chats .tx{flex:1;min-width:0}
+.chats .tt{font-weight:700;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chats .ls{color:var(--dim);font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chats .dt{color:var(--dim);font-size:13px;flex:none}
+.empty,.msg{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:18px;color:var(--dim)}
+.btn{border:0;border-radius:12px;background:var(--lime);color:#0b2b20;font:700 15px Inter,sans-serif;padding:11px 16px;cursor:pointer}
+.small{font-size:14px;color:var(--dim)}
+.small a{color:var(--green)}
+</style>
+</head>
+<body>
+<div class="wlbar" data-wlnav="students" data-current="coach"></div><script src="/wlnav.js"></script>
+<main>
+  <header>
+    <h1>Your AI Coach</h1>
+    <p class="lede">Help with your challenges and projects. It asks questions and gives hints so you get better, and it never does the work for you.</p>
+  </header>
+
+  <div class="cards">
+    <button class="card lead" type="button" data-lesson><span class="k">Start here</span><b>Learn to use your coach</b><p>A 3-minute chat about what AI is, what it gets wrong, and how to ask good questions.</p><i>Start the lesson →</i></button>
+    <a class="card" href="/challenges/"><span class="k">Challenges</span><b>Coach me on a challenge</b><p>Open any challenge and tap <b style="font:inherit;font-weight:700">Ask the AI Coach</b>. Plan it, practice it, get unstuck.</p><i>Go to Challenges →</i></a>
+    <a class="card" href="/projects/"><span class="k">Projects</span><b>Coach me on a project</b><p>Open a spark and tap <b style="font:inherit;font-weight:700">Plan it with your AI Coach</b> to pick a version and make steps.</p><i>Go to Projects →</i></a>
+  </div>
+
+  <section>
+    <h2 style="margin-bottom:12px">Four things to remember</h2>
+    <ul class="rules">
+      <li><b>It's a computer program.</b>Not a person or a friend. It can be wrong, so check big things with your guide.</li>
+      <li><b>You do the thinking.</b>It asks questions and gives hints. The work, and the pass, are yours.</li>
+      <li><b>Keep private things private.</b>Never type your full name, address, phone, school or passwords.</li>
+      <li><b>Guides can read every chat.</b>If something is wrong or you feel unsafe, tell a real adult. You can also use SafeUT or call or text 988.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 style="margin-bottom:12px">Your conversations</h2>
+    <div id="chats"><p class="msg">Loading…</p></div>
+  </section>
+  <p class="small">For parents: <a href="/parents/ai/">how the AI Coach keeps students safe</a>.</p>
+</main>
+<script type="module" src="/coach/coach.js"></script>
+<script type="module">
+const FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
+const box = document.getElementById("chats");
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const when = ms => { const d = new Date(ms), now = new Date(); return d.toDateString() === now.toDateString() ? d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+const val = v => !v ? null : "stringValue" in v ? v.stringValue : "integerValue" in v ? Number(v.integerValue) : "booleanValue" in v ? v.booleanValue : null;
+let seq = 0;
+async function load(r) {
+  const my = ++seq;
+  const u = window.wlFirebase && window.wlFirebase.auth.currentUser;
+  if (!u) { box.innerHTML = '<div class="msg">Sign in with your school account to see your chats. <button class="btn" type="button" data-wl-signin>Sign in</button></div>'; return; }
+  if (r && r.role === "parent") { box.innerHTML = '<p class="msg">The AI Coach is for students, signed in with their school account. Parents: see <a href="/parents/ai/">how it keeps students safe</a>.</p>'; return; }
+  if (r && r.role === "student" && r.band === "K–1") { box.innerHTML = '<p class="msg">The AI Coach is for grades 2 to 8. Your guide will help you with challenges.</p>'; return; }
+  try {
+    const q = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" },
+      body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "aiChats" }], where: { fieldFilter: { field: { fieldPath: "uid" }, op: "EQUAL", value: { stringValue: u.uid } } }, limit: 200 } }) });
+    if (my !== seq) return;
+    if (!q.ok) throw new Error(q.status);
+    const chats = (await q.json()).filter(x => x.document).map(x => ({ id: x.document.name.split("/").pop(), ...Object.fromEntries(Object.entries(x.document.fields || {}).map(([k, v]) => [k, val(v)])) }))
+      .sort((a, b) => (b.updated || 0) - (a.updated || 0));
+    const staffNote = r && r.role === "staff" ? '<p class="small" style="margin-bottom:10px">You are staff, so these are your own test chats. Every student conversation is on <a href="/guides/students/">Guides › Students</a>.</p>' : "";
+    box.innerHTML = staffNote + (chats.length ? '<ul class="chats">' + chats.map(c => `<li><button type="button" data-chat="${c.id}"><span class="ic" aria-hidden="true">${c.kind === "project" ? "P" : c.kind === "lesson" ? "?" : "C"}</span><span class="tx"><span class="tt">${esc(c.topicTitle || (c.kind === "lesson" ? "How to use your coach" : "Chat"))}</span><span class="ls">You: ${esc(c.last || "")}</span></span><span class="dt">${esc(when(c.updated || c.created || Date.now()))}</span></button></li>`).join("") + "</ul>"
+      : '<p class="empty">No chats yet. Start with the lesson above, or open a challenge and tap Ask the AI Coach.</p>');
+  } catch (e) { box.innerHTML = '<p class="msg">Couldn\'t load your chats. Reload the page to try again.</p>'; }
+}
+document.addEventListener("click", e => {
+  const c = e.target.closest("[data-chat]");
+  if (c && window.WLCoach) { window.WLCoach.open({ chatId: c.getAttribute("data-chat") }); return; }
+  if (e.target.closest("[data-lesson]") && window.WLCoach) window.WLCoach.open({ kind: "lesson", topicId: "lesson", topicTitle: "How to use your coach" });
+});
+document.addEventListener("wl-role", e => load(e.detail));
+document.addEventListener("wl-coach-closed", () => load(window.wlRole));
+if (window.wlRole !== undefined) load(window.wlRole);
+setTimeout(() => { if (box.textContent.trim() === "Loading…" && !(window.wlFirebase && window.wlFirebase.auth.currentUser)) load(null); }, 4000);
+</script>
+<script type="module" src="/auth.js" data-site="coach"></script>
+</body>
+</html>

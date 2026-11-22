@@ -469,3 +469,4 @@ main{max-width:1180px;margin:0 auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
   .prog-out .btn{margin-left:0}
 }
 .progress .wrap{padding-left:0;padding-right:0;max-width:none}
+.coach-starts{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}

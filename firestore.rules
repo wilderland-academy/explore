@@ -57,7 +57,8 @@ service cloud.firestore {
     }
     // Site settings (the AI relay address).
     match /mentorConfig/{id} {
-      allow read: if isStaff();
+      // School accounts can read it too: students' AI Coach needs the relay address (which only answers signed-in school accounts).
+      allow read: if isStaff() || school();
       allow write: if isAdmin();
     }
     // Each person's conversation history with the AI coaches and the Lab builder (/guides/log.js).
@@ -160,6 +161,52 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['working', 'updated'])
         && request.resource.data.working is list && request.resource.data.working.size() <= 3;
       allow delete: if isAdmin();
+    }
+
+    // ---- Student AI Coach (/coach/, inside Challenges and Projects; staff view at /guides/students/) ----
+    // The relay Worker writes all of these with the student's own sign-in, after it has screened the message.
+    // Students can add to their own log but never change or delete it; every staff member can read every conversation.
+    match /aiChats/{chatId} {
+      allow read: if staffSchool() || (school() && resource.data.uid == request.auth.uid);
+      allow create: if school() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.level == 0 && request.resource.data.turns == 0;
+      // The Worker updates the running totals; the flag level can only go up.
+      allow update: if school() && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updated', 'turns', 'level', 'last'])
+        && request.resource.data.level >= resource.data.level
+        && request.resource.data.turns == resource.data.turns + 1;
+      // Staff mark a conversation reviewed.
+      allow update: if staffSchool()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewed', 'reviewedBy', 'reviewedAt']);
+      allow delete: if isAdmin();
+    }
+    match /aiTurns/{id} {
+      allow read: if staffSchool() || (school() && resource.data.uid == request.auth.uid);
+      allow create: if school() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.role in ['student', 'coach']
+        && request.resource.data.text is string && request.resource.data.text.size() <= 4000;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+    match /aiAlerts/{id} {
+      allow read: if staffSchool();
+      allow create: if school() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'open';
+      allow update: if staffSchool()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'note', 'reviewedBy', 'reviewedAt'])
+        && request.resource.data.status in ['open', 'reviewed'];
+      allow delete: if isAdmin();
+    }
+    // Daily message count per student (the Worker enforces the limit).
+    match /aiStudents/{uid} {
+      allow read: if staffSchool() || (school() && request.auth.uid == uid);
+      allow create: if school() && request.auth.uid == uid && request.resource.data.count == 1;
+      allow update: if school() && request.auth.uid == uid
+        && (request.resource.data.count == resource.data.count + 1
+            || (request.resource.data.day > resource.data.day && request.resource.data.count == 1));
+    }
+    // Staff see students' saved challenges, sparks and books (stored by /auth.js under students/{uid}/sites/{site}).
+    match /{path=**}/sites/{site} {
+      allow read: if staffSchool();
     }
 
     // Stories guides share with all staff.

@@ -2243,19 +2243,13 @@ function renderSpark() {
     '<li><b>Try a tiny version (30 minutes).</b> ' + esc(S.tiny) + '</li>' +
     '<li><b>Plan the rest.</b> Use the AI coach below to break your project into small steps, then show the plan to your guide.</li>' +
     '<li><b>Aim for the showcase.</b> Decide what you will have to show at the next showcase, even if the whole project is not finished yet.</li></ol></div>' +
-    '<div class="sec coach"><h3>Plan it with an AI coach</h3>' +
-    '<p>Everyone starts from a different place. Fill in what you can, then copy the prompt into an AI chatbot. It will ask about you and help you break the project into steps that fit you.</p>' +
-    '<p class="warn">Use a chatbot your guide or parent has said is OK, and use it with them. Most chatbots are only for ages 13 and up, and some only for adults. Never type your full name, school or address into one.</p>' +
-    '<div class="form">' + FIELDS.map(function (f) {
-      var id = 'me-' + f[0], v = ME[meKey(f[0], sp)] || '';
-      return '<label for="' + id + '">' + esc(f[1]) + '</label><input id="' + id + '" data-me="' + f[0] + '" type="text" autocomplete="off" value="' + esc(v) + '" placeholder="' + esc('e.g. ' + f[2]) + '">';
+    '<div class="sec coach"><h3>Plan it with your AI Coach</h3>' +
+    '<p>Your coach asks a few questions about you, then helps you pick a version of this project and break it into small steps. It gives ideas and hints. You do the making.</p>' +
+    '<div class="acts coachstarts">' + ['Help me pick a version', 'Break it into small steps', 'What can I do today?', 'I\'m stuck'].map(function (q) {
+      return '<button class="btn ghost" type="button" data-coach-spark="' + esc(q) + '">' + esc(q) + '</button>';
     }).join('') + '</div>' +
-    '<label class="plabel" for="aiprompt">Your prompt</label><textarea class="copybox prompt" id="aiprompt" readonly></textarea>' +
-    '<div class="acts"><button class="btn" type="button" data-copy="aiprompt">Copy prompt</button><button class="btn ghost" type="button" data-act="clearme">Clear my answers</button></div>' +
-    '<p class="fine">Your answers stay on this device so you only type them once. On a shared computer, press Clear when you are done.</p>' +
-    '<details class="more"><summary>Prompts for later</summary>' + FOLLOW.map(function (f, k) {
-      return '<div class="fprompt"><b>' + esc(f[0]) + '</b><p id="fp' + k + '">' + esc(f[1]) + '</p><button class="linkbtn" type="button" data-copy="fp' + k + '">Copy</button></div>';
-    }).join('') + '<p class="fine">Replace the parts in [brackets] before you send them.</p></details></div>' +
+    '<div class="acts"><button class="btn" type="button" data-coach-spark="">Open the coach</button></div>' +
+    '<p class="fine">The coach is an AI, not a person. Your guides can read your chats. It is for students in grades 2 to 8 signed in with a school account.</p></div>' +
     '<div class="sec"><h3>Learn more</h3><ul class="res">' + S.res.map(function (r) {
       return '<li><a href="' + esc(r[1]) + '" target="_blank" rel="noopener">' + esc(r[0]) + '</a><span>' + esc(r[2]) + '</span></li>';
     }).join('') +
@@ -2506,9 +2500,21 @@ var onTheme = function () { readTheme(); redraw(); };
 if (window.matchMedia) { var mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', onTheme); else if (mq.addListener) mq.addListener(onTheme); }
 new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+// AI Coach for the open spark: the coach gets the spark, the kind of project and the first-hour steps.
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-coach-spark]'); if (!b || !st.sp) return;
+  var sp = st.sp, n = N[sp.src], t = sparkAt(sp.src, sp.i), w = n.type === 'way' ? n : n.W, S = START[n.R.id] || { tiny: '' };
+  var ctx = ['Project idea (a "spark"): ' + t, 'Kind of project: ' + w.name, 'Area: ' + n.R.name];
+  if (n.type === 'story') ctx.push('Inspired by the story of ' + n.name + ' (' + n.tag + ').');
+  if (S.tiny) ctx.push('Suggested tiny first version: ' + S.tiny);
+  ctx.push('How Wilderland projects work: students pick a small, medium or stretch version, break it into 5 to 8 steps that each fit one work session, mark steps that need an adult or safety gear, and aim to show something at the next showcase.');
+  var go = function () { window.WLCoach.open({ kind: 'project', topicId: (sp.src + '-' + sp.i).slice(0, 40), topicTitle: t, context: ctx.join('\n'), first: b.getAttribute('data-coach-spark') || '' }); };
+  if (window.WLCoach) go(); else document.addEventListener('wl-coach-ready', go, { once: true });
+});
 })();
 
 </script>
+<script type="module" src="/coach/coach.js"></script>
 <script type="module" src="/auth.js" data-site="projects"></script>
 </body>
 </html>

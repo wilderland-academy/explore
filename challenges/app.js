@@ -350,8 +350,31 @@
 
 
   // ---------- AI starter prompts (built in ai.js from the challenge's own sentence and steps) ----------
+  // Students: the AI Coach chat (coach/coach.js), with starter buttons. Guides: the copyable prompts. Parents: neither.
+  var COACH_STARTS = ['Help me make a plan', 'Explain how to start', 'Quiz me on it', 'I\'m stuck'];
+  function coachContext(c) {
+    var comp = D.comps[c.c], s = SK[comp.k];
+    var L = ['Challenge ("I can" sentence): ' + c.t, 'Life skill: ' + s.n + ' > ' + comp.s + ' > ' + comp.n, 'Grades: ' + c.gr, 'Time: ' + c.tm, 'Credits: ' + c.cr, 'How it is shown to a guide: ' + c.w];
+    if (c.how && c.how.length) L.push('How to do it:\n- ' + c.how.join('\n- '));
+    if (c.st && c.st.length) L.push((c.z === 'Epic' ? 'Checkpoints' : 'Stages') + ':\n- ' + c.st.join('\n- '));
+    if (c.gate) L.push('Safety Gate (a guide or certified instructor checks this first): ' + c.gate);
+    if (c.h) L.push('This challenge can also be passed off at home with a parent.');
+    return L.join('\n').slice(0, 3800);
+  }
+  function openCoach(id, say) {
+    var c = BYID[id]; if (!c) return;
+    var go = function () { window.WLCoach.open({ kind: 'challenge', topicId: c.id, topicTitle: c.t, context: coachContext(c), first: say || '' }); };
+    if (window.WLCoach) go(); else document.addEventListener('wl-coach-ready', go, { once: true });
+  }
   function aiBox(c) {
-    if (!window.WLAI) return '';
+    if (STUDENT) {
+      if (c.b === 'K–1') return '';
+      return '<div class="sheet-sec ai-sec coach-sec"><h3>' + icon('bot') + 'Ask the AI Coach</h3>' +
+        '<p class="ai-note">Your coach helps you plan, practice and get unstuck. It asks questions and gives hints, and it won’t do the challenge for you. Tap one to start:</p>' +
+        '<div class="coach-starts">' + COACH_STARTS.map(function (t) { return '<button class="chip" type="button" data-coach="' + c.id + '" data-say="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' +
+        '<button class="btn" type="button" data-coach="' + c.id + '">' + icon('message-square') + 'Open the coach</button></div>';
+    }
+    if (SITE === 'parents' || !window.WLAI) return '';
     var P = window.WLAI.prompts(c), k1 = c.b === 'K–1';
     return '<div class="sheet-sec ai-sec"><h3>' + icon('bot') + (k1 ? 'AI prompts for guides' : 'Get help from AI') + '</h3>' +
       '<p class="ai-note">' + (k1
@@ -560,6 +583,7 @@
     }
     if (t.dataset.pick) { setPick(t.dataset.pick, picks.indexOf(t.dataset.pick) < 0); return; }
     if (t.dataset.unpick) { setPick(t.dataset.unpick, false); return; }
+    if (t.dataset.coach) { if (detail.open) detail.close(); openCoach(t.dataset.coach, t.dataset.say); return; }
     if (t.dataset.open) { if (picksDlg.open) picksDlg.close(); openDetail(t.dataset.open); return; }
     if (t.hasAttribute('data-close')) { t.closest('dialog').close(); return; }
     if (t.hasAttribute('data-open-picks')) { lastFocus = t; renderPicks(); picksDlg.showModal(); return; }
