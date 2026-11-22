@@ -11,6 +11,18 @@
 .wlbar .wlbar-home{gap:10px}
 .wlbar .wlbar-home .wlbar-logo{display:block!important}
 .wlbar .wlbar-site{font:700 19px/1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;letter-spacing:-.01em;color:#fff;white-space:nowrap;padding-right:6px;border-right:1px solid rgba(255,255,255,.22);margin-right:2px}
+.wlbar .wlbar-switch{position:relative;flex:none;margin-left:-8px}
+.wlbar .wlbar-switch>button.wlbar-site{display:inline-flex;align-items:center;gap:5px;background:none;border:0;border-right:1px solid rgba(255,255,255,.22);cursor:pointer;padding:6px 8px 6px 0;border-radius:0;min-height:36px}
+.wlbar .wlbar-switch>button.wlbar-site:hover .wlbar-caret,.wlbar .wlbar-switch>button[aria-expanded="true"] .wlbar-caret{background:rgba(255,255,255,.14)}
+.wlbar .wlbar-caret{width:18px;height:18px;padding:3px;border-radius:5px;flex:none;color:#d5f367;transition:background .15s}
+.wlbar .wlbar-switch>button:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
+.wlbar .wlbar-menu{position:absolute;left:0;top:calc(100% + 6px);min-width:190px;background:#0f231c;border:1px solid #28493d;border-radius:12px;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:60}
+.wlbar .wlbar-menu[hidden]{display:none}
+.wlbar .wlbar-menu p{margin:2px 8px 6px;font:600 11.5px/1.2 Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#a9bbb0}
+.wlbar .wlbar-menu a{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:8px;color:#f6f8ea;text-decoration:none;font-size:15px}
+.wlbar .wlbar-menu a:hover{background:rgba(255,255,255,.08)}
+.wlbar .wlbar-menu a[aria-current]{color:#d5f367}
+.wlbar .wlbar-menu a[aria-current]::after{content:"\2713";font-weight:700}
 .wlbar .wlbar-sites{display:flex;flex-wrap:nowrap;align-items:center;gap:2px;margin:0 0 0 8px;padding:0;background:none;border:0;position:static;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .wlbar .wlbar-sites::-webkit-scrollbar{display:none}
 .wlbar .wlbar-sites a{display:inline-flex;margin:0;border:0;box-shadow:none;font-weight:600;font-size:15px;line-height:1;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;color:rgba(255,255,255,.8);text-decoration:none;white-space:nowrap}
@@ -29,6 +41,8 @@
   .wlbar .wlbar-home svg{height:18px}
   .wlbar .wlbar-home{gap:7px}
   .wlbar .wlbar-site{font-size:16px;padding-right:5px}
+  .wlbar .wlbar-switch{margin-left:-4px}
+  .wlbar .wlbar-caret{width:16px;height:16px}
   .wlbar .wlbar-sites{margin-left:0;gap:0}
   .wlbar .wlbar-sites a{padding:0 9px;font-size:14px;min-height:34px}
   .wl-title{font-size:19px}

@@ -657,6 +657,9 @@ function importPanel() {
 let boardBand = null, boardQ = "";
 function boardView() {
   const mine = S.mine[0] && S.students[S.mine[0]];
+  // Students see only their own grade band's crew; guides can look across bands.
+  const lockBand = S.role === "student" && mine && BANDS.includes(mine.band) ? mine.band : null;
+  if (lockBand) boardBand = lockBand;
   if (!boardBand) boardBand = mine ? mine.band : "2–4";
   const list = Object.values(S.boards).filter(b => b.name && (boardBand === "All" || b.band === boardBand))
     .filter(b => !boardQ || b.name.toLowerCase().includes(boardQ) || (b.working || []).concat((b.passed || []).map(p => p.c)).some(c => chTitle(c).toLowerCase().includes(boardQ)))
@@ -667,7 +670,7 @@ function boardView() {
   return h("div", {}, [
     head("Crew board", "What everyone is working on, and what they've passed. Ask someone who's done it how they did it."),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
-      h("div", { class: "row" }, [...["All", ...BANDS].map(b => h("button", { class: "chip", type: "button", "aria-pressed": String(boardBand === b), text: b === "All" ? "Everyone" : "Grades " + b, onclick: () => { boardBand = b; route(); } })), h("label", { class: "f", for: "bq", style: { marginLeft: "auto" } }, [h("span", { class: "hint", text: "Search" }), q])]),
+      h("div", { class: "row" }, [...(lockBand ? [h("span", { class: "tag", text: "Grades " + lockBand })] : ["All", ...BANDS]).map(b => typeof b !== "string" ? b : h("button", { class: "chip", type: "button", "aria-pressed": String(boardBand === b), text: b === "All" ? "Everyone" : "Grades " + b, onclick: () => { boardBand = b; route(); } })), h("label", { class: "f", for: "bq", style: { marginLeft: "auto" } }, [h("span", { class: "hint", text: "Search" }), q])]),
       list.length ? h("div", { class: "boardgrid" }, list.map(b => {
         const passed = (b.passed || []).slice().sort((x, y) => (y.d || "").localeCompare(x.d || ""));
         const credits = b.credits || 0, ranks = RANKS[b.band] || [], rank = ranks.filter(r => r[0] <= credits).pop();
@@ -715,14 +718,29 @@ function route() {
 }
 addEventListener("hashchange", () => { route(); scrollTo(0, 0); });
 
+// Tell the shared top bar (/wlnav.js) who this is, for the site switcher (staff, parents) and to keep students on the
+// Students site. Same "wl-role" event and device memory as /auth.js, which these tracker pages don't load.
+const TEAM = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];
+function tellRole() {
+  let d = null;
+  if (S.user && TEAM.includes(S.email) && S.role !== "unverified") d = { role: "staff", band: null };
+  else if (S.role === "staff" || S.role === "parent") d = { role: S.role, band: null };
+  else if (S.role === "student") { const bands = [...new Set(S.mine.map(id => S.students[id] && S.students[id].band).filter(Boolean))]; d = { role: "student", band: bands.length === 1 ? bands[0] : null }; }
+  if (d) d = { email: S.email, ...d };
+  window.wlRole = d;
+  try { if (d) localStorage.setItem("wl-role", JSON.stringify({ e: d.email, r: d.role, b: d.band })); else localStorage.removeItem("wl-role"); } catch (e) { }
+  document.dispatchEvent(new CustomEvent("wl-role", { detail: d }));
+}
+
 let seq = 0;
 async function start(u) {
   const my = ++seq;
-  if (!u) { Object.assign(S, { user: null, role: null, students: {}, entries: {}, boards: {}, mine: [] }); return route(); }
+  if (!u) { Object.assign(S, { user: null, role: null, students: {}, entries: {}, boards: {}, mine: [] }); tellRole(); return route(); }
   main(h("p", { class: "loading", text: "Loading…" }));
   await decideRole(u);
   if (my !== seq) return;
-  if (S.role === "unverified") return route();
+  if (S.role === "unverified") { tellRole(); return route(); }
+  if (S.role !== "student") tellRole();
   try { await loadAll(); }
   catch (e) {
     console.warn("Life Skills:", e);
@@ -730,6 +748,7 @@ async function start(u) {
     acct(); return main([head("Can't open the tracker", e.code === "permission-denied" ? "The database rules for the tracker aren't published yet, or this account isn't allowed in. Tell Alex." : "Check your connection and reload the page.")]);
   }
   if (my !== seq) return;
+  tellRole();
   route();
 }
 (async () => {

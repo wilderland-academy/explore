@@ -391,3 +391,4 @@ main{max-width:1180px;margin:0 auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
 .ai-list details{margin-top:6px}
 .ai-list summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--green)}
 .ai-list .template{margin-top:8px;font-size:14px;max-width:none}
+.band:disabled{cursor:default}.band:disabled:hover{border-color:transparent}
