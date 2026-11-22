@@ -20,8 +20,9 @@ Explore is four sites under one domain, with one top bar shared by all of them:
 
 **The bar.** Every page links `/wl.css` and starts `<body>` with
 `<div class="wlbar" data-wlnav="students" data-current="books"></div><script src="/wlnav.js"></script>`.
-`/wlnav.js` holds every site's tabs in one list, so the bar is identical everywhere: the logo mark only (no wordmark, no site
-name), which goes to the current site's own home; that site's tabs; Basecamp; and the sign-in slot (`data-wl-auth`, left out
+`/wlnav.js` holds every site's tabs in one list, so the bar is identical everywhere: the three-mountain logo mark (no
+wordmark) and the site's name (Students, Guides or Parents; nothing on the front door), which together go to the current site's
+own home; that site's tabs; Basecamp; and the sign-in slot (`data-wl-auth`, left out
 with `data-auth="off"` on pages with their own account menu, like the Life Skills tracker). The site's home isn't a tab, because
 the logo goes there. To add or rename a tab, edit `wlnav.js`, nowhere else. Same colors on every site: don't restyle `.wlbar`
 on a page.

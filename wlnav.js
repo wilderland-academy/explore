@@ -3,13 +3,13 @@
 //   <div class="wlbar" data-wlnav="students" data-current="books"></div><script src="/wlnav.js"></script>
 // data-wlnav: home | students | guides | parents. data-current: the tab id below for this page (or nothing).
 // data-auth="off" leaves out the sign-in slot (pages with their own account menu, like the Life Skills tracker).
-// The logo goes to the current site's own home page. Links that leave Explore (Basecamp) get an arrow and open a new tab.
+// The logo and the site's name go to the current site's own home page. Links that leave Explore (Basecamp) get an arrow and open a new tab.
 // Styles are in /wl.css. A plain script (not a module) so the bar is drawn before the page paints.
 (function () {
   var BASECAMP = { id: "basecamp", label: "Basecamp", href: "https://my.wilderland.academy/", out: true };
   var SITES = {
-    home: { name: "Wilderland Explore", home: "/", tabs: [] },
-    students: { name: "Students", home: "/students/", tabs: [
+    home: { name: "Wilderland Explore", home: "/", label: "", tabs: [] },
+    students: { name: "Students", home: "/students/", label: "Students", tabs: [
       { id: "books", label: "Books", href: "/books/" },
       { id: "challenges", label: "Challenges", href: "/challenges/" },
       { id: "lifeskills", label: "Life Skills", href: "/lifeskills/" },
@@ -17,20 +17,21 @@
       { id: "store", label: "Store", href: "/store/" },
       { id: "suggest", label: "Ideas", href: "/suggest/" },
       BASECAMP] },
-    guides: { name: "Guides", home: "/guides/", tabs: [
+    guides: { name: "Guides", home: "/guides/", label: "Guides", tabs: [
       { id: "mentor", label: "Mentor Mindset", href: "/fieldguide/" },
       { id: "behavior", label: "Behavior", href: "/behavior/" },
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
       { id: "parentcomms", label: "Parent Comms", href: "/guides/parents/" },
       BASECAMP] },
-    parents: { name: "Parents", home: "/parents/", tabs: [
+    parents: { name: "Parents", home: "/parents/", label: "Parents", tabs: [
       { id: "athome", label: "At Home", href: "/parents/athome/" },
       { id: "approach", label: "Our Approach", href: "/parents/approach/" },
       { id: "fieldnotes", label: "Field Notes", href: "/parents/series/" },
       { id: "lifeskills", label: "Life Skills", href: "/parents/lifeskills/" },
       BASECAMP] }
   };
-  var MARK = '<svg class="wlbar-mark" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg>';
+  // "wlbar-logo", not the old "wlbar-mark": an old cached wl.css hid .wlbar-mark on desktop.
+  var MARK = '<svg class="wlbar-logo" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg>';
   var ARROW = '<svg class="wlbar-out" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2h6v6M10 2 3 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
 
@@ -42,7 +43,9 @@
     if (t.out) return '<a class="wlbar-ext" href="' + t.href + '" target="_blank" rel="noopener" aria-label="' + esc(t.label) + ' (opens in a new tab)">' + esc(t.label) + ARROW + "</a>";
     return '<a href="' + t.href + '"' + (t.id === cur ? ' aria-current="page"' : "") + ">" + esc(t.label) + "</a>";
   }).join("");
-  bar.innerHTML = '<div class="wlbar-in"><a class="wlbar-home" href="' + site.home + '" aria-label="' + esc(site.name) + ' home">' + MARK + "</a>" +
+  // The logo and the site's name ("Students", "Guides", "Parents") both go to that site's home page.
+  bar.innerHTML = '<div class="wlbar-in"><a class="wlbar-home" href="' + site.home + '" aria-label="' + esc(site.name) + ' home">' + MARK +
+    (site.label ? '<span class="wlbar-site">' + esc(site.label) + "</span>" : "") + "</a>" +
     (tabs ? '<nav class="wlbar-sites" aria-label="' + esc(site.name) + '">' + tabs + "</nav>" : "") +
     (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-auth" data-wl-auth></span>') + "</div>";
   bar.setAttribute("data-wlnav-done", "");
