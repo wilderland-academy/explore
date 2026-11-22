@@ -4,6 +4,7 @@
 // (mentorConfig/main); every draft is saved to the guide's private history (/guides/log.js).
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import { coachLog, autosaver } from "/guides/log.js";
+import { EPICS } from "./epics.js";
 
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];   // keep in step with auth.js
@@ -20,7 +21,8 @@ let db, user = null, relay = "", RULES = "", log = null, seq = 0, ctl = null;
 const W = window.WL || { skills: [], comps: {}, ch: [] };
 const skillBy = Object.fromEntries(W.skills.map(s => [s.k, s]));
 const byComp = {}; for (const c of W.ch) (byComp[c.c] ||= []).push(c);
-const st = { way: null, skill: null, sub: null, comp: null, idea: "", matches: null, ch: null, chAct: null, type: null, band: null, time: "", notes: "", plan: "", q: "", qBand: "" };
+const st = { way: null, skill: null, sub: null, comp: null, idea: "", matches: null, ch: null, chAct: null, type: null, band: null, time: "", notes: "", plan: "", q: "", qBand: "", epic: null, eBand: "" };
+const epicBy = Object.fromEntries(EPICS.map(e => [e.id, e]));
 let turns = [], lastDraft = "", threadId = null, busy = false, status = "", stop = "", recentCache = null;
 const save = autosaver(() => log, () => { status = "Couldn't save this draft to your history. Copy it before you leave."; drawOut(); });
 
@@ -38,6 +40,8 @@ async function onAuth(u) {
   if (!RULES) { try { const r = await fetch("rules.txt", { cache: "no-cache" }); if (r.ok) RULES = await r.text(); } catch (e) { RULES = ""; } }
   log = coachLog(db, u);
   if (my !== seq) return;
+  const ep = new URLSearchParams(location.search).get("epic");
+  if (ep && epicBy[ep]) { pickEpic(epicBy[ep]); history.replaceState(null, "", location.pathname); }
   const t = new URLSearchParams(location.search).get("t");
   if (t) {
     try { const x = await log.get(t); if (x && x.site === "labs") { turns = x.messages || []; threadId = x.id; lastDraft = [...turns].reverse().find(m => m.role === "assistant")?.content || ""; Object.assign(st, x.meta && x.meta.st ? x.meta.st : {}); firstShown = (x.meta && x.meta.firstShown) || ""; } } catch (e) { console.warn(e); }
@@ -79,9 +83,10 @@ function draw() {
 }
 
 function step1() {
-  const ways = [["skill", "A Life Skill to build", "Pick from the Skill Map. See which abilities have no challenges yet."], ["idea", "A cool idea", "Describe the activity. The builder suggests the Life Skill it really builds."], ["existing", "A challenge on the site", "Run it as a Skill Lab, make a version for another age, or an Epic."], ["review", "A plan I already wrote", "Paste it. Get its scorecard and the 2–3 changes that matter most."]];
+  const ways = [["epic", "An epic Lab to adapt", "Weeks-long Labs that end in a real feat, for every band. Make one yours."], ["skill", "A Life Skill to build", "Pick from the Skill Map. See which abilities have no challenges yet."], ["idea", "A cool idea", "Describe the activity. The builder suggests the Life Skill it really builds."], ["existing", "A challenge on the site", "Run it as a Skill Lab, make a version for another age, or an Epic."], ["review", "A plan I already wrote", "Paste it. Get its scorecard and the 2–3 changes that matter most."]];
   const sec = el("section", { class: "step" }, el("span", { class: "stepn", text: "Step 1" }), el("h2", { text: "What do you have to start with?" }),
     el("div", { class: "ways", role: "group", "aria-label": "Ways to start" }, ways.map(([k, b, s]) => el("button", { class: "way", type: "button", "aria-pressed": String(st.way === k), onclick: () => { st.way = k; if (k === "review") st.type = null; draw(); } }, el("b", { text: b }), el("span", { text: s })))));
+  if (st.way === "epic") sec.append(epicPanel());
   if (st.way === "skill") sec.append(skillPanel());
   if (st.way === "idea") sec.append(ideaPanel());
   if (st.way === "existing") sec.append(existingPanel());
@@ -89,6 +94,27 @@ function step1() {
     el("textarea", { id: "plan", style: "min-height:200px", placeholder: "Paste a Lab plan, a challenge idea, or a project proposal.", oninput: e => { st.plan = e.target.value; } }))));
   if (st.way === "review") setTimeout(() => { const t = $("#plan"); if (t && !t.value) t.value = st.plan; });
   return sec;
+}
+function pickEpic(e) {
+  Object.assign(st, { way: "epic", epic: e.id, band: e.band, type: "Skill Lab", comp: e.skills[0], time: e.weeks, eBand: st.eBand || e.band });
+}
+function epicPanel() {
+  const p = el("div", { class: "panel" });
+  p.append(el("p", { class: "note", text: "Alpha reports its pre-K students building a real treehouse with power tools, swimming long distances and building 1,000-piece sets, over weeks or months. We have less money and higher ratios, so each option here says what support it needs and roughly what it costs. Every one follows the Workshop Scorecard: high standards, high support, high autonomy." }));
+  p.append(el("div", { class: "chips", role: "group", "aria-label": "Band" }, [["", "All bands"], ...BANDS.map(b => [b, b])].map(([b, lab]) => chip(lab, st.eBand === b, () => { st.eBand = b; draw(); }))));
+  const list = EPICS.filter(e => !st.eBand || e.band === st.eBand);
+  p.append(el("div", { class: "epics" }, list.map(e => {
+    const on = st.epic === e.id;
+    return el("article", { class: "epic" + (on ? " on" : "") },
+      el("div", { class: "etop" }, el("span", { class: "cn", text: e.band }), el("span", { class: "cn", text: e.weeks }), el("span", { class: "cn", title: "$ uses what we have · $$ a few hundred dollars · $$$ over about $1,000 or a paid partner", text: e.cost })),
+      el("h3", { text: e.title }),
+      el("p", { class: "feat", text: e.feat }),
+      el("p", { class: "note", text: e.skills.map(compLabel).map(x => x.split(" › ").pop()).join(" · ") }),
+      el("details", {}, el("summary", { text: "How it hits the Scorecard" }),
+        el("dl", {}, [["High standards", e.standards], ["High support", e.support], ["High autonomy", e.autonomy], ["Test to Pass", e.test], ["Showcase", e.showcase], ["Safety", e.safety], ["Worth knowing", e.note]].flatMap(([k, v]) => v ? [el("dt", { text: k }), el("dd", { text: v })] : []))),
+      el("button", { class: "btn " + (on ? "lime" : "go"), type: "button", text: on ? "Chosen: set the details below" : "Make this one ours", onclick: () => { pickEpic(e); draw(); $("#step2")?.scrollIntoView({ behavior: "smooth", block: "start" }); } }));
+  })));
+  return p;
 }
 function skillPanel() {
   const p = el("div", { class: "panel" });
@@ -154,14 +180,16 @@ function existingPanel() {
   return p;
 }
 
-function ready1() { return st.way === "review" ? true : st.way === "existing" ? !!(st.ch && st.chAct) : !!st.comp; }
+function ready1() { return st.way === "review" ? true : st.way === "existing" ? !!(st.ch && st.chAct) : st.way === "epic" ? !!st.epic : !!st.comp; }
 function step2() {
   if (!ready1()) return null;
-  const sec = el("section", { class: "step" }, el("span", { class: "stepn", text: "Step 2" }), el("h2", { text: "The details" }));
+  const sec = el("section", { class: "step", id: "step2" }, el("span", { class: "stepn", text: "Step 2" }), el("h2", { text: "The details" }));
   const p = el("div", { class: "panel" });
   if (st.way === "review") p.append(el("p", {}, el("b", { text: "Reviewing " }), "your plan against the scorecard."));
+  else if (st.way === "epic") p.append(el("p", {}, el("b", { text: "Starting from: " }), epicBy[st.epic].title, el("br"), el("b", { text: "Skills: " }), epicBy[st.epic].skills.map(compLabel).join("; ")));
   else p.append(el("p", {}, el("b", { text: "Skill: " }), compLabel(st.comp), st.ch ? el("span", {}, el("br"), el("b", { text: "From: " }), st.ch.t) : null));
-  if (st.way !== "review" && st.way !== "existing") p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: "What are we making?" }), el("div", { class: "chips" }, TYPES.map(t => chip(t, st.type === t, () => { st.type = t; draw(); }, { disabled: t === "Project" && st.band === "K–1" ? true : null })))));
+  if (st.way === "epic") p.append(el("p", { class: "note", text: "Change the band, the time or the notes to fit your crew (number of kids, adults you can count on, budget, season). The builder keeps the feat and the high bar unless you tell it otherwise." }));
+  if (st.way !== "review" && st.way !== "existing" && st.way !== "epic") p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: "What are we making?" }), el("div", { class: "chips" }, TYPES.map(t => chip(t, st.type === t, () => { st.type = t; draw(); }, { disabled: t === "Project" && st.band === "K–1" ? true : null })))));
   p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: st.way === "review" ? "Age band (optional)" : "Age band" }), el("div", { class: "chips" }, BANDS.map(b => chip(b, st.band === b, () => { st.band = b; if (b === "K–1" && st.type === "Project") st.type = "Skill Lab"; draw(); })))));
   const n = [];
   if (st.band === "K–1" && st.type === "Challenge" && st.way !== "review") n.push(el("div", { class: "box warn", text: "K–1 students don't run Challenges on their own. The builder will make it guide-led (the guide runs it, each child shows the skill alone), or switch to a Skill Lab." }));
@@ -211,12 +239,17 @@ function buildPrompt() {
     req = `Mode ${{ Challenge: "A", "Skill Lab": "B", Project: "C" }[st.type]}: build a ${st.type} for the ${st.band} band.`;
     if (st.way === "idea") req += `\nThe guide's idea: """${st.idea.trim()}"""\nKeep the guide's idea as the vehicle, but shape it so passing requires the specific ability.`;
   }
+  if (st.way === "epic") {
+    const e = epicBy[st.epic];
+    req = `Mode B, Epic Lab: build a full Epic Skill Lab for the ${st.band} band, starting from this example. Keep the feat and the bar unless the guide's notes change them. Fill in the whole plan week by week, with the specific steps that get every child from where they start to the feat, how adults and outside experts are used, the Test to Pass for each skill target, and the showcase. If the guide's band differs from the example's (${e.band}), adapt the feat so it is still impressive for that age.\n\nThe example:\nTitle: ${e.title}\nFeat: ${e.feat}\nLength: ${e.weeks}\nSkill targets: ${e.skills.map(id => compLabel(id) + " (" + id + ")").join("; ")}\nHigh standards: ${e.standards}\nHigh support: ${e.support}\nHigh autonomy: ${e.autonomy}\nTest to Pass: ${e.test}\nShowcase: ${e.showcase}\nSafety: ${e.safety}\nCost: ${e.cost}\nNotes: ${e.note || ""}`;
+  }
   if (st.time.trim()) req += `\nTime we have: ${st.time.trim()}`;
   if (st.notes.trim()) req += `\nOther notes from the guide: ${st.notes.trim()}`;
   return `The guide chose these with buttons, so treat them as settled and don't ask about them. Don't ask questions on this first draft: fill sensible defaults, list them on the "Assumed:" line, and produce the full finished draft now. The guide can ask for changes afterward.\n\n${ctx.join("\n\n")}\n\n## The request\n${req}`;
 }
 function requestSummary() {
   if (st.way === "review") return "Review my plan" + (st.band ? " (" + st.band + ")" : "") + ":\n\n" + st.plan.trim();
+  if (st.way === "epic") return ["Make this Epic Lab ours: " + epicBy[st.epic].title + " for " + st.band, st.time.trim() ? "Time: " + st.time.trim() : "", st.notes.trim() ? "Notes: " + st.notes.trim() : ""].filter(Boolean).join("\n");
   const what = st.way === "existing" ? { lab: "Run this challenge as a Skill Lab", band: "A version of this challenge for another age band", epic: "A harder Epic version of this challenge", improve: "Review and improve this challenge" }[st.chAct] + ": " + st.ch.t : "Build a " + st.type;
   return [what + (st.band ? " for " + st.band : ""), st.comp ? "Skill: " + compLabel(st.comp) : "", st.way === "idea" ? "My idea: " + st.idea.trim() : "", st.time.trim() ? "Time: " + st.time.trim() : "", st.notes.trim() ? "Notes: " + st.notes.trim() : ""].filter(Boolean).join("\n");
 }
@@ -232,7 +265,7 @@ async function run() {
     turns.push({ role: "assistant", content: r.text }); lastDraft = r.text; stop = r.stop;
     if (!threadId) threadId = log.newId();
     recentCache = null;
-    await save({ id: threadId, site: "labs", kind: st.way === "review" ? "Review" : st.type || "Challenge", title: titleOf(r.text), messages: turns, meta: { st: { way: st.way, comp: st.comp, type: st.type, band: st.band }, firstShown } });
+    await save({ id: threadId, site: "labs", kind: st.way === "review" ? "Review" : st.type || "Challenge", title: titleOf(r.text), messages: turns, meta: { st: { way: st.way, comp: st.comp, type: st.type, band: st.band, epic: st.epic }, firstShown } });
   } catch (e) { if (turns.at(-1)?.role === "user") turns.pop(); status = errCopy(e); }
   busy = false; ctl = null; draw(); $("#step3")?.scrollIntoView({ block: "start" });
 }
@@ -315,6 +348,6 @@ function recent() {
   return sec;
 }
 function restart() {
-  Object.assign(st, { way: null, skill: null, sub: null, comp: null, idea: "", matches: null, ch: null, chAct: null, type: null, band: null, time: "", notes: "", plan: "", q: "", qBand: "" });
+  Object.assign(st, { way: null, skill: null, sub: null, comp: null, idea: "", matches: null, ch: null, chAct: null, type: null, band: null, time: "", notes: "", plan: "", q: "", qBand: "", epic: null, eBand: "" });
   turns = []; lastDraft = ""; threadId = null; status = ""; stop = ""; draw(); scrollTo({ top: 0, behavior: "smooth" });
 }
