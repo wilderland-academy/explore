@@ -13,7 +13,6 @@
     students: { name: "Students", home: "/students/", label: "Students", tabs: [
       { id: "books", label: "Books", href: "/books/" },
       { id: "challenges", label: "Challenges", href: "/challenges/" },
-      { id: "lifeskills", label: "Life Skills", href: "/lifeskills/" },
       { id: "projects", label: "Projects", href: "/projects/" },
       { id: "store", label: "Store", href: "/store/" },
       { id: "suggest", label: "Ideas", href: "/suggest/" },
@@ -22,6 +21,7 @@
       { id: "mentor", label: "Mentor Mindset", href: "/fieldguide/" },
       { id: "behavior", label: "Behavior", href: "/behavior/" },
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
+      { id: "challenges", label: "Challenges", href: "/guides/challenges/" },
       { id: "parentcomms", label: "Parent Comms", href: "/guides/parents/" },
       BASECAMP] },
     parents: { name: "Parents", home: "/parents/", label: "Parents", tabs: [
@@ -29,6 +29,7 @@
       { id: "approach", label: "Our Approach", href: "/parents/approach/" },
       { id: "fieldnotes", label: "Field Notes", href: "/parents/series/" },
       { id: "lifeskills", label: "Life Skills", href: "/parents/lifeskills/" },
+      { id: "challenges", label: "Challenges", href: "/parents/challenges/" },
       BASECAMP] }
   };
   // "wlbar-logo", not the old "wlbar-mark": an old cached wl.css hid .wlbar-mark on desktop.
@@ -95,15 +96,16 @@
   // Where each role may be. Students: only the Students site. Parents: Parents and Students.
   function allowed(r) {
     if (!r || r.role === "staff") return null;
-    var ls = /^\/(guides|parents)\/lifeskills\//.test(location.pathname);
-    if (r.role === "student" && key !== "students") return ls ? "/lifeskills/" : "/students/";
-    if (r.role === "parent" && (key === "guides" || key === "home")) return ls ? "/parents/lifeskills/" : "/parents/";
+    // Keep people on the same kind of page where there is one: the tracker, or the challenge map.
+    var m = /^\/(?:guides|parents)\/(lifeskills|challenges)\//.exec(location.pathname), page = m && m[1];
+    if (r.role === "student" && key !== "students") return page === "lifeskills" ? "/challenges/#progress" : page === "challenges" ? "/challenges/" : "/students/";
+    if (r.role === "parent" && (key === "guides" || key === "home")) return page ? "/parents/" + page + "/" : "/parents/";
     return null;
   }
   function apply(r) {
     r = r && r.role ? r : null;
     var go = allowed(r);
-    if (go && location.pathname !== go) { location.replace(go); return; }
+    if (go && location.pathname !== go.split("#")[0]) { location.replace(go); return; }
     var was = JSON.stringify(role); role = r;
     if (JSON.stringify(role) !== was) draw();
   }

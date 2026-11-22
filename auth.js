@@ -22,7 +22,7 @@ const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@w
 // Pages that only need to know who is visiting (the front door, the Parents pages, the Students home). Here nobody is
 // ever signed out, so a parent still confirming their email isn't bounced, and no sign-in chip appears if the bar says data-auth="off".
 const SOFT_SITES = ["home", "parents", "students"];
-const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["Projects", "/projects/"], ["Life Skills tracker", "/lifeskills/"]];
+const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["My progress", "/challenges/#progress"], ["Projects", "/projects/"]];
 
 const me = document.querySelector('script[src$="auth.js"]');
 const SITE = (me && me.dataset.site) || "";
@@ -191,35 +191,38 @@ const FS = `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/dat
 let roleSeq = 0;
 function sendRole(r) {
   window.wlRole = r;
-  try { if (r) origSet.call(localStorage, "wl-role", JSON.stringify({ e: r.email, r: r.role, b: r.band || null })); else origRemove.call(localStorage, "wl-role"); } catch (e) { }
+  try { if (r) origSet.call(localStorage, "wl-role", JSON.stringify({ e: r.email, r: r.role, b: r.band || null, s: r.sid || null })); else origRemove.call(localStorage, "wl-role"); } catch (e) { }
   document.dispatchEvent(new CustomEvent("wl-role", { detail: r }));
 }
 async function findRole(u, em) {
   if (!u.emailVerified) return null;
-  if (GUESTS.includes(em)) return { role: "staff", band: null };
-  if (!em.endsWith("@" + DOMAIN)) return { role: "parent", band: null };
-  if (ADMINS.includes(em)) return { role: "staff", band: null };
+  if (GUESTS.includes(em)) return { role: "staff", band: null, sid: null };
+  if (!em.endsWith("@" + DOMAIN)) return { role: "parent", band: null, sid: null };
+  if (ADMINS.includes(em)) return { role: "staff", band: null, sid: null };
   const H = { Authorization: "Bearer " + await u.getIdToken() };
   const st = await fetch(`${FS}/staff/${encodeURIComponent(em)}`, { headers: H });
-  if (st.ok) return { role: "staff", band: null };
+  if (st.ok) return { role: "staff", band: null, sid: null };
   if (st.status !== 404) throw new Error("staff " + st.status);
   // A student: their band comes from their Life Skills tracker record (lsStudents, matched by school email).
-  let band = null;
+  let band = null, sid = null;
   try {
     const q = await fetch(`${FS}:runQuery`, { method: "POST", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "lsStudents" }], where: { fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: em } } }, limit: 5 } }) });
     if (q.ok) {
-      const bands = [...new Set((await q.json()).map(x => x.document && x.document.fields && x.document.fields.band && x.document.fields.band.stringValue).filter(Boolean))];
+      const docs = (await q.json()).map(x => x.document).filter(Boolean);
+      const bands = [...new Set(docs.map(d => d.fields && d.fields.band && d.fields.band.stringValue).filter(Boolean))];
       if (bands.length === 1) band = bands[0];
+      // Their tracker record, so Challenges can show their own progress.
+      if (docs.length === 1) sid = docs[0].name.split("/").pop();
     }
   } catch (e) { /* no band: the student sees every band until a guide adds them to the tracker */ }
-  return { role: "student", band };
+  return { role: "student", band, sid };
 }
 async function decideRole(u) {
   const my = ++roleSeq;
   if (!u) { sendRole(null); return; }
   const em = (u.email || "").toLowerCase();
   // Same account as last time on this device: show the remembered role now, then check it.
-  try { const c = JSON.parse(localStorage.getItem("wl-role") || "null"); if (c && c.e === em) sendRole({ email: em, role: c.r, band: c.b || null }); } catch (e) { }
+  try { const c = JSON.parse(localStorage.getItem("wl-role") || "null"); if (c && c.e === em) sendRole({ email: em, role: c.r, band: c.b || null, sid: c.s || null }); } catch (e) { }
   try {
     const r = await findRole(u, em);
     if (my !== roleSeq) return;
