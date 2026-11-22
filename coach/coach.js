@@ -3,17 +3,23 @@
 // All the safety work happens in the relay Worker (relay/worker.js): it screens each message, removes personal
 // details, answers serious messages with fixed words, checks each reply, logs everything for guides, and alerts staff.
 // This file only draws the chat and walks students through using it.
-//   WLCoach.open({ kind: "challenge" | "project" | "academic" | "lesson", topicId, topicTitle, context, starters: [..] })
-//   "academic" is hint-only help with schoolwork; the Worker alerts staff in Slack for every academic conversation.
+//   WLCoach.open({ kind, topicId, topicTitle, context, starters: [..] })
+//     kind: "challenge" | "project" (about one), "find-challenge" | "find-project" (helps pick one; the Worker sends the
+//     list), "conflict" (working out a conflict, from the Behavior Policy), "lesson", or "academic" (a pilot: only for
+//     students an admin has unlocked; every academic conversation is flagged to staff in Slack #alerts).
+//   Replies can name challenges as [EN-03.2] and project kinds as [[paint]]; they become links (challenges open in a
+//   modal beside the coach; [[id]] uses window.WLCoachLinks(id) -> { href, text } if the page provides it).
 //   WLCoach.open({ chatId })            reopen a past conversation
 //   opts.first: a message to send as soon as the chat opens (from a starter button on the page)
 // Needs /auth.js on the page (window.wlFirebase). Only school accounts can use it; K–1 students can't (guide-led).
 const FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
 const INTRO_KEY = "wl-coach-intro";
 // Bump when the first-time intro changes, so every student sees the new version once.
-const INTRO_VERSION = "2";
-const KINDS = ["challenge", "project", "academic", "lesson"];
-const TOPIC_NAMES = { lesson: "How to use your coach", academic: "Help with academics" };
+const INTRO_VERSION = "3";
+const KINDS = ["challenge", "project", "find-challenge", "find-project", "conflict", "academic", "lesson"];
+const TOPIC_NAMES = { lesson: "How to use your coach", academic: "Help with academics", "find-challenge": "Find a challenge", "find-project": "Find a project idea", conflict: "Work out a conflict" };
+// The coach's face: a fox. (Guides have their own mentor, a dragon.)
+const FOX = "🦊";
 
 const css = `
 :root{--wlc-w:min(420px,40vw);--wlc-h:min(62vh,560px)}
@@ -34,8 +40,10 @@ dialog.wlc-beside[open]{position:fixed;inset:16px calc(var(--wlc-w) + 16px) 16px
 @media (min-width:861px){.wlc-size{display:none}}
 .wlc *{box-sizing:border-box}
 .wlc-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#01412f;color:#fff}
-.wlc-head .av{width:34px;height:34px;border-radius:10px;background:#d5f367;display:grid;place-items:center;flex:none}
-.wlc-head .av svg{width:22px;height:22px}
+.wlc-head .av{width:38px;height:38px;border-radius:12px;background:#d5f367;display:grid;place-items:center;flex:none;font-size:24px;line-height:1}
+.wlc-m.coach{position:relative;margin-left:30px}
+.wlc-m.coach::before{content:"🦊";position:absolute;left:-30px;bottom:0;font-size:20px;line-height:1}
+.wlc-m a.wl-ch,.wlc-m a.wlc-link{color:#015640;font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .wlc-head .t{flex:1;min-width:0}
 .wlc-head b{display:block;font-size:16px;line-height:1.2;color:#fff}
 .wlc-head span{display:block;font-size:13px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -74,13 +82,15 @@ dialog.wlc-beside[open]{position:fixed;inset:16px calc(var(--wlc-w) + 16px) 16px
 .wlc-btn.ghost{background:#eef1ea}
 @media (prefers-reduced-motion:reduce){.wlc,html.wlc-docked body{transition:none}.wlc-typing i{animation:none}}
 `;
-const BOT = '<svg viewBox="0 0 24 24" fill="none" stroke="#01412f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>';
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const STARTERS = {
   challenge: ["Help me make a plan", "Explain how to start", "Quiz me on it", "I'm stuck", "Am I ready to show my guide?"],
   project: ["Help me pick a version", "Break it into small steps", "What can I do today?", "I'm stuck"],
   academic: ["I don't get this idea", "Give me a hint, not the answer", "Check my thinking", "Quiz me on the basics", "Where can I learn this?"],
+  "find-challenge": ["I love being outside", "I want to build something", "I want to get stronger", "Something with people", "I'm not sure yet"],
+  "find-project": ["I love art", "Something with animals", "I want to make money", "I want to help people", "I'm not sure yet"],
+  conflict: ["Someone keeps bugging me", "I had a fight with a friend", "I said something I regret", "Two of my friends are fighting", "I'm really upset right now"],
   lesson: ["What is an AI coach?", "Let's start the lesson"]
 };
 
@@ -112,7 +122,7 @@ function mount() {
   // A side panel (complementary region), not a modal dialog: the page beside it stays readable and usable.
   const box = document.createElement("aside"); box.className = "wlc"; box.hidden = true;
   box.setAttribute("aria-labelledby", "wlc-title");
-  box.innerHTML = `<div class="wlc-head"><div class="av">${BOT}</div><div class="t"><b id="wlc-title">AI Coach</b><span id="wlc-topic"></span></div><button class="wlc-size" type="button" aria-label="Make the coach bigger" aria-pressed="false">⤢</button><button class="wlc-x" type="button" aria-label="Close the coach">×</button></div>
+  box.innerHTML = `<div class="wlc-head"><div class="av" aria-hidden="true">${FOX}</div><div class="t"><b id="wlc-title">AI Coach</b><span id="wlc-topic"></span></div><button class="wlc-size" type="button" aria-label="Make the coach bigger" aria-pressed="false">⤢</button><button class="wlc-x" type="button" aria-label="Close the coach">×</button></div>
     <p class="wlc-ai">I'm an AI, not a person, and I can make mistakes. Your guides can read our chats. Never type your full name, address, phone or passwords.</p>
     <div class="wlc-log" id="wlc-log" aria-live="polite"></div>
     <div class="wlc-chips" id="wlc-chips"></div>
@@ -172,11 +182,30 @@ function bubble(role, text) {
   if (role === "coach") {
     // "Coach tip:" lines get their own little box, so tips about using AI stand out.
     const parts = String(text).split(/\n?(?=Coach tip:)/);
-    d.textContent = parts[0].trim();
-    parts.slice(1).forEach(p => { const t = document.createElement("span"); t.className = "tip"; t.textContent = p.trim(); d.appendChild(t); });
+    linkify(d, parts[0].trim());
+    parts.slice(1).forEach(p => { const t = document.createElement("span"); t.className = "tip"; linkify(t, p.trim()); d.appendChild(t); });
   } else d.textContent = text;
   el.log.appendChild(d); el.log.scrollTop = el.log.scrollHeight;
   return d;
+}
+// Turn [EN-03.2] (a challenge) and [[paint]] (a project kind on the Projects map) into links. Everything else stays text.
+function linkify(el, text) {
+  const re = /\[\[([a-z0-9-]{1,40})\]\]|\[([A-Z]{2}-\d{2}\.\d{1,2})\]/g;
+  let last = 0, m;
+  while ((m = re.exec(text))) {
+    el.append(text.slice(last, m.index));
+    let a = null;
+    if (m[2]) {
+      const t = window.WLChallenge ? window.WLChallenge.title(m[2]) : m[2];
+      if (t && t !== m[2]) { a = document.createElement("a"); a.className = "wl-ch"; a.href = "/challenges/#c=" + m[2]; a.setAttribute("data-wl-ch", m[2]); a.textContent = t; }
+    } else if (typeof window.WLCoachLinks === "function") {
+      const r = window.WLCoachLinks(m[1]);
+      if (r) { a = document.createElement("a"); a.className = "wlc-link"; a.href = r.href; a.textContent = r.text; }
+    }
+    el.append(a || (m[2] ? m[2] : m[1].replace(/-/g, " ")));
+    last = re.lastIndex;
+  }
+  el.append(text.slice(last));
 }
 function note(text) { return bubble("note", text); }
 function chips(list) {
@@ -200,7 +229,8 @@ function intro() {
   d.innerHTML = `<h3>Meet your AI Coach</h3>${WHY}
     <h4>What it helps with</h4>
     <ul><li><b>Challenges, Life Skill Labs and projects:</b> plans, practice, next steps, getting unstuck.</li>
-    <li><b>Academics, the learning way:</b> hints, questions that help you think, a re-explain of the basics, and where to learn more. It never just gives you the answer. Guides check every academics chat.</li></ul>
+    <li><b>Working out a conflict:</b> calming down, seeing the other side, and planning what to say, the Wilderland way.</li>
+    <li><b>Not academics (yet):</b> it doesn't help with schoolwork. We're trying that with a few students first.</li></ul>
     <h4>Four things to remember</h4><ol>
     <li><b>I'm a computer program, not a person.</b>I guess what words come next. I can be wrong, so check big things with your guide.</li>
     <li><b>You do the thinking.</b>I won't do your work for you. I'll ask questions and give hints so you get better.</li>
@@ -216,6 +246,9 @@ function greet() {
   const hello = k === "lesson" ? "Hi! I'm your AI Coach. Want a 3-minute lesson on how to get the most out of me? Tap a button below or type a question."
     : k === "project" ? "Hi! Let's work on your project. Tap a button below to start, or tell me what you're thinking."
     : k === "academic" ? "Hi! Tell me the subject and what you're stuck on. I'll help you figure it out with hints and questions. I won't give you the answer, and your guides look at every academics chat."
+    : k === "find-challenge" ? "Hi! Let's find a challenge you'll actually want to do. What are you into lately? A hobby, something you want to try, or something you want to get better at?"
+    : k === "find-project" ? "Hi! Let's find a project idea that's yours. What are you into lately, or what's something you wish existed?"
+    : k === "conflict" ? "Hi. Conflicts are hard, and it's smart to think one through. Are you feeling calm enough to talk about it, or do you want to take a beat first? When you're ready, tell me a little about what happened."
     : "Hi! Let's work on this challenge. Tap a button below to start, or ask me anything about it.";
   bubble("coach", hello);
   // Opened from a starter button on the page: send that message straight away.
@@ -311,5 +344,10 @@ document.addEventListener("click", e => { const b = e.target.closest('.wlc-chip[
 
 // Who may use it: school accounts that are students in grades 2–8, or staff (to try it out).
 function canUse(r) { return !!(r && (r.role === "staff" || (r.role === "student" && r.band !== "K–1"))); }
-window.WLCoach = { open, close, canUse, docked, WHY };
+// Other relay requests from student pages (the academics-pilot "I'm interested" button). Returns { ok, status, data }.
+async function call(body) {
+  const r = await fetch(await relayUrl(), { method: "POST", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
+}
+window.WLCoach = { open, close, canUse, docked, WHY, call, FOX };
 document.dispatchEvent(new CustomEvent("wl-coach-ready"));

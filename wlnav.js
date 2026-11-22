@@ -72,6 +72,8 @@
     var auth = bar.querySelector(".wlbar-auth");
     bar.innerHTML = '<div class="wlbar-in">' + home + sw +
       (tabs ? '<nav class="wlbar-sites" aria-label="' + esc(site.name) + '">' + tabs + "</nav>" : "") +
+      // The Guide Mentor (🐲) is one click away on every staff page.
+      (key === "guides" ? '<button type="button" class="wlbar-mentor" data-wl-mentor aria-label="Open the Guide Mentor" title="Guide Mentor: ask anything about your work"><span aria-hidden="true">🐲</span><span class="wlbar-mentor-t">Guide Mentor</span></button>' : "") +
       (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-auth" data-wl-auth></span>') + "</div>";
     // Keep the sign-in chip if it was already mounted.
     var slot = bar.querySelector(".wlbar-auth");
@@ -80,6 +82,9 @@
     var nav = bar.querySelector(".wlbar-sites"), here = nav && nav.querySelector('[aria-current="page"]');
     if (nav && here) nav.scrollLeft = here.offsetLeft - nav.clientWidth / 2 + here.offsetWidth / 2;
   }
+  // The Guide Mentor lives in /guides/mentor/mentor.js, loaded on first use.
+  window.wlOpenMentor = function (opts) { return import("/guides/mentor/mentor.js").then(function (m) { return opts ? m.open(opts) : m.toggle(); }); };
+  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-wl-mentor]")) { e.preventDefault(); window.wlOpenMentor(); } });
   bar.addEventListener("click", function (e) {
     var b = e.target.closest(".wlbar-switch > button"); if (!b) return;
     var m = b.nextElementSibling, open = m.hidden;

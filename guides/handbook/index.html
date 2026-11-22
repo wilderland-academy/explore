@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staff Handbook · Wilderland Guides</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#01412f">
+<link rel="icon" href="/books/f/icon.png">
+<link rel="stylesheet" href="/wl.css">
+<style>
+/* Staff Handbook (/guides/handbook/). Staff only. The text is not in this public site: it comes from the relay
+   Worker (mode "doc", Cloudflare KV), which answers only Wilderland staff accounts. The original PDF, if an admin has
+   uploaded it, is in Firebase Storage at staff/handbook.pdf (staff only). */
+@font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{color-scheme:light;--paper:#f5f1ea;--sheet:#fffdf9;--line:#ddd3c4;--ink:#231b24;--dim:#625a63;--green:#0f3d2e;
+  --display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.6 var(--body)}
+main{max-width:1120px;margin:0 auto;padding:34px 18px 80px}
+h1,h2{font-family:var(--display);font-weight:700;letter-spacing:-.01em;line-height:1.15;margin:0}
+h1{font-size:clamp(30px,5vw,44px)}
+p{margin:0 0 12px}
+.eyebrow{font:700 12px var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.lede{color:var(--dim);max-width:62ch;margin-top:10px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 24px}
+.in{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:var(--sheet);min-width:0;flex:1 1 260px;max-width:420px}
+.btn{border:0;border-radius:10px;background:#d5f367;color:#0b2b20;font:700 14.5px var(--body);padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn.ghost{background:#ece5d9}
+.wrap{display:grid;grid-template-columns:260px minmax(0,1fr);gap:28px;align-items:start}
+nav.toc{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:12px 10px;font-size:14px}
+nav.toc a{display:block;padding:5px 8px;border-radius:7px;color:var(--ink);text-decoration:none}
+nav.toc a:hover{background:#efe9df}
+nav.toc .part{font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:10px 8px 4px}
+article{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:8px 26px 26px}
+section.s{padding-top:22px;border-top:1px solid var(--line);margin-top:18px;scroll-margin-top:12px}
+section.s:first-child{border-top:0;margin-top:0}
+section.s h2{font-size:24px;margin-bottom:10px;display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+section.s h2 button{font:600 13px var(--body);border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 10px;cursor:pointer;color:var(--green)}
+section.s ul{margin:0 0 12px;padding-left:20px}
+section.s h3{font:700 16px var(--body);margin:16px 0 6px}
+section.s li{margin-bottom:4px}
+mark{background:#f6e58d;border-radius:3px}
+.empty{background:var(--sheet);border:1px dashed var(--line);border-radius:12px;padding:18px;color:var(--dim)}
+.note{font-size:13.5px;color:var(--dim)}
+.hidden{display:none}
+@media (max-width:860px){.wrap{grid-template-columns:1fr}nav.toc{position:static;max-height:260px}article{padding:4px 16px 20px}}
+</style>
+</head>
+<body>
+<div class="wlbar" data-wlnav="guides"></div><script src="/wlnav.js"></script>
+<main>
+  <p class="eyebrow">Wilderland staff</p>
+  <h1>Staff Handbook</h1>
+  <p class="lede">Our handbook for guides, mentors, apprentices and regular volunteers: effective July 2026, reviewed every year. Have a question about it? Ask the Guide Mentor 🐲, which answers from this handbook and tells you which section it used.</p>
+  <div class="bar">
+    <label for="hq" style="position:absolute;left:-9999px">Search the handbook</label>
+    <input class="in" id="hq" type="search" placeholder="Search the handbook, like “phones” or “field trip”">
+    <button class="btn" type="button" data-ask-hb>Ask the Guide Mentor 🐲</button>
+    <a class="btn ghost hidden" id="pdf" target="_blank" rel="noopener">Open the original PDF ↗</a>
+    <label class="btn ghost hidden" id="up">Upload the PDF<input type="file" accept="application/pdf" hidden></label>
+  </div>
+  <div id="app"><p class="empty">Loading…</p></div>
+</main>
+<script type="module">
+const FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
+const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
+const BUCKET = "wilderland-df15e.firebasestorage.app", PDF = "staff/handbook.pdf";
+const PARTS = [[1, "Welcome & employment basics"], [3, "Conduct & professional expectations"], [15, "Safety"], [21, "Technology"], [24, "Classroom & educational expectations"], [32, "Montessori acknowledgments"], [39, "School-specific policies"], [45, "Employment terms & acknowledgment"]];
+const $ = s => document.querySelector(s), app = $("#app");
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let sections = [], started = false;
+
+function parse(text) {
+  const out = []; let cur = null;
+  text.split(/\n\n+/).forEach(b => {
+    const m = b.match(/^## (\d+)\. (.+)$/);
+    if (m) { cur = { n: +m[1], title: m[2].trim(), blocks: [] }; out.push(cur); return; }
+    if (cur && !b.startsWith("# ")) cur.blocks.push(b.trim());
+  });
+  return out;
+}
+function body(s, q) {
+  const mark = t => { let h = esc(t); if (q) h = h.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), x => `<mark>${x}</mark>`); return h; };
+  let html = "", list = false;
+  s.blocks.forEach(b => {
+    if (b.startsWith("- ")) { if (!list) { html += "<ul>"; list = true; } html += `<li>${mark(b.slice(2))}</li>`; }
+    else { if (list) { html += "</ul>"; list = false; } html += b.length < 70 && !/[.:;,!?)]$/.test(b) && !/^\d/.test(b) ? `<h3>${mark(b)}</h3>` : `<p>${mark(b)}</p>`; }
+  });
+  return html + (list ? "</ul>" : "");
+}
+function draw() {
+  const q = $("#hq").value.trim().toLowerCase();
+  const shown = sections.filter(s => !q || (s.title + " " + s.blocks.join(" ")).toLowerCase().includes(q));
+  let toc = "", pi = 0;
+  sections.forEach(s => { while (pi < PARTS.length && PARTS[pi][0] <= s.n) { toc += `<p class="part">${esc(PARTS[pi][1])}</p>`; pi++; } toc += `<a href="#s${s.n}">${s.n}. ${esc(s.title)}</a>`; });
+  app.innerHTML = `<div class="wrap"><nav class="toc" aria-label="Sections">${toc}</nav><article>${shown.length ? shown.map(s => `<section class="s" id="s${s.n}"><h2><span>${s.n}. ${esc(s.title)}</span><button type="button" data-ask="${s.n}">Ask about this 🐲</button></h2>${body(s, q)}</section>`).join("") : `<p class="empty" style="margin-top:18px">Nothing in the handbook matches “${esc(q)}”. Try the Guide Mentor: it also knows the Behavior Policy and our approach.</p>`}</article></div>`;
+}
+async function relayUrl(t) { const r = await fetch(FS + "/mentorConfig/main", { headers: { Authorization: "Bearer " + t } }); const j = await r.json(); return j.fields.relay.stringValue; }
+async function start(r) {
+  const u = window.wlFirebase && window.wlFirebase.auth.currentUser;
+  if (!u) { app.innerHTML = `<p class="empty">Sign in with your Wilderland staff account. <button class="btn" type="button" data-wl-signin>Sign in</button></p>`; return; }
+  if (!r || r.role !== "staff" || !String(u.email).toLowerCase().endsWith("@wilderland.academy")) { app.innerHTML = `<p class="empty">The Staff Handbook is for Wilderland staff.</p>`; return; }
+  if (started) return; started = true;
+  try {
+    const t = await u.getIdToken();
+    const res = await fetch(await relayUrl(t), { method: "POST", headers: { Authorization: "Bearer " + t, "Content-Type": "application/json" }, body: JSON.stringify({ mode: "doc", key: "handbook" }) });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error || res.status);
+    sections = parse(j.text); draw();
+    if (location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }
+  } catch (e) { started = false; app.innerHTML = `<p class="empty">Couldn't load the handbook: ${esc(e.message)}</p>`; }
+  pdf(u);
+}
+// The original PDF, if uploaded. Admins can upload or replace it.
+async function pdf(u) {
+  const t = await u.getIdToken(), url = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(PDF)}`;
+  try { const m = await fetch(url, { headers: { Authorization: "Firebase " + t } }); if (m.ok) { const a = $("#pdf"); a.classList.remove("hidden"); a.onclick = async e => { e.preventDefault(); const b = await (await fetch(url + "?alt=media", { headers: { Authorization: "Firebase " + await u.getIdToken() } })).blob(); window.open(URL.createObjectURL(b), "_blank"); }; } } catch (e) { }
+  if (ADMINS.includes(String(u.email).toLowerCase())) {
+    const up = $("#up"); up.classList.remove("hidden");
+    up.querySelector("input").onchange = async e => {
+      const f = e.target.files[0]; if (!f) return; up.firstChild.textContent = "Uploading…";
+      const r = await fetch(`https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o?name=${encodeURIComponent(PDF)}`, { method: "POST", headers: { Authorization: "Firebase " + await u.getIdToken(), "Content-Type": "application/pdf" }, body: f });
+      up.firstChild.textContent = r.ok ? "Uploaded ✓" : "Upload failed";
+      if (r.ok) pdf(u);
+    };
+  }
+}
+$("#hq").addEventListener("input", () => { if (sections.length) draw(); });
+document.addEventListener("click", e => {
+  const a = e.target.closest("[data-ask]");
+  if (a) { const s = sections.find(x => x.n === +a.dataset.ask); window.wlOpenMentor({ prefill: `About section ${s.n} of the Staff Handbook, "${s.title}": ` }); return; }
+  if (e.target.closest("[data-ask-hb]")) window.wlOpenMentor({});
+});
+document.addEventListener("wl-role", e => start(e.detail));
+document.addEventListener("wl-auth", e => { if (!e.detail) start(null); });
+if (window.wlRole !== undefined) start(window.wlRole);
+</script>
+<script type="module" src="/auth.js" data-site="handbook"></script>
+</body>
+</html>

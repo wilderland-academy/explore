@@ -36,7 +36,7 @@ h1{font-size:clamp(28px,4.6vw,42px)}
 .item b{font-size:14.5px;line-height:1.35}
 .item span{font-size:12.5px;color:var(--dim)}
 .item:focus-visible{outline:2px solid var(--ink)}
-.c-mentor{--c:var(--mentor)}.c-behavior{--c:var(--behavior)}.c-parents{--c:var(--parents)}.c-labs{--c:var(--labs)}
+.c-mentor{--c:var(--mentor)}.c-behavior{--c:var(--behavior)}.c-parents{--c:var(--parents)}.c-labs{--c:var(--labs)}.c-guide{--c:#0f231c}
 .view{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:14px;min-height:300px}
 .vhead{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:12px}
 .vhead h2{font-size:22px}
@@ -104,7 +104,7 @@ function md(t) {
   return out;
 }
 // Where "Continue" goes. Parent Comms and the Lab builder reopen the conversation; the other coaches open fresh.
-const continueHref = x => x.site === "parents" ? "/guides/parents/?t=" + encodeURIComponent(x.id) : x.site === "labs" ? "/guides/lifeskills/builder/?t=" + encodeURIComponent(x.id) : null;
+const continueHref = x => x.site === "guide" ? "/guides/?mentor=" + encodeURIComponent(x.id) : x.site === "parents" ? "/guides/parents/?t=" + encodeURIComponent(x.id) : x.site === "labs" ? "/guides/lifeskills/builder/?t=" + encodeURIComponent(x.id) : null;
 
 let log = null, items = [], filter = (location.hash.slice(1) in SITES) ? location.hash.slice(1) : "all", openId = null, seq = 0;
 function gate(msg) { app.innerHTML = ""; app.appendChild(h("section", { class: "gate" }, [h("h2", { text: "Wilderland staff area" }), h("p", { text: msg })])); }
