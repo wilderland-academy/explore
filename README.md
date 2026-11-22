@@ -287,3 +287,11 @@ from `/challenges/data.js`, `/books/` and `/projects/`, so new items show up wit
 never stored in the site); parents also find their children's Labs. Students see only Students pages and their own band and
 older; test accounts show only in test views. Staff can send what they typed to the Guide Mentor. Add a page to the search in
 the `PAGES` list at the top of `/search.js`.
+
+## Mr. Fox, and Life Skills for parents, added Nov 22, 2026
+- The student AI Coach is now **Mr. Fox** 🦊 everywhere (menus, pages, alerts, Slack notices, and its own replies). It still
+  says plainly that it's an AI, not a person.
+- **Parents › Life Skills** now has, for each child: their record, plus **Supporting them at home**: their next Labs with the
+  guides' notes for home, and challenges they can pass off at home (what they're working on first, then the life skills
+  furthest from this year's goal). Staff who open Parents › Life Skills get a **parent preview** (pick any student to see
+  their family's view) instead of being sent to the Guides copy.

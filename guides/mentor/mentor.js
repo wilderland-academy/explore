@@ -1,6 +1,6 @@
 // Wilderland Guide Mentor 🐲: one AI for guides that knows the Staff Handbook, the Behavior Policy and how Wilderland
 // works (the Field Guide, Our Approach, At Home, Parent Comms rules, the Lab builder rules). Staff only.
-// It opens as a side panel beside the page (a bottom panel on phones), like the students' AI Coach, from:
+// It opens as a side panel beside the page (a bottom panel on phones), like the students' Mr. Fox, from:
 //   - the 🐲 button in the Guides top bar on every staff page (/wlnav.js loads this file on first click),
 //   - the "Ask the Guide Mentor" button at the top of /guides/ and on the front door for staff,
 //   - /guides/?mentor (and ?mentor=<thread id> from Your conversations to continue one).

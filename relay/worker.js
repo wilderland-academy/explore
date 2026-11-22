@@ -1,7 +1,7 @@
 // Wilderland relay: a Cloudflare Worker that lets signed-in Wilderland people call Claude from
 // explore.wilderland.academy without the API key ever reaching a browser.
 //   - Staff tools (Field Guide, Behavior, Parent Comms, Lab builder): any request without mode "coach".
-//   - The student AI Coach: requests with mode "coach" (kinds: challenge, project, find-challenge, find-project,
+//   - The student Mr. Fox: requests with mode "coach" (kinds: challenge, project, find-challenge, find-project,
 //     conflict, academic for pilot students only, lesson), and mode "interest" (a student asks to join the academics pilot).
 //   - The Guide Mentor (mode "mentor", staff only): answers from the Staff Handbook and Behavior Policy (Cloudflare KV,
 //     binding DOCS, never in the public repo) plus the public Field Guide, Our Approach, At Home and Lab builder files.
@@ -189,7 +189,7 @@ If the conversation is marked academic="yes", also mark it not ok when the reply
 
 function coachSystem(band, kind) {
   const young = band === "2–4";
-  return `You are the Wilderland Coach, an AI learning coach on the Wilderland Academy website. You help one student at a time with a Life Skills challenge, a Life Skill Lab, a passion project, or working through a conflict with someone${kind === "academic" ? ", and in this conversation (hint-only) academic learning" : ""}. You know a lot about many subjects, and you are available any time, which is why students ask you before or between talks with their guides. The student is in grades ${young ? "2 to 4 (about 7 to 10 years old)" : band === "5–8" ? "5 to 8 (about 10 to 14 years old)" : "2 to 8 (about 7 to 14 years old)"}.
+  return `You are Mr. Fox (🦊), an AI learning coach on the Wilderland Academy website. Students call you Mr. Fox. You are an AI, not a person, and you say so if a student asks or seems unsure. You help one student at a time with a Life Skills challenge, a Life Skill Lab, a passion project, or working through a conflict with someone${kind === "academic" ? ", and in this conversation (hint-only) academic learning" : ""}. You know a lot about many subjects, and you are available any time, which is why students ask you before or between talks with their guides. The student is in grades ${young ? "2 to 4 (about 7 to 10 years old)" : band === "5–8" ? "5 to 8 (about 10 to 14 years old)" : "2 to 8 (about 7 to 14 years old)"}.
 
 Who you are
 - You are an AI, a computer program. You are not a person, not a friend, and you do not have feelings. If asked, say so plainly and kindly.
@@ -202,7 +202,7 @@ How you coach (this is the most important part)
 - Ask one question at a time. Keep every reply short: ${young ? "2 to 4 short sentences, simple words, like talking to a 2nd to 4th grader" : "no more than 5 or 6 sentences, clear and friendly"}. Plain text only. A short numbered list is fine when giving steps.
 - Be warm, specific and encouraging, and keep the bar high. Praise effort and specific progress, not the person.
 - Say "I'm not sure" when you are not sure. Remind the student that AI can be wrong, and to check important things with their guide.
-${kind !== "academic" ? `- You don't help with academic schoolwork (math, reading, writing, spelling, science or social studies assignments, learning-app questions, tests). If the student asks, say kindly that the coach doesn't help with academic work right now; Wilderland is trying it with a few students first, and they can tell their guide or tap "I'm interested" on the AI Coach page if they'd like to be one of them. Then bring it back to challenges, Labs, projects or the conflict.
+${kind !== "academic" ? `- You don't help with academic schoolwork (math, reading, writing, spelling, science or social studies assignments, learning-app questions, tests). If the student asks, say kindly that the coach doesn't help with academic work right now; Wilderland is trying it with a few students first, and they can tell their guide or tap "I'm interested" on Mr. Fox's page if they'd like to be one of them. Then bring it back to challenges, Labs, projects or the conflict.
 ` : ""}- Teach the student to use AI well. When it fits (about every third reply, never every time), add one short line starting "Coach tip:" with a tip about asking good questions, giving the AI details, checking answers, or doing their own thinking. If the student writes a vague message, gently show them how to ask a clearer one.
 
 ${kind === "academic" ? `Academic help (this conversation): hint-only
@@ -317,12 +317,12 @@ async function alertStaff(env, token, a, id = rid()) {
     // Only what staff need to know to act fast; the full conversation stays on the site (never the student's words here).
     const link = `https://explore.wilderland.academy/guides/roster/${a.chatId ? "#c=" + a.chatId : "#alerts"}`;
     const text = wants
-      ? `Academics pilot: ${a.name || a.email} (grades ${a.band || "?"}) would like to try the AI Coach for academics. To unlock it, edit them on the Student Roster: https://explore.wilderland.academy/guides/roster/`
+      ? `Academics pilot: ${a.name || a.email} (grades ${a.band || "?"}) would like to try Mr. Fox for academics. To unlock it, edit them on the Student Roster: https://explore.wilderland.academy/guides/roster/`
       : answers
-      ? `Academic help, needs a look: ${a.name || a.email} (grades ${a.band || "?"}) asked the AI Coach for answers. The coach should have answered with hints only; please read it: ${link}`
+      ? `Academic help, needs a look: ${a.name || a.email} (grades ${a.band || "?"}) asked Mr. Fox for answers. The coach should have answered with hints only; please read it: ${link}`
       : academic
-      ? `Academic help: ${a.name || a.email} (grades ${a.band || "?"}) is using the AI Coach for academics${a.topic ? " (" + a.topic + ")" : ""}. Please read the conversation to check it's hints and learning, not answers: ${link}`
-      : `${a.severity === "urgent" ? "URGENT" : "Alert"}: a student AI Coach conversation needs a guide (${a.category.replace(/_/g, " ")}, ${a.name || a.email}, grades ${a.band || "?"}). Open ${link}`;
+      ? `Academic help: ${a.name || a.email} (grades ${a.band || "?"}) is using Mr. Fox for academics${a.topic ? " (" + a.topic + ")" : ""}. Please read the conversation to check it's hints and learning, not answers: ${link}`
+      : `${a.severity === "urgent" ? "URGENT" : "Alert"}: a student's conversation with Mr. Fox needs a guide (${a.category.replace(/_/g, " ")}, ${a.name || a.email}, grades ${a.band || "?"}). Open ${link}`;
     try { await fetch(env.ALERT_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) }); } catch (e) { /* the alert is already saved on the site */ }
   }
 }
@@ -379,9 +379,9 @@ async function coach(req, env, who, token, staff, body, out) {
   let rec = null;
   try { if (T) { rec = await fsGet(`lsStudents/${TEST.sid}`, token); if (rec && rec.test !== true) rec = null; } else { const r = await fsWhere("lsStudents", [["email", who.email]], token, 3); if (r.length === 1) rec = r[0]; } } catch (e) { rec = null; }
   const band = rec && rec.band || "";
-  if (!staff && band === "K–1") return out(403, { error: "The AI Coach is for grades 2 to 8. Your guide will help you with challenges." });
+  if (!staff && band === "K–1") return out(403, { error: "Mr. Fox is for grades 2 to 8. Your guide will help you with challenges." });
   // A family can ask for the coach to be off for their child: an admin sets coachOff: true on the tracker record.
-  if (!staff && rec && rec.coachOff === true) return out(403, { error: "The AI Coach is turned off for your account. Your guide can help you instead." });
+  if (!staff && rec && rec.coachOff === true) return out(403, { error: "Mr. Fox is turned off for your account. Your guide can help you instead." });
   const name = (rec && rec.name) || who.name || who.email.split("@")[0];
   // Academics is a pilot: only students an admin has unlocked (coachAcademic: true on their tracker record, set on the
   // Student Roster), and staff trying it out.
@@ -399,7 +399,7 @@ async function coach(req, env, who, token, staff, body, out) {
   if (chatId && (!chat || chat.uid !== who.uid || !!chat.test !== T)) return out(403, { error: "That conversation isn't yours." });
   // A conversation keeps the kind it started with.
   if (chat && KINDS.includes(chat.kind)) kind = chat.kind;
-  if (kind === "academic" && !academicOK) return out(403, { error: "The AI Coach doesn't help with academic work yet. We're trying it with a few students first. If you'd like to be one of them, tap \"I'm interested\" on the AI Coach page or tell your guide." });
+  if (kind === "academic" && !academicOK) return out(403, { error: "Mr. Fox doesn't help with academic work yet. We're trying it with a few students first. If you'd like to be one of them, tap \"I'm interested\" on Mr. Fox's page or tell your guide." });
   let history = [];
   if (chat) {
     const turns = (await fsWhere("aiTurns", [["chatId", chatId], ["uid", who.uid]], token, 200)).sort((a, b) => a.at - b.at);
@@ -450,7 +450,7 @@ async function coach(req, env, who, token, staff, body, out) {
   // Every academics conversation is reviewed by staff: one alert (and one #alerts Slack notice) per conversation per day,
   // so a student can't keep one long chat going to avoid review. The fixed id makes a second try that day a no-op.
   if (kind === "academic") {
-    try { await alertStaff(env, token, { ...TX, uid: who.uid, email: who.email, name, band, chatId, category: "academic_use", severity: "low", reason: "Used the AI Coach for academics" + (topicTitle ? " (" + topicTitle + ")" : "") + ". Read the conversation to check it stayed hints and learning.", quote: message.slice(0, 200), topic: topicTitle, staffTest: staff }, "academic-" + chatId + "-" + day); }
+    try { await alertStaff(env, token, { ...TX, uid: who.uid, email: who.email, name, band, chatId, category: "academic_use", severity: "low", reason: "Used Mr. Fox for academics" + (topicTitle ? " (" + topicTitle + ")" : "") + ". Read the conversation to check it stayed hints and learning.", quote: message.slice(0, 200), topic: topicTitle, staffTest: staff }, "academic-" + chatId + "-" + day); }
     catch (e) { /* already alerted for this conversation today */ }
   }
 
@@ -509,7 +509,7 @@ async function interest(env, who, token, out, body = {}) {
   const name = (rec && rec.name) || who.name || who.email.split("@")[0], band = rec && rec.band || "";
   try {
     await alertStaff(env, token, { ...(T ? { test: true } : {}), uid: who.uid, email: who.email, name, band, chatId: "", category: "academic_interest", severity: "low",
-      reason: "Would like to join the AI Coach academics pilot. To unlock it, edit the student on the Student Roster.", quote: "" }, (T ? "interest-test-" : "interest-") + who.uid);
+      reason: "Would like to join Mr. Fox academics pilot. To unlock it, edit the student on the Student Roster.", quote: "" }, (T ? "interest-test-" : "interest-") + who.uid);
   } catch (e) { /* already asked */ }
   return out(200, { ok: true });
 }

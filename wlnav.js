@@ -42,7 +42,7 @@
       { id: "books", label: "Books", href: "/books/" },
       { id: "challenges", label: "Challenges", href: "/challenges/" },
       { id: "projects", label: "Projects", href: "/projects/" },
-      { id: "coach", label: "AI Coach", href: "/coach/" },
+      { id: "coach", label: "Mr. Fox", href: "/coach/" },
       { id: "store", label: "Store", href: "/store/" },
       { id: "suggest", label: "Ideas", href: "/suggest/" },
       BASECAMP] },
@@ -131,7 +131,7 @@
   function banner() {
     if (!view) return "";
     var who = AS[view.as] ? AS[view.as][0] : "Test";
-    return '<div class="wlbar-banner" role="status"><span>🧪 You\'re seeing the site as the <b>' + esc(who.toLowerCase()) + "</b> (grades " + esc(view.band || "2–4") + ")." + (view.as === "guide" ? " Life Skills, the Student Roster and the AI Coach show only the test accounts, and real Labs are read-only. Other staff tools (Behavior, Field Guide) are the real ones." : " What you do here only touches the test accounts.") + '</span><button type="button" data-wl-as="">Back to my account</button></div>';
+    return '<div class="wlbar-banner" role="status"><span>🧪 You\'re seeing the site as the <b>' + esc(who.toLowerCase()) + "</b> (grades " + esc(view.band || "2–4") + ")." + (view.as === "guide" ? " Life Skills, the Student Roster and Mr. Fox show only the test accounts, and real Labs are read-only. Other staff tools (Behavior, Field Guide) are the real ones." : " What you do here only touches the test accounts.") + '</span><button type="button" data-wl-as="">Back to my account</button></div>';
   }
   var KEYS = ["lantern-stacks", "wl-picks", "wl-band", "atlas-sparks", "atlas-me", "wl-store", "wl-role"];
   function switchTo(as, band) {
@@ -218,7 +218,7 @@
   draw();
   bar.setAttribute("data-wlnav-done", "");
   document.addEventListener("wl-role", function (e) { apply(e.detail); });
-  // Open AI Coach alerts, shown as a count on the Guides "Student Roster" tab (sent by /auth.js and /guides/roster/).
+  // Open Mr. Fox alerts, shown as a count on the Guides "Student Roster" tab (sent by /auth.js and /guides/roster/).
   var alerts = null;
   function paintAlerts() {
     var a = bar.querySelector("[data-wl-alerts]"); if (!a) return;
@@ -226,7 +226,7 @@
     if (!alerts || !alerts.open) { a.removeAttribute("title"); return; }
     var b = document.createElement("span"); b.className = "wlbar-badge" + (alerts.urgent ? " urgent" : "");
     b.textContent = alerts.open > 99 ? "99+" : String(alerts.open);
-    a.appendChild(b); a.title = alerts.open + " open AI Coach alert" + (alerts.open === 1 ? "" : "s") + (alerts.urgent ? ", " + alerts.urgent + " urgent" : "");
+    a.appendChild(b); a.title = alerts.open + " open Mr. Fox alert" + (alerts.open === 1 ? "" : "s") + (alerts.urgent ? ", " + alerts.urgent + " urgent" : "");
   }
   document.addEventListener("wl-alerts", function (e) { alerts = e.detail; paintAlerts(); });
   if (window.wlRole !== undefined) apply(window.wlRole);

@@ -264,7 +264,7 @@ async function findRole(u, em) {
   } catch (e) { /* no band: the student sees every band until a guide adds them to the tracker */ }
   return { role: "student", band, sid };
 }
-// Staff on the Guides site: how many AI Coach alerts are open, for the badge on the "Students" tab.
+// Staff on the Guides site: how many Mr. Fox alerts are open, for the badge on the "Students" tab.
 async function countAlerts(u) {
   if (!document.querySelector('[data-wlnav="guides"]') || location.pathname.startsWith("/guides/roster/")) return;
   try {

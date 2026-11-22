@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Coach · Wilderland</title>
+<title>Mr. Fox · Wilderland</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#01412f">
 <link rel="icon" href="/books/f/icon.png">
@@ -58,7 +58,7 @@ p{margin:0}
 <div class="wlbar" data-wlnav="students" data-current="coach"></div><script src="/wlnav.js"></script>
 <main>
   <header>
-    <h1><span class="fox" aria-hidden="true">🦊</span> Your AI Coach</h1>
+    <h1><span class="fox" aria-hidden="true">🦊</span> Mr. Fox</h1>
     <p class="lede">Help finding and doing challenges, Life Skill Labs and projects, and help working out a conflict. It asks questions and gives hints so you get better, and it never does the work for you. It opens beside the page, so you can see your work and the coach at the same time.</p>
   </header>
 
@@ -72,13 +72,13 @@ p{margin:0}
   <section class="acad" id="acad">
     <h2>What about academics?</h2>
     <div id="acad-body">
-      <p class="small" style="margin:6px 0 12px;max-width:66ch">The AI Coach doesn't help with academic work. AI that hands out answers makes it easy to skip the thinking, and the thinking is the point. We're trying an academics coach with a few students first: it only gives hints and questions, never answers, and guides read every chat.</p>
+      <p class="small" style="margin:6px 0 12px;max-width:66ch">Mr. Fox doesn't help with academic work. AI that hands out answers makes it easy to skip the thinking, and the thinking is the point. We're trying an academics coach with a few students first: it only gives hints and questions, never answers, and guides read every chat.</p>
       <div class="row"><button class="btn" type="button" data-interest>I'm interested in trying it</button><span class="small" id="interest-msg" aria-live="polite"></span></div>
     </div>
   </section>
 
   <section>
-    <h2 style="margin-bottom:12px">Why ask an AI Coach, not just a guide?</h2>
+    <h2 style="margin-bottom:12px">Why ask Mr. Fox (an AI coach), not just a guide?</h2>
     <ul class="rules why">
       <li><b>It's always there.</b>Your guides help a whole crew at once. The coach can help you right now: when every guide is busy, before school, or at home.</li>
       <li><b>It knows something about almost everything.</b>Knots, budgets, birds, speeches, fractions. Whatever your challenge, Lab or project is about, you can ask.</li>
@@ -100,7 +100,7 @@ p{margin:0}
     <h2 style="margin-bottom:12px">Your conversations</h2>
     <div id="chats"><p class="msg">Loading…</p></div>
   </section>
-  <p class="small">For parents: <a href="/parents/ai/">how the AI Coach keeps students safe</a>.</p>
+  <p class="small">For parents: <a href="/parents/ai/">how Mr. Fox keeps students safe</a>.</p>
 </main>
 <script type="module" src="/coach/coach.js"></script>
 <script type="module">
@@ -114,8 +114,8 @@ async function load(r) {
   const my = ++seq;
   const u = window.wlFirebase && window.wlFirebase.auth.currentUser;
   if (!u) { box.innerHTML = '<div class="msg">Sign in with your school account to see your chats. <button class="btn" type="button" data-wl-signin>Sign in</button></div>'; return; }
-  if (r && r.role === "parent") { box.innerHTML = '<p class="msg">The AI Coach is for students, signed in with their school account. Parents: see <a href="/parents/ai/">how it keeps students safe</a>.</p>'; return; }
-  if (r && r.role === "student" && r.band === "K–1") { box.innerHTML = '<p class="msg">The AI Coach is for grades 2 to 8. Your guide will help you with challenges.</p>'; return; }
+  if (r && r.role === "parent") { box.innerHTML = '<p class="msg">Mr. Fox is for students, signed in with their school account. Parents: see <a href="/parents/ai/">how it keeps students safe</a>.</p>'; return; }
+  if (r && r.role === "student" && r.band === "K–1") { box.innerHTML = '<p class="msg">Mr. Fox is for grades 2 to 8. Your guide will help you with challenges.</p>'; return; }
   try {
     const q = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" },
       body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "aiChats" }], where: { fieldFilter: { field: { fieldPath: "uid" }, op: "EQUAL", value: { stringValue: u.uid } } }, limit: 200 } }) });
@@ -127,7 +127,7 @@ async function load(r) {
       .filter(c => !!c.test === isTest).sort((a, b) => (b.updated || 0) - (a.updated || 0));
     const staffNote = r && r.role === "staff" ? '<p class="small" style="margin-bottom:10px">You are staff, so these are your own test chats. Every student conversation is on <a href="/guides/roster/">Guides › Student Roster</a>.</p>' : "";
     box.innerHTML = staffNote + (chats.length ? '<ul class="chats">' + chats.map(c => `<li><button type="button" data-chat="${c.id}"><span class="ic" aria-hidden="true">${{ project: "P", "find-project": "P", lesson: "?", academic: "A", conflict: "🤝", "find-challenge": "C" }[c.kind] || "C"}</span><span class="tx"><span class="tt">${esc(c.topicTitle || ({ lesson: "How to use your coach", academic: "Academics", conflict: "Working out a conflict", "find-challenge": "Finding a challenge", "find-project": "Finding a project" }[c.kind] || "Chat"))}</span><span class="ls">You: ${esc(c.last || "")}</span></span><span class="dt">${esc(when(c.updated || c.created || Date.now()))}</span></button></li>`).join("") + "</ul>"
-      : '<p class="empty">No chats yet. Start with the lesson above, or open a challenge and tap Ask the AI Coach.</p>');
+      : '<p class="empty">No chats yet. Start with the lesson above, or open a challenge and tap Ask Mr. Fox.</p>');
   } catch (e) { box.innerHTML = '<p class="msg">Couldn\'t load your chats. Reload the page to try again.</p>'; }
 }
 document.addEventListener("click", e => {

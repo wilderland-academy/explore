@@ -273,3 +273,5 @@ div.f span.hint{font-weight:400;color:var(--fg-muted)}
 /* Chips and plain buttons inside a grey panel need a white face to read as buttons. */
 .panel .chip:not([aria-pressed="true"]){background:var(--white)}
 .panel .vgrid ~ * .chip{background:var(--white)}
+/* Parent preview (staff on the Parents site) */
+.pvbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 16px;border-radius:12px;background:var(--sun-tint);font-size:15px;line-height:22px}

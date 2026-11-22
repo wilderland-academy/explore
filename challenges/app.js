@@ -353,7 +353,7 @@
 
 
   // ---------- AI starter prompts (built in ai.js from the challenge's own sentence and steps) ----------
-  // Students: the AI Coach chat (coach/coach.js), with starter buttons. Guides: the copyable prompts. Parents: neither.
+  // Students: Mr. Fox chat (coach/coach.js), with starter buttons. Guides: the copyable prompts. Parents: neither.
   var COACH_STARTS = ['Help me make a plan', 'Explain how to start', 'Quiz me on it', 'I\'m stuck'];
   function coachContext(c) {
     var comp = D.comps[c.c], s = SK[comp.k];
@@ -372,7 +372,7 @@
   function aiBox(c) {
     if (STUDENT) {
       if (c.b === 'K–1') return '';
-      return '<div class="sheet-sec ai-sec coach-sec"><h3>' + icon('bot') + 'Ask the AI Coach</h3>' +
+      return '<div class="sheet-sec ai-sec coach-sec"><h3>' + icon('bot') + 'Ask Mr. Fox</h3>' +
         '<p class="ai-note">Your coach helps you plan, practice and get unstuck. It asks questions and gives hints, and it won’t do the challenge for you. Tap one to start:</p>' +
         '<div class="coach-starts">' + COACH_STARTS.map(function (t) { return '<button class="chip" type="button" data-coach="' + c.id + '" data-say="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' +
         '<button class="btn" type="button" data-coach="' + c.id + '">' + icon('message-square') + 'Open the coach</button></div>';
@@ -445,7 +445,7 @@
     detail.querySelector('.d-close').focus();
   }
   detail.addEventListener('close', function () {
-    if (detail.dataset.wlcKeep) return; // closed only to move it beside the AI Coach
+    if (detail.dataset.wlcKeep) return; // closed only to move it beside Mr. Fox
     if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
   });
 
@@ -697,8 +697,8 @@
   });
   window.addEventListener('hashchange', fromChallengeHash);
 
-  // ---------- the AI Coach helps a student find a challenge (students' site) ----------
-  // The button shows only for someone who can use the coach. /challenges/?coach=find (from the AI Coach page) opens it
+  // ---------- Mr. Fox helps a student find a challenge (students' site) ----------
+  // The button shows only for someone who can use the coach. /challenges/?coach=find (from Mr. Fox's page) opens it
   // once the student's sign-in is confirmed; the coach asks what they're into and suggests challenges from their band.
   function openFinder() {
     var go = function () { window.WLCoach.open({ kind: 'find-challenge', topicId: 'find', topicTitle: 'Find a challenge' }); };

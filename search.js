@@ -27,7 +27,7 @@ const PAGES = [
   ["My progress", "/challenges/#progress", "s", "credits rank trail passes feats not yet"],
   ["Crew board", "/challenges/#progress", "s", "crew working on passed"],
   ["Projects", "/projects/", "s", "atlas ideas sparks"],
-  ["AI Coach", "/coach/", "s", "help chat conflict"],
+  ["Mr. Fox", "/coach/", "s", "help chat conflict"],
   ["Store", "/store/", "s", "shop buy"],
   ["Ideas and Town Hall", "/suggest/", "s", "suggestion box vote town hall"],
   ["Guides home", "/guides/", "g", "staff"],
@@ -53,8 +53,8 @@ const PAGES = [
   ["Crew board (guides)", "/guides/lifeskills/#board", "g", "crew working"],
   ["Student Roster", "/guides/roster/", "g", "students parents roster"],
   ["Add students", "/guides/roster/#add", "g", "new student import csv"],
-  ["AI Coach alerts", "/guides/roster/#alerts", "g", "alerts flags"],
-  ["All AI Coach conversations", "/guides/roster/#chats", "g", "chats conversations"],
+  ["Mr. Fox alerts", "/guides/roster/#alerts", "g", "alerts flags"],
+  ["All Mr. Fox conversations", "/guides/roster/#chats", "g", "chats conversations"],
   ["Parent Comms", "/guides/parents/", "g", "parent communication email draft"],
   ["Staff Handbook", "/guides/handbook/", "g", "handbook policies"],
   ["Conversation history", "/guides/history/", "g", "history saved drafts"],
@@ -66,7 +66,7 @@ const PAGES = [
   ["Labs schedule (parents)", "/parents/lifeskills/#schedule", "p", "labs calendar"],
   ["Challenges (parents)", "/parents/challenges/", "p", "challenge map"],
   ["Passing off at home", "/challenges/parents.html", "p", "pass off home log sheet"],
-  ["How the AI Coach keeps students safe", "/parents/ai/", "p", "ai safety coach"]
+  ["How Mr. Fox keeps students safe", "/parents/ai/", "p", "ai safety coach"]
 ];
 const SITES_FOR = { staff: "hsgp", parent: "hsp", student: "hs", anon: "hsp" };
 
