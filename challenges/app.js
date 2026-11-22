@@ -16,8 +16,8 @@
   var state = { band: load('wl-band', '5–8'), skill: null, sub: null, q: '', f: { home: false, epic: false, lab: false, any: false } };
   if (['K–1', '2–4', '5–8'].indexOf(state.band) < 0) state.band = '5–8';
   var picks = load('wl-picks', []).filter(function (id) { return BYID[id]; });
-  // A signed-in student sees only their own grade band (from their Life Skills tracker record, via /auth.js).
-  // Saved picks from another band are kept in storage but not shown while locked.
+  // A signed-in student (band from their Life Skills tracker record, via /auth.js) always starts in their own grade band
+  // and may look up at older bands, never down. Saved picks from a younger band are kept in storage but not shown.
   var locked = null, hiddenPicks = [];
   function savePicks() { save('wl-picks', picks.concat(hiddenPicks)); }
 
@@ -361,7 +361,7 @@
   var detail = document.getElementById('detail');
   var lastFocus = null;
   function openDetail(id) {
-    var c = BYID[id]; if (!c || (locked && c.b !== locked)) return;
+    var c = BYID[id]; if (!c || !bandOpen(c.b)) return;
     var comp = D.comps[c.c], s = SK[comp.k];
     var on = picks.indexOf(c.id) >= 0;
     var h = '<button class="icon-btn d-close" data-close aria-label="Close">' + icon('x') + '</button>' +
@@ -484,8 +484,7 @@
     S = structure();
     Array.prototype.forEach.call(document.querySelectorAll('.band'), function (b) {
       b.setAttribute('aria-pressed', String(b.dataset.band === state.band));
-      b.hidden = !!locked && b.dataset.band !== locked;
-      b.disabled = !!locked;
+      b.hidden = !bandOpen(b.dataset.band);
     });
     document.getElementById('k1-note').hidden = !guideMode();
     document.getElementById('year').hidden = guideMode();
@@ -528,7 +527,7 @@
       return;
     }
     if (t.dataset.band) {
-      if (locked) return;
+      if (!bandOpen(t.dataset.band)) return;
       state.band = t.dataset.band; save('wl-band', state.band);
       if (state.skill && state.sub && !S[state.skill]) state.sub = null;
       state.sub = null; renderAll(); return;
@@ -606,6 +605,7 @@
 
   // ---------- one grade band for a signed-in student ----------
   var BANDS = ['K–1', '2–4', '5–8'];
+  function bandOpen(b) { return !locked || BANDS.indexOf(b) >= BANDS.indexOf(locked); }
   function setLock(b) {
     b = BANDS.indexOf(b) >= 0 ? b : null;
     if (b === locked) return false;
@@ -613,8 +613,8 @@
     locked = b;
     if (b) {
       state.band = b; save('wl-band', b); state.sub = null;
-      hiddenPicks = picks.filter(function (id) { return BYID[id].b !== b; });
-      picks = picks.filter(function (id) { return BYID[id].b === b; });
+      hiddenPicks = picks.filter(function (id) { return !bandOpen(BYID[id].b); });
+      picks = picks.filter(function (id) { return bandOpen(BYID[id].b); });
     }
     return true;
   }
@@ -623,7 +623,7 @@
   try { var rc = JSON.parse(localStorage.getItem('wl-role') || 'null'); if (rc && rc.r === 'student') setLock(rc.b); } catch (e) {}
   document.addEventListener('wl-role', function (e) {
     if (!setLock(lockFrom(e.detail))) return;
-    if (detail.open && locked) detail.close();
+    if (detail.open) detail.close();
     if (state.skill && !state.sub && !window.matchMedia('(max-width:820px)').matches) state.sub = (structure()[state.skill].subs[0] || null);
     renderAll();
   });

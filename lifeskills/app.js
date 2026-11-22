@@ -657,10 +657,10 @@ function importPanel() {
 let boardBand = null, boardQ = "";
 function boardView() {
   const mine = S.mine[0] && S.students[S.mine[0]];
-  // Students see only their own grade band's crew; guides can look across bands.
+  // Students start on their own band's crew and can look up at older bands, not down; guides see every band.
   const lockBand = S.role === "student" && mine && BANDS.includes(mine.band) ? mine.band : null;
-  if (lockBand) boardBand = lockBand;
-  if (!boardBand) boardBand = mine ? mine.band : "2–4";
+  const bandChoices = lockBand ? BANDS.slice(BANDS.indexOf(lockBand)) : ["All", ...BANDS];
+  if (!boardBand || !bandChoices.includes(boardBand)) boardBand = mine ? mine.band : "2–4";
   const list = Object.values(S.boards).filter(b => b.name && (boardBand === "All" || b.band === boardBand))
     .filter(b => !boardQ || b.name.toLowerCase().includes(boardQ) || (b.working || []).concat((b.passed || []).map(p => p.c)).some(c => chTitle(c).toLowerCase().includes(boardQ)))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -670,7 +670,7 @@ function boardView() {
   return h("div", {}, [
     head("Crew board", "What everyone is working on, and what they've passed. Ask someone who's done it how they did it."),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
-      h("div", { class: "row" }, [...(lockBand ? [h("span", { class: "tag", text: "Grades " + lockBand })] : ["All", ...BANDS]).map(b => typeof b !== "string" ? b : h("button", { class: "chip", type: "button", "aria-pressed": String(boardBand === b), text: b === "All" ? "Everyone" : "Grades " + b, onclick: () => { boardBand = b; route(); } })), h("label", { class: "f", for: "bq", style: { marginLeft: "auto" } }, [h("span", { class: "hint", text: "Search" }), q])]),
+      h("div", { class: "row" }, [...bandChoices.map(b => h("button", { class: "chip", type: "button", "aria-pressed": String(boardBand === b), text: b === "All" ? "Everyone" : "Grades " + b, onclick: () => { boardBand = b; route(); } })), h("label", { class: "f", for: "bq", style: { marginLeft: "auto" } }, [h("span", { class: "hint", text: "Search" }), q])]),
       list.length ? h("div", { class: "boardgrid" }, list.map(b => {
         const passed = (b.passed || []).slice().sort((x, y) => (y.d || "").localeCompare(x.d || ""));
         const credits = b.credits || 0, ranks = RANKS[b.band] || [], rank = ranks.filter(r => r[0] <= credits).pop();
