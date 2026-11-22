@@ -1,6 +1,11 @@
 (function () {
   'use strict';
   var D = window.WL;
+  // The same page runs in three sites (built by Jekyll from _includes/challenges.html): students plan and save picks;
+  // guides and parents get the full map without the student plan.
+  var SITE = document.body.getAttribute('data-site') || 'students', STUDENT = SITE === 'students';
+  // Progress from the Life Skills tracker (set by progress.js for a signed-in student): cid -> 'pass' | 'working'.
+  var status = {}, statusHooks = null;
   var SK = {}, BYID = {};
   D.skills.forEach(function (s) { SK[s.k] = s; });
   D.ch.forEach(function (c) { BYID[c.id] = c; });
@@ -28,7 +33,7 @@
     });
   }
   function icon(name) {
-    return '<svg class="ic" aria-hidden="true"><use href="icons.svg#i-' + name + '"/></svg>';
+    return '<svg class="ic" aria-hidden="true"><use href="/challenges/icons.svg#i-' + name + '"/></svg>';
   }
   function tint(hex, amt) {
     var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
@@ -156,17 +161,19 @@
     if (anyHobby(c)) tags += '<span class="tag tag-hob">' + icon('sparkles') + 'Bring your hobby</span>';
     if (c.b === 'K–1') tags += '<span class="tag">' + icon('users') + 'Guide-led</span>';
     if (c.gate) tags += '<span class="tag">' + icon('shield-alert') + 'Safety Gate</span>';
-    return '<div class="ch"><button class="ch-open" data-open="' + c.id + '"><span class="ch-text">' + esc(c.t) + '</span>' +
+    if (status[c.id] === 'pass') tags = '<span class="tag tag-pass">' + icon('circle-check') + 'Passed</span>' + tags;
+    else if (status[c.id] === 'working') tags = '<span class="tag tag-work">' + icon('flag') + 'Working on it</span>' + tags;
+    return '<div class="ch' + (status[c.id] === 'pass' ? ' ch-passed' : '') + '"><button class="ch-open" data-open="' + c.id + '"><span class="ch-text">' + esc(c.t) + '</span>' +
       (idea ? '<span class="ch-idea">' + esc(idea) + '</span>' : '') +
       (tags ? '<span class="tags">' + tags + '</span>' : '') + '</button>' +
-      (c.b === 'K–1' ? '' : '<button class="pick" data-pick="' + c.id + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Remove from my plan' : 'Save to my plan') + '">' +
+      (c.b === 'K–1' || !STUDENT ? '' : '<button class="pick" data-pick="' + c.id + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Remove from my plan' : 'Save to my plan') + '">' +
       icon(on ? 'bookmark-check' : 'bookmark') + '</button>') + '</div>';
   }
   function compBlock(cid, list) {
     var comp = D.comps[cid], s = SK[comp.k];
     var im = imgFor(cid);
     return '<div class="comp has-img" style="' + skillVars(s) + '">' +
-      (im ? '<img class="comp-img" src="img/' + cid + '.jpg" alt="" loading="lazy" width="960" height="360">'
+      (im ? '<img class="comp-img" src="/challenges/img/' + cid + '.jpg" alt="" loading="lazy" width="960" height="360">'
           : '<div class="comp-img comp-band" aria-hidden="true">' + icon(comp.i) + '</div>') +
       '<h3>' + icon(comp.i) + esc(comp.n) + '</h3>' +
       list.map(function (c) { return chRow(c); }).join('') + '</div>';
@@ -328,7 +335,7 @@
     var home = 'vlot'.indexOf(c.p) >= 0;
     return '<div class="home-box' + (c.p === 's' ? ' gate' : home ? '' : ' school') + '"><h3>' + icon(m[0]) + esc(m[1]) + '</h3><p>' + esc(m[2]) + '</p>' +
       '<div class="row">' + (home ? '<button class="btn btn-sm" type="button" data-copy-email="' + c.id + '">' + icon('copy') + 'Copy email for the Field Guide</button>' : '') +
-      '<a class="btn btn-sm ghost" href="parents.html#' + m[3] + '">' + esc(m[4]) + '</a></div></div>';
+      '<a class="btn btn-sm ghost" href="/challenges/parents.html#' + m[3] + '">' + esc(m[4]) + '</a></div></div>';
   }
   function emailFor(c) {
     var L = ['Subject: Home pass-off: [child’s first name and last initial], ' + c.id, '',
@@ -367,14 +374,14 @@
     var h = '<button class="icon-btn d-close" data-close aria-label="Close">' + icon('x') + '</button>' +
       '<div class="d-band" style="' + skillVars(s) + '"><span class="badge">' + icon(comp.i) + '</span>' +
       '<p class="d-crumb">' + esc(s.n) + ' › ' + esc(comp.s) + ' › ' + esc(comp.n) + '</p></div>' +
-      (imgFor(c.c) ? '<img class="d-img" src="img/' + c.c + '.jpg" alt="">' : '<div class="d-img comp-band" style="' + skillVars(s) + '" aria-hidden="true">' + icon(comp.i) + '</div>') +
-      '<h2 id="d-title" class="d-title">' + esc(c.t) + '</h2>' +
+      (imgFor(c.c) ? '<img class="d-img" src="/challenges/img/' + c.c + '.jpg" alt="">' : '<div class="d-img comp-band" style="' + skillVars(s) + '" aria-hidden="true">' + icon(comp.i) + '</div>') +
+      '<h2 id="d-title" class="d-title" data-cid="' + c.id + '">' + esc(c.t) + '</h2>' +
       '<div class="facts">' +
       '<div class="fact"><b>Grades</b>' + esc(c.gr) + '</div>' +
       '<div class="fact"><b>Time</b>' + esc(c.b === 'K–1' && c.z === 'Week' ? 'Guide-led: a day or longer, as it needs' : c.tm) + '</div>' +
       '<div class="fact"><b>Credits</b>' + c.cr + '</div>' +
       '<div class="fact"><b>How you show it</b>' + esc(c.w) + '</div>' +
-      '</div>';
+      '</div>' + (statusHooks ? statusHooks.detail(c) : '');
     if (c.ta) h += '<div class="callout"><b>Turnaround Epic.</b> It only counts when it fixes a real problem or builds something new for you. Before you start, a parent (or your guide, for a habit at school) confirms the problem with a week of evidence. At the end, they confirm what changed.</div>';
     if (c.gate) h += '<div class="callout"><b>Safety Gate.</b> Pass this before: ' + esc(c.gate) + '. A guide or certified instructor checks it.</div>';
     if (c.how && c.how.length) {
@@ -403,7 +410,7 @@
     } else {
       h += '<p>No outside lesson for this one: you learn it by doing, with the steps above and your crew. Ask your guide if you get stuck.</p>';
     }
-    h += '</div>' + aiBox(c) + homeBox(c) + '<div class="sheet-actions">' + (c.b === 'K–1' ? '' : '<button class="btn" data-pick="' + c.id + '" aria-pressed="' + on + '">' +
+    h += '</div>' + aiBox(c) + homeBox(c) + '<div class="sheet-actions">' + (c.b === 'K–1' || !STUDENT ? '' : '<button class="btn" data-pick="' + c.id + '" aria-pressed="' + on + '">' +
       icon(on ? 'bookmark-check' : 'bookmark') + (on ? 'Saved to my plan' : 'Save to my plan') + '</button>') +
       '<button class="btn ghost" data-close>Back</button></div>';
     if (imgFor(c.c)) h += '<p class="credit">' + credit(imgFor(c.c)) + '</p>';
@@ -487,7 +494,7 @@
       b.hidden = !bandOpen(b.dataset.band);
     });
     document.getElementById('k1-note').hidden = !guideMode();
-    document.getElementById('year').hidden = guideMode();
+    document.getElementById('year').hidden = guideMode() || !STUDENT;
     Array.prototype.forEach.call(document.querySelectorAll('.nav [data-open-picks]'), function (b) { b.hidden = guideMode(); });
     // K–1 is guide-led in Labs: no home work, no hobby picks
     ['home', 'any'].forEach(function (k) {
@@ -627,6 +634,13 @@
     if (state.skill && !state.sub && !window.matchMedia('(max-width:820px)').matches) state.sub = (structure()[state.skill].subs[0] || null);
     renderAll();
   });
+
+  // ---------- hooks for progress.js ----------
+  window.WLC = {
+    open: openDetail,
+    band: function () { return state.band; },
+    setStatus: function (m, hooks) { status = m || {}; statusHooks = hooks || null; renderTree(); renderSearch(); if (detail.open) { var t = detail.querySelector('[data-cid]'); if (t) openDetail(t.getAttribute('data-cid')); } }
+  };
 
   // ---------- start ----------
   state.skill = 'EN';

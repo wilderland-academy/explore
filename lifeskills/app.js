@@ -31,8 +31,9 @@ const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@w
 const EMU = location.hostname === "localhost" && new URLSearchParams(location.search).has("emu");
 // The same tracker runs in all three Explore sites, each with its own top bar: students at /lifeskills/,
 // guides at /guides/lifeskills/, parents at /parents/lifeskills/. route() sends each person to their own site's copy.
-const HOMES = { staff: "/guides/lifeskills/", student: "/lifeskills/", parent: "/parents/lifeskills/" };
-const PATH = location.pathname.startsWith("/guides/lifeskills") ? HOMES.staff : location.pathname.startsWith("/parents/lifeskills") ? HOMES.parent : HOMES.student;
+// Students no longer use the tracker pages: their progress and crew board are inside Challenges (/challenges/#progress).
+const HOMES = { staff: "/guides/lifeskills/", student: "/challenges/", parent: "/parents/lifeskills/" };
+const PATH = location.pathname.startsWith("/guides/lifeskills") ? HOMES.staff : location.pathname.startsWith("/parents/lifeskills") ? HOMES.parent : "/lifeskills/";
 const BASE = PATH + (EMU ? "?emu" : "");
 const HOME = location.origin + BASE;
 const LINK_KEY = "wl-ls-link-email";
@@ -691,6 +692,7 @@ function route() {
   if (S.role === "unverified") return unverified();
   const [v, arg] = location.hash.slice(1).split("=");
   // Signed in on another site's copy (a parent following an old /lifeskills/ link, say): move to their own.
+  if (S.role === "student") { location.replace("/challenges/#progress"); return; }
   if (HOMES[S.role] && HOMES[S.role] !== PATH) { location.replace(HOMES[S.role] + location.search + location.hash); return; }
   acct();
   if (S.role === "staff") {
@@ -725,10 +727,10 @@ function tellRole() {
   let d = null;
   if (S.user && TEAM.includes(S.email) && S.role !== "unverified") d = { role: "staff", band: null };
   else if (S.role === "staff" || S.role === "parent") d = { role: S.role, band: null };
-  else if (S.role === "student") { const bands = [...new Set(S.mine.map(id => S.students[id] && S.students[id].band).filter(Boolean))]; d = { role: "student", band: bands.length === 1 ? bands[0] : null }; }
+  else if (S.role === "student") { const bands = [...new Set(S.mine.map(id => S.students[id] && S.students[id].band).filter(Boolean))]; d = { role: "student", band: bands.length === 1 ? bands[0] : null, sid: S.mine.length === 1 ? S.mine[0] : null }; }
   if (d) d = { email: S.email, ...d };
   window.wlRole = d;
-  try { if (d) localStorage.setItem("wl-role", JSON.stringify({ e: d.email, r: d.role, b: d.band })); else localStorage.removeItem("wl-role"); } catch (e) { }
+  try { if (d) localStorage.setItem("wl-role", JSON.stringify({ e: d.email, r: d.role, b: d.band, s: d.sid || null })); else localStorage.removeItem("wl-role"); } catch (e) { }
   document.dispatchEvent(new CustomEvent("wl-role", { detail: d }));
 }
 
