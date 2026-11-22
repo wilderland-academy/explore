@@ -42,6 +42,13 @@
 .wlbar .wlbar-mentor:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 .wlbar .wlbar-mentor + .wlbar-auth{margin-left:8px}
 .wlbar a:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
+/* Search (everyone): the first thing on the right of the bar; what follows it sits 8px after. */
+.wlbar .wlbar-search{margin-left:auto;display:inline-flex;align-items:center;gap:8px;flex:none;min-height:36px;padding:0 8px 0 11px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.06);color:#f6f8ea;font:600 14px/1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;cursor:pointer}
+.wlbar .wlbar-search svg{width:17px;height:17px;flex:none}
+.wlbar .wlbar-search kbd{font:600 11.5px/1 ui-monospace,Menlo,monospace;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,.12);color:#d5f367}
+.wlbar .wlbar-search:hover{background:rgba(255,255,255,.12)}
+.wlbar .wlbar-search:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
+.wlbar .wlbar-search ~ .wlbar-mentor,.wlbar .wlbar-search ~ .wlbar-test,.wlbar .wlbar-search ~ .wlbar-auth{margin-left:8px}
 /* Test view (testers only): the switch in the bar and the strip under it while viewing as a test account. */
 .wlbar .wlbar-test{position:relative;flex:none;margin-left:auto}
 .wlbar .wlbar-test + .wlbar-auth{margin-left:8px}
@@ -73,6 +80,8 @@
   .wlbar .wlbar-mentor{padding:0 8px}
   .wlbar .wlbar-mentor-t{display:none}
   .wlbar .wlbar-testbtn{padding:0 8px}
+  .wlbar .wlbar-search{padding:0 9px;border-color:transparent}
+  .wlbar .wlbar-search-t,.wlbar .wlbar-search kbd{display:none}
   .wlbar .wlbar-test-t{display:none}
   .wlbar .wlbar-banner{padding:8px 12px;font-size:13px}
 }
@@ -91,3 +100,6 @@ body[data-gated].wl-pending .wl-wait{display:block}
 .wl-gate small{display:block;margin-top:14px;color:#7f978b;font-size:13px}
 .wl-wait{text-align:center;color:#a9bbb0;padding:60px 20px;font:400 15px Inter,system-ui,sans-serif}
 
+/* Mid-size screens: the search button shrinks to its icon and shortcut so the site tabs keep their room. */
+@media (max-width:1440px){.wlbar .wlbar-search-t{display:none}.wlbar .wlbar-search{padding-left:9px}}
+@media (max-width:980px){.wlbar .wlbar-search kbd{display:none}}

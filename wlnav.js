@@ -82,6 +82,7 @@
   // "wl-role" event: { role: "staff" | "student" | "parent" | null, band: "K–1" | "2–4" | "5–8" | null }.
   // This only steers the screen. What is private (records, coaching history) is protected by the Firestore rules.
   var SWITCH = { staff: ["students", "guides", "parents"], parent: ["parents", "students"] };
+  var MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   var CARET = '<svg class="wlbar-caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var role = null;
 
@@ -100,6 +101,8 @@
     var auth = bar.querySelector(".wlbar-auth");
     bar.innerHTML = '<div class="wlbar-in">' + home + sw +
       (tabs ? '<nav class="wlbar-sites" aria-label="' + esc(site.name) + '">' + tabs + "</nav>" : "") +
+      // Search (⌘K / Ctrl+K, or "/"), for everyone: /search.js, loaded on first use.
+      '<button type="button" class="wlbar-search" data-wl-search aria-label="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')" title="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="wlbar-search-t">Search</span><kbd>' + (MAC ? "⌘K" : "Ctrl K") + "</kbd></button>" +
       // The Guide Mentor (🐲) is one click away on every staff page.
       (key === "guides" ? '<button type="button" class="wlbar-mentor" data-wl-mentor aria-label="Open the Guide Mentor" title="Guide Mentor: ask anything about your work"><span aria-hidden="true">🐲</span><span class="wlbar-mentor-t">Guide Mentor</span></button>' : "") +
       (tester ? '<div class="wlbar-test"><button type="button" class="wlbar-testbtn' + (view ? " on" : "") + '" aria-haspopup="true" aria-expanded="false" title="See the site as a test guide, student or parent"><span aria-hidden="true">🧪</span><span class="wlbar-test-t">' + (view ? "Test " + view.as : "Test view") + "</span></button>" + testMenu() + "</div>" : "") +
@@ -160,6 +163,14 @@
   document.addEventListener("click", function (e) {
     var w = bar.querySelector(".wlbar-test");
     if (w && !w.contains(e.target)) { w.querySelector(".wlbar-menu").hidden = true; w.querySelector("button").setAttribute("aria-expanded", "false"); }
+  });
+
+  // Search: ⌘K / Ctrl+K anywhere, "/" when not typing, or the button.
+  window.wlOpenSearch = function () { return import("/search.js").then(function (m) { m.open(); }); };
+  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-wl-search]")) { e.preventDefault(); window.wlOpenSearch(); } });
+  document.addEventListener("keydown", function (e) {
+    var k = (e.key || "").toLowerCase(), t = e.target, typing = t && (t.isContentEditable || /^(input|textarea|select)$/i.test(t.tagName));
+    if ((k === "k" && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) || (k === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey)) { e.preventDefault(); window.wlOpenSearch(); }
   });
 
   // The Guide Mentor lives in /guides/mentor/mentor.js, loaded on first use.
