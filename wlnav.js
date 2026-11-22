@@ -14,6 +14,7 @@
       { id: "books", label: "Books", href: "/books/" },
       { id: "challenges", label: "Challenges", href: "/challenges/" },
       { id: "projects", label: "Projects", href: "/projects/" },
+      { id: "coach", label: "AI Coach", href: "/coach/" },
       { id: "store", label: "Store", href: "/store/" },
       { id: "suggest", label: "Ideas", href: "/suggest/" },
       BASECAMP] },
@@ -23,6 +24,7 @@
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
       { id: "challenges", label: "Challenges", href: "/guides/challenges/" },
       { id: "parentcomms", label: "Parent Comms", href: "/guides/parents/" },
+      { id: "students", label: "Students", href: "/guides/students/" },
       BASECAMP] },
     parents: { name: "Parents", home: "/parents/", label: "Parents", tabs: [
       { id: "athome", label: "At Home", href: "/parents/athome/" },
@@ -44,7 +46,7 @@
   var site = SITES[key], cur = bar.getAttribute("data-current") || "";
   var tabs = site.tabs.map(function (t) {
     if (t.out) return '<a class="wlbar-ext" href="' + t.href + '" target="_blank" rel="noopener" aria-label="' + esc(t.label) + ' (opens in a new tab)">' + esc(t.label) + ARROW + "</a>";
-    return '<a href="' + t.href + '"' + (t.id === cur ? ' aria-current="page"' : "") + ">" + esc(t.label) + "</a>";
+    return '<a href="' + t.href + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "students" ? ' data-wl-alerts' : "") + ">" + esc(t.label) + "</a>";
   }).join("");
 
   // Who may switch to which site. Staff (and team guests) see all three; parents see theirs and the students' site;
@@ -107,7 +109,7 @@
     var go = allowed(r);
     if (go && location.pathname !== go.split("#")[0]) { location.replace(go); return; }
     var was = JSON.stringify(role); role = r;
-    if (JSON.stringify(role) !== was) draw();
+    if (JSON.stringify(role) !== was) { draw(); paintAlerts(); }
   }
   // Draw at once. A role remembered on this device (written only by /auth.js and the tracker, cleared on sign-out)
   // shows the switcher without a flicker; it never moves anyone until the signed-in account confirms it.
@@ -115,5 +117,16 @@
   draw();
   bar.setAttribute("data-wlnav-done", "");
   document.addEventListener("wl-role", function (e) { apply(e.detail); });
+  // Open AI Coach alerts, shown as a count on the Guides "Students" tab (sent by /auth.js and /guides/students/).
+  var alerts = null;
+  function paintAlerts() {
+    var a = bar.querySelector("[data-wl-alerts]"); if (!a) return;
+    var old = a.querySelector(".wlbar-badge"); if (old) old.remove();
+    if (!alerts || !alerts.open) { a.removeAttribute("title"); return; }
+    var b = document.createElement("span"); b.className = "wlbar-badge" + (alerts.urgent ? " urgent" : "");
+    b.textContent = alerts.open > 99 ? "99+" : String(alerts.open);
+    a.appendChild(b); a.title = alerts.open + " open AI Coach alert" + (alerts.open === 1 ? "" : "s") + (alerts.urgent ? ", " + alerts.urgent + " urgent" : "");
+  }
+  document.addEventListener("wl-alerts", function (e) { alerts = e.detail; paintAlerts(); });
   if (window.wlRole !== undefined) apply(window.wlRole);
 })();

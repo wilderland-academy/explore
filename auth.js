@@ -217,6 +217,17 @@ async function findRole(u, em) {
   } catch (e) { /* no band: the student sees every band until a guide adds them to the tracker */ }
   return { role: "student", band, sid };
 }
+// Staff on the Guides site: how many AI Coach alerts are open, for the badge on the "Students" tab.
+async function countAlerts(u) {
+  if (!document.querySelector('[data-wlnav="guides"]') || location.pathname.startsWith("/guides/students/")) return;
+  try {
+    const r = await fetch(`${FS}:runQuery`, { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" },
+      body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "aiAlerts" }], where: { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "open" } } }, limit: 100 } }) });
+    if (!r.ok) return;
+    const docs = (await r.json()).filter(x => x.document);
+    document.dispatchEvent(new CustomEvent("wl-alerts", { detail: { open: docs.length, urgent: docs.filter(x => (x.document.fields.severity || {}).stringValue === "urgent").length } }));
+  } catch (e) { /* the badge is a convenience; the Students page always shows the alerts */ }
+}
 async function decideRole(u) {
   const my = ++roleSeq;
   if (!u) { sendRole(null); return; }
@@ -229,6 +240,7 @@ async function decideRole(u) {
     const was = window.wlRole;
     const next = r ? { email: em, ...r } : null;
     if (JSON.stringify(was || null) !== JSON.stringify(next)) sendRole(next);
+    if (next && next.role === "staff" && em.endsWith("@" + DOMAIN)) countAlerts(u);
   } catch (e) { console.warn("Wilderland role:", e); }
 }
 onAuthStateChanged(auth, async u => {

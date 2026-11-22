@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The AI Coach and your child's safety · Wilderland</title>
+<meta name="description" content="How Wilderland's AI Coach works, what it will and won't do, how conversations are screened and reviewed by guides, and what data is kept.">
+<meta name="theme-color" content="#015640">
+<link rel="icon" href="/books/f/icon.png">
+<link rel="stylesheet" href="/wl.css">
+<link rel="stylesheet" href="/parents/parents.css">
+<style>
+.ai{display:flex;flex-direction:column;gap:26px;padding-top:36px}
+.ai section{display:flex;flex-direction:column;gap:10px}
+.ai ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;max-width:72ch}
+.ai .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.ai .card h3{font-size:18px}
+.ai .help{background:var(--lamp-bg);border-radius:16px;padding:18px 20px}
+.ai .fine{font-size:14px;color:var(--dim);max-width:72ch}
+</style>
+</head>
+<body>
+<div class="wlbar" data-wlnav="parents" data-auth="off"></div><script src="/wlnav.js"></script>
+<script type="module" src="/auth.js" data-site="parents"></script>
+<main class="wrap ai">
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <h1>The AI Coach and <span>your child's safety</span></h1>
+    <p class="lede">Students in grades 2 to 8 can get help from an AI Coach on their Life Skills challenges and passion projects. Here is exactly what it does, what it won't do, and how we keep an eye on it.</p>
+  </header>
+
+  <section>
+    <h2>What it is</h2>
+    <ul>
+      <li>An AI chat inside the student website, built on Anthropic's Claude models. It tells students it is an AI, not a person, every time they open it.</li>
+      <li>It is a coach, not an answer machine. It asks questions and gives hints, and it does not do the work for students. Research on AI tutors found students who were handed answers learned less, while a tutor built to guide them avoided that harm.</li>
+      <li>It only helps with challenges, projects, and learning to use AI well. It has no name or personality, and it does not act as a friend or companion.</li>
+      <li>Kindergarten and 1st grade don't use it. Their challenges are guide-led.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The safeguards</h2>
+    <div class="grid">
+      <div class="card"><h3>Every message is checked twice</h3><p>Before the coach answers, a separate AI screens the student's message for safety concerns. Before the student sees the answer, another check reviews the coach's reply. If either check can't run, the coach doesn't answer.</p></div>
+      <div class="card"><h3>Topics it won't touch</h3><p>Anything sexual or romantic, violence and weapons, drugs, alcohol and vaping, self-harm, scary or graphic content, hate, and getting around rules or filters. It does not give medical, mental-health or legal advice, and it stays out of politics and religion.</p></div>
+      <div class="card"><h3>Serious messages reach a person</h3><p>If a child mentions hurting themselves, being hurt, or hurting someone, the AI does not reply in its own words. The child sees a fixed message pointing them to a trusted adult, SafeUT and 988, and our staff get an alert right away.</p></div>
+      <div class="card"><h3>Guides can read every chat</h3><p>Every conversation is saved, and every staff member can read them. Students are told this up front. Students can't delete their chats or change what was said.</p></div>
+      <div class="card"><h3>Personal details stay out</h3><p>The coach never asks for personal information. Email addresses, phone numbers, street addresses and links are removed from a message before it is saved or sent to the AI, and the student is reminded to keep those private.</p></div>
+      <div class="card"><h3>Safety comes first</h3><p>For fire, tools, cooking, water, heights or anything risky, the coach says an adult must be there and the guide's safety check comes first. It never explains how to skip safety steps.</p></div>
+      <div class="card"><h3>Limits on use</h3><p>Students can send up to 50 messages a day, and each conversation has a set length. Long sessions tend to drift away from learning, so the coach nudges students to take a break.</p></div>
+      <div class="card"><h3>It teaches good AI habits</h3><p>The first chat is a short lesson: what AI is, that it can be wrong, why you never share personal details, and how to ask a good question. Short tips about using AI well keep coming up after that.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Your child's data</h2>
+    <ul>
+      <li><b>What we keep:</b> the messages your child sends, the coach's replies, any safety flags, and how many messages they sent each day. We store these in Wilderland's own Google Firebase database, tied to their school account.</li>
+      <li><b>Who can see it:</b> your child, and Wilderland staff. It is used only for your child's learning and safety, never for advertising.</li>
+      <li><b>The AI company:</b> messages go to Anthropic, the company that makes Claude, to get the coach's reply. Under Anthropic's commercial terms, these messages aren't used to train its models, and Anthropic deletes them within 30 days unless it needs them to enforce its usage policy or the law requires it.</li>
+      <li><b>Your choices:</b> you can ask to read your child's conversations, ask us to delete them, or ask us to turn the coach off for your child. Talk to your child's guide or email the school.</li>
+    </ul>
+    <p class="fine">Wilderland follows Anthropic's requirements for organizations that serve minors (content screening, monitoring and reporting, teaching safe use, and telling users they are talking to an AI), and we built the coach to protect children's privacy under the Children's Online Privacy Protection Act (COPPA).</p>
+  </section>
+
+  <section class="help">
+    <h2>If your child is struggling</h2>
+    <p>The AI Coach is not a counselor. If your child is having a hard time, please reach out to their guide. Utah families can also use the free SafeUT app (chat with a licensed counselor 24/7) or call or text 988. In an emergency, call 911.</p>
+  </section>
+</main>
+</body>
+</html>

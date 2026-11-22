@@ -24,7 +24,32 @@ Firebase console → Firestore Database → Rules. Replace everything with the c
 Open https://explore.wilderland.academy/fieldguide/#admin, paste the address under "AI relay", click Save, then Test.
 "Relay answered: ready" means everything is working.
 
+## 5. The student AI Coach (added Nov 21, 2026)
+The same Worker answers students' AI Coach chats (requests with `mode: "coach"`). Nothing extra to set up beyond
+publishing the latest `/firestore.rules` and pasting the latest `worker.js`. Optional:
+- **ALERT_WEBHOOK** (Settings → Variables and Secrets → Secret): a Google Chat or Slack incoming-webhook address. Urgent and
+  high alerts post a one-line notice there (category, student, grades, and a link; never the student's words), so
+  someone sees them even when nobody has the site open.
+- **Turning the coach off for one student:** in the Firebase console, open that student's `lsStudents` record and add the
+  field `coachOff` = true (boolean).
+
+How it keeps students safe, in the order it runs:
+1. Only signed-in school accounts. Students in K–1 are refused (their challenges are guide-led). Guests are refused.
+2. Daily cap (50 messages per student) and a cap per conversation (40 messages).
+3. Emails, phone numbers, street addresses and links are removed from the message before anything else.
+4. A separate quick model screens the message (self-harm, being harmed, threats, sexual, weapons and danger, drugs,
+   bullying, distress, personal info, manipulation, cheating, profanity, off topic). If screening fails, nothing is answered.
+5. The student's message is saved, and any medium-or-worse message creates an alert, before any reply.
+6. Urgent and high messages, and attempts to get around the rules, get fixed replies written in advance (crisis replies
+   point to a trusted adult, SafeUT, 988 and 911). The AI never improvises those.
+7. Otherwise the coach replies under fixed server-side rules (`coachSystem` in `worker.js`), with only conversation lines this
+   Worker signed (anything typed straight into the database is ignored and reported as tampering).
+8. A second check reads the reply before the student sees it. If it fails or can't run, the student gets a safe fallback
+   and staff get an alert.
+9. The coach's reply is saved. Students can add to their log but can't edit or delete it (see `firestore.rules`).
+
 ## Changing things later
 - Staff list: the Admin page. Admin emails are also listed in `worker.js`, `fieldguide/app.js` and `firestore.rules`.
-- Models and size limits: the constants at the top of `worker.js`.
+- Models and size limits: the constants at the top of `worker.js`. The coach's limits are under "Student coach limits".
+- The coach's rules, the screener and the fixed crisis replies: `coachSystem`, `SCREEN_SYSTEM`, `OUTPUT_SYSTEM` and `SCRIPTS` in `worker.js`.
 - To switch the AI off: delete the relay address on the Admin page, or delete the Worker.
