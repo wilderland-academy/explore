@@ -1,4 +1,15 @@
 // Mentor Mindset Field Guide: content.
+// Why this training exists and what's expected. Shown at the top of the Field Guide's map; Trail Partner reads it too.
+export const WHY={
+title:"What brought you here won't get us there",
+lede:"High standards, high support, high autonomy. This is required training for every guide, Field Guides and Academic Guides alike. Work through the stops in order, then keep practicing.",
+paras:[
+"We hired very experienced educators, on purpose. Your years with students and families are a big part of why you're here, and we're counting on them.",
+"We are also a very ambitious school. Research on what actually motivates students to achieve and succeed, in school and in every other part of their lives, keeps moving. As new evidence comes out, we intend to apply it in every way we educate our students. We don't rest on our laurels, and we know the successes of our past won't necessarily lead to success in the future.",
+"We teach our students that they need to be adaptable. So do we. The Mentor Mindset is how we adapt to the new science of student motivation."
+],
+expect:"The Mentor Mindset is obligatory training, and it is critical to your success as a Field Guide or an Academic Guide. You signed up to do this job; this is how we train for it. Every guide works through every stop and practices the moves until they come naturally."
+};
 export const CTX=[
 {id:"acad",name:"Academic coaching",E:["Opens with the dashboard gap: “You're behind on Math Academy.”","Points at errors: “Wrong, try again.”","Reads a stall as laziness.","Leads with what they'll lose if the target is missed.","Does most of the talking in the weekly session."],
  P:["Quietly lowers today's target.","Gives the answer to end the struggle.","Praises effort on work that missed the bar.","Avoids mentioning the distance to the goal.","Offers comfort like “math just isn't your thing.”"],
