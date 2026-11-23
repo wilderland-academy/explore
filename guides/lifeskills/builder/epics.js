@@ -39,7 +39,7 @@ export const EPICS = [
     test: "The finished set matches the box, built by the child alone, with their build log showing the days it took.",
     showcase: "A gallery where families hear each builder explain the hardest step and how they fixed a mistake.",
     safety: "Small parts: keep sets in labeled bins away from younger siblings at pickup.",
-    cost: "$$", note: "Sets can be bought used or shared across years. Alpha's published K–1 goals include 100-piece puzzles; this goes further." },
+    cost: "$$", note: "Sets can be bought used or shared across years." },
 
   /* ---------------- 2–4 ---------------- */
   { id: "g24-restaurant", band: "2–4", title: "Pop-Up Restaurant", weeks: "6 weeks",
