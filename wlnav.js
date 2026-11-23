@@ -53,6 +53,8 @@
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
       { id: "roster", label: "Student Roster", href: "/guides/roster/" },
       { id: "parentcomms", label: "Parent Comms", href: "/guides/parents/" },
+      // The Staff Handbook and every other staff policy and form (/guides/policies/, /guides/handbook/).
+      { id: "policies", label: "Policies", href: "/guides/policies/" },
       BASECAMP] },
     parents: { name: "Parents", home: "/parents/", label: "Parents", tabs: [
       { id: "athome", label: "At Home", href: "/parents/athome/" },

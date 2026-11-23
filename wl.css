@@ -30,6 +30,8 @@
 .wlbar .wlbar-sites a[aria-current="page"]{color:#0b2b20;background:#d5f367}
 /* Links that leave Explore (Basecamp): set apart by a thin rule, with an arrow. */
 .wlbar .wlbar-sites a.wlbar-ext{gap:5px;margin-left:8px;position:relative;color:rgba(255,255,255,.72)}
+/* Laptop widths: tighter tabs so the Guides row (six tabs + Basecamp) fits beside search and Trail Partner. */
+@media (max-width:1500px){.wlbar .wlbar-sites a{padding:0 9px}}
 .wlbar .wlbar-sites a.wlbar-ext::before{content:"";position:absolute;left:-6px;top:9px;bottom:9px;border-left:1px solid rgba(255,255,255,.25)}
 .wlbar .wlbar-out{width:11px;height:11px;flex:none;opacity:.85}
 .wlbar .wlbar-badge{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;margin-left:6px;border-radius:999px;background:#e9a23b;color:#1d1300;font-size:11.5px;font-weight:800}
@@ -41,6 +43,8 @@
 .wlbar .wlbar-mentor:hover{background:rgba(213,243,103,.26)}
 .wlbar .wlbar-mentor:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 .wlbar .wlbar-mentor + .wlbar-auth{margin-left:8px}
+/* Laptop widths: Trail Partner shows just 🐲 (its name stays in the tooltip and for screen readers). */
+@media (max-width:1400px){.wlbar .wlbar-mentor{padding:0 8px}.wlbar .wlbar-mentor .wlbar-mentor-t{display:none}}
 .wlbar a:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 /* Search (everyone): the first thing on the right of the bar; what follows it sits 8px after. */
 .wlbar .wlbar-search{margin-left:auto;display:inline-flex;align-items:center;gap:8px;flex:none;min-height:36px;padding:0 8px 0 11px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.06);color:#f6f8ea;font:600 14px/1 "WL Uncut","Uncut Sans",Inter,system-ui,sans-serif;cursor:pointer}

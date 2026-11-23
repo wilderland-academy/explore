@@ -313,3 +313,29 @@ the `PAGES` list at the top of `/search.js`.
   The 🐲 side panel's ⤢ opens it; `/guides/history/` and `/guides/?mentor` now lead here. The front door no longer shows Trail
   Partner; the Guides home has one quiet link.
 - **Previous / Next** links end every section of Mentor Mindset, Behavior, Our Approach and At Home.
+
+## Policies & Resources (`/guides/policies/`), added Nov 23, 2026
+- **One place for everything beyond the handbook.** A new **Policies** tab in the Guides bar (the Staff Handbook page sits under
+  it too) and a card on `/guides/`. The page has the forms (Elective Time Off), the four policies (Role Clarity and Updates, Guide
+  Standards & Expectations, Two-Adult Minimum, Raising Concerns), and links to the Staff Handbook and the Behavior Guide. Staff only.
+- **Read them on the page.** Each policy opens at `/guides/policies/#<id>` with its sections, a search across all four, "Ask about
+  this 🐲" on every section and a link to the original (Google Doc, or for the Guide Standards a PDF admins upload at
+  `staff/guide-standards.pdf`; the existing `storage.rules` already cover it). Section links look like `#two-adult--procedures`.
+- **The text is not in this public repo.** Like the handbook, it lives in Cloudflare KV (namespace `DOCS`) under
+  `policy-role-clarity`, `policy-guide-standards`, `policy-two-adult` and `policy-raising-concerns`, served by the Worker's `doc`
+  mode to school staff only. Until a key is added, that policy's card links to the Google Doc instead.
+- **Trail Partner knows them.** `POLICY_DOCS` in `relay/worker.js` adds the four to its documents, each labelled with its date
+  and whether it's still a draft; it says so when it relies on a draft.
+- **⌘K search** finds the policy pages, the time-off form, and (for school staff) every policy section by its text.
+- **Adding or updating a policy:** edit its KV key in Cloudflare. To add a new one, add it to `DOCS` in
+  `/guides/policies/index.html`, `POLICY_DOCS` in `relay/worker.js` and the list in `/search.js`. When the Board adopts a draft,
+  clear its `status` in `DOCS` and update its label in `POLICY_DOCS`. Forms are the `FORMS` list at the top of the page.
+- **Top bar:** to fit six Guides tabs, tabs are a little tighter at 1500px and narrower, and Trail Partner shows just 🐲 at 1400px
+  and narrower (its name stays in the tooltip).
+- **Deploy:** add the four KV keys; paste `relay/worker.js` into the Worker and Deploy.
+
+## Mentor Mindset is required training (Nov 23, 2026)
+- The Field Guide's map now opens with "What brought you here won't get us there": why experienced guides still train (we apply
+  new research on student motivation; we adapt, as we ask students to), and that the Mentor Mindset is obligatory for every
+  guide, Field and Academic. The text is `WHY` at the top of `fieldguide/data.js`, so Trail Partner reads it too. Don't describe
+  it as optional or "not homework". The Guides home card says "Required training for every guide."
