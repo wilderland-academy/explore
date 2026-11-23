@@ -5,7 +5,7 @@
 //     conflict, academic for pilot students only, lesson), and mode "interest" (a student asks to join the academics pilot).
 //   - Trail Partner (mode "mentor", staff only): answers from the Staff Handbook and Behavior Policy (Cloudflare KV,
 //     binding DOCS, never in the public repo) plus the public Field Guide, Our Approach, At Home and Lab builder files.
-//     Mode "doc" (staff only) returns a document from DOCS for the Staff Handbook page.
+//     Mode "doc" (staff only) returns a document from DOCS for the Staff Handbook and Policies & Resources pages.
 //   - Book matching (mode "booktags", any school account): tags an outside book with the Lantern Stacks' own labels. Everything that keeps students safe lives here, on the server,
 //     where a student can't switch it off: the coach's rules, screening every student message and every coach reply,
 //     removing personal details, fixed crisis replies, the log every guide can read, and alerts to staff.
@@ -524,9 +524,17 @@ const MENTOR_PUBLIC = [
   ["Parent communication rules", "/guides/parents/skill.txt"],
   ["Life Skill Lab builder rules and the Workshop Scorecard", "/guides/lifeskills/builder/rules.txt"]
 ];
+// Staff policies beyond the handbook (Guides › Policies, /guides/policies/). Their text is in DOCS too, never in this repo.
+// Keep the keys in step with DOCS in /guides/policies/index.html. Update a label when a draft is adopted.
+const POLICY_DOCS = [
+  ["policy-role-clarity", "Role Clarity and Updates (September 2026; replaces 'Who Owns What'; in effect)"],
+  ["policy-guide-standards", "Wilderland Guide Standards & Expectations (November 11, 2026; takes effect once the Board adopts it)"],
+  ["policy-two-adult", "Two-Adult Minimum Policy (September 26, 2026; draft for Board adoption)"],
+  ["policy-raising-concerns", "Raising Concerns Policy (September 2026; draft for Board adoption)"]
+];
 async function mentorKnowledge(env) {
   const parts = [];
-  for (const [key, label] of [["handbook", "Wilderland Staff Handbook (2026-27; text read from the PDF, so a few words may be garbled)"], ["behavior-policy", "Wilderland Behavior Policy (revised March 2026)"]]) {
+  for (const [key, label] of [["handbook", "Wilderland Staff Handbook (2026-27; text read from the PDF, so a few words may be garbled)"], ["behavior-policy", "Wilderland Behavior Policy (revised March 2026)"], ...POLICY_DOCS]) {
     const t = env.DOCS ? await env.DOCS.get(key) : null;
     if (t) parts.push(`<document title="${label}">\n${t}\n</document>`);
   }
@@ -540,6 +548,7 @@ const MENTOR_SYSTEM = `You are Trail Partner, an AI thinking partner for the gui
 How you answer
 - Ground every answer in Wilderland's own documents below. Say which document and section you're drawing on (for example "Staff Handbook, 18. First Aid and Incident Reporting" or "Behavior Policy, Tiered Behaviors"). If the documents don't cover it, say so plainly, then give your best general advice and label it as such.
 - When documents disagree, say so and point to the newer one; suggest checking with an admin.
+- Some policies are drafts awaiting Board adoption (their titles say so). When you rely on one, say it's a draft. Guides can read every policy at /guides/policies/ and request elective time off with the form linked there.
 - Be practical and brief: lead with what to do, then why. Use short lists when there are steps. Offer a script or wording when it helps (for example what to say to a student or parent), in Wilderland's voice: warm, direct, high standards with high support, no shaming, blaming or labeling.
 - For anything about safety, abuse or neglect, a mental-health crisis, or law, give the handbook's exact procedure first. Utah law: anyone with reason to believe a child is abused or neglected must report immediately to DCFS (1-855-323-3237) or law enforcement; telling an admin does not replace their own report. If someone may be in danger now, say to call 911.
 - Never invent policies, numbers, deadlines or names. Never make up a student's details; use what the guide tells you. Don't repeat student names back unnecessarily.
@@ -558,10 +567,10 @@ async function mentor(env, who, token, staff, body, out) {
   try { const r = await claude(env, payload); return out(200, r); }
   catch (e) { return out(e.status === 429 ? 429 : 502, { error: e.message }); }
 }
-// A document from DOCS for staff pages (the Staff Handbook page).
+// A document from DOCS for staff pages (the Staff Handbook page, Policies & Resources and search).
 async function docFor(env, who, staff, body, out) {
   if (!staff || !who.email.endsWith(DOMAIN)) return out(403, { error: "Staff only." });
-  const key = ["handbook", "behavior-policy"].includes(body.key) ? body.key : "";
+  const key = ["handbook", "behavior-policy", ...POLICY_DOCS.map(d => d[0])].includes(body.key) ? body.key : "";
   if (!key) return out(400, { error: "bad key" });
   const text = env.DOCS ? await env.DOCS.get(key) : null;
   if (!text) return out(404, { error: "That document hasn't been loaded yet." });
