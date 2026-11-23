@@ -140,6 +140,13 @@ const app = $("#app"); app.innerHTML = "";
 const main = h("div", { class: "view ap-page" });
 [intro(), pillars(), help(), mornings(), skills(), evidence(), words(), refresher()].forEach(x => main.appendChild(x));
 app.appendChild(main);
+// Previous / next at the end of each section (this page scrolls; the links jump within it).
+SECTIONS.forEach(([id], i) => {
+  const el = document.getElementById(id); if (!el) return;
+  const p = SECTIONS[i - 1], n = SECTIONS[i + 1];
+  const a = (s, dir) => h("a", { class: "pg " + dir, href: "#" + s[0] }, [h("small", { text: dir === "prev" ? "← Previous" : "Next →" }), h("b", { text: s[1] })]);
+  el.appendChild(h("nav", { class: "pager noprint", "aria-label": "More sections" }, [p ? a(p, "prev") : h("span"), n ? a(n, "next") : h("a", { class: "pg next", href: "/parents/athome/" }, [h("small", { text: "Next →" }), h("b", { text: "Wilderland at Home" })])]));
+});
 
 // scroll spy: highlight the section nearest the top of the screen
 const links = [...nav.querySelectorAll("a")];

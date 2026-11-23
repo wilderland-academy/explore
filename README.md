@@ -300,3 +300,16 @@ the `PAGES` list at the top of `/search.js`.
 - **Parents sign in with any Google account.** The Parents pages, the front door and the pages outside guests may open no
   longer ask Google for a school account; Parents › Life Skills leads with "Continue with Google" for families and keeps
   school sign-in for staff below it. Student pages still point Google at school accounts.
+
+## Phone menu, account menu, Trail Partner page, section links (Nov 23, 2026)
+- **Phones (760px and narrower):** the top bar's sections move into a ☰ menu (with "Switch to" and Basecamp). A page's own row
+  of sections (the Life Skills menu; Mentor Mindset, Behavior, Our Approach and At Home sections) becomes one "Section ▾"
+  button that opens the list. Nothing scrolls sideways. All in `/wlnav.js` and `/wl.css`; wide screens are unchanged.
+- **Test view** is inside the account menu now (the sign-in chip, or the Life Skills tracker's menu); `window.WLTest.html()`
+  gives the choices. Only pages with no account menu (Parents pages, the front door) still show the 🧪 button.
+  Also fixed: the sign-in chip's menu closed the moment it opened.
+- **Trail Partner page, `/guides/partner/`:** every conversation with the staff AI tools on the left (search, filter, grouped
+  by day), the conversation on the right. Trail Partner conversations continue right there; the others open in their own tool.
+  The 🐲 side panel's ⤢ opens it; `/guides/history/` and `/guides/?mentor` now lead here. The front door no longer shows Trail
+  Partner; the Guides home has one quiet link.
+- **Previous / Next** links end every section of Mentor Mindset, Behavior, Our Approach and At Home.

@@ -3,7 +3,7 @@
 import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import * as D from "./data.js";
 import { coachLog, autosaver } from "/guides/log.js";
-// Coach's tent conversations and scored practice reps are saved to each guide's private history (/guides/history/).
+// Coach's tent conversations and scored practice reps are saved to each guide's private history (/guides/partner/).
 const saveLog = autosaver(() => user && db ? coachLog(db, user) : null, () => console.warn("Couldn't save to history"));
 
 const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];
@@ -60,8 +60,17 @@ function route() {
   if (live.on) { if (location.hash !== "#sessions") history.replaceState(null, "", "#sessions"); return; }
   let v = location.hash.slice(1); if (!VIEWS[v] || (v === "admin" && !isAdmin)) v = "map";
   document.querySelectorAll("#nav a").forEach(a => { if (a.getAttribute("href") === "#" + v) { a.setAttribute("aria-current", "page"); a.scrollIntoView && a.scrollIntoView({ block: "nearest", inline: "center" }); } else a.removeAttribute("aria-current"); });
-  const sec = h("section", { class: "view" }); app.innerHTML = ""; app.appendChild(sec); VIEWS[v](sec); window.scrollTo(0, 0);
+  const sec = h("section", { class: "view" }); app.innerHTML = ""; app.appendChild(sec); VIEWS[v](sec); pager(sec, STOPS.map(s => [s[0], s[1]]), v); window.scrollTo(0, 0);
 }
+// Previous / next section, at the bottom of every section.
+function pager(sec, list, id) {
+  const i = list.findIndex(s => s[0] === id); if (i < 0) return;
+  const p = list[i - 1], n = list[i + 1];
+  if (!p && !n) return;
+  const a = (s, dir) => h("a", { class: "pg " + dir, href: "#" + s[0] }, [h("small", { text: dir === "prev" ? "← Previous" : "Next →" }), h("b", { text: s[1] })]);
+  sec.appendChild(h("nav", { class: "pager noprint", "aria-label": "More sections" }, [p ? a(p, "prev") : h("span"), n ? a(n, "next") : h("span")]));
+}
+
 addEventListener("hashchange", route);
 const head = (sec, title, lede) => { sec.appendChild(h("h1", { html: title })); if (lede) sec.appendChild(h("p", { class: "lede", text: lede })); };
 const card = (cls, kids) => h("div", { class: "card " + (cls || "") }, kids);
@@ -220,7 +229,7 @@ VIEWS.coach = sec => {
   let convo = [], busy = false, convoId = null; const age = h("select", { id: "cAge" }, ["Grades 5 to 8", "Grades 2 to 4", "K to 1"].map(t => h("option", { text: t, selected: t === myAge() ? "" : false }))), ctx = h("select", { id: "cCtx" }, ["Academic coaching or app block", "Behavior problem solving", "Project mentoring", "Life Skills Lab", "Other"].map(t => h("option", { text: t }))), what = h("textarea", { id: "cWhat", placeholder: "Example: J. has done almost no Math Academy for two weeks. When I check in he says he doesn't care and puts his head down." }), tried = h("input", { type: "text", id: "cTried" }), note = h("span", { class: "small" }), thread = h("div", { class: "thread" }), more = h("input", { type: "text", id: "cMore", placeholder: "He said “whatever.” What now?" }), follow = card("", []); follow.hidden = true;
   const ask = async (text, shown) => { if (busy) return; busy = true; thread.appendChild(h("div", { class: "msg u", text: shown })); convo.push({ role: "user", content: text }); const out = h("div", { class: "msg a", text: "Thinking…" }); thread.appendChild(out); try { const t = await ai(convo, { system: D.COACH, max: 900 }); out.textContent = t; convo.push({ role: "assistant", content: t }); follow.hidden = false; if (!convoId) convoId = coachLog(db, user).newId(); saveLog({ id: convoId, site: "mentor", kind: "coach", messages: convo, meta: { age: age.value, setting: ctx.value } }); } catch (e) { convo.pop(); out.textContent = aiErr(e); } busy = false; };
   follow.append(h("label", { for: "cMore" }, ["Follow up", more]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Send", onclick: () => { const t = more.value.trim(); if (t) { more.value = ""; ask(t, t); } } }), h("button", { class: "btn ghost", text: "Start a new situation", onclick: () => { convo = []; convoId = null; thread.innerHTML = ""; follow.hidden = true; what.value = tried.value = ""; } })]));
-  sec.append(card("", [h("div", { class: "grid g2" }, [h("label", { for: "cAge" }, ["Age band", age]), h("label", { for: "cCtx" }, ["Setting", ctx])]), h("label", { for: "cWhat" }, ["What's happening?", what]), h("label", { for: "cTried" }, ["What have you tried, and how did it land? (optional)", tried]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Get suggestions", onclick: () => { if (what.value.trim().length < 20) { note.textContent = "Add a little more about what's happening."; return; } note.textContent = ""; const d = "Age band: " + age.value + "\nSetting: " + ctx.value + "\nWhat's happening: " + what.value.trim() + (tried.value.trim() ? "\nWhat I've tried: " + tried.value.trim() : ""); convo = []; convoId = null; thread.innerHTML = ""; ask(d, d); } }), note, h("a", { class: "btn ghost", href: "/guides/history/#mentor", text: "Past conversations" })])]), thread, follow);
+  sec.append(card("", [h("div", { class: "grid g2" }, [h("label", { for: "cAge" }, ["Age band", age]), h("label", { for: "cCtx" }, ["Setting", ctx])]), h("label", { for: "cWhat" }, ["What's happening?", what]), h("label", { for: "cTried" }, ["What have you tried, and how did it land? (optional)", tried]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Get suggestions", onclick: () => { if (what.value.trim().length < 20) { note.textContent = "Add a little more about what's happening."; return; } note.textContent = ""; const d = "Age band: " + age.value + "\nSetting: " + ctx.value + "\nWhat's happening: " + what.value.trim() + (tried.value.trim() ? "\nWhat I've tried: " + tried.value.trim() : ""); convo = []; convoId = null; thread.innerHTML = ""; ask(d, d); } }), note, h("a", { class: "btn ghost", href: "/guides/partner/#mentor", text: "Past conversations" })])]), thread, follow);
 };
 
 /* ---------------- session room ---------------- */

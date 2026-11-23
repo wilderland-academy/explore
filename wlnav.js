@@ -105,14 +105,16 @@
       '<button type="button" class="wlbar-search" data-wl-search aria-label="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')" title="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="wlbar-search-t">Search</span><kbd>' + (MAC ? "⌘K" : "Ctrl K") + "</kbd></button>" +
       // Trail Partner (🐲) is one click away on every staff page.
       (key === "guides" ? '<button type="button" class="wlbar-mentor" data-wl-mentor aria-label="Open Trail Partner" title="Trail Partner: ask anything about your work"><span aria-hidden="true">🐲</span><span class="wlbar-mentor-t">Trail Partner</span></button>' : "") +
-      (tester ? '<div class="wlbar-test"><button type="button" class="wlbar-testbtn' + (view ? " on" : "") + '" aria-haspopup="true" aria-expanded="false" title="See the site as a test guide, student or parent"><span aria-hidden="true">🧪</span><span class="wlbar-test-t">' + (view ? "Test " + view.as : "Test view") + "</span></button>" + testMenu() + "</div>" : "") +
-      (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-auth" data-wl-auth></span>') + "</div>" + banner();
+      // Test view lives in the account menu. Only pages with no account menu (the Parents pages, the front door) show
+      // it on its own.
+      (tester && !hasPill() ? '<div class="wlbar-test"><button type="button" class="wlbar-testbtn' + (view ? " on" : "") + '" aria-haspopup="true" aria-expanded="false" title="See the site as a test guide, student or parent"><span aria-hidden="true">🧪</span><span class="wlbar-test-t">' + (view ? "Test " + view.as : "Test view") + "</span></button>" + '<div class="wlbar-menu wlbar-testmenu" hidden>' + testMenu() + "</div></div>" : "") +
+      (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-auth" data-wl-auth></span>') +
+      // Phones: the site's sections are in this menu instead of a row that scrolls sideways.
+      (tabs ? '<button type="button" class="wlbar-burger" aria-haspopup="true" aria-expanded="false" aria-controls="wlbar-drawer" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>' : "") +
+      "</div>" + (tabs ? '<nav class="wlbar-drawer" id="wlbar-drawer" aria-label="' + esc(site.name) + ' menu" hidden>' + drawer(opts) + "</nav>" : "") + banner();
     // Keep the sign-in chip if it was already mounted.
     var slot = bar.querySelector(".wlbar-auth");
     if (auth && slot) slot.parentNode.replaceChild(auth, slot);
-    // On narrow screens the tabs scroll sideways; bring the current one into view.
-    var nav = bar.querySelector(".wlbar-sites"), here = nav && nav.querySelector('[aria-current="page"]');
-    if (nav && here) nav.scrollLeft = here.offsetLeft - nav.clientWidth / 2 + here.offsetWidth / 2;
   }
   // ---------- Test view (testers only) ----------
   // A tester can see the site as the test guide, test student or test parent. It's remembered on this device until they
@@ -120,13 +122,26 @@
   var P = window.WLPeople, tester = false, view = null;
   var AS = { guide: ["Test guide", "/guides/"], student: ["Test student", "/students/"], parent: ["Test parent", "/parents/"] };
   function testerOf(r) { return r && P.TESTERS.indexOf(String(r.real || r.email || "").toLowerCase()) >= 0; }
+  // The test choices, for the account menu (/auth.js and the Life Skills tracker put this in theirs) or the standalone
+  // button. Clicks are handled for the whole page below, wherever the menu is.
   function testMenu() {
     var band = (view && view.band) || "2–4";
-    return '<div class="wlbar-menu wlbar-testmenu" hidden><p>See the site as</p>' +
+    return '<div class="wl-testsec"><p>🧪 See the site as</p>' +
       '<a href="#" data-wl-as=""' + (!view ? ' aria-current="true"' : "") + ">Myself</a>" +
       ["guide", "student", "parent"].map(function (k) { return '<a href="#" data-wl-as="' + k + '"' + (view && view.as === k ? ' aria-current="true"' : "") + ">" + AS[k][0] + "</a>"; }).join("") +
       '<p>Test accounts\' band</p><div class="wlbar-testbands">' + P.BANDS.map(function (b) { return '<button type="button" data-wl-asband="' + b + '" aria-pressed="' + (b === band) + '">' + b + "</button>"; }).join("") + "</div>" +
       '<p class="wlbar-testnote">The test guide, student and parent are linked to each other. Only testers can see them.</p></div>';
+  }
+  window.WLTest = { on: function () { return tester; }, html: testMenu };
+  // Pages with their own account menu: the sign-in chip (/auth.js), or the Life Skills tracker's (#acct).
+  function hasPill() { return bar.getAttribute("data-auth") !== "off" || !!document.getElementById("acct") || /\/lifeskills\/$/.test(location.pathname); }
+  // The phone menu: this site's sections, then the other sites this person may open, then Basecamp.
+  function drawer(opts) {
+    return '<div class="wlbar-drawer-in">' + site.tabs.filter(function (t) { return !t.out; }).map(function (t) {
+      return '<a href="' + t.href + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? " data-wl-alerts" : "") + ">" + esc(t.label) + "</a>";
+    }).join("") +
+      (opts ? '<p>Switch to</p><div class="wlbar-drawer-sites">' + opts.filter(function (k) { return k !== key; }).map(function (k) { return '<a href="' + SITES[k].home + '">' + esc(SITES[k].label) + "</a>"; }).join("") + "</div>" : "") +
+      '<a class="wlbar-ext" href="' + BASECAMP.href + '" target="_blank" rel="noopener">' + BASECAMP.label + ARROW + "</a></div>";
   }
   function banner() {
     if (!view) return "";
@@ -151,19 +166,60 @@
   bar.addEventListener("click", function (e) {
     var t = e.target.closest(".wlbar-testbtn");
     if (t) { var m = t.nextElementSibling, o = m.hidden; m.hidden = !o; t.setAttribute("aria-expanded", String(o)); return; }
-    var a = e.target.closest("[data-wl-as]");
-    if (a) { e.preventDefault(); var cur = bar.querySelector("[data-wl-asband][aria-pressed=true]"); switchTo(a.getAttribute("data-wl-as"), cur ? cur.getAttribute("data-wl-asband") : (view && view.band)); return; }
-    var b = e.target.closest("[data-wl-asband]");
+    var g = e.target.closest(".wlbar-burger");
+    if (g) { var d = bar.querySelector(".wlbar-drawer"), op = d.hidden; d.hidden = !op; g.setAttribute("aria-expanded", String(op)); return; }
+  });
+  // Test choices, wherever they are on the page (account menu, standalone button, the banner).
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("[data-wl-as]");
+    if (a) { e.preventDefault(); var box = a.closest(".wl-testsec") || document, cur = box.querySelector("[data-wl-asband][aria-pressed=true]"); switchTo(a.getAttribute("data-wl-as"), cur ? cur.getAttribute("data-wl-asband") : (view && view.band)); return; }
+    var b = e.target.closest && e.target.closest("[data-wl-asband]");
     if (b) {
-      bar.querySelectorAll("[data-wl-asband]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      e.preventDefault(); e.stopPropagation();
+      (b.closest(".wl-testsec") || document).querySelectorAll("[data-wl-asband]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
       // Already in a test view: switching the band reloads that view in the new band.
       if (view) switchTo(view.as, b.getAttribute("data-wl-asband"));
     }
-  });
+  }, true);
   document.addEventListener("click", function (e) {
     var w = bar.querySelector(".wlbar-test");
     if (w && !w.contains(e.target)) { w.querySelector(".wlbar-menu").hidden = true; w.querySelector("button").setAttribute("aria-expanded", "false"); }
+    var d = bar.querySelector(".wlbar-drawer");
+    if (d && !d.hidden && !d.contains(e.target) && !e.target.closest(".wlbar-burger")) { d.hidden = true; bar.querySelector(".wlbar-burger").setAttribute("aria-expanded", "false"); }
   });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    var d = bar.querySelector(".wlbar-drawer"); if (!d || d.hidden) return;
+    d.hidden = true; var g = bar.querySelector(".wlbar-burger"); g.setAttribute("aria-expanded", "false"); g.focus();
+  });
+
+  // ---------- Section menus inside pages, on phones ----------
+  // A page's own row of sections (the Life Skills menu, Mentor Mindset and Behavior stops, Our Approach and At Home
+  // sections) becomes one "Section ▾" button on phones that opens the list. Wide screens are unchanged.
+  var NAVS = ".trail nav, .nav-links, [data-ls-subnav]";
+  function collapse(nav) {
+    if (nav.dataset.wlCollapse) return; nav.dataset.wlCollapse = "1";
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "wl-secbtn"; btn.setAttribute("aria-expanded", "false");
+    nav.parentNode.insertBefore(btn, nav);
+    nav.classList.add("wl-collapsible");
+    var label = function () {
+      var c = nav.querySelector('[aria-current="page"],[aria-current="location"],[aria-current="true"]');
+      var t = (c ? c.textContent : (nav.getAttribute("aria-label") || "Sections")).trim();
+      btn.innerHTML = '<span class="wl-secbtn-k">' + esc(nav.getAttribute("aria-label") || "Sections") + '</span><span class="wl-secbtn-t">' + esc(t) + "</span>" + CARET;
+      btn.hidden = !nav.querySelector("a,button");
+    };
+    var set = function (open) { nav.classList.toggle("open", open); btn.setAttribute("aria-expanded", String(open)); };
+    btn.addEventListener("click", function () { set(!nav.classList.contains("open")); });
+    nav.addEventListener("click", function (e) { if (e.target.closest("a")) set(false); });
+    new MutationObserver(label).observe(nav, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-current"] });
+    label();
+  }
+  function collapseAll() { document.querySelectorAll(NAVS).forEach(collapse); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", collapseAll); else collapseAll();
+  // Pages that draw their section menu later.
+  var pend = false;
+  new MutationObserver(function () { if (pend) return; pend = true; requestAnimationFrame(function () { pend = false; collapseAll(); }); }).observe(document.documentElement, { childList: true, subtree: true });
 
   // Search: ⌘K / Ctrl+K anywhere, "/" when not typing, or the button.
   window.wlOpenSearch = function () { return import("/search.js").then(function (m) { m.open(); }); };

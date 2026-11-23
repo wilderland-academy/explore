@@ -144,6 +144,15 @@ table{border-collapse:collapse;width:100%;font-size:14.5px}th,td{text-align:left
 details summary{cursor:pointer;font-weight:700}
 @media (max-width:520px){.bar{grid-template-columns:104px 1fr 44px}.anat div{grid-template-columns:1fr}.map a text{font-size:19px}}
 @media (prefers-reduced-motion:reduce){.recbtn.on{animation:none}.map a circle{transition:none}}
+/* Previous / next section */
+:root{--pgbg:rgba(255,255,255,.04)}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+.pager .pg{display:flex;flex-direction:column;gap:3px;padding:14px 16px;border-radius:14px;border:1px solid var(--line);text-decoration:none;color:inherit;background:var(--pgbg,transparent)}
+.pager .pg:hover{border-color:currentColor}
+.pager .pg.next{text-align:right;grid-column:2}
+.pager .pg small{font:600 12px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.pager .pg b{font-size:17px;line-height:1.25}
+@media (max-width:560px){.pager{grid-template-columns:1fr}.pager .pg.next{grid-column:1;grid-row:1}.pager>span{display:none}}
 </style>
 </head>
 <body>

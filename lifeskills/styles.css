@@ -275,3 +275,5 @@ div.f span.hint{font-weight:400;color:var(--fg-muted)}
 .panel .vgrid ~ * .chip{background:var(--white)}
 /* Parent preview (staff on the Parents site) */
 .pvbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 16px;border-radius:12px;background:var(--sun-tint);font-size:15px;line-height:22px}
+.acct-menu .wl-testsec .wlbar-testbands button{display:block;flex:1;width:auto;text-align:center;padding:8px 0}
+.acct-menu .wl-testsec a{display:flex;width:auto}

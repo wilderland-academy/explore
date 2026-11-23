@@ -88,8 +88,20 @@ function route() {
   if (!startedFor) return;
   let [v, sub] = location.hash.slice(1).split("/"); if (!VIEWS[v] || (v === "admin" && !isAdmin)) { v = "map"; sub = ""; }
   document.querySelectorAll("#nav a").forEach(a => { if (a.getAttribute("href") === "#" + v) { a.setAttribute("aria-current", "page");  } else a.removeAttribute("aria-current"); });
-  const sec = h("section", { class: "view" }); app.innerHTML = ""; app.appendChild(sec); VIEWS[v](sec, decodeURIComponent(sub || "")); window.scrollTo(0, 0);
+  const sec = h("section", { class: "view" }); app.innerHTML = ""; app.appendChild(sec); VIEWS[v](sec, decodeURIComponent(sub || ""));
+  // One topic inside a section (a standard, a knot) keeps its own "back" link; the section pages get previous / next.
+  if (!sub) pager(sec, STOPS.map(s => [s[0], s[1]]), v);
+  window.scrollTo(0, 0);
 }
+// Previous / next section, at the bottom of every section.
+function pager(sec, list, id) {
+  const i = list.findIndex(s => s[0] === id); if (i < 0) return;
+  const p = list[i - 1], n = list[i + 1];
+  if (!p && !n) return;
+  const a = (s, dir) => h("a", { class: "pg " + dir, href: "#" + s[0] }, [h("small", { text: dir === "prev" ? "← Previous" : "Next →" }), h("b", { text: s[1] })]);
+  sec.appendChild(h("nav", { class: "pager noprint", "aria-label": "More sections" }, [p ? a(p, "prev") : h("span"), n ? a(n, "next") : h("span")]));
+}
+
 addEventListener("hashchange", route);
 const head = (sec, title, lede) => { sec.appendChild(h("h1", { html: title })); if (lede) sec.appendChild(h("p", { class: "lede", text: lede })); };
 const back = (sec, href, label) => sec.appendChild(h("a", { class: "chip noprint", href, text: "← " + label }));
@@ -340,7 +352,7 @@ function quizView(sec, m) {
 }
 
 /* ---------------- coach ---------------- */
-// Each coach conversation is saved to the guide's private history (/guides/log.js, viewable at /guides/history/).
+// Each coach conversation is saved to the guide's private history (/guides/log.js, viewable at /guides/partner/).
 let thread = [], threadId = null, threadBand = "";
 const saveLog = autosaver(() => user && db ? coachLog(db, user) : null, () => toast("Couldn't save this conversation to your history."));
 VIEWS.coach = sec => {
@@ -353,7 +365,7 @@ VIEWS.coach = sec => {
   const draw = () => { out.innerHTML = ""; thread.forEach(m => out.appendChild(h("div", { class: "msg " + (m.role === "user" ? "u" : "a"), text: m.content }))); };
   const send = async () => { const t = ta.value.trim(); if (t.length < 15) { status.textContent = "Add a little more detail."; return; } thread.push({ role: "user", content: (thread.length ? "" : "[" + band.value + "] ") + t }); ta.value = ""; draw(); status.textContent = "Thinking…"; btn.disabled = true; try { const r = await ai(thread, { system: D.COACH, max: 1100 }); thread.push({ role: "assistant", content: r }); status.textContent = ""; if (!threadId) { threadId = coachLog(db, user).newId(); threadBand = band.value; } saveLog({ id: threadId, site: "behavior", kind: "coach", messages: thread, meta: { band: threadBand } }); } catch (e) { thread.pop(); ta.value = t; status.textContent = aiErr(e); } btn.disabled = false; draw(); };
   const btn = h("button", { class: "btn", text: "Ask", onclick: send });
-  sec.appendChild(card("", [h("label", { for: "cBand" }, ["Band", band]), h("label", { for: "cTa" }, ["The situation", ta]), h("div", { class: "row" }, [btn, h("button", { class: "btn ghost", text: "Start over", onclick: () => { thread = []; threadId = null; draw(); status.textContent = ""; } }), h("a", { class: "chip", href: "/guides/history/#behavior", text: "Past conversations" })]), status, out]));
+  sec.appendChild(card("", [h("label", { for: "cBand" }, ["Band", band]), h("label", { for: "cTa" }, ["The situation", ta]), h("div", { class: "row" }, [btn, h("button", { class: "btn ghost", text: "Start over", onclick: () => { thread = []; threadId = null; draw(); status.textContent = ""; } }), h("a", { class: "chip", href: "/guides/partner/#behavior", text: "Past conversations" })]), status, out]));
   draw();
   sec.appendChild(card("", [h("p", { class: "small", text: "The coach drafts; you decide. It can be wrong about policy details, so check the Tier ladder before you act on anything it says the standard requires. Each conversation is saved to your private history, which only you can see. Delete it there anytime." })]));
 };
