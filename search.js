@@ -31,7 +31,7 @@ const PAGES = [
   ["Store", "/store/", "s", "shop buy"],
   ["Ideas and Town Hall", "/suggest/", "s", "suggestion box vote town hall"],
   ["Guides home", "/guides/", "g", "staff"],
-  ["Mentor Mindset Field Guide", "/fieldguide/", "g", "mentor mindset coaching"],
+  ["Mentor Mindset Field Guide", "/fieldguide/", "g", "mentor mindset coaching required training"],
   ["Field Guide: coach's tent", "/fieldguide/#coach", "g", "ask coach situation"],
   ["Field Guide: coaching sessions", "/fieldguide/#sessions", "g", "session room students"],
   ["Field Guide: phrasebook", "/fieldguide/#phrases", "g", "phrases what to say"],

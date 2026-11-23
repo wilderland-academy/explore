@@ -333,3 +333,9 @@ the `PAGES` list at the top of `/search.js`.
 - **Top bar:** to fit six Guides tabs, tabs are a little tighter at 1500px and narrower, and Trail Partner shows just 🐲 at 1400px
   and narrower (its name stays in the tooltip).
 - **Deploy:** add the four KV keys; paste `relay/worker.js` into the Worker and Deploy.
+
+## Mentor Mindset is required training (Nov 23, 2026)
+- The Field Guide's map now opens with "What brought you here won't get us there": why experienced guides still train (we apply
+  new research on student motivation; we adapt, as we ask students to), and that the Mentor Mindset is obligatory for every
+  guide, Field and Academic. The text is `WHY` at the top of `fieldguide/data.js`, so Trail Partner reads it too. Don't describe
+  it as optional or "not homework". The Guides home card says "Required training for every guide."
