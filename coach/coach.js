@@ -10,6 +10,8 @@
 //   Replies can name challenges as [EN-03.2] and project kinds as [[paint]]; they become links (challenges open in a
 //   modal beside the coach; [[id]] uses window.WLCoachLinks(id) -> { href, text } if the page provides it).
 //   WLCoach.open({ chatId })            reopen a past conversation
+//   WLCoach.home({ dock })              the /coach/ page: Mr. Fox stays open in `dock` (half the page), starting on a
+//     home screen that offers what it helps with. Closing a conversation there goes back to that screen.
 //   opts.first: a message to send as soon as the chat opens (from a starter button on the page)
 // Needs /auth.js on the page (window.wlFirebase). Only school accounts can use it; K–1 students can't (guide-led).
 const FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
@@ -78,6 +80,11 @@ dialog.wlc-beside[open]{position:fixed;inset:16px calc(var(--wlc-w) + 16px) 16px
 .wlc-send:disabled{opacity:.5;cursor:default}
 .wlc-hint{margin:6px 2px 0;font-size:12.5px;color:#5c6b62}
 .wlc-hint a{color:#015640}
+.wlc-home{display:flex;flex-direction:column;gap:8px;padding:4px 14px 12px}
+.wlc-home a,.wlc-home button{all:unset;box-sizing:border-box;cursor:pointer;display:block;background:#fff;border:1.5px solid #d6dfcb;border-radius:14px;padding:11px 14px;color:#14231c;font:600 15px/1.3 Inter,"Uncut Sans",system-ui,sans-serif}
+.wlc-home a:hover,.wlc-home button:hover{border-color:#015640}
+.wlc-home a:focus-visible,.wlc-home button:focus-visible{outline:2px solid #015640;outline-offset:2px}
+.wlc-home small{display:block;font-weight:400;color:#5c6b62;font-size:13.5px;margin-top:2px}
 .wlc-btn{border:0;border-radius:12px;background:#d5f367;color:#0b2b20;font:700 15px inherit;padding:11px 16px;cursor:pointer;align-self:flex-start}
 .wlc-btn.ghost{background:#eef1ea}
 @media (prefers-reduced-motion:reduce){.wlc,html.wlc-docked body{transition:none}.wlc-typing i{animation:none}}
@@ -94,7 +101,7 @@ const STARTERS = {
   lesson: ["What is an AI coach?", "Let's start the lesson"]
 };
 
-let el = null, st = null, relay = "";
+let el = null, st = null, relay = "", pinned = false;
 
 function user() { return window.wlFirebase && window.wlFirebase.auth.currentUser; }
 async function token() { const u = user(); if (!u) throw new Error("signed out"); return u.getIdToken(); }
@@ -137,7 +144,11 @@ function mount() {
   el.input.addEventListener("input", () => { el.input.style.height = "auto"; el.input.style.height = Math.min(140, el.input.scrollHeight) + "px"; });
   el.input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); el.form.requestSubmit(); } });
   el.form.addEventListener("submit", e => { e.preventDefault(); sendMsg(el.input.value); });
-  el.chips.addEventListener("click", e => { const b = e.target.closest("[data-say]"); if (b) sendMsg(b.getAttribute("data-say")); });
+  el.chips.addEventListener("click", e => {
+    const hm = e.target.closest("[data-home]");
+    if (hm) { const k = hm.getAttribute("data-home"); open({ kind: k, topicId: k, topicTitle: TOPIC_NAMES[k] }); return; }
+    const b = e.target.closest("[data-say]"); if (b) sendMsg(b.getAttribute("data-say"));
+  });
   el.log.addEventListener("click", e => {
     const b = e.target.closest("[data-intro-ok]");
     if (b) { try { localStorage.setItem(INTRO_KEY, INTRO_VERSION); } catch (x) { } b.closest(".wlc-intro").remove(); greet(); }
@@ -219,7 +230,7 @@ function busy(on) {
 }
 
 // Why ask the coach instead of (or before) a guide. Shown in the first-time intro and on /coach/.
-const WHY = `<div class="why"><b>Why ask Mr. Fox, an AI coach,?</b>
+const WHY = `<div class="why"><b>Why ask Mr. Fox, an AI coach?</b>
   <ul><li><b>It's always there.</b>Your guides help a whole crew. The coach can help you right now, even when every guide is busy, or at home.</li>
   <li><b>It knows a little about almost everything.</b>Knots, budgets, birds, speeches, fractions: you can ask about any challenge, Lab or project.</li>
   <li><b>Your guide is still the one who passes you.</b>Show your guide when you're ready, and ask them about anything big, risky or personal.</li></ul></div>`;
@@ -243,6 +254,7 @@ function intro() {
 }
 function greet() {
   const k = st.kind;
+  if (k === "home") return homeChoices();
   const hello = k === "lesson" ? "Hi! I'm Mr. Fox. Want a 3-minute lesson on how to get the most out of me? Tap a button below or type a question."
     : k === "project" ? "Hi! Let's work on your project. Tap a button below to start, or tell me what you're thinking."
     : k === "academic" ? "Hi! Tell me the subject and what you're stuck on. I'll help you figure it out with hints and questions. I won't give you the answer, and your guides look at every academics chat."
@@ -296,7 +308,7 @@ async function open(opts) {
   if (role && role.role === "parent") { alert("Mr. Fox is for students, signed in with their school account."); return; }
   const wasOpen = !el.box.hidden;
   st = { kind: KINDS.includes(opts.kind) ? opts.kind : "challenge", chatId: opts.chatId || "", topicId: opts.topicId || "", topicTitle: opts.topicTitle || "", context: opts.context || "", starters: opts.starters || null, first: opts.first || "", busy: false, retry: "", lastFocus: wasOpen && st ? st.lastFocus : document.activeElement };
-  el.log.innerHTML = ""; chips([]);
+  el.log.innerHTML = ""; chips([]); typing(true); xState();
   el.box.hidden = false;
   document.documentElement.classList.add("wlc-docked");
   sheetsBeside();
@@ -320,6 +332,42 @@ async function open(opts) {
   }
   setTimeout(() => { if (!el.log.querySelector("[data-intro-ok]")) el.input.focus(); }, 80);
 }
+// ---- The /coach/ page: Mr. Fox open beside the instructions, starting on a home screen ----
+// On /coach/ the × goes back to the home screen (and isn't needed on it).
+function xState() {
+  const x = el.box.querySelector(".wlc-x"); if (!pinned) return;
+  x.hidden = st.kind === "home"; x.setAttribute("aria-label", "Back to the start"); x.title = "Back to the start";
+}
+function typing(on) {
+  el.input.disabled = !on; el.send.disabled = !on;
+  el.input.placeholder = on ? "Ask your coach…" : "Pick a topic to start";
+}
+function homeChoices() {
+  bubble("coach", "Hi! I'm Mr. Fox. What do you want to work on today?");
+  el.chips.innerHTML = `<div class="wlc-home">
+    <button type="button" data-home="lesson">Learn how to use me<small>A 3-minute chat about what AI is, what it gets wrong, and how to ask good questions.</small></button>
+    <a href="/challenges/?coach=find">Find a challenge<small>Tell me what you're into and I'll suggest challenges that fit.</small></a>
+    <a href="/projects/?coach=find">Find a project idea<small>Tell me what you love or wish existed.</small></a>
+    <button type="button" data-home="conflict">Work out a conflict<small>Calm down, see their side, and plan what to say.</small></button></div>`;
+  typing(false);
+}
+function home(opts) {
+  mount();
+  if (opts && opts.dock && el.box.parentNode !== opts.dock) opts.dock.appendChild(el.box);
+  pinned = true;
+  el.box.classList.add("pinned");
+  st = { kind: "home", chatId: "", topicId: "", topicTitle: "", context: "", starters: null, first: "", busy: false, retry: "", lastFocus: null };
+  el.log.innerHTML = ""; el.chips.innerHTML = "";
+  el.topic.textContent = "Your AI coach"; xState();
+  el.box.hidden = false; el.box.classList.add("on");
+  document.documentElement.classList.add("wlc-docked");
+  const role = window.wlRole;
+  if (!user()) { note("Sign in with your school account to talk with Mr. Fox."); el.chips.innerHTML = '<div class="wlc-home"><button type="button" data-wl-signin>Sign in</button></div>'; typing(false); return; }
+  if (role && role.role === "parent") { note("Mr. Fox is for students, signed in with their school account."); typing(false); return; }
+  if (role && role.role === "student" && role.band === "K–1") { note("Mr. Fox is for grades 2 to 8. Your guide will help you with challenges."); typing(false); return; }
+  let seen = false; try { seen = localStorage.getItem(INTRO_KEY) === INTRO_VERSION; } catch (e) { }
+  if (seen) greet(); else { intro(); typing(false); }
+}
 // The topic under the coach's name. A challenge's title is a link that opens the challenge beside the coach.
 function topicLine() {
   const title = st.topicTitle || TOPIC_NAMES[st.kind] || "";
@@ -332,6 +380,8 @@ function topicLine() {
 }
 function close() {
   if (!el || el.box.hidden) return;
+  // On /coach/ Mr. Fox stays open: closing a conversation goes back to the home screen.
+  if (pinned) { const id = st && st.chatId; if (st && st.kind === "home") return; home(); document.dispatchEvent(new CustomEvent("wl-coach-closed", { detail: { chatId: id } })); return; }
   el.box.classList.remove("on", "big");
   document.documentElement.classList.remove("wlc-docked");
   sheetsBack();
@@ -351,5 +401,5 @@ async function call(body) {
   const r = await fetch(await relayUrl(), { method: "POST", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify(asTest(body)) });
   return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
 }
-window.WLCoach = { open, close, canUse, docked, WHY, call, FOX };
+window.WLCoach = { open, close, home, kind: () => st && st.kind, canUse, docked, WHY, call, FOX };
 document.dispatchEvent(new CustomEvent("wl-coach-ready"));

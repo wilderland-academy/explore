@@ -294,7 +294,10 @@ function acct() {
   const box = $("#acct"); box.innerHTML = "";
   if (!S.user) return;
   const roleName = S.test ? "Test " + S.test : { staff: S.admin ? "Admin" : "Guide", student: "Student", parent: "Parent", unverified: "Not verified yet" }[S.role] || "";
-  const b = h("button", { type: "button", "aria-expanded": String(menuOpen), text: S.test ? "🧪 Test " + S.test : firstName(S.user.displayName) || S.email.split("@")[0], onclick: () => { menuOpen = !menuOpen; acct(); } });
+  // Looks like the sign-in chip on other pages (initial, then name); on Guides and Parents it sits in the top bar.
+  const nm = S.test ? "Test " + S.test : firstName(S.user.displayName) || S.email.split("@")[0];
+  const b = h("button", { type: "button", "aria-expanded": String(menuOpen), "aria-label": "Account: " + nm, onclick: () => { menuOpen = !menuOpen; acct(); } },
+    [h("span", { class: "av", text: S.test ? "🧪" : (nm[0] || "?").toUpperCase() }), h("span", { text: nm })]);
   box.append(b);
   if (menuOpen) box.append(h("div", { class: "acct-menu" }, [
     h("p", { text: S.test ? `${roleName}. You're ${S.real}.` : `${roleName}. Signed in as ${S.email}.` }),

@@ -13,10 +13,10 @@
 <link rel="stylesheet" href="/wl.css">
 </head>
 <body data-site="{{ include.site }}">
-<div class="wlbar" data-wlnav="{{ include.site }}" data-current="{% if include.site == "students" %}challenges{% else %}lifeskills{% endif %}"{% if include.site == "parents" %} data-auth="off"{% endif %}></div><script src="/wlnav.js"></script>
+<div class="wlbar" data-wlnav="{{ include.site }}" data-current="{% if include.site == "students" %}challenges{% else %}lifeskills{% endif %}"></div><script src="/wlnav.js"></script>
 <a class="skip" href="#tree">Skip to challenges</a>
 
-<header class="nav">
+<header class="nav{% unless include.site == "students" %} wlsub{% endunless %}">
   <div class="nav-inner">
 {% if include.site == "students" %}    <a class="brand wl-title" href="/challenges/">Life Skills Challenges</a>
     <nav class="nav-links" aria-label="On this site">

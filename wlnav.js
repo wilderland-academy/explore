@@ -48,6 +48,8 @@
       BASECAMP] },
     guides: { name: "Guides", home: "/guides/", label: "Guides", tabs: [
       { id: "mentor", label: "Mentor Mindset", href: "/fieldguide/" },
+      // Recording and reviewing 1:1 coaching sessions: a stop inside the Field Guide, with its own tab so it's one click away.
+      { id: "sessions", label: "Session Room", href: "/fieldguide/#sessions" },
       { id: "behavior", label: "Behavior", href: "/behavior/" },
       // Challenges, the Labs schedule and the Lab builder live inside Life Skills (its sub-menu: /lifeskills/subnav.js).
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
@@ -73,11 +75,21 @@
     ? document.currentScript.previousElementSibling : document.querySelector("[data-wlnav]:not([data-wlnav-done])");
   if (!bar) return;
   var key = SITES[bar.getAttribute("data-wlnav")] ? bar.getAttribute("data-wlnav") : "home";
-  var site = SITES[key], cur = bar.getAttribute("data-current") || "";
+  var site = SITES[key];
+  // The current tab. The Session Room is a view of the Field Guide (/fieldguide/#sessions), so it follows the address.
+  function curTab() {
+    var c = bar.getAttribute("data-current") || "";
+    return c === "mentor" && /^#sessions\b/.test(location.hash) ? "sessions" : c;
+  }
+  var cur = curTab();
   var tabs = site.tabs.map(function (t) {
     if (t.out) return '<a class="wlbar-ext" href="' + t.href + '" target="_blank" rel="noopener" aria-label="' + esc(t.label) + ' (opens in a new tab)">' + esc(t.label) + ARROW + "</a>";
-    return '<a href="' + t.href + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.label) + "</a>";
+    return '<a href="' + t.href + '" data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.label) + "</a>";
   }).join("");
+  addEventListener("hashchange", function () {
+    var c = curTab(); if (c === cur) return; cur = c;
+    bar.querySelectorAll("[data-wl-tab]").forEach(function (a) { if (a.getAttribute("data-wl-tab") === cur) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  });
 
   // Who may switch to which site. Staff (and team guests) see all three; parents see theirs and the students' site;
   // students and signed-out visitors get no switcher. Roles come from /auth.js or the Life Skills tracker as a
@@ -102,7 +114,9 @@
     }
     var auth = bar.querySelector(".wlbar-auth");
     bar.innerHTML = '<div class="wlbar-in">' + home + sw +
-      (tabs ? '<nav class="wlbar-sites" aria-label="' + esc(site.name) + '">' + tabs + "</nav>" : "") +
+      (tabs ? '<nav class="wlbar-sites" aria-label="' + esc(site.name) + '">' + tabs + "</nav>" +
+        // Tabs that don't fit on this screen fold into "More" (fit() below). Never the current page's tab.
+        '<div class="wlbar-more" hidden><button type="button" aria-haspopup="true" aria-expanded="false">More' + CARET + '</button><div class="wlbar-menu" hidden></div></div>' : "") +
       // Search (⌘K / Ctrl+K, or "/"), for everyone: /search.js, loaded on first use.
       '<button type="button" class="wlbar-search" data-wl-search aria-label="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')" title="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="wlbar-search-t">Search</span><kbd>' + (MAC ? "⌘K" : "Ctrl K") + "</kbd></button>" +
       // Trail Partner (🐲) is one click away on every staff page.
@@ -117,7 +131,43 @@
     // Keep the sign-in chip if it was already mounted.
     var slot = bar.querySelector(".wlbar-auth");
     if (auth && slot) slot.parentNode.replaceChild(auth, slot);
+    fit();
   }
+  // ---------- Tabs that don't fit go in "More" ----------
+  // On laptop widths a site can have more tabs than room (the Guides site, with search, Trail Partner and the account
+  // chip beside them). Rather than cutting the last tabs off, they move into a "More" menu, from the end, keeping the
+  // current page's tab in the row. Phones use the ☰ menu instead.
+  function fit() {
+    var nav = bar.querySelector(".wlbar-sites"), more = bar.querySelector(".wlbar-more");
+    if (!nav || !more) return;
+    if (ro) ro.observe(nav);
+    var links = Array.prototype.slice.call(nav.children);
+    links.forEach(function (a) { a.hidden = false; });
+    more.hidden = true; more.querySelector(".wlbar-menu").hidden = true; more.querySelector("button").setAttribute("aria-expanded", "false");
+    if (!nav.clientWidth || nav.scrollWidth <= nav.clientWidth + 1) return;
+    more.hidden = false;
+    var gone = [];
+    for (var i = links.length - 1; i >= 0 && nav.scrollWidth > nav.clientWidth + 1; i--) {
+      if (links[i].getAttribute("aria-current")) continue;
+      links[i].hidden = true; gone.unshift(links[i]);
+    }
+    more.querySelector(".wlbar-menu").innerHTML = gone.map(function (a) {
+      var c = a.cloneNode(true); c.hidden = false; c.removeAttribute("aria-current"); return c.outerHTML;
+    }).join("");
+  }
+  var fitPend = false;
+  addEventListener("resize", function () { if (fitPend) return; fitPend = true; requestAnimationFrame(function () { fitPend = false; fit(); }); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  // The sign-in chip arrives after the bar is drawn and takes room from the tabs: fit again when their row changes size.
+  var ro = window.ResizeObserver ? new ResizeObserver(function () { if (fitPend) return; fitPend = true; requestAnimationFrame(function () { fitPend = false; fit(); }); }) : null;
+  bar.addEventListener("click", function (e) {
+    var b = e.target.closest(".wlbar-more > button"); if (!b) return;
+    var m = b.nextElementSibling, open = m.hidden; m.hidden = !open; b.setAttribute("aria-expanded", String(open));
+  });
+  document.addEventListener("click", function (e) {
+    var mo = bar.querySelector(".wlbar-more");
+    if (mo && !mo.contains(e.target)) { mo.querySelector(".wlbar-menu").hidden = true; mo.querySelector("button").setAttribute("aria-expanded", "false"); }
+  });
   // ---------- Test view (testers only) ----------
   // A tester can see the site as the test guide, test student or test parent. It's remembered on this device until they
   // switch back. The pages read it through /auth.js (and the tracker), which only honour it for the tester who set it.
@@ -140,7 +190,7 @@
   // The phone menu: this site's sections, then the other sites this person may open, then Basecamp.
   function drawer(opts) {
     return '<div class="wlbar-drawer-in">' + site.tabs.filter(function (t) { return !t.out; }).map(function (t) {
-      return '<a href="' + t.href + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? " data-wl-alerts" : "") + ">" + esc(t.label) + "</a>";
+      return '<a href="' + t.href + '" data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? " data-wl-alerts" : "") + ">" + esc(t.label) + "</a>";
     }).join("") +
       (opts ? '<p>Switch to</p><div class="wlbar-drawer-sites">' + opts.filter(function (k) { return k !== key; }).map(function (k) { return '<a href="' + SITES[k].home + '">' + esc(SITES[k].label) + "</a>"; }).join("") + "</div>" : "") +
       '<a class="wlbar-ext" href="' + BASECAMP.href + '" target="_blank" rel="noopener">' + BASECAMP.label + ARROW + "</a></div>";
@@ -217,7 +267,21 @@
     new MutationObserver(label).observe(nav, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-current"] });
     label();
   }
-  function collapseAll() { document.querySelectorAll(NAVS).forEach(collapse); }
+  function collapseAll() { document.querySelectorAll(NAVS).forEach(collapse); side(); }
+  // ---------- Section menus on the left, on wide screens ----------
+  // A page whose section row is <div class="trail wlside"> followed by its <main> (Mentor Mindset, Behavior, At Home,
+  // Our Approach) gets the sections as a menu down the left side; the page itself sits beside it. Layout is in /wl.css
+  // (.wlside-wrap); between phone and wide widths the row stays as it was, and phones keep the "Section ▾" button.
+  function side() {
+    document.querySelectorAll(".trail.wlside").forEach(function (t) {
+      if (t.parentNode.classList.contains("wlside-wrap")) return;
+      var m = t.nextElementSibling;
+      while (m && m.tagName === "SCRIPT") m = m.nextElementSibling;
+      if (!m || m.tagName !== "MAIN") return;
+      var w = document.createElement("div"); w.className = "wlside-wrap";
+      t.parentNode.insertBefore(w, t); w.appendChild(t); w.appendChild(m);
+    });
+  }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", collapseAll); else collapseAll();
   // Pages that draw their section menu later.
   var pend = false;
