@@ -57,7 +57,7 @@ const PAGES = [
   ["All Mr. Fox conversations", "/guides/roster/#chats", "g", "chats conversations"],
   ["Parent Comms", "/guides/parents/", "g", "parent communication email draft"],
   ["Staff Handbook", "/guides/handbook/", "g", "handbook policies"],
-  ["Conversation history", "/guides/history/", "g", "history saved drafts"],
+  ["Trail Partner and your conversations", "/guides/partner/", "g", "history saved drafts conversations chats mentor ai"],
   ["Parents home", "/parents/", "p", "families"],
   ["Wilderland at Home", "/parents/athome/", "p", "home routine schedule part time"],
   ["Our Approach", "/parents/approach/", "p", "approach how it works"],

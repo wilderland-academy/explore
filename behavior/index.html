@@ -198,6 +198,15 @@ details summary{cursor:pointer;font-weight:700}
   .dim,.small{color:#444!important} a{color:#111}
   .view{padding-top:0}
 }
+/* Previous / next section */
+:root{--pgbg:var(--shelf)}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+.pager .pg{display:flex;flex-direction:column;gap:3px;padding:14px 16px;border-radius:14px;border:1px solid var(--line);text-decoration:none;color:inherit;background:var(--pgbg,transparent)}
+.pager .pg:hover{border-color:currentColor}
+.pager .pg.next{text-align:right;grid-column:2}
+.pager .pg small{font:600 12px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.pager .pg b{font-size:17px;line-height:1.25}
+@media (max-width:560px){.pager{grid-template-columns:1fr}.pager .pg.next{grid-column:1;grid-row:1}.pager>span{display:none}}
 </style>
 </head>
 <body>

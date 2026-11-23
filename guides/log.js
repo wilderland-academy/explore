@@ -9,7 +9,7 @@ export const SITES = {
   behavior: { label: "Behavior", href: "/behavior/#coach" },
   parents: { label: "Parent Comms", href: "/guides/parents/" },
   labs: { label: "Lab builder", href: "/guides/lifeskills/builder/" },
-  guide: { label: "Trail Partner 🐲", href: "/guides/?mentor" }
+  guide: { label: "Trail Partner 🐲", href: "/guides/partner/" }
 };
 const MAX_MSG = 24000, MAX_TOTAL = 600000;   // Firestore documents are capped at 1 MB
 

@@ -299,7 +299,7 @@ function drawOut() {
     p.append(out);
     if (stop === "max_tokens" || (lastDraft.match(/^```/gm) || []).length % 2 === 1) p.append(el("p", { class: "box warn", text: "The draft was cut short. Ask below for a shorter version, or for the rest." }));
     const copy = el("button", { class: "btn white", type: "button", text: "Copy draft", onclick: async () => { try { await navigator.clipboard.writeText(splitScore(lastDraft).md.replace(/\n## Scorecard\s*$/m, "")); copy.textContent = "Copied"; } catch (e) { copy.textContent = "Couldn't copy"; } setTimeout(() => copy.textContent = "Copy draft", 2000); } });
-    p.append(el("div", { class: "acts" }, copy, el("a", { class: "btn plain", href: "/guides/history/#labs", text: "Saved in your history" }), el("button", { class: "btn plain", type: "button", text: "Start over", onclick: restart })));
+    p.append(el("div", { class: "acts" }, copy, el("a", { class: "btn plain", href: "/guides/partner/?show=labs", text: "Saved in your history" }), el("button", { class: "btn plain", type: "button", text: "Start over", onclick: restart })));
     const ta = el("textarea", { id: "refine", style: "min-height:76px", placeholder: "e.g. Make it 2 weeks instead of 3. Make the pass line harder. Use the creek instead of the garden. Raise indicator 7." });
     const go = el("button", { class: "btn go", type: "button", text: "Update the draft", onclick: () => { const t = ta.value.trim(); if (!t) { ta.focus(); return; } turns.push({ role: "user", content: t + "\n\n(Give the full updated draft in the same format, with a fresh Scorecard.)" }); run(); } });
     p.append(el("div", { class: "field" }, el("label", { class: "lbl", for: "refine", text: "Change something" }), ta, el("div", { class: "acts" }, go)));
@@ -348,7 +348,7 @@ function recent() {
     const box = el("div", { class: "drafts" });
     if (!mine.length) box.append(el("p", { class: "note", text: "Drafts you build are saved here automatically. Only you can see them." }));
     mine.forEach(x => box.append(el("a", { class: "r", href: "?t=" + encodeURIComponent(x.id), style: "text-decoration:none;color:inherit" }, el("span", { class: "t", text: x.title }), el("span", { class: "cn", text: new Date(x.updated).toLocaleDateString(undefined, { month: "short", day: "numeric" }) }))));
-    box.append(el("a", { class: "btn plain", href: "/guides/history/#labs", style: "align-self:flex-start", text: "All drafts, with delete, in your history" }));
+    box.append(el("a", { class: "btn plain", href: "/guides/partner/?show=labs", style: "align-self:flex-start", text: "All drafts, with delete, in your history" }));
     sec.lastChild.replaceWith(box);
   }).catch(() => { recentCache = null; sec.lastChild.textContent = "Couldn't load your saved drafts."; });
   return sec;

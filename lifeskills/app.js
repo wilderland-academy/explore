@@ -284,9 +284,11 @@ function acct() {
   const b = h("button", { type: "button", "aria-expanded": String(menuOpen), text: S.test ? "🧪 Test " + S.test : firstName(S.user.displayName) || S.email.split("@")[0], onclick: () => { menuOpen = !menuOpen; acct(); } });
   box.append(b);
   if (menuOpen) box.append(h("div", { class: "acct-menu" }, [
-    h("p", { text: S.test ? `${roleName}. You're ${S.real}; switch back in the bar at the top.` : `${roleName}. Signed in as ${S.email}.` }),
+    h("p", { text: S.test ? `${roleName}. You're ${S.real}.` : `${roleName}. Signed in as ${S.email}.` }),
     S.role === "staff" ? h("a", { href: "/fieldguide/", text: "Field Guide" }) : null,
     S.role !== "parent" ? h("a", { href: "/challenges/", text: "Challenges" }) : h("a", { href: "/challenges/parents.html", text: "Passing off at home" }),
+    // Testers: switch to a test account (or back) from here.
+    TESTERS.includes(S.real) && window.WLTest ? h("div", { html: window.WLTest.html() }) : null,
     h("button", { type: "button", text: "Sign out", onclick: async () => { menuOpen = false; try { localStorage.removeItem("wl-viewas"); } catch (e) { } await signOut(auth); location.hash = ""; } })
   ]));
 }

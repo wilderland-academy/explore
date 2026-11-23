@@ -145,12 +145,14 @@ let state = "saved", open = false;
 function setState(s) { state = s; const d = host.querySelector(".st"); if (d) d.className = "st " + s; }
 function msg(t) { const m = document.createElement("div"); m.className = "wla-msg"; m.textContent = t; document.body.appendChild(m); setTimeout(() => m.remove(), 7000); }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// Testers: the test view choices sit in this menu (from /wlnav.js, which also handles the clicks).
+const testSec = () => window.WLTest && window.WLTest.on() ? window.WLTest.html() : "";
 function render() {
   const here = location.pathname;
   const links = SITES.map(([n, p]) => `<a href="${p}" class="${here.startsWith(p) ? "here" : ""}">${n}</a>`).join("");
   if (!user && family) {
     host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${view ? "🧪" : esc((family.email || "?")[0].toUpperCase())}</span><span>${view ? "Test parent" : "Parent"}</span></button>
-    ${open ? `<div class="menu"><p>${view ? `Test parent (you're ${esc(family.email)}).` : `Signed in as ${esc(family.email)}, a family account.`}</p><a href="/parents/lifeskills/">Life Skills tracker</a><a href="/challenges/parents.html">Passing off at home</a><a href="/parents/">Parents home</a><hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
+    ${open ? `<div class="menu"><p>${view ? `Test parent (you're ${esc(family.email)}).` : `Signed in as ${esc(family.email)}, a family account.`}</p><a href="/parents/lifeskills/">Life Skills tracker</a><a href="/challenges/parents.html">Passing off at home</a><a href="/parents/">Parents home</a>${testSec()}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
     return;
   }
   if (!user) {
@@ -159,7 +161,7 @@ function render() {
   }
   const first = view ? (view.as === "guide" ? "Test guide" : "Test student") : (user.displayName || user.email || "?").trim();
   host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${view ? "🧪" : user.photoURL ? `<img src="${esc(user.photoURL)}" alt="" referrerpolicy="no-referrer">` : esc(first[0].toUpperCase())}</span><span>${esc(view ? first : first.split(" ")[0])}</span><span class="st ${state}" title="Saved to your account"></span></button>
-  ${open ? `<div class="menu"><p>Signed in as ${esc(user.email)}. What you save here follows you to any Chromebook.</p>${links}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
+  ${open ? `<div class="menu"><p>Signed in as ${esc(user.email)}. What you save here follows you to any Chromebook.</p>${links}${testSec()}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
 }
 host.addEventListener("click", async e => {
   const b = e.target.closest("[data-wla]"); if (!b) return;
@@ -190,7 +192,8 @@ function gate(u) {
   b.classList.remove("wl-pending"); b.classList.toggle("wl-in", !!u); b.classList.toggle("wl-out", !u);
 }
 document.addEventListener("click", e => { if (e.target.closest("[data-wl-signin]")) { e.preventDefault(); wlSignIn(); } });
-document.addEventListener("click", e => { if (open && !host.contains(e.target)) { open = false; render(); } });
+// composedPath: the menu is redrawn on click, so the clicked button may already be gone; check the path the click took.
+document.addEventListener("click", e => { if (open && !e.composedPath().includes(host)) { open = false; render(); } });
 
 function mount() {
   // Pages whose bar has no sign-in slot (data-auth="off") only need the role: no chip.

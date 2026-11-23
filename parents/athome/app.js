@@ -45,10 +45,20 @@ function route() {
   let v = location.hash.slice(1).split("/")[0]; if (!VIEWS[v]) v = "home";
   document.querySelectorAll("#nav a").forEach(a => { if (a.getAttribute("href") === "#" + v) { a.setAttribute("aria-current", "page"); a.scrollIntoView && a.scrollIntoView({ block: "nearest", inline: "center" }); } else a.removeAttribute("aria-current"); });
   const y = route.last === v ? window.scrollY : 0; route.last = v;
-  const sec = h("section", { class: "view" }); app.innerHTML = ""; app.appendChild(sec); VIEWS[v](sec); window.scrollTo(0, y);
+  const sec = h("section", { class: "view" }); app.innerHTML = ""; app.appendChild(sec); VIEWS[v](sec); pager(sec, STOPS.map(s => [s[0], NAVL[s[0]] || s[1]]), v); window.scrollTo(0, y);
 }
+// Previous / next section, at the bottom of every section.
+function pager(sec, list, id) {
+  const i = list.findIndex(s => s[0] === id); if (i < 0) return;
+  const p = list[i - 1], n = list[i + 1];
+  if (!p && !n) return;
+  const a = (s, dir) => h("a", { class: "pg " + dir, href: "#" + s[0] }, [h("small", { text: dir === "prev" ? "← Previous" : "Next →" }), h("b", { text: s[1] })]);
+  sec.appendChild(h("nav", { class: "pager noprint", "aria-label": "More sections" }, [p ? a(p, "prev") : h("span"), n ? a(n, "next") : h("span")]));
+}
+
 addEventListener("hashchange", route);
-const next = (sec, id) => { const i = STOPS.findIndex(s => s[0] === id); const n = STOPS[i + 1]; if (n) sec.appendChild(h("a", { class: "btn ghost", style: "align-self:flex-start;text-decoration:none", href: "#" + n[0], text: "Next: " + n[1] + " →" })); };
+// (Each section ends with previous / next links: pager(), added by route.)
+const next = () => { };
 
 /* ---------- start ---------- */
 VIEWS.home = sec => {

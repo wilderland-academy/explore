@@ -3,7 +3,7 @@
 // It opens as a side panel beside the page (a bottom panel on phones), like the students' Mr. Fox, from:
 //   - the 🐲 button in the Guides top bar on every staff page (/wlnav.js loads this file on first click),
 //   - the "Ask Trail Partner" button at the top of /guides/ and on the front door for staff,
-//   - /guides/?mentor (and ?mentor=<thread id> from Your conversations to continue one).
+//   - /guides/?mentor. The full page, with every conversation on the left, is /guides/partner/ (⤢ in the panel).
 // The knowledge lives in the relay Worker (mode "mentor"); the handbook and policy are never sent from or stored in
 // this public site. Conversations are saved to the staff member's own history (coachLog, site "guide").
 //   import("/guides/mentor/mentor.js").then(m => m.open({ ask, prefill, threadId }))  (or window.wlOpenMentor(opts))
@@ -20,7 +20,7 @@ const CONFIG = {
 const app = getApps()[0] || initializeApp(CONFIG);
 const auth = getAuth(app), db = getFirestore(app);
 const DRAGON = "🐲";
-const STARTERS = [
+export const STARTERS = [
   "A student keeps disrupting the Lab. What does our policy say to do?",
   "Help me plan what to say to a parent who is upset",
   "What's our procedure if a child gets hurt outside?",
@@ -46,6 +46,7 @@ html.wgm-docked body{margin-right:var(--wgm-w);transition:margin-right .25s ease
 .wgm-head .t{flex:1;min-width:0}
 .wgm-head b{display:block;font-size:16px;color:#fff}
 .wgm-head span{display:block;font-size:12.5px;color:#c9d6cd}
+.wgm-head a.wgm-full{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;text-decoration:none;font-size:18px;flex:none}
 .wgm-head button{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:20px;line-height:1;flex:none}
 .wgm-head button:focus-visible,.wgm button:focus-visible,.wgm textarea:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 .wgm-log{flex:1;overflow-y:auto;padding:16px 14px 8px;display:flex;flex-direction:column;gap:12px}
@@ -97,15 +98,14 @@ function mount() {
   if (el) return;
   const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
   const box = document.createElement("aside"); box.className = "wgm"; box.hidden = true; box.setAttribute("aria-labelledby", "wgm-t");
-  box.innerHTML = `<div class="wgm-head"><div class="wgm-av" aria-hidden="true">${DRAGON}</div><div class="t"><b id="wgm-t">Trail Partner</b><span>Knows our handbook, behavior policy and approach</span></div><button class="wgm-new" type="button" aria-label="Start a new conversation" title="New conversation">＋</button><button class="wgm-size" type="button" aria-label="Make the mentor bigger">⤢</button><button class="wgm-x" type="button" aria-label="Close Trail Partner">×</button></div>
+  box.innerHTML = `<div class="wgm-head"><div class="wgm-av" aria-hidden="true">${DRAGON}</div><div class="t"><b id="wgm-t">Trail Partner</b><span>Knows our handbook, behavior policy and approach</span></div><a class="wgm-full" href="/guides/partner/" aria-label="Open Trail Partner full page, with all your conversations" title="Full page and all conversations">⤢</a><button class="wgm-new" type="button" aria-label="Start a new conversation" title="New conversation">＋</button><button class="wgm-x" type="button" aria-label="Close Trail Partner">×</button></div>
     <div class="wgm-log" aria-live="polite"></div>
     <div class="wgm-foot"><form class="wgm-row"><label for="wgm-in" style="position:absolute;left:-9999px">Ask Trail Partner</label><textarea id="wgm-in" rows="1" maxlength="6000" placeholder="Ask anything about your work…"></textarea><button class="wgm-send" type="submit">Send</button></form>
-    <p class="wgm-hint">AI can be wrong. Check anything about safety or the law with an admin. Saved to <a href="/guides/history/">your conversations</a>, which only you can see.</p></div>`;
+    <p class="wgm-hint">AI can be wrong. Check anything about safety or the law with an admin. Saved to <a href="/guides/partner/">your conversations</a>, which only you can see.</p></div>`;
   document.body.append(box);
   el = { box, log: box.querySelector(".wgm-log"), form: box.querySelector("form"), input: box.querySelector("textarea"), send: box.querySelector(".wgm-send") };
   box.querySelector(".wgm-x").addEventListener("click", close);
   box.querySelector(".wgm-new").addEventListener("click", () => { msgs = []; threadId = null; created = 0; save(); draw(); el.input.focus(); });
-  box.querySelector(".wgm-size").addEventListener("click", () => box.classList.toggle("big"));
   box.addEventListener("keydown", e => { if (e.key === "Escape") { e.preventDefault(); close(); } });
   el.input.addEventListener("input", () => { el.input.style.height = "auto"; el.input.style.height = Math.min(180, el.input.scrollHeight) + "px"; });
   el.input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); el.form.requestSubmit(); } });
@@ -113,6 +113,8 @@ function mount() {
   el.log.addEventListener("click", e => { const c = e.target.closest("[data-ask]"); if (c) ask(c.getAttribute("data-ask")); });
 }
 function draw() {
+  // The full page opens this conversation (or a new one).
+  el.box.querySelector(".wgm-full").href = "/guides/partner/" + (threadId ? "#" + encodeURIComponent(threadId) : "#new");
   el.log.innerHTML = "";
   if (!msgs.length) {
     const d = document.createElement("div"); d.className = "wgm-intro";

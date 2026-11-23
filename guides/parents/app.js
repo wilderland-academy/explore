@@ -174,7 +174,7 @@ function draw() {
     h("p", { class: "eyebrow", text: "Staff guides · Parent Communication" }),
     h("h1", { html: "Write to families <span>with confidence.</span>" }),
     h("p", { class: "lede", text: "Tell the coach what you need or paste a draft. You get a message you can send right away, plus the one or two things that would make it better. Your voice stays yours." }),
-    h("a", { class: "histlink", href: "/guides/history/#parents", text: "Your past conversations →" })
+    h("a", { class: "histlink", href: "/guides/partner/?show=parents", text: "Your past conversations →" })
   ]);
 
   const log = h("div", { class: "log", id: "log", "aria-live": "polite" });

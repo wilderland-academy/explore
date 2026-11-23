@@ -5,7 +5,7 @@
 export const CHANGELOG = [
   ["2026-11-21", "First version: three modes (newsletters, customer service, events) built on the wilderland-parent-comms skill."],
   ["2026-11-21", "Starter buttons fill the box unless marked to send; an unfinished template is never sent."],
-  ["2026-11-21", "Conversations save to each person's private history (/guides/history/), where they can be reopened or deleted."]
+  ["2026-11-21", "Conversations save to each person's private history (/guides/partner/), where they can be reopened or deleted."]
 ];
 
 // How the page wraps the skill. Sent as part of the system prompt on every call.
