@@ -99,6 +99,11 @@ const daysAgo = iso => iso ? Math.floor((Date.now() - new Date(iso + "T12:00:00"
 const shortName = n => { const p = String(n || "").trim().split(/\s+/); return p.length > 1 ? p[0] + " " + p[p.length - 1][0] + "." : p[0] || ""; };
 const firstName = n => String(n || "").trim().split(/\s+/)[0] || "";
 const emails = s => [...new Set(String(s || "").split(/[\s,;]+/).map(x => x.trim().toLowerCase()).filter(Boolean))];
+// A student's guides: the ones named on their record, otherwise their band's guides (WLPeople.STAFF_BANDS in /wlnav.js).
+const guideName = g => g === TEST.guide ? "Test Guide" : g.split("@")[0].replace(/^./, x => x.toUpperCase());
+const bandGuides = band => Object.entries((window.WLPeople || {}).STAFF_BANDS || {}).filter(([, b]) => b === band).map(([e]) => e);
+const guidesOf = s => { const g = emails(s && s.guide); return g.length ? g : s && s.test ? [TEST.guide] : bandGuides(s && s.band); };
+const orList = xs => xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " or " + xs[xs.length - 1];
 const isEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 const ordinal = n => n + (["th", "st", "nd", "rd"][((n % 100) - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
 let toastT;
@@ -171,10 +176,15 @@ async function loadAll() {
   const keep = x => !!x.test === !!S.test;
   const testOnly = c => S.test ? query(collection(db, c), where("test", "==", true)) : collection(db, c);
   if (S.role === "staff") {
-    const snap = await getDocs(testOnly("lsStudents"));
-    snap.forEach(d => { const x = { id: d.id, ...d.data() }; if (keep(x)) S.students[d.id] = x; });
+    // The test guide works with the test band's real students (view only: see viewOnly) plus the test student, like a
+    // real guide of that band would.
+    const staffKeep = x => S.test ? !!x.test || x.band === S.testBand : !x.test;
+    // Testers without a school account (guests) can only read the test records.
+    const all = async c => { try { return await getDocs(collection(db, c)); } catch (e) { if (S.test && e.code === "permission-denied") return getDocs(testOnly(c)); throw e; } };
+    const snap = await all("lsStudents");
+    snap.forEach(d => { const x = { id: d.id, ...d.data() }; if (staffKeep(x)) S.students[d.id] = x; });
     await Promise.all(Object.keys(S.students).map(loadEntries));
-    const b = await getDocs(testOnly("lsBoard")); b.forEach(d => { const x = { id: d.id, ...d.data() }; if (keep(x)) S.boards[d.id] = x; });
+    const b = await all("lsBoard"); b.forEach(d => { if (S.students[d.id]) S.boards[d.id] = { id: d.id, ...d.data() }; });
     // Labs too, for the challenges they introduce (Validate offers them).
     try { await loadLabs(true); } catch (e) { console.warn("Life Skills: couldn't read Labs", e); }
     await loadSaved();
@@ -221,7 +231,10 @@ function boardDoc(sid) {
   const s = S.students[sid], sum = summary(sid), old = S.boards[sid] || {};
   return { name: shortName(s.name), band: s.band, working: (old.working || []).filter(c => !sum.passes.some(p => p.cid === c)), passed: sum.passes.map(p => BYID[p.cid] && BYID[p.cid].custom ? { c: p.cid, d: p.date, t: chTitle(p.cid), k: BYID[p.cid].k } : { c: p.cid, d: p.date }), credits: sum.trail, updated: Date.now(), ...(s.test ? { test: true } : {}) };
 }
-async function saveBoard(sid) { const b = boardDoc(sid); await setDoc(doc(db, "lsBoard", sid), b); S.boards[sid] = { id: sid, ...b }; }
+// In a test view, real students are shown so the test guide sees a real band, but nothing about them can be changed.
+const viewOnly = sid => !!S.test && !(S.students[sid] || {}).test;
+const VO_MSG = "Real students are view-only in a Test view. Try it with Test Student.";
+async function saveBoard(sid) { if (viewOnly(sid)) return; const b = boardDoc(sid); await setDoc(doc(db, "lsBoard", sid), b); S.boards[sid] = { id: sid, ...b }; }
 
 // ---------- auth ----------
 async function decideRole(u) {
@@ -462,6 +475,7 @@ function workingList(sid, editable) {
   return wrap;
 }
 async function setWorking(sid, list) {
+  if (viewOnly(sid)) { toast(VO_MSG); return; }
   try { await updateDoc(doc(db, "lsBoard", sid), { working: list.slice(0, 3), updated: Date.now() }); S.boards[sid] = { ...(S.boards[sid] || {}), working: list.slice(0, 3) }; route(); }
   catch (e) { toast(errText(e)); }
 }
@@ -484,7 +498,7 @@ function record(sid, opts = {}) {
   const staffBits = opts.staff ? h("div", { class: "row noprint" }, [
     h("a", { class: "btn go", href: "#validate=" + sid, text: "Validate a challenge" }),
     h("a", { class: "btn", href: ROSTER + "#edit=" + encodeURIComponent(sid), text: "Edit student and parents" }),
-    sum.newMilestone ? h("button", { class: "btn", type: "button", text: `Mark milestone ${sum.milestone} celebrated`, onclick: async () => { try { await updateDoc(doc(db, "lsStudents", sid), { celebrated: sum.milestone }); s.celebrated = sum.milestone; toast("Marked. It drops off the new milestones list."); route(); } catch (e) { toast(errText(e)); } } }) : null
+    sum.newMilestone ? h("button", { class: "btn", type: "button", text: `Mark milestone ${sum.milestone} celebrated`, onclick: async () => { if (viewOnly(sid)) { toast(VO_MSG); return; } try { await updateDoc(doc(db, "lsStudents", sid), { celebrated: sum.milestone }); s.celebrated = sum.milestone; toast("Marked. It drops off the new milestones list."); route(); } catch (e) { toast(errText(e)); } } }) : null
   ]) : null;
   const entryRow = (e, kind) => {
     const sk = skillOf(e.cid), c = BYID[e.cid];
@@ -494,6 +508,7 @@ function record(sid, opts = {}) {
     if (kind === "notyet") kids.push(h("dl", { class: "ny" }, [h("dt", { text: "Missing" }), h("dd", { text: e.missing || "—" }), h("dt", { text: "Practice" }), h("dd", { text: e.practice || "—" }), h("dt", { text: "Retry" }), h("dd", { text: e.retry ? "On or after " + fmt(e.retry) : "Any day you're ready" })]));
     let confirm = false;
     const del = opts.staff ? h("button", { class: "btn danger noprint", type: "button", text: "Remove", onclick: async ev => {
+      if (viewOnly(sid)) { toast(VO_MSG); return; }
       if (!confirm) { confirm = true; ev.target.textContent = "Confirm remove"; return; }
       try { await deleteDoc(doc(db, "lsStudents", sid, "entries", e.id)); S.entries[sid] = S.entries[sid].filter(x => x.id !== e.id); await saveBoard(sid); toast("Removed."); route(); } catch (x) { toast(errText(x)); }
     } }) : h("span");
@@ -501,7 +516,7 @@ function record(sid, opts = {}) {
   };
   return h("div", {}, [
     h("div", { class: "wrap page-head" }, h("div", { class: "who" }, [
-      h("div", {}, [h("h1", { text: opts.self ? "My trail" : s.name }), h("p", { text: [opts.self ? s.name : "", s.grade ? "Grade " + s.grade : "Grades " + s.band, s.guide ? (emails(s.guide).length > 1 ? "Field Guides " : "Field Guide ") + emails(s.guide).map(g => g.split("@")[0].replace(/^./, x => x.toUpperCase())).join(" and ") : ""].filter(Boolean).join(", ") })]),
+      h("div", {}, [h("h1", { text: opts.self ? "My trail" : s.name }), h("p", { text: [opts.self ? s.name : "", s.grade ? "Grade " + s.grade : "Grades " + s.band, guidesOf(s).length ? (guidesOf(s).length > 1 ? "Field Guides " : "Field Guide ") + guidesOf(s).map(guideName).join(" and ") : ""].filter(Boolean).join(", ") })]),
       staffBits
     ])),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
@@ -734,7 +749,7 @@ function validateGroup(labId) {
   const passedOn = (sid, c) => { const p = summary(sid).passes.find(x => x.cid === c); return p ? p.date : ""; };
   const inBand = s => valBand === "All" || s.band === valBand;
   const people = () => Object.values(S.students).filter(inBand).sort((a, b) => a.name.localeCompare(b.name));
-  const chosen = () => Object.keys(mark).filter(k => mark[k] && S.students[k]);
+  const chosen = () => Object.keys(mark).filter(k => mark[k] && S.students[k] && !viewOnly(k));
   const drawSave = () => {
     const n = chosen().length, ny = chosen().filter(k => mark[k] === "notyet").length;
     saveBtn.textContent = !cid ? "Pick a challenge first" : n ? `Validate ${n} student${n === 1 ? "" : "s"}${ny ? ` (${n - ny} passed, ${ny} not yet)` : ""}` : "Pick students";
@@ -763,7 +778,7 @@ function validateGroup(labId) {
     const list = people().filter(s => !q || s.name.toLowerCase().includes(q));
     const search = h("input", { class: "in", type: "search", id: "gq", value: q, placeholder: "Find a student", style: { maxWidth: "260px" } });
     search.addEventListener("input", () => { q = search.value.trim().toLowerCase(); const pos = search.selectionStart; drawStu(); const n = $("#gq"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } });
-    const open = list.filter(s => !(cid && passedOn(s.id, cid)));
+    const open = list.filter(s => !(cid && passedOn(s.id, cid)) && !viewOnly(s.id));
     stuBox.append(h("div", { class: "row" }, [...["All", ...BANDS].map(b => h("button", { class: "chip", type: "button", "aria-pressed": String(valBand === b), text: b === "All" ? "All bands" : "Grades " + b, onclick: () => { valBand = b; drawStu(); drawSave(); } })),
       h("span", { style: { marginLeft: "auto" } }), search]));
     stuBox.append(h("div", { class: "row" }, [
@@ -772,16 +787,16 @@ function validateGroup(labId) {
       h("span", { class: "small muted", text: "Tap a name to add it as passed; tap Not yet for anyone who isn't there yet. Shift-click to add a run of names." })]));
     if (!list.length) { stuBox.append(h("p", { class: "empty", text: "No students match." })); return; }
     stuBox.append(h("div", { class: "vgrid" }, list.map((s, i) => {
-      const done = cid ? passedOn(s.id, cid) : "", m = mark[s.id] || "";
+      const done = cid ? passedOn(s.id, cid) : "", m = mark[s.id] || "", vo = viewOnly(s.id);
       const toggle = ev => {
-        if (done) return;
-        if (ev.shiftKey && lastPicked != null) { const [a, b] = [Math.min(lastPicked, i), Math.max(lastPicked, i)]; list.slice(a, b + 1).forEach(x => { if (!(cid && passedOn(x.id, cid))) mark[x.id] = "pass"; }); }
+        if (done || vo) return;
+        if (ev.shiftKey && lastPicked != null) { const [a, b] = [Math.min(lastPicked, i), Math.max(lastPicked, i)]; list.slice(a, b + 1).forEach(x => { if (!(cid && passedOn(x.id, cid)) && !viewOnly(x.id)) mark[x.id] = "pass"; }); }
         else mark[s.id] = m ? "" : "pass";
         lastPicked = i; drawStu(); drawSave();
       };
       return h("div", { class: "vrow" + (m ? " " + m : "") + (done ? " done" : "") }, [
-        h("button", { type: "button", class: "vname", "aria-pressed": String(!!m), disabled: !!done, onclick: toggle },
-          [h("span", { class: "vbox", "aria-hidden": "true", text: m === "pass" ? "✓" : m === "notyet" ? "…" : "" }), h("span", {}, [h("b", { text: s.name }), h("small", { text: done ? "Already passed " + fmt(done) : "Grades " + s.band })])]),
+        h("button", { type: "button", class: "vname", "aria-pressed": String(!!m), disabled: !!done || vo, title: vo ? VO_MSG : null, onclick: toggle },
+          [h("span", { class: "vbox", "aria-hidden": "true", text: m === "pass" ? "✓" : m === "notyet" ? "…" : "" }), h("span", {}, [h("b", { text: s.name }), h("small", { text: done ? "Already passed " + fmt(done) : vo ? "Real student · view only in Test view" : "Grades " + s.band })])]),
         m ? h("div", { class: "seg small", role: "group", "aria-label": s.name }, [["pass", "Passed"], ["notyet", "Not yet"]].map(([v, l]) => h("button", { type: "button", "aria-pressed": String(m === v), text: l, onclick: () => { mark[s.id] = v; drawStu(); drawSave(); } }))) : null
       ]);
     })));
@@ -851,6 +866,7 @@ function validateOne(pre) {
   const save = async () => {
     note.className = "note err";
     if (!sid) { note.textContent = "Choose a student."; return; }
+    if (viewOnly(sid)) { note.textContent = VO_MSG; return; }
     if (!cid) { note.textContent = "Choose a challenge."; return; }
     if (result === "notyet" && (!tMiss.value.trim() || !tPrac.value.trim())) { note.textContent = "A not yet needs what was missing and how to practice."; return; }
     const before = summary(sid);
@@ -1029,7 +1045,7 @@ function labDetail(l, staff) {
         files.length || links.length ? h("ul", { class: "files" }, [
           ...files.map(f => h("li", {}, [h("a", { href: f.url, target: "_blank", rel: "noopener", text: f.name }), h("span", { class: "small muted", text: " · " + sizeTxt(f.size || 0) })])),
           ...links.map(k => h("li", {}, h("a", { href: k.url, target: "_blank", rel: "noopener", text: k.label || k.url })))]) : null,
-        staff ? null : h("p", { class: "small muted", text: "All of this is optional. Questions? Ask your child's guide." })])
+        staff ? null : h("p", { class: "small muted", text: "All of this is optional. Questions? Ask " + (() => { const g = [...new Set(S.mine.map(id => S.students[id]).filter(x => x && (l.bands || []).includes(x.band)).flatMap(guidesOf))].map(guideName); return g.length ? orList(g) : "your child's guide"; })() + "." })])
     ]))
   ]);
 }

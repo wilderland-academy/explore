@@ -48,6 +48,13 @@ async function onAuth(u) {
   if (my !== seq) return;
   const ep = new URLSearchParams(location.search).get("epic");
   if (ep && epicBy[ep]) { pickEpic(epicBy[ep]); history.replaceState(null, "", location.pathname); }
+  // From Skill Lab ideas (/guides/lifeskills/ideas/): start from "A cool idea" with the idea filled in.
+  const qs = new URLSearchParams(location.search), idea = qs.get("idea");
+  if (idea) {
+    Object.assign(st, { way: "idea", idea: idea.slice(0, 1500), type: "Skill Lab" });
+    if (BANDS.includes(qs.get("band"))) Object.assign(st, { band: qs.get("band"), bandPicked: true });
+    history.replaceState(null, "", location.pathname);
+  }
   const t = new URLSearchParams(location.search).get("t");
   if (t) {
     try { const x = await log.get(t); if (x && x.site === "labs") { turns = x.messages || []; threadId = x.id; lastDraft = [...turns].reverse().find(m => m.role === "assistant")?.content || ""; Object.assign(st, x.meta && x.meta.st ? x.meta.st : {}); firstShown = (x.meta && x.meta.firstShown) || ""; } } catch (e) { console.warn(e); }

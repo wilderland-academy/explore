@@ -106,12 +106,21 @@ function person(email) {
   const k = key(email);
   return S.people[k] || (S.people[k] = { email: k, name: "", band: "", guide: "", uid: "", sid: "", grade: "", parents: [], school: "", picks: [], sparks: [], saved: [], want: [], chats: [], alerts: [], coach: null });
 }
-// A tester's test view (the test guide) sees only the test accounts; everyone else never sees them.
+// A tester's test view (the test guide) sees the test accounts, plus the test band's real students on the roster (view
+// only, so it looks like a real guide's roster); everyone else never sees the test accounts.
 const testWhere = { fieldFilter: { field: { fieldPath: "test" }, op: "EQUAL", value: { booleanValue: true } } };
 const fetchAll = c => S.test ? runQuery({ from: [{ collectionId: c }], where: testWhere }) : list(c).then(xs => xs.filter(x => !x.test));
+const myBand = () => { const b = window.wlBand ? window.wlBand() : ""; return BANDS.includes(b) ? b : ""; };
+const fetchLs = async () => {
+  if (!S.test) return fetchAll("lsStudents");
+  const [t, real] = await Promise.all([fetchAll("lsStudents"), list("lsStudents").catch(() => [])]);
+  return t.concat(real.filter(x => !x.test && x.band === myBand()).map(x => ({ ...x, viewOnly: true })));
+};
+// Real students in a test view can be read, not changed.
+const isViewOnly = sid => { const x = S.ls.find(y => y.id === sid); return !!(x && x.viewOnly); };
 async function loadAll() {
   const [alerts, chats, ls, ai, sites] = await Promise.all([
-    fetchAll("aiAlerts"), fetchAll("aiChats"), fetchAll("lsStudents"), fetchAll("aiStudents"),
+    fetchAll("aiAlerts"), fetchAll("aiChats"), fetchLs(), fetchAll("aiStudents"),
     runQuery({ from: [{ collectionId: "sites", allDescendants: true }], ...(S.test ? { where: testWhere } : {}) }).then(xs => xs.filter(x => !!x.test === !!S.test)).catch(() => [])
   ]);
   S.people = {};
@@ -131,7 +140,9 @@ async function loadAll() {
   alerts.forEach(a => person(a.email).alerts.push(a));
   S.alerts = alerts.sort((a, b) => (a.status === "open" ? 0 : 1) - (b.status === "open" ? 0 : 1) || SEV.indexOf(b.severity) - SEV.indexOf(a.severity) || b.at - a.at);
   S.chats = chats.sort((a, b) => (b.updated || 0) - (a.updated || 0));
-  S.myBands = [...new Set(ls.filter(s => String(s.guide || "").toLowerCase().split(/[\s,;]+/).includes(S.me)).map(s => s.band).filter(Boolean))];
+  // A guide's bands: any student they're named on, plus their own band (WLPeople.STAFF_BANDS, or the test band in a
+  // test view), so a band's guides work with all of its students without filling in every record.
+  S.myBands = [...new Set(ls.filter(s => String(s.guide || "").toLowerCase().split(/[\s,;]+/).includes(S.me)).map(s => s.band).concat(myBand() ? [myBand()] : []).filter(Boolean))];
   S.loaded = true;
   badge();
   if (!S.test) syncParents().catch(e => console.warn("Roster: couldn't update parent access", e));
@@ -227,7 +238,7 @@ function vEdit(sid, preEmail) {
   const pre = preEmail ? S.people[key(preEmail)] || {} : {};
   const v = s || { name: pre.name || "", band: pre.band || "2–4", grade: "", email: preEmail || "", guide: S.me, parents: [] };
   return `<p class="crumb"><a href="${s ? "#s=" + encodeURIComponent(pkey(s)) : "#roster"}">← ${s ? esc(s.name) : "Roster"}</a></p>` +
-    head(s ? "Edit " + esc(s.name) : "Add a student", "Each parent signs in with the exact email you put here and sees only this child: their Life Skills record and the Labs schedule for their band.") +
+    head(s ? "Edit " + esc(s.name) : "Add a student", "Each parent signs in with the exact email you put here and sees only this child: their Life Skills record and the Labs schedule for their band.") + (s && s.viewOnly ? `<p class="note err">This is a real student. In a Test view you can look, but saving is turned off. Try editing Test Student.</p>` : "") +
     `<form class="card form" id="stu" data-sid="${esc(sid || "")}" novalidate>
       <div class="grid2"><label>Full name<input class="in" name="name" maxlength="60" value="${esc(v.name)}" autocomplete="off" required></label>
       <div class="row" style="align-items:flex-end"><label style="flex:1">Band<select class="in" name="band">${BANDS.map(b => `<option value="${b}"${v.band === b ? " selected" : ""}>Grades ${b}</option>`).join("")}</select></label><label style="width:90px">Grade<input class="in" name="grade" maxlength="2" value="${esc(v.grade || "")}" placeholder="3" style="min-width:0"></label></div></div>
@@ -241,6 +252,7 @@ function vEdit(sid, preEmail) {
 }
 async function saveStudent(form) {
   const note = $("#stu-note"), say = t => { note.className = "note err"; note.textContent = t; };
+  if (form.dataset.sid && isViewOnly(form.dataset.sid)) return say("Real students are view-only in a Test view. Try it with Test Student.");
   const sid = form.dataset.sid, s = sid ? S.ls.find(x => x.id === sid) : null, fd = new FormData(form);
   const name = String(fd.get("name") || "").trim().replace(/\s+/g, " "), email = String(fd.get("email") || "").trim().toLowerCase(), guide = emails(fd.get("guide")).join(", "), parents = emails(fd.get("parents"));
   if (name.length < 2) return say("Add the student's full name.");
@@ -262,6 +274,7 @@ async function saveStudent(form) {
   } catch (e) { form.querySelector("[type=submit]").disabled = false; say(e.message); }
 }
 async function deleteStudent(sid, btn) {
+  if (isViewOnly(sid)) { btn.textContent = "Real students are view-only in a Test view."; btn.disabled = true; return; }
   if (!btn.dataset.sure) { btn.dataset.sure = "1"; btn.textContent = "Delete this student and every Life Skills record? Click again."; return; }
   btn.disabled = true;
   try {

@@ -146,7 +146,7 @@
   function banner() {
     if (!view) return "";
     var who = AS[view.as] ? AS[view.as][0] : "Test";
-    return '<div class="wlbar-banner" role="status"><span>🧪 You\'re seeing the site as the <b>' + esc(who.toLowerCase()) + "</b> (grades " + esc(view.band || "2–4") + ")." + (view.as === "guide" ? " Life Skills, the Student Roster and Mr. Fox show only the test accounts, and real Labs are read-only. Other staff tools (Behavior, Field Guide) are the real ones." : " What you do here only touches the test accounts.") + '</span><button type="button" data-wl-as="">Back to my account</button></div>';
+    return '<div class="wlbar-banner" role="status"><span>🧪 You\'re seeing the site as the <b>' + esc(who.toLowerCase()) + "</b> (grades " + esc(view.band || "2–4") + ")." + (view.as === "guide" ? " Life Skills, the Student Roster and the Session room show this band's real students, as its guide would see them. Real student records and Labs are read-only; Session room notes go to your own private notebook. Behavior is the real tool." : " What you do here only touches the test accounts.") + '</span><button type="button" data-wl-as="">Back to my account</button></div>';
   }
   var KEYS = ["lantern-stacks", "wl-picks", "wl-band", "atlas-sparks", "atlas-me", "wl-store", "wl-role"];
   function switchTo(as, band) {

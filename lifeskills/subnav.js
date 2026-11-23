@@ -5,7 +5,7 @@
 // The tracker reads window.WLSubnav and draws its own links, because some of its items are views on the same page.
 (function () {
   var L = {
-    // Labs holds the schedule and the Lab builder (tabs inside it: WLLabTabs below).
+    // Labs holds the schedule, ideas, how Labs run and the Lab builder (tabs inside it: WLLabTabs below).
     guides: [
       ["overview", "Overview", "/guides/lifeskills/#overview"],
       ["challenges", "Challenges", "/guides/challenges/"],
@@ -21,8 +21,10 @@
     ]
   };
   window.WLSubnav = L;
-  // Inside Labs (guides): Schedule and Lab builder. <nav data-ls-labtabs data-current="schedule|build"></nav>
-  var LABTABS = [["schedule", "Schedule", "/guides/lifeskills/#schedule"], ["build", "Lab builder", "/guides/lifeskills/builder/"]];
+  // Inside Labs (guides): Schedule, Ideas (Alpha's workshops to borrow), How Labs run (Alpha's playbook) and the Lab builder.
+  // <nav data-ls-labtabs data-current="schedule|ideas|playbook|build"></nav>
+  var LABTABS = [["schedule", "Schedule", "/guides/lifeskills/#schedule"], ["ideas", "Ideas", "/guides/lifeskills/ideas/"],
+    ["playbook", "How Labs run", "/guides/lifeskills/playbook/"], ["build", "Lab builder", "/guides/lifeskills/builder/"]];
   window.WLLabTabs = function (cur) {
     return LABTABS.map(function (x) { return '<a href="' + x[2] + '"' + (x[0] === cur ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("");
   };

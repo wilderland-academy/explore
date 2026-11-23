@@ -398,14 +398,39 @@ VIEWS.tracker = async (sec, sub) => {
     chips.appendChild(h("button", { class: "chip", "aria-pressed": String(f.mine), text: "My students", onclick: () => { f.mine = !f.mine; local.set("bg-tr-f", f); draw(); } }));
     chips.appendChild(h("button", { class: "chip", "aria-pressed": String(f.due), text: "Due for review", onclick: () => { f.due = !f.due; local.set("bg-tr-f", f); draw(); } }));
     const s = q.value.trim().toLowerCase(); list.innerHTML = "";
-    const shown = all.filter(x => (f.band === "all" || x.band === f.band) && (!f.mine || x.guide === me()) && (!f.due || daysAgo(x.reviewedAt) === null || daysAgo(x.reviewedAt) >= 7) && (!s || (x.name || "").toLowerCase().includes(s)));
+    const shown = all.filter(x => (f.band === "all" || x.band === f.band) && (!f.mine || x.guide === me() || (myKey(true) !== "all" && x.band === myKey(true))) && (!f.due || daysAgo(x.reviewedAt) === null || daysAgo(x.reviewedAt) >= 7) && (!s || (x.name || "").toLowerCase().includes(s)));
     if (!shown.length) list.appendChild(h("p", { class: "dim", text: all.length ? "No students match." : "No students yet. Add your students to start." }));
     shown.forEach(x => { const d = daysAgo(x.reviewedAt); list.appendChild(h("button", { class: "kid", onclick: () => location.hash = "#tracker/" + x.id }, [h("b", { text: x.name }), h("span", { class: "small", text: (x.band || "") + " · " + (x.guideName || x.guide || "no guide") }), pills(x), h("span", { class: "small" }, [h("span", { class: "dot" + (d !== null && d < 7 ? " ok" : "") }), d === null ? "Never reviewed" : d === 0 ? "Reviewed today" : "Reviewed " + d + " days ago"])])); });
   };
   q.oninput = draw;
   try { all = await loadStudents(true); } catch (e) { list.appendChild(h("p", { class: "dim", text: "Couldn't load students. The database rules for the tracker may not be published yet." })); return; }
   draw();
+  rosterSync(sec, all, list);
 };
+// Students on the Student Roster (lsStudents) who aren't in the tracker yet: one tap adds them at Level 3, with their
+// band and guides from the roster (or the band's guides from WLPeople.STAFF_BANDS). Matched on the roster id, the full
+// name, or first name plus last initial, so a student entered by hand isn't added twice.
+const KEY_OF = { "K–1": "K-1", "2–4": "2-4", "5–8": "5-8" };
+const nameKeys = n => { const w = String(n || "").toLowerCase().replace(/[^a-z\s'-]/g, " ").split(/\s+/).filter(Boolean); return w.length ? [w.join(" "), w[0] + " " + (w[1] || "").slice(0, 1)] : []; };
+async function rosterSync(sec, all, before) {
+  let roster = [];
+  try { const snap = await getDocs(collection(db, "lsStudents")); snap.forEach(d => roster.push({ id: d.id, ...d.data() })); } catch (e) { return; }
+  const have = new Set(), ids = new Set(all.map(x => x.lsId).filter(Boolean));
+  all.forEach(x => nameKeys(x.name).forEach(k => have.add(k)));
+  const missing = roster.filter(r => !r.test && !r.archived && KEY_OF[r.band] && !ids.has(r.id) && !nameKeys(r.name).some(k => have.has(k)));
+  if (!missing.length) return;
+  const note = h("p", { class: "small" });
+  const btn = h("button", { class: "btn", text: "Add them at Level 3" });
+  btn.onclick = async () => {
+    btn.disabled = true; note.textContent = "Adding…"; let n = 0;
+    for (const r of missing) {
+      const g = String(r.guide || "").split(/[\s,;]+/).filter(Boolean)[0] || Object.entries((window.WLPeople || {}).STAFF_BANDS || {}).filter(([, b]) => b === r.band).map(([e]) => e)[0] || "";
+      try { await addDoc(collection(db, "flStudents"), { name: String(r.name).slice(0, 60), band: KEY_OF[r.band], lsId: r.id, guide: g, guideName: g ? g.split("@")[0].replace(/^./, c => c.toUpperCase()) : "", levels: { academic: 3, walk: 3, table: 3, field: 3 }, pending: null, reviewedAt: null, updatedAt: Date.now(), created: Date.now(), createdBy: me(), archived: false }); n++; } catch (e) { }
+    }
+    cache.students = null; note.textContent = "Added " + n + ". Reloading…"; setTimeout(route, 600);
+  };
+  sec.insertBefore(card("M-edge noprint", [h("p", { text: missing.length + (missing.length === 1 ? " student on the Student Roster isn't" : " students on the Student Roster aren't") + " in the tracker yet: " + missing.slice(0, 8).map(r => String(r.name).split(" ")[0]).join(", ") + (missing.length > 8 ? "…" : "") + "." }), h("div", { class: "row" }, [btn]), note]), before);
+}
 async function addView(sec) {
   back(sec, "#tracker", "Tracker");
   head(sec, "Add <span>students</span>", "Everyone starts at Level 3 in all four domains.");

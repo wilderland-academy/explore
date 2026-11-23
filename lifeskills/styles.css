@@ -207,7 +207,7 @@ a.wl-ch{color:var(--forest);text-decoration:underline;text-underline-offset:2px}
 
 /* Life Skill Labs schedule */
 /* Labs (guides): Schedule | Lab builder */
-.labtabs{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--mist)}
+.labtabs{display:inline-flex;flex-wrap:wrap;gap:4px;padding:4px;border-radius:22px;background:var(--mist)}
 .labtabs a{padding:8px 16px;border-radius:999px;color:var(--slate);text-decoration:none;font-weight:600;font-size:15px;line-height:20px}
 .labtabs a:hover{color:var(--ink)}
 .labtabs a[aria-current=page]{background:var(--white);color:var(--forest);box-shadow:0 1px 3px #0000001f}
