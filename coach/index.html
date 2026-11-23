@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="foxhalf">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,6 +15,23 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.55 Inter,system-ui,sans-serif}
 main{max-width:980px;margin:0 auto;padding:36px 18px 80px;display:flex;flex-direction:column;gap:28px}
+/* Half the page is Mr. Fox (the dock, on the right), the other half the instructions. coach.js draws the chat into the
+   dock with WLCoach.home({ dock }); these rules turn its side panel into a column of the page. */
+html.foxhalf{--wlc-w:max(420px,50vw)}
+html.wlc-docked body.foxbody{margin-right:0;padding-bottom:0}
+.foxpage{display:grid;grid-template-columns:minmax(0,1fr) var(--wlc-w);align-items:start}
+.foxpage>main{max-width:680px;width:100%}
+.foxdock{position:sticky;top:0;height:100vh;border-left:1px solid var(--line)}
+.foxdock .wlc{position:relative;inset:auto;width:100%;height:100%;transform:none;transition:none;z-index:auto;border-left:0;box-shadow:none}
+.foxdock .wlc-size{display:none}
+.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.steps li b{display:block}
+@media (max-width:860px){
+  .foxpage{display:flex;flex-direction:column}
+  .foxdock{order:-1;position:relative;height:min(78vh,640px);border-left:0;border-bottom:1px solid var(--line)}
+  .foxdock .wlc{top:auto;left:auto;border-radius:0;border-top:0}
+  .foxdock .wlc .wlc-head{border-radius:0}
+}
 h1,h2{font-family:"Uncut Sans",Inter,system-ui,sans-serif;letter-spacing:-.02em;line-height:1.12;margin:0}
 h1{font-size:clamp(30px,5vw,46px)} h2{font-size:24px}
 p{margin:0}
@@ -54,20 +71,24 @@ p{margin:0}
 .cards{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 </style>
 </head>
-<body>
+<body class="foxbody">
 <div class="wlbar" data-wlnav="students" data-current="coach"></div><script src="/wlnav.js"></script>
+<div class="foxpage">
 <main>
   <header>
     <h1><span class="fox" aria-hidden="true">🦊</span> Mr. Fox</h1>
-    <p class="lede">Help finding and doing challenges, Life Skill Labs and projects, and help working out a conflict. It asks questions and gives hints so you get better, and it never does the work for you. It opens beside the page, so you can see your work and the coach at the same time.</p>
+    <p class="lede">Your AI coach for challenges, Life Skill Labs, projects and working out a conflict. It asks questions and gives hints so you get better, and it never does the work for you.</p>
   </header>
 
-  <div class="cards">
-    <button class="card lead" type="button" data-lesson><span class="k">Start here</span><b>Learn to use your coach</b><p>A 3-minute chat about what AI is, what it gets wrong, and how to ask good questions.</p><i>Start the lesson →</i></button>
-    <a class="card" href="/challenges/?coach=find"><span class="k">Challenges</span><b>Find a challenge with me</b><p>Tell the coach what you're into and it suggests challenges that fit. Tap one to see it. Then plan it, practice it, get unstuck.</p><i>Open Challenges with the coach →</i></a>
-    <a class="card" href="/projects/?coach=find"><span class="k">Projects</span><b>Find a project idea with me</b><p>Tell the coach what you love or wish existed, and it points you to kinds of projects on the map, with an idea to start this week.</p><i>Open Projects with the coach →</i></a>
-    <button class="card" type="button" data-conflict><span class="k">Conflicts</span><b>Work out a conflict</b><p>Someone bugging you, a fight with a friend, or something you said? Calm down, see their side, and plan what to say, the Wilderland way.</p><i>Talk it through →</i></button>
-  </div>
+  <section>
+    <h2 style="margin-bottom:12px">How to talk with Mr. Fox</h2>
+    <ol class="steps">
+      <li><b>Pick what you want to work on.</b>Mr. Fox is right here on this page. New to it? Start with "Learn how to use me."</li>
+      <li><b>Say what you're working on, what you tried, and what help you want.</b>"I'm on the knot challenge, my bowline keeps slipping, can you give me a hint?" gets a much better answer than "help."</li>
+      <li><b>Do the next step yourself.</b>Try what it suggests, then come back and tell it what happened.</li>
+      <li><b>Working on a challenge or a project?</b>Open it and tap Ask Mr. Fox, so you can see your work and the coach side by side.</li>
+    </ol>
+  </section>
 
   <section class="acad" id="acad">
     <h2>What about academics?</h2>
@@ -102,6 +123,8 @@ p{margin:0}
   </section>
   <p class="small">For parents: <a href="/parents/ai/">how Mr. Fox keeps students safe</a>.</p>
 </main>
+<div class="foxdock" id="foxdock" aria-label="Mr. Fox"></div>
+</div>
 <script type="module" src="/coach/coach.js"></script>
 <script type="module">
 const FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
@@ -127,7 +150,7 @@ async function load(r) {
       .filter(c => !!c.test === isTest).sort((a, b) => (b.updated || 0) - (a.updated || 0));
     const staffNote = r && r.role === "staff" ? '<p class="small" style="margin-bottom:10px">You are staff, so these are your own test chats. Every student conversation is on <a href="/guides/roster/">Guides › Student Roster</a>.</p>' : "";
     box.innerHTML = staffNote + (chats.length ? '<ul class="chats">' + chats.map(c => `<li><button type="button" data-chat="${c.id}"><span class="ic" aria-hidden="true">${{ project: "P", "find-project": "P", lesson: "?", academic: "A", conflict: "🤝", "find-challenge": "C" }[c.kind] || "C"}</span><span class="tx"><span class="tt">${esc(c.topicTitle || ({ lesson: "How to use your coach", academic: "Academics", conflict: "Working out a conflict", "find-challenge": "Finding a challenge", "find-project": "Finding a project" }[c.kind] || "Chat"))}</span><span class="ls">You: ${esc(c.last || "")}</span></span><span class="dt">${esc(when(c.updated || c.created || Date.now()))}</span></button></li>`).join("") + "</ul>"
-      : '<p class="empty">No chats yet. Start with the lesson above, or open a challenge and tap Ask Mr. Fox.</p>');
+      : '<p class="empty">No chats yet. Pick something to work on with Mr. Fox, or open a challenge and tap Ask Mr. Fox.</p>');
   } catch (e) { box.innerHTML = '<p class="msg">Couldn\'t load your chats. Reload the page to try again.</p>'; }
 }
 document.addEventListener("click", e => {
@@ -161,7 +184,12 @@ async function pilot(r) {
     document.getElementById("acad-body").innerHTML = `<p class="small" style="margin:6px 0 12px;max-width:66ch">You're in the academics pilot. The coach helps you learn it: a hint, a question that gets you thinking, the basics explained another way, or where to learn more. It won't give you the answer or help on a test, and your guides read every academics chat. Pick a subject:</p><div class="subj">${SUBJECTS.map(x => `<button class="chip" type="button" data-acad="${x}">${x}</button>`).join("")}</div>`;
   } catch (e) { /* stays locked */ }
 }
-document.addEventListener("wl-role", e => { load(e.detail); pilot(e.detail); });
+// Mr. Fox, open in the dock. Redrawn when sign-in settles, unless a conversation is already going.
+const dock = document.getElementById("foxdock");
+function fox() { if (window.WLCoach && (!window.WLCoach.kind() || window.WLCoach.kind() === "home")) window.WLCoach.home({ dock }); }
+fox();
+document.addEventListener("wl-auth", fox);
+document.addEventListener("wl-role", e => { load(e.detail); pilot(e.detail); fox(); });
 document.addEventListener("wl-coach-closed", () => load(window.wlRole));
 if (window.wlRole !== undefined) { load(window.wlRole); pilot(window.wlRole); }
 setTimeout(() => { if (box.textContent.trim() === "Loading…" && !(window.wlFirebase && window.wlFirebase.auth.currentUser)) load(null); }, 4000);

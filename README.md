@@ -339,3 +339,19 @@ the `PAGES` list at the top of `/search.js`.
   new research on student motivation; we adapt, as we ask students to), and that the Mentor Mindset is obligatory for every
   guide, Field and Academic. The text is `WHY` at the top of `fieldguide/data.js`, so Trail Partner reads it too. Don't describe
   it as optional or "not homework". The Guides home card says "Required training for every guide."
+
+## Navigation and layout pass (Nov 23, 2026)
+- **Session Room tab.** The Guides bar has a Session Room tab (`/fieldguide/#sessions`). It lights up whenever the Field
+  Guide shows the Session Room, and Mentor Mindset lights up for the other stops (`curTab()` in `/wlnav.js`).
+- **"More".** When a site has more tabs than fit beside search, Trail Partner and the account chip, the last ones fold
+  into a More menu (`fit()` in `/wlnav.js`), never the current page's tab. Phones still use ☰.
+- **Section menus on the left.** Mentor Mindset, Behavior, At Home and Our Approach show their sections down the left at
+  1000px and wider (`.trail.wlside`, wrapped by `/wlnav.js` in `.wlside-wrap`; styles in `/wl.css`). Narrower screens keep
+  the row; phones keep "Section ▾". Add `wlside` to another page's `.trail` (followed by its `<main>`) to give it the same.
+- **Mr. Fox page.** `/coach/` is half instructions, half Mr. Fox (`WLCoach.home({ dock })` in `/coach/coach.js`). Mr. Fox
+  starts on a home screen (learn how to use me, find a challenge, find a project idea, work out a conflict); × in a
+  conversation goes back there. On phones the chat comes first.
+- **One Life Skills header.** The tracker, Challenges map, Lab builder, Ideas and How Labs run (Guides and Parents) share
+  `<header class="nav wlsub">` in `/wl.css`: same height, title and links, so nothing shifts between them. The tracker's
+  account menu moved into the top bar, where the sign-in chip is everywhere else, and Parents › Challenges now shows the
+  chip too. The students' tracker and Challenges keep their own header.

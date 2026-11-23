@@ -154,3 +154,51 @@ body[data-gated].wl-pending .wl-wait{display:block}
   nav.wl-collapsible.open{display:flex!important;flex-direction:column;flex-wrap:nowrap!important;gap:4px!important;overflow:visible!important;order:4;width:100%;margin:6px 0 0!important}
   nav.wl-collapsible.open a,nav.wl-collapsible.open button{display:flex;align-items:center;min-height:44px;white-space:normal;border-radius:10px}
 }
+
+/* ---------- Section menus on the left (Mentor Mindset, Behavior, At Home, Our Approach) ----------
+   /wlnav.js wraps <div class="trail wlside"> and its <main> in .wlside-wrap. On wide screens the sections run down the
+   left; each page keeps its own colors (its .trail background and its current-section highlight). Narrower screens keep
+   the row, and phones the "Section ▾" button. */
+@media (min-width:1000px){
+  .wlside-wrap{display:grid;grid-template-columns:232px minmax(0,1fr);align-items:start}
+  .wlside-wrap:has(> .trail[hidden]){grid-template-columns:minmax(0,1fr)}
+  .wlside-wrap > .trail{position:sticky;top:0;height:100vh;overflow-y:auto;z-index:20;border-bottom:0;border-right:1px solid rgba(128,128,128,.28);backdrop-filter:none;-webkit-backdrop-filter:none;scrollbar-width:thin}
+  .wlside-wrap > .trail .in{display:flex;flex-direction:column;align-items:stretch;gap:14px;padding:0}
+  .wlside-wrap > .trail nav{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:2px;padding:18px 12px;overflow:visible;flex:none}
+  .wlside-wrap > .trail nav a{display:block;white-space:normal;line-height:1.3;text-align:left;border-radius:8px;padding:9px 12px;flex:none}
+  .wlside-wrap > .trail nav a:not([aria-current]){border-color:transparent;background:transparent}
+  .wlside-wrap > .trail nav a:not([aria-current]):hover{border-color:transparent;background:rgba(128,128,128,.14)}
+  .wlside-wrap > .trail .in > :not(nav){padding:0 12px 18px}
+  .wlside-wrap > main{min-width:0}
+}
+@media print{.wlside-wrap{display:block}}
+
+/* ---------- The Life Skills sub-bar (Guides and Parents) ----------
+   The slim forest bar under the top bar, the same on the tracker, the Challenges map and the Lab builder:
+   <header class="nav wlsub">. Same height, title, link style and spacing everywhere, so nothing shifts between them. */
+header.nav.wlsub{background:#015640;color:#f0f2f0}
+header.nav.wlsub .nav-in,header.nav.wlsub .nav-inner{display:flex;align-items:center;flex-wrap:nowrap;gap:12px 28px;min-height:56px;max-width:1180px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+header.nav.wlsub .brand{display:flex;align-items:center;margin:0 auto 0 0;padding:0;color:#fff;text-decoration:none;font:700 20px/1 "Uncut Sans","WL Uncut",Inter,system-ui,sans-serif;letter-spacing:-.4px;flex:none}
+header.nav.wlsub .brand img{display:none}
+header.nav.wlsub .brand span{border:0;padding:0;font:inherit;letter-spacing:inherit}
+header.nav.wlsub .nav-links{display:flex;flex-wrap:nowrap;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+header.nav.wlsub .nav-links a{color:#c9c9c9;text-decoration:none;font:400 16px/1.2 "Uncut Sans",Inter,system-ui,sans-serif;padding:8px 12px;border-radius:8px;white-space:nowrap}
+header.nav.wlsub .nav-links a:hover{color:#fff;text-decoration:none}
+header.nav.wlsub .nav-links a[aria-current="page"]{color:#121213;background:#d5f367;text-decoration:none}
+@media (max-width:760px){header.nav.wlsub .nav-in,header.nav.wlsub .nav-inner{min-height:48px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}}
+/* The tracker's account menu, moved into the top bar so it sits where the sign-in chip is on every other page. */
+.wlbar .acct{position:relative;flex:none}
+.wlbar .acct > button{white-space:nowrap;display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;border-radius:999px;padding:7px 12px 7px 7px;background:#d5f367;color:#0b2b20;font:600 14px/1 Inter,"Uncut Sans",system-ui,sans-serif;letter-spacing:0;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.wlbar .acct > button .av{width:24px;height:24px;border-radius:50%;background:#015640;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
+.wlbar .acct .acct-menu{top:calc(100% + 8px);z-index:60}
+@media (max-width:640px){.wlbar .acct > button > span:nth-child(2){display:none}.wlbar .acct > button{padding:6px}}
+
+/* "More": tabs that don't fit the row on this screen (/wlnav.js fit()). Phones use the ☰ menu instead. */
+.wlbar .wlbar-sites a[hidden]{display:none}
+.wlbar .wlbar-more{position:relative;flex:none}
+.wlbar .wlbar-more[hidden]{display:none}
+.wlbar .wlbar-more>button{display:inline-flex;align-items:center;gap:4px;background:none;border:0;cursor:pointer;color:#fff;opacity:.8;font-family:inherit;font-weight:600;font-size:15px;line-height:1;padding:0 12px;min-height:36px;border-radius:999px;white-space:nowrap}
+.wlbar .wlbar-more>button:hover,.wlbar .wlbar-more>button[aria-expanded="true"]{opacity:1;background:rgba(255,255,255,.1)}
+.wlbar .wlbar-more>button:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
+.wlbar .wlbar-more .wlbar-menu{left:auto;right:0}
+@media (max-width:760px){.wlbar .wlbar-more{display:none !important}}
