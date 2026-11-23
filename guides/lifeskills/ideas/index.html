@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Skill Lab ideas · Labs · Wilderland staff</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#015640">
+<link rel="preload" href="/challenges/fonts/uncut-sans-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/challenges/fonts/uncut-sans-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/wl.css">
+<link rel="stylesheet" href="/lifeskills/styles.css">
+<style>
+.nav-in{min-height:56px}
+.brand span{border-left:0;padding-left:0}
+@media (max-width:760px){.nav-in{min-height:48px;padding-top:8px}}
+main{padding-bottom:64px}
+.gate2{max-width:520px;margin:10vh auto 0;text-align:center}
+.lbl{font:700 12px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-muted);min-width:64px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.filters{display:flex;flex-direction:column;gap:12px;background:var(--mist);border-radius:var(--radius-lg);padding:16px}
+.filters .chip{background:var(--white)} .filters .chip[aria-pressed=true]{background:var(--forest);color:var(--white)}
+.frow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.frow input,.frow select{width:100%;font:400 16px/24px var(--font-sans);color:var(--ink);background:var(--white);border:1px solid var(--silver);border-radius:var(--radius-sm);padding:9px 12px}
+.sel3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.sel3{grid-template-columns:1fr}.lbl{min-width:0;width:100%}}
+.ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.idea{background:var(--white);border:1px solid #4d4d5126;border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.idea h3{font:700 19px/25px var(--font-sans);color:var(--fg-brand)}
+.idea .d{line-height:23px;overflow-wrap:anywhere}
+.idea .n{font-size:14.5px;line-height:21px;background:var(--sun-tint);border-radius:6px;padding:6px 9px}
+.idea-top{display:flex;align-items:center;gap:7px;font:600 13px/1 var(--font-sans);color:var(--fg-muted)}
+.idea-top .sw{width:10px;height:10px;border-radius:50%}
+.idea .tags{display:flex;flex-wrap:wrap;gap:5px}
+.idea .tag{background:var(--mist)}
+.idea .src{font-size:13px;line-height:18px;color:var(--fg-muted)}
+.idea .btn{margin-top:auto;align-self:flex-start}
+</style>
+</head>
+<body>
+<div class="wlbar" data-wlnav="guides" data-current="lifeskills"></div><script src="/wlnav.js"></script>
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="/guides/lifeskills/"><span>Life Skills</span></a>
+    <nav class="nav-links" aria-label="Life Skills" data-ls-subnav="guides" data-current="labs"></nav>
+  </div>
+</header>
+<div class="wrap labtabs-wrap"><nav data-ls-labtabs data-current="ideas"></nav></div><script src="/lifeskills/subnav.js"></script>
+<main id="app"><p class="loading">Loading…</p></main>
+<script src="/challenges/data.js"></script>
+<script type="module" src="/auth.js" data-site="labbuilder"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

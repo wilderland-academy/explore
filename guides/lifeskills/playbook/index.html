@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Labs run · Labs · Wilderland staff</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#015640">
+<link rel="preload" href="/challenges/fonts/uncut-sans-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/challenges/fonts/uncut-sans-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/wl.css">
+<link rel="stylesheet" href="/lifeskills/styles.css">
+<style>
+.nav-in{min-height:56px}
+.brand span{border-left:0;padding-left:0}
+@media (max-width:760px){.nav-in{min-height:48px;padding-top:8px}}
+main{padding-bottom:64px}
+.pb{max-width:820px}
+.pb h2{font:700 26px/32px var(--font-sans);letter-spacing:-.5px;color:var(--fg-brand);margin-top:12px}
+.pb h3{font:700 19px/25px var(--font-sans);color:var(--ink)}
+.pb p,.pb li{line-height:26px}
+.pb ol,.pb ul{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.rules{counter-reset:r;list-style:none;padding:0 !important}
+.rules li{counter-increment:r;background:var(--white);border-radius:var(--radius-md);padding:14px 16px 14px 56px;position:relative;border:1px solid #4d4d5122}
+.rules li::before{content:counter(r);position:absolute;left:14px;top:13px;width:28px;height:28px;border-radius:50%;background:var(--lime);font:700 15px/28px var(--font-sans);text-align:center;color:var(--forest)}
+.rules b{display:block;font-size:17px;margin-bottom:2px}
+.ex{color:var(--fg-muted);font-size:15px;line-height:22px;display:block;margin-top:4px}
+.sched{border-collapse:collapse;width:100%;max-width:520px;font-size:15px}
+.sched td{padding:7px 10px;border-bottom:1px solid #4d4d5122;vertical-align:top}
+.sched td:first-child{white-space:nowrap;color:var(--fg-muted);font-variant-numeric:tabular-nums}
+.sched tr.hl td{background:var(--lime-tint);font-weight:600}
+.callout{background:var(--sun-tint);border-radius:var(--radius-md);padding:14px 16px;line-height:24px}
+.toc{display:flex;flex-wrap:wrap;gap:6px}
+.toc a{background:var(--mist);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:600;color:var(--forest);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wlbar" data-wlnav="guides" data-current="lifeskills"></div><script src="/wlnav.js"></script>
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="/guides/lifeskills/"><span>Life Skills</span></a>
+    <nav class="nav-links" aria-label="Life Skills" data-ls-subnav="guides" data-current="labs"></nav>
+  </div>
+</header>
+<div class="wrap labtabs-wrap"><nav data-ls-labtabs data-current="playbook"></nav></div><script src="/lifeskills/subnav.js"></script>
+<main>
+  <div class="wrap page-head">
+    <h1>How Labs run</h1>
+    <p>How Alpha School runs its afternoon life-skills workshops, so our Skill Labs can borrow what works. This page keeps only what we're fairly confident is Alpha's own practice, from its schedule, calendar, Test2Pass post, workshop grid and FAQ. Research findings and our own guesses are left out.</p>
+  </div>
+  <section class="band"><div class="wrap stack pb">
+    <nav class="toc" aria-label="On this page"><a href="#shape">The shape</a><a href="#who">Who does what</a><a href="#rules">Designing one</a><a href="#notyet">When a child doesn't pass</a><a href="#keep">Keep or replace</a><a href="#skip">What we leave out</a></nav>
+
+    <h2 id="shape">The shape of a workshop</h2>
+    <ul>
+      <li><b>One workshop runs one session.</b> Alpha says most run for a full eight-week session. Its year has five sessions of about 6 to 9 weeks, each followed by a break week, and a new slate of workshops starts each session. A few run all year (the 5th-grade food truck did).</li>
+      <li><b>Every afternoon.</b> On Alpha's sample schedule, workshops take the whole afternoon, 12:30 to 3:15, every day.</li>
+      <li><b>By grade band.</b> Each band runs its own slate of 2 to 6 workshops at once. In one Austin session that meant 18 workshops across five bands.</li>
+      <li><b>It ends in a Test2Pass:</b> one public, pass-or-not-yet test of the skill, in front of real people.</li>
+    </ul>
+    <table class="sched" aria-label="A day at Alpha Austin">
+      <tr><td>8:45–9:00</td><td>Morning launch</td></tr>
+      <tr><td>9:00–11:30</td><td>Academics (2 Hour Learning)</td></tr>
+      <tr><td>11:30–12:30</td><td>Lunch and recess</td></tr>
+      <tr class="hl"><td>12:30–3:15</td><td>Workshop time</td></tr>
+      <tr><td>3:15–3:30</td><td>Individual goal checks</td></tr>
+      <tr><td>3:30–4:00</td><td>One-on-one meetings</td></tr>
+    </table>
+
+    <h2 id="who">Who does what</h2>
+    <p><b>Guides own the frame.</b> Below high school, guides design the workshop, set its Test2Pass, recruit outside experts and run the sessions. Alpha hires guides for their ability to plan engaging life-skills workshops.</p>
+    <p><b>Students own the real work inside it.</b> Fifth graders on the food truck cook, serve guests, manage their schedules and budget on their own. Middle schoolers cold-call businesses and negotiate deals. Second graders call a friend's parent to set up their own playdate.</p>
+    <p><b>Choice lives inside the workshop.</b> We found no Alpha source saying students pick which workshop they take; workshops are assigned by grade band. What students choose is how they do the work.</p>
+    <p><b>Bring in outside experts.</b> Alpha uses a climbing gym, a STEM center, snowboard coaches, a sailor who judges the sailing test and engineering judges. The expert makes the test credible.</p>
+
+    <h2 id="rules">Designing one: Alpha's rules</h2>
+    <p>Every workshop Alpha describes is built backward from one act a child does in public that either passes or doesn't.</p>
+    <ol class="rules">
+      <li><b>Aim at one life skill.</b> Alpha uses five (teamwork and leadership, storytelling and public speaking, entrepreneurship and financial literacy, relationships and socialization, grit and hard work). We use our eight.</li>
+      <li><b>Write it as an “I can.”</b> The benchmark is an observable act. Alpha's tests must not depend on a teacher's subjective judgment.
+        <span class="ex">K–1 example: “I can play a game with my friends to the end without arguing or crying.”</span></li>
+      <li><b>Real stakes, real audience.</b> Alpha's line is “learn it, then live it.” The test happens in front of real people with something real riding on it.
+        <span class="ex">Real money (one middle-school business had to earn back a $1,500 investment and clear $1,000 profit), a gallery show, a local news segment, an audience of 100+.</span></li>
+      <li><b>Do the thing, don't describe it.</b> The test is the child doing it: selling, sailing, speaking, climbing. Not a poster about it.</li>
+      <li><b>Make the goal big, slightly impossible.</b> Ride 5 miles at age 5. Climb a 40-foot wall solo. Sail to the Bahamas. Alpha's 2nd-grade challenge set is called “Five Impossible Things.”</li>
+      <li><b>Measure the soft skill with a number.</b> In Alpha's escape room the team's talk is scored for uplifting language (target 80 to 90%). Put a count, a time or a share on the skill you're building.
+        <span class="ex">Alpha uses mics and AI scoring for this. We'd use a guide's tally, since recording children needs a release on file.</span></li>
+      <li><b>Some tests pass or fail as a team.</b> For Alpha's middle-school Spartan Race: if they leave anyone behind, they don't pass.</li>
+      <li><b>Bring outside judges.</b> An expert who isn't the guide gives the pass its weight.</li>
+    </ol>
+    <p><a class="btn go" href="/guides/lifeskills/ideas/">Browse Alpha's 171 workshops</a> <a class="btn" href="/guides/lifeskills/builder/">Build a Lab</a></p>
+
+    <h2 id="notyet">When a child doesn't pass</h2>
+    <ul>
+      <li><b>It's a retry, never a grade.</b> Alpha's stated rule: the student works with their guide on a specific plan of action, then either retries the Test2Pass or builds the skill another way.</li>
+      <li><b>Retries aren't rationed.</b> Alpha High's Bootcamp gives unlimited tries until a student shows mastery.</li>
+      <li><b>Failing out loud is normal.</b> Alpha classes have a “Fail button” students press when they mess up, and the whole class cheers. The PreK LEGO benchmark is “I can fail over 20 times without giving up.”</li>
+    </ul>
+
+    <h2 id="keep">Keep it or replace it</h2>
+    <p>Alpha keeps the workshops that spark students' interest and replaces the less engaging ones, so what kids love shapes next session's slate. Its north star is kids who would choose school over vacation.</p>
+
+    <h2 id="skip">What we leave out</h2>
+    <div class="callout">Two parts of Alpha's system sit outside Lab design, so they aren't on this page as directions: students earn tokens (Alpha Bucks), and the afternoon is earned by finishing academics. Our Lab rules already say no prizes or rewards for passing. Some Alpha High Bootcamp tests that critics flagged (a heart-rate test while watching parents' criticism, failing a job for complaining) aren't for our ages either.</div>
+    <p class="small muted">Source: “How Alpha Runs Workshops: A Playbook for Wilderland” (Oct 1, 2026), which re-checked Alpha's sample schedule, 2025–26 calendar, Test2Pass post, workshop grid, FAQ and Session 3 post. Nothing here has been independently evaluated; it's how Alpha says it works.</p>
+  </div></section>
+</main>
+<script type="module" src="/auth.js" data-site="labbuilder"></script>
+</body>
+</html>
