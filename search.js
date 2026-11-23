@@ -57,6 +57,12 @@ const PAGES = [
   ["All Mr. Fox conversations", "/guides/roster/#chats", "g", "chats conversations"],
   ["Parent Comms", "/guides/parents/", "g", "parent communication email draft"],
   ["Staff Handbook", "/guides/handbook/", "g", "handbook policies"],
+  ["Policies & Resources", "/guides/policies/", "g", "policy policies forms resources"],
+  ["Elective Time Off form", "/guides/policies/", "g", "pto time off day off vacation leave coverage form"],
+  ["Role Clarity and Updates", "/guides/policies/#role-clarity", "g", "roles who owns what responsibilities coverage spending amazon"],
+  ["Guide Standards & Expectations", "/guides/policies/#guide-standards", "g", "standards daily rhythm schedule pilot expectations"],
+  ["Two-Adult Minimum", "/guides/policies/#two-adult", "g", "two adult ratio supervision coverage one-on-one field trip"],
+  ["Raising Concerns", "/guides/policies/#raising-concerns", "g", "concern complaint whistleblower retaliation track b child safety"],
   ["Trail Partner and your conversations", "/guides/partner/", "g", "history saved drafts conversations chats mentor ai"],
   ["Parents home", "/parents/", "p", "families"],
   ["Wilderland at Home", "/parents/athome/", "p", "home routine schedule part time"],
@@ -71,8 +77,8 @@ const PAGES = [
 const SITES_FOR = { staff: "hsgp", parent: "hsp", student: "hs", anon: "hsp" };
 
 // ---------- the index, built in pieces as each source arrives ----------
-const IX = { pages: [], challenges: [], books: [], projects: [], students: [], labs: [], behavior: [], handbook: [] };
-const GROUPS = [["pages", "Pages", 6], ["students", "Students", 6], ["challenges", "Challenges", 8], ["labs", "Labs", 5], ["handbook", "Staff Handbook", 6], ["behavior", "Behavior Guide", 5], ["books", "Books", 6], ["projects", "Project ideas", 6]];
+const IX = { pages: [], challenges: [], books: [], projects: [], students: [], labs: [], behavior: [], handbook: [], policies: [] };
+const GROUPS = [["pages", "Pages", 6], ["students", "Students", 6], ["challenges", "Challenges", 8], ["labs", "Labs", 5], ["handbook", "Staff Handbook", 6], ["policies", "Policies", 6], ["behavior", "Behavior Guide", 5], ["books", "Books", 6], ["projects", "Project ideas", 6]];
 let loading = 0, built = false;
 const add = (g, items) => { IX[g] = items; draw(); };
 async function job(f) { loading++; draw(); try { await f(); } catch (e) { console.warn("Search:", e); } loading--; draw(); }
@@ -162,6 +168,19 @@ function build() {
         if (m) { cur = { n: m[1], t: m[2].trim(), body: [] }; out.push(cur); } else if (cur) cur.body.push(line);
       });
       add("handbook", out.map(s => ({ t: s.n + ". " + s.t, u: "/guides/handbook/#s" + s.n, sub: "Staff Handbook", body: s.body.join(" ").replace(/\s+/g, " ") })));
+      // The other staff policies (Policies & Resources), section by section. Keep in step with DOCS in /guides/policies/.
+      const slug = s => String(s).toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+      const pol = await Promise.all([["role-clarity", "policy-role-clarity", "Role Clarity"], ["guide-standards", "policy-guide-standards", "Guide Standards"], ["two-adult", "policy-two-adult", "Two-Adult Minimum"], ["raising-concerns", "policy-raising-concerns", "Raising Concerns"]].map(async ([id, key, title]) => {
+        const r = await fetch(relay, { method: "POST", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: JSON.stringify({ mode: "doc", key }) }).catch(() => null);
+        if (!r || !r.ok) return [];
+        const secs = []; let c = null;
+        ((await r.json()).text || "").split("\n").forEach(line => {
+          const m = /^#{2,3}\s+(.+)$/.exec(line.trim());
+          if (m) { c = { t: m[1].trim(), body: [] }; secs.push(c); } else if (c) c.body.push(line);
+        });
+        return secs.map(s => ({ t: s.t, u: "/guides/policies/#" + id + "--" + slug(s.t), sub: title, body: s.body.join(" ").replace(/[*|#]+/g, " ").replace(/\s+/g, " ") }));
+      }));
+      add("policies", pol.flat());
     });
   }
 }
