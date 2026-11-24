@@ -81,7 +81,7 @@ const fold = (summary, kids, open) => { const d = h("details", { class: "fold" }
 const QUAD = { E: ["Enforcer", "High standards, low support", "“I set the bar. Reaching it is your problem.”", "Gets compliance while you're watching. Costs trust, and the student learns that you think little of them."], M: ["Mentor", "High standards, high support", "“The bar is high, I know you can reach it, and I'm in it with you.”", "The student hears respect. Hard feedback lands as a compliment."], A: ["Apathetic", "Low standards, low support", "“Whatever.”", "Checked out. Rare among people who chose this work."], P: ["Protector", "Low standards, high support", "“This is too much for you. Let me take it off your plate.”", "Feels kind in the moment. The student hears that you doubt them, and loses the chance to find out they can."] };
 const RENDER = {
   text: s => s.text.map(para),
-  map: () => [h("p", { text: "Each step you finish opens its part of the Guides site. Here's what's waiting:" }), h("div", { class: "list" }, STEPS.filter(x => x.unlocks).map(x => card([h("b", { text: x.icon + " " + x.name }), h("p", { class: "dim", text: "Opens " + x.unlocks.name + ": " + x.unlocks.what })])))],
+  map: () => [h("p", { text: "The Guides site grows with you. Each step you finish adds its part of the site; until then, that part stays out of sight. Here's what's coming, in order:" }), h("div", { class: "list" }, STEPS.filter(x => x.unlocks).map(x => card([h("b", { text: x.icon + " " + x.name }), h("p", { class: "dim", text: "Opens " + x.unlocks.name + ": " + x.unlocks.what })])))],
   quad: () => {
     const out = h("div"), box = h("div", { class: "quadwrap" });
     const draw = k => { box.innerHTML = ""; box.append(h("div", { class: "quad" }, ["E", "M", "A", "P"].map(x => h("button", { type: "button", class: "q q" + x, "aria-pressed": String(x === k), onclick: () => draw(x) }, [h("b", { text: QUAD[x][0] }), h("small", { text: QUAD[x][1] })]))), card([h("p", { class: "say", text: QUAD[k][2] }), h("p", { class: "dim", text: QUAD[k][3] })])); };
@@ -179,7 +179,7 @@ function checkView(sec, s, i) {
 function doneView(sec, s, i) {
   const nx = STEPS[i + 1];
   sec.append(h("p", { class: "eyebrow", text: `Step ${i + 1} of ${STEPS.length}: ${s.name}` }), h("h1", { text: "✓ " + s.name + ": done" }));
-  if (s.unlocks) sec.appendChild(card([h("b", { text: "🔓 Unlocked: " + s.unlocks.name }), h("p", { class: "dim", text: s.unlocks.what }), h("a", { class: "small", href: OPEN_LINK[s.id], text: "Take a look →" })], "ok"));
+  if (s.unlocks) sec.appendChild(card([h("b", { text: "🔓 Now on your Guides site: " + s.unlocks.name }), h("p", { class: "dim", text: s.unlocks.what }), h("a", { class: "small", href: OPEN_LINK[s.id], text: "Take a look →" })], "ok"));
   sec.appendChild(h("div", { class: "next" }, [h("span"), nx ? h("a", { class: "btn big", href: "#" + nx.id, text: `Next: ${nx.name} →` }) : h("a", { class: "btn big", href: "#finish", text: "Finish →" })]));
   if (s.dig && s.dig.length) sec.append(h("h2", { text: "Dig deeper (optional)" }), h("p", { class: "dim", text: "For whenever you want more. Save anything to come back to it during the year." }), digList(s.dig));
 }
