@@ -23,8 +23,8 @@
   var state = { band: window.wlBand ? window.wlBand() : '5–8', gr: 'all', skill: null, sub: null, q: '', f: { home: false, epic: false, lab: false, any: false } };
   var bandPicked = false;
   // Grades 5–8 splits into 5–6 and 7–8 (c.gr; "5–8" means the challenge fits all four grades). state.gr narrows the
-  // 5–8 band: 'all', '5–6' or '7–8'. A signed-in 7th or 8th grader starts on 7–8 (grade from the Life Skills tracker,
-  // via /auth.js) and can switch; everyone else starts on all of 5–8.
+  // 5–8 band: 'all', '5–6' or '7–8'. A signed-in 5th or 6th grader starts on 5–6 and a 7th or 8th grader on 7–8 (grade
+  // from the Life Skills tracker, via /auth.js); either can switch to see the rest. Everyone else starts on all of 5–8.
   var grPicked = false;
   // Recommended Labs are for guides planning Labs; students and parents don't see that tag or filter.
   var GUIDES = SITE === 'guides';
@@ -108,6 +108,10 @@
       var c = BYID[id]; return status[id] === 'pass' && c && D.comps[c.c].k === skill ? a + (c.cr || 1) : a;
     }, 0);
   }
+  // Challenges (not credits) passed in a life skill, for the words under the dots.
+  function passedCount(skill) {
+    return Object.keys(status).filter(function (id) { var c = BYID[id]; return status[id] === 'pass' && c && D.comps[c.c].k === skill; }).length;
+  }
   function savedIn(skill) {
     return picksIn(skill).filter(function (c) { return status[c.id] !== 'pass'; }).reduce(function (a, c) { return a + (c.cr || 1); }, 0);
   }
@@ -124,15 +128,21 @@
     var t = target();
     document.getElementById('year-goal').textContent = state.band === 'K–1'
       ? 'In K–1, every challenge is part of a Life Skill Lab, led by a guide with the whole crew. Each child aims for 2 in each of the 8 life skills this year.'
-      : 'Finish 2 challenges in each of the 8 life skills this year. An Epic counts as 2. Challenges you save show as lined dots; a dot fills in when you pass.';
+      : 'Finish 2 challenges in each of the 8 life skills this year. An Epic counts as 2. Saved challenges show as lined dots, and a dot fills in when you pass. Gray lined dots are extra saves beyond the 2.';
     document.getElementById('year-skills').innerHTML = D.skills.map(function (s) {
       // Filled: passed (from the Life Skills tracker, for a signed-in student). Lined: saved to the plan, not passed yet.
-      var p = Math.min(passedIn(s.k), t), n = Math.min(p + savedIn(s.k), t), dots = '';
+      // Gray lined: saved beyond the goal, one dot per extra credit, so every save is visible.
+      var sv = savedIn(s.k), p = Math.min(passedIn(s.k), t), n = Math.min(p + sv, t), extra = Math.max(0, sv - (n - p)), dots = '';
       for (var i = 0; i < t; i++) dots += '<span class="dot' + (i < p ? ' on' : i < n ? ' saved' : '') + '"></span>';
+      for (var j = 0; j < extra; j++) dots += '<span class="dot saved extra"></span>';
+      var open = picksIn(s.k).filter(function (c) { return status[c.id] !== 'pass'; }), ns = open.length, np = passedCount(s.k);
+      var epics = open.filter(function (c) { return (c.cr || 1) > 1; }).length;
+      var words = [np ? np + ' passed' : '', ns ? ns + ' saved' + (epics ? ' (' + epics + ' Epic' + (epics > 1 ? 's' : '') + ', 2 dots each)' : '') : ''].filter(Boolean).join(' · ');
       return '<li><button class="ys' + (p >= t ? ' done' : '') + '" data-skill="' + s.k + '" style="' + skillVars(s) + '"' +
         (state.skill === s.k ? ' aria-current="true"' : '') +
-        ' aria-label="' + esc(s.n) + ': ' + p + ' of ' + t + ' passed, ' + (n - p) + ' more saved">' +
-        '<span class="ys-name">' + esc(s.n) + '</span><span class="dots">' + dots + '</span></button></li>';
+        ' aria-label="' + esc(s.n) + ': ' + (words || 'nothing saved yet') + '">' +
+        '<span class="ys-name">' + esc(s.n) + '</span><span class="dots" aria-hidden="true">' + dots + '</span>' +
+        (words ? '<span class="ys-count" aria-hidden="true">' + words + '</span>' : '') + '</button></li>';
     }).join('');
   }
 
@@ -573,11 +583,11 @@
     var note = document.getElementById('grsplit-note');
     if (note) note.textContent = GR_NOTE[state.gr] || '';
   }
-  // A 7th or 8th grader starts on 7–8 until they choose otherwise on this page.
+  // A 5th or 6th grader starts on 5–6, a 7th or 8th grader on 7–8, until they choose otherwise on this page.
   function gradeDefault(grade) {
     if (grPicked) return false;
     var n = parseInt(String(grade == null ? '' : grade).replace(/[^0-9]/g, ''), 10);
-    var want = n >= 7 && n <= 8 ? '7–8' : 'all';
+    var want = n >= 7 && n <= 8 ? '7–8' : n >= 5 && n <= 6 ? '5–6' : 'all';
     if (want === state.gr) return false;
     state.gr = want; return true;
   }
