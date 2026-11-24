@@ -101,6 +101,58 @@
     document.body.appendChild(gm);
     setTimeout(function () { if (document.documentElement.classList.contains("wl-gate")) gm.innerHTML = 'Still checking your sign-in. <a href="' + signInUrl() + '">Go to the sign-in page</a> or reload.'; }, 10000);
   }
+  // ---------- Parts of the Guides site that open through onboarding ----------
+  // A guide sees every section in the menu from day one, so they know what's coming, but each one opens only after
+  // they finish its step in onboarding (/guides/onboarding/). Locked tabs and cards point to onboarding; a locked
+  // page shows what's waiting there and a button back to onboarding. Admins and outside guests see everything.
+  // Who has unlocked what comes from /auth.js (or the Life Skills tracker) as a "wl-unlocks" event:
+  // { e: email, all: true|false, done: [step ids] }, remembered on this device as "wl-unlocks".
+  // Keep the step ids in step with /guides/onboarding/data.js.
+  var LOCKS = [
+    { step: "mentor", name: "Mentor Mindset and the Session Room", tabs: ["mentor", "sessions"], path: /^\/fieldguide\//, what: "The Mentor Mindset Field Guide, the practice range and coach, and the Session Room for weekly 1:1s." },
+    { step: "behavior", name: "The Behavior Guide", tabs: ["behavior"], path: /^\/behavior\//, what: "The tiers, Freedom Levels, real scenarios, the behavior coach, the Freedom Level tracker and Town Hall." },
+    { step: "lifeskills", name: "Life Skills and the Student Roster", tabs: ["lifeskills", "roster"], path: /^\/guides\/(lifeskills|roster|challenges|students)\//, what: "The Life Skills tracker, the Labs schedule, Lab ideas, How Labs run, the Lab builder, and the Student Roster." },
+    { step: "parents", name: "Parent Comms", tabs: ["parentcomms"], path: /^\/guides\/parents\//, what: "The Parent Comms tool, which drafts any message to families with you and checks your own drafts." },
+    { step: "policies", name: "Policies and the Staff Handbook", tabs: ["policies"], path: /^\/guides\/(policies|handbook)\//, what: "Every staff policy and form in one place, searchable." }
+  ];
+  var ONBOARD = "/guides/onboarding/";
+  var unlocks = null; try { unlocks = JSON.parse(localStorage.getItem("wl-unlocks") || "null"); } catch (e) { }
+  var who = function (c) { return String((c && (c.x || c.e)) || "").toLowerCase(); };
+  if (unlocks && known && unlocks.e !== who(known)) unlocks = null;   // someone else's, from before
+  var staffNow = function () { var r = role || (known && known.r ? { role: known.r } : null); return key === "guides" && r && r.role === "staff"; };
+  function stepLocked(step) { return staffNow() && unlocks && !unlocks.all && (unlocks.done || []).indexOf(step) < 0; }
+  function tabLock(id) { for (var i = 0; i < LOCKS.length; i++) if (LOCKS[i].tabs.indexOf(id) >= 0 && stepLocked(LOCKS[i].step)) return LOCKS[i]; return null; }
+  var PAGE = null; for (var li = 0; li < LOCKS.length; li++) if (LOCKS[li].path.test(location.pathname)) PAGE = LOCKS[li];
+  // A guide's first visit to a section page since unlocks were remembered: wait to hear before showing it.
+  var unlocksPending = function () { return !!PAGE && staffNow() && !unlocks; };
+  if (key === "guides" && PAGE && known && known.r === "staff" && !unlocks && !document.documentElement.classList.contains("wl-gate")) {
+    document.documentElement.classList.add("wl-gate");
+    var gs2 = document.createElement("style"); gs2.textContent = "html.wl-gate body{visibility:hidden}"; document.head.appendChild(gs2);
+  }
+  var LCSS = "html.wl-locked body>*:not(.wlbar):not(.wl-lockpanel):not(script):not(style){display:none !important}" +
+    ".wl-lockpanel{max-width:640px;margin:56px auto;padding:30px 28px;border-radius:18px;background:#fffdf9;border:1px solid #ddd3c4;color:#231b24;font:400 16px/1.55 Inter,system-ui,sans-serif;display:flex;flex-direction:column;gap:12px}" +
+    ".wl-lockpanel h1{font:700 30px/1.15 'Iowan Old Style',Palatino,Georgia,serif;margin:0}.wl-lockpanel p{margin:0;color:#625a63}" +
+    ".wl-lockpanel a.go{align-self:flex-start;background:#01412f;color:#fff;border-radius:999px;padding:13px 24px;font-weight:600;text-decoration:none}" +
+    "[data-unlock].wl-lockd{opacity:.62;filter:grayscale(.7)}[data-unlock].wl-lockd .wl-lockbadge{display:inline-block}" +
+    ".wl-lockbadge{display:none;align-self:flex-start;font:700 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;background:#231b24;color:#fff;border-radius:99px;padding:3px 9px}" +
+    ".wlbar a.wlbar-locked{opacity:.6}.wlbar a.wlbar-locked span{margin-right:5px}";
+  function applyLocks() {
+    if (!document.getElementById("wl-lockcss")) { var s = document.createElement("style"); s.id = "wl-lockcss"; s.textContent = LCSS; document.head.appendChild(s); }
+    var lockedHere = PAGE && stepLocked(PAGE.step), panel = document.querySelector(".wl-lockpanel");
+    document.documentElement.classList.toggle("wl-locked", !!lockedHere);
+    if (lockedHere && !panel) {
+      panel = document.createElement("div"); panel.className = "wl-lockpanel"; panel.setAttribute("role", "region"); panel.setAttribute("aria-label", "Locked section");
+      panel.innerHTML = "<p>🔒 Opens after its step in onboarding</p><h1>" + esc(PAGE.name) + "</h1><p>Here's what's waiting: " + esc(PAGE.what) + "</p><p>We open the site one part at a time so nothing is overwhelming. Finish the step and this opens right away.</p><a class=\"go\" href=\"" + ONBOARD + "\">Continue onboarding →</a>";
+      bar.parentNode.insertBefore(panel, bar.nextSibling);
+    } else if (!lockedHere && panel) panel.remove();
+    document.querySelectorAll("[data-unlock]").forEach(function (el) {
+      var L = null; LOCKS.forEach(function (x) { if (x.step === el.getAttribute("data-unlock") && stepLocked(x.step)) L = x; });
+      if (!el.hasAttribute("data-href")) el.setAttribute("data-href", el.getAttribute("href") || "");
+      if (!el.querySelector(".wl-lockbadge")) { var b = document.createElement("span"); b.className = "wl-lockbadge"; b.textContent = "🔒 Opens after onboarding"; el.insertBefore(b, el.firstChild && el.firstChild.nextSibling); }
+      el.classList.toggle("wl-lockd", !!L); el.setAttribute("href", L ? ONBOARD : el.getAttribute("data-href"));
+      if (L) el.setAttribute("title", "Opens after you finish this step in onboarding"); else el.removeAttribute("title");
+    });
+  }
   // Where the sign-in page sends someone: back to ?next= if it's on their own sites, otherwise their site's home.
   function homeDest(r) {
     var m = /[?&]next=([^&#]*)/.exec(location.search), n = "";
@@ -117,10 +169,17 @@
     return c === "mentor" && /^#sessions\b/.test(location.hash) ? "sessions" : c;
   }
   var cur = curTab();
-  var tabs = site.tabs.map(function (t) {
+  // A tab for a section this guide hasn't unlocked yet: shown with a lock, pointing to onboarding.
+  function tabLink(t, cls) {
+    var L = tabLock(t.id);
+    if (L) return '<a href="' + ONBOARD + '" class="wlbar-locked' + (cls || "") + '" data-wl-tab="' + t.id + '" title="Opens after its onboarding step" aria-label="' + esc(t.label) + ' (locked until its onboarding step)"><span aria-hidden="true">🔒 </span>' + esc(t.label) + "</a>";
+    return '<a href="' + t.href + '"' + (cls ? ' class="' + cls.trim() + '"' : "") + ' data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.label) + "</a>";
+  }
+  var tabsHtml = function () { return site.tabs.map(function (t) {
     if (t.out) return '<a class="wlbar-ext" href="' + t.href + '" target="_blank" rel="noopener" aria-label="' + esc(t.label) + ' (opens in a new tab)">' + esc(t.label) + ARROW + "</a>";
-    return '<a href="' + t.href + '" data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.label) + "</a>";
-  }).join("");
+    return tabLink(t);
+  }).join(""); };
+  var tabs = tabsHtml();
   addEventListener("hashchange", function () {
     var c = curTab(); if (c === cur) return; cur = c;
     bar.querySelectorAll("[data-wl-tab]").forEach(function (a) { if (a.getAttribute("data-wl-tab") === cur) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
@@ -136,6 +195,7 @@
   var role = null;
 
   function draw() {
+    tabs = tabsHtml();
     var opts = (role && SWITCH[role.role]) || null;
     var label = site.label || (opts ? "Explore" : "");
     var home = '<a class="wlbar-home" href="' + site.home + '" aria-label="' + esc(site.name) + ' home">' + MARK +
@@ -225,7 +285,7 @@
   // The phone menu: this site's sections, then the other sites this person may open, then Basecamp.
   function drawer(opts) {
     return '<div class="wlbar-drawer-in">' + site.tabs.filter(function (t) { return !t.out; }).map(function (t) {
-      return '<a href="' + t.href + '" data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? " data-wl-alerts" : "") + ">" + esc(t.label) + "</a>";
+      return tabLink(t);
     }).join("") +
       (opts ? '<p>Switch to</p><div class="wlbar-drawer-sites">' + opts.filter(function (k) { return k !== key; }).map(function (k) { return '<a href="' + SITES[k].home + '">' + esc(SITES[k].label) + "</a>"; }).join("") + "</div>" : "") +
       '<a class="wlbar-ext" href="' + BASECAMP.href + '" target="_blank" rel="noopener">' + BASECAMP.label + ARROW + "</a></div>";
@@ -363,9 +423,12 @@
     if (GATED && !r) { location.replace(signInUrl()); return; }
     var go = allowed(r);
     if (go && location.pathname !== go.split("#")[0]) { location.replace(go); return; }
-    ungate();
     var was = JSON.stringify([role, tester, view]); role = r;
     tester = testerOf(r); view = r && r.test ? { as: r.test, band: r.band, by: r.real } : null;
+    // Unlocks remembered for a different account don't count.
+    if (unlocks && r && unlocks.e !== String(r.real || r.email || "").toLowerCase()) unlocks = null;
+    if (!unlocksPending()) ungate();
+    applyLocks();
     if (JSON.stringify([role, tester, view]) !== was) { draw(); paintAlerts(); }
   }
   // Draw at once. A role remembered on this device (written only by /auth.js and the tracker, cleared on sign-out)
@@ -376,8 +439,15 @@
     if (c) { tester = P.TESTERS.indexOf(String(c.x || c.e || "").toLowerCase()) >= 0; view = c.t ? { as: c.t, band: c.b, by: c.x } : null; }
   } catch (e) { }
   draw();
+  applyLocks();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", applyLocks);
   bar.setAttribute("data-wlnav-done", "");
   document.addEventListener("wl-role", function (e) { apply(e.detail); });
+  document.addEventListener("wl-unlocks", function (e) {
+    var d = e.detail; unlocks = d && d.e ? d : null;
+    if (!unlocksPending() && role) ungate();
+    applyLocks(); draw(); paintAlerts();
+  });
   // Open Mr. Fox alerts, shown as a count on the Guides "Student Roster" tab (sent by /auth.js and /guides/roster/).
   var alerts = null;
   function paintAlerts() {
