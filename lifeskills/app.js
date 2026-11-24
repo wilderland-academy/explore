@@ -53,6 +53,8 @@ const CHMAP = PATH === HOMES.staff ? "/guides/challenges/" : PATH === HOMES.pare
 const app = initializeApp(CONFIG);
 const auth = getAuth(app);
 const db = getFirestore(app);
+// The tracker pages don't load /auth.js: share this sign-in with /notify.js (the 🔔 in the top bar).
+if (!window.wlFirebase) window.wlFirebase = { app, auth, config: CONFIG };
 // Local testing only: on localhost, talk to the Firebase emulators instead of the real project.
 if (EMU) { connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true }); connectFirestoreEmulator(db, "127.0.0.1", 8085); }
 
@@ -342,7 +344,7 @@ function acct() {
   if (menuOpen) box.append(h("div", { class: "acct-menu" }, [
     h("p", { text: S.test ? `${roleName}. You're ${S.real}.` : `${roleName}. Signed in as ${S.email}.` }),
     S.role === "staff" ? h("a", { href: "/fieldguide/", text: "Field Guide" }) : null,
-    S.role !== "parent" ? h("a", { href: "/challenges/", text: "Challenges" }) : h("a", { href: "/parents/passoff/", text: "Passing off at home" }),
+    S.role !== "parent" ? h("a", { href: S.role === "staff" ? "/guides/challenges/" : "/challenges/", text: "Challenges" }) : h("a", { href: "/parents/passoff/", text: "Passing off at home" }),
     // Testers: switch to a test account (or back) from here.
     TESTERS.includes(S.real) && window.WLTest ? h("div", { html: window.WLTest.html() }) : null,
     h("button", { type: "button", text: "Sign out", onclick: async () => { menuOpen = false; try { localStorage.removeItem("wl-viewas"); } catch (e) { } await signOut(auth); location.hash = ""; } })
@@ -623,6 +625,12 @@ function goalsPanel(sid, opts) {
   ]);
 }
 
+// A notification for the student (/notify.js) when a guide records a pass or a not yet.
+function tellPass(sid, cid, result, o) {
+  const s = S.students[sid]; if (!s || !s.email || !window.wlNotify) return;
+  const t = result === "pass" ? `You passed “${chTitle(cid)}”. Nice work!` : `Not yet on “${chTitle(cid)}”.` + (o.missing ? ` Missing: ${o.missing.trim().slice(0, 80)}.` : "") + (o.practice ? ` Practice: ${o.practice.trim().slice(0, 80)}.` : "");
+  window.wlNotify([s.email], { kind: result === "pass" ? "pass" : "notyet", text: t, link: "/challenges/#progress" });
+}
 // Families: how to support it at home. The child's next Labs (with the guides' notes for home) and challenges they can
 // pass off at home: what they're working on first, then the life skills furthest from this year's goal.
 function homeSupport(sid) {
@@ -925,6 +933,7 @@ function validateGroup(labId) {
       const b2 = writeBatch(db);
       ids.forEach(k => { const b = boardDoc(k); b2.set(doc(db, "lsBoard", k), b); S.boards[k] = { id: k, ...b }; });
       await b2.commit();
+      ids.forEach(k => tellPass(k, cid, mark[k], { missing: gMiss.value, practice: gPrac.value }));
       const passed = ids.filter(k => mark[k] === "pass"), ny = ids.length - passed.length;
       const miles = passed.filter(k => S.students[k].band !== "K–1" && summary(k).milestone > before[k].milestone).map(k => firstName(S.students[k].name));
       const msg = `Validated ${chTitle(cid)}: ${passed.length} passed${ny ? `, ${ny} not yet` : ""}.` + (miles.length ? ` New milestone for ${miles.join(", ")}: add ${miles.length === 1 ? "them" : "them all"} to the next Honor Court.` : "");
@@ -983,6 +992,7 @@ function validateOne(pre) {
       const ref = await addDoc(collection(db, "lsStudents", sid, "entries"), e);
       S.entries[sid] = (S.entries[sid] || []).concat({ id: ref.id, ...e });
       await saveBoard(sid);
+      tellPass(sid, cid, result, { missing: tMiss.value, practice: tPrac.value });
       const after = summary(sid), name = firstName(S.students[sid].name);
       let msg = result === "pass" ? `Validated ${name}'s pass.` : `Saved a not yet for ${name}. The family sees what to practice.`;
       if (result === "pass" && after.milestone > before.milestone && S.students[sid].band !== "K–1") msg = `Milestone: that's ${name}'s ${ordinal(after.trail)} credit. Add ${name} to the next Honor Court.` + (after.rank !== before.rank ? ` New rank: ${after.rank}.` : "");

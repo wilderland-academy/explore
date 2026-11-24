@@ -81,7 +81,43 @@ async function push() {
   const body = { fields: { data: { stringValue: JSON.stringify(readLocal()) }, updated: { timestampValue: new Date().toISOString() }, email: { stringValue: view ? TEST.student : user.email || "" }, ...(view ? { test: { booleanValue: true } } : {}) } };
   const r = await fetch(DOC(user.uid), { method: "PATCH", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
   setState(r.ok ? "saved" : "error");
-  if (r.ok) share(SITE, body.fields.data.stringValue);
+  if (r.ok) { share(SITE, body.fields.data.stringValue); tellGuides(); }
+}
+// ---------- Telling a student's guides what they did (/notify.js) ----------
+// Compared with what this device last saw (set after each sign-in sync, so things merged in from another Chromebook
+// aren't announced twice): new saved challenges, goals set or finished, books finished or wanted, project ideas, and
+// Camp Store list additions. A few at a time, so a busy minute doesn't flood a guide.
+const actKey = () => "wl-act-" + (user ? user.uid : "") + (view ? "#test" : "") + "-" + SITE;
+function setBaseline() { try { origSet.call(localStorage, actKey(), JSON.stringify(readLocal())); } catch (e) { } }
+function tellGuides() {
+  const r0 = window.wlRole; if (!user || !r0 || r0.role !== "student") return;
+  let prev = null; try { prev = JSON.parse(localStorage.getItem(actKey()) || "null"); } catch (e) { }
+  const now = readLocal(); setBaseline();
+  if (!prev || !window.wlNotifyGuides) return;
+  const j = (o, k) => { try { return JSON.parse(o[k] || "null"); } catch (e) { return null; } };
+  const added = (a, b) => (b || []).filter(x => !(a || []).includes(x));
+  const n = view ? "Test S." : String(user.displayName || user.email.split("@")[0]).trim().split(/\s+/)[0];
+  const ch = id => { const c = ((window.WL || {}).ch || []).find(x => x.id === id); return c ? c.t : id; };
+  const book = id => { try { const b = (typeof BOOKS !== "undefined" ? BOOKS : []).find(x => x.id === id); return b ? b.t : "a book"; } catch (e) { return "a book"; } };
+  const prod = id => { try { const p = (typeof PRODUCTS !== "undefined" ? PRODUCTS : []).concat(typeof EXPERIENCES !== "undefined" ? EXPERIENCES : []).find(x => x.id === id); return p ? p.n : /^r-/.test(id) ? "a guide reward" : id; } catch (e) { return id; } };
+  const out = [];
+  if (SITE === "challenges") added(j(prev, "wl-picks"), j(now, "wl-picks")).forEach(id => out.push(["save", `${n} saved a challenge: “${ch(id)}”`]));
+  if (SITE === "goals") {
+    const a = (j(prev, "wl-goals") || {}).list || [], b = (j(now, "wl-goals") || {}).list || [], had = Object.fromEntries(a.map(g => [g.id, g]));
+    b.forEach(g => { const lab = g.label || g.text || "a goal"; if (!had[g.id]) out.push(["goal", `${n} set a goal: ${lab}`]); else if (g.done && !had[g.id].done) out.push(["goal", `${n} finished a goal: ${lab}`]); });
+  }
+  if (SITE === "books") {
+    const a = j(prev, "lantern-stacks") || {}, b = j(now, "lantern-stacks") || {};
+    added(a.saved, b.saved).forEach(id => out.push(["book", `${n} finished and loved “${book(id)}”`]));
+    added(a.nope, b.nope).forEach(id => out.push(["book", `${n} read “${book(id)}” and it wasn't for them`]));
+    added(a.want, b.want).forEach(id => out.push(["book", `${n} wants to read “${book(id)}”`]));
+  }
+  if (SITE === "projects") added((j(prev, "atlas-sparks") || []).map(x => x && x.t), (j(now, "atlas-sparks") || []).map(x => x && x.t)).filter(Boolean).forEach(t => out.push(["project", `${n} saved a project idea: “${t}”`]));
+  if (SITE === "store") added((j(prev, "wl-store") || {}).wish, (j(now, "wl-store") || {}).wish).forEach(id => out.push(["store", `${n} added “${prod(id)}” to their Camp Store list`]));
+  if (!out.length) return;
+  const link = r0.sid ? "/guides/lifeskills/#s=" + r0.sid : "/guides/roster/";
+  if (out.length > 4) window.wlNotifyGuides({ kind: out[0][0], text: `${n}: ${out.length} new things saved, including ${out[0][1].replace(n + " ", "")}`, link });
+  else out.forEach(([kind, text]) => window.wlNotifyGuides({ kind, text, link }));
 }
 // A copy for the student's guides and linked parents (their profile on /parents/lifeskills/ and /guides/lifeskills/):
 // lsShared/{sid}/sites/{site}. Only these sites; the Camp Store list stays private. A failed copy never blocks a save.
@@ -145,6 +181,7 @@ async function syncOnSignIn() {
     KEYS.forEach(k => { if (next[k] == null) origRemove.call(localStorage, k); else origSet.call(localStorage, k, next[k]); });
     origSet.call(localStorage, LINK(), LINKID());
     applying = false;
+    setBaseline();
     if (KEYS.some(k => (next[k] ?? null) !== (remote[k] ?? null))) await push(); else setState("saved");
     // The page read localStorage when it loaded, so reload once to show the student's saved things. Only once: a page
     // that rewrites one of its keys on load (Challenges sets the student's own grade band) would otherwise differ from

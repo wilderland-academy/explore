@@ -429,3 +429,21 @@ the `PAGES` list at the top of `/search.js`.
 - The home pass-off guide and log moved to `/parents/passoff/` (old `/challenges/parents.html` and `log.html` redirect).
 - A tester's "view as parent" also shows the tester's own real children (records listing the tester's email as a parent).
 - `firestore.rules` adds `lsShared` (replacing `lsGoals`): paste it into the Firebase console to publish.
+
+## Portals, notifications, Camp Store and Suggestion Wall for guides, added Nov 24, 2026
+
+- **Staying in your site.** `/wlnav.js` points links at the current site's copy of a page when there is one (Challenges,
+  Life Skills tracker, Camp Store, Suggestion Wall). A link that must leave for another site opens a short notice first
+  ("This opens the Students site…"). Students never get links to the Parents site's pass-off guide.
+- **Notifications** (`/notify.js`, loaded by `/wlnav.js`): a 🔔 for students and guides, from Firestore `wlNotes`.
+  Students hear about passes and not yets, Camp Store rewards made for them, ideas accepted or answered (with the
+  guide's name), votes on their ideas and Town Hall answers. Their guides hear about saved challenges, goals set or
+  finished, books, project ideas, Camp Store list additions, challenges started, ideas, votes and Town Hall items.
+  Senders: `/auth.js` (site saves), `challenges/progress.js`, `lifeskills/app.js`, `_includes/store.html`,
+  `_includes/suggest.html`, `behavior/app.js`.
+- **Camp Store** and **Suggestion Wall** (renamed from Suggestion Box) are one include each (`_includes/store.html`,
+  `_includes/suggest.html`) built for Students (`/store/`, `/suggest/`) and Guides (`/guides/store/`, `/guides/suggest/`).
+  Rewards from guides open from a button at the top right, leave out K–1, and can carry a picture (Storage `store/`).
+  Accepting an idea records the guide's name; votes keep voters' names (`vnames`).
+- **Lantern Stacks** shows grades instead of ages and presets a signed-in student's grade.
+- Publish both `firestore.rules` and `storage.rules` in the Firebase console.

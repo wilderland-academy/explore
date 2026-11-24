@@ -216,7 +216,16 @@ async function setWorking(cid, on) {
   let next = was.filter(c => c !== cid);
   if (on) { if (next.length >= 3) return; next = next.concat(cid); }
   C.board.working = next; drawProgress(); drawCrew(); setStatus();
-  try { await saveWorking(C.sid, next); }
+  try {
+    await saveWorking(C.sid, next);
+    // Tell their guides (/notify.js) when they start working on one.
+    if (on && window.wlNotifyGuides) {
+      const u = window.wlFirebase && window.wlFirebase.auth.currentUser, r = window.wlRole || {};
+      const n = r.test ? "Test S." : String((u && (u.displayName || u.email.split("@")[0])) || "A student").trim().split(/\s+/)[0];
+      const c = ((window.WL || {}).ch || []).find(x => x.id === cid);
+      window.wlNotifyGuides({ kind: "working", text: `${n} started working on “${c ? c.t : cid}”`, link: "/guides/lifeskills/#s=" + C.sid });
+    }
+  }
   catch (e) { console.warn("Progress:", e); C.board.working = was; drawProgress(); drawCrew(); setStatus(); alertLine("That didn't save. Try again in a moment."); }
 }
 function alertLine(t) { const el = document.getElementById("toast"); if (!el) return; el.textContent = t; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2600); }

@@ -561,7 +561,7 @@ VIEWS.townhall = async (sec, sub) => {
     tabs.innerHTML = ""; [["new", "New"], ["agenda", "On an agenda"], ["discussed", "Discussed"], ["declined", "Declined"]].forEach(([k, t]) => tabs.appendChild(h("button", { class: "chip", "aria-pressed": String(tab === k), text: t + " (" + cache.th.filter(x => x.status === k && (band === "all" || x.band === band)).length + ")", onclick: () => { tab = k; local.set("bg-th-tab", k); draw(); } })));
     bands.innerHTML = ""; [["all", "All bands"], ["K-1", "K–1"], ["2-4", "2–4"], ["5-8", "5–8"]].forEach(([k, t]) => bands.appendChild(h("button", { class: "chip", "aria-pressed": String(band === k), text: t, onclick: () => { band = k; local.set("bg-th-band", k); draw(); } })));
     list.innerHTML = ""; const items = cache.th.filter(x => x.status === tab && (band === "all" || x.band === band));
-    if (!items.length) list.appendChild(h("p", { class: "dim", text: tab === "new" ? "Nothing new. Students submit items from the Suggestion Box." : "Nothing here." }));
+    if (!items.length) list.appendChild(h("p", { class: "dim", text: tab === "new" ? "Nothing new. Students submit items from the Suggestion Wall." : "Nothing here." }));
     items.forEach(x => list.appendChild(thCard(x, draw)));
   };
   draw();
@@ -573,7 +573,13 @@ function thCard(x, redraw) {
   if (x.note) c.appendChild(h("div", { class: "note", text: "Reply to student: " + x.note }));
   if (x.outcome) c.appendChild(h("div", { class: "say", text: "Decided: " + x.outcome }));
   const acts = h("div", { class: "row noprint" }), form = h("div", { style: "display:flex;flex-direction:column;gap:8px" });
-  const upd = async (fields, agendaFields) => { try { await updateDoc(doc(db, "townhall", x.id), Object.assign({ reviewedBy: me(), reviewedAt: Date.now() }, fields)); if (agendaFields && x.agendaId) await updateDoc(doc(db, "townhallAgenda", x.agendaId), agendaFields); Object.assign(x, fields); toast("Saved."); redraw(); } catch (e) { toast("Couldn't save. The database rules may not be published yet."); } };
+  // The student sees which guide answered, and gets a notification (/notify.js).
+  const myName = () => { const n = ((user && user.displayName) || "").trim().split(/\s+/)[0]; return n || me().split("@")[0].replace(/^./, c => c.toUpperCase()); };
+  const tell = f => { if (!x.email || !window.wlNotify) return; const nm = myName(), it = "“" + x.text.slice(0, 100) + "”";
+    const t = f.status === "agenda" ? `${nm} put your Town Hall item on the agenda${f.meeting ? " for " + f.meeting : ""}: ${it}` : f.status === "declined" ? `${nm} answered your Town Hall item: ${it}`
+      : f.status === "discussed" ? `Town Hall decided on your item: ${it}` : f.note ? `${nm} replied to your Town Hall item: ${it}` : "";
+    if (t) window.wlNotify([x.email], { kind: f.status === "agenda" ? "accepted" : "townhall", text: t, link: "/suggest/" }); };
+  const upd = async (fields, agendaFields) => { try { await updateDoc(doc(db, "townhall", x.id), Object.assign({ reviewedBy: me(), reviewedName: myName(), reviewedAt: Date.now() }, fields)); tell(fields); if (agendaFields && x.agendaId) await updateDoc(doc(db, "townhallAgenda", x.agendaId), agendaFields); Object.assign(x, fields); toast("Saved."); redraw(); } catch (e) { toast("Couldn't save. The database rules may not be published yet."); } };
   if (x.status === "new" || x.status === "declined") acts.appendChild(h("button", { class: "btn", text: "Put on an agenda", onclick: () => {
     form.innerHTML = ""; const date = h("input", { type: "date" }), title = h("input", { type: "text", maxlength: 160, value: x.kind === "people" ? "" : x.text.slice(0, 160) });
     form.append(h("label", null, ["Meeting date", date]), h("label", null, ["Title students will see (no names)", title]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Add to agenda", onclick: async () => { if (!date.value || title.value.trim().length < 6) { toast("Pick a date and write a title."); return; } try { const a = await addDoc(collection(db, "townhallAgenda"), { title: title.value.trim(), meeting: date.value, band: x.band || "", itemId: x.id, status: "upcoming", outcome: "", created: Date.now(), by: me() }); x.agendaId = a.id; await upd({ status: "agenda", meeting: date.value, agendaId: a.id }); cache.agenda = null; } catch (e) { toast("Couldn't save."); } } }), h("button", { class: "btn ghost", text: "Cancel", onclick: () => { form.innerHTML = ""; } })]));
@@ -586,7 +592,7 @@ function thCard(x, redraw) {
 }
 async function agendaView(sec) {
   back(sec, "#townhall", "Town Hall items");
-  head(sec, "Town Hall <span>agenda</span>", "Pick a meeting. Print it for the student facilitator. Students see upcoming titles on the Suggestion Box page.");
+  head(sec, "Town Hall <span>agenda</span>", "Pick a meeting. Print it for the student facilitator. Students see upcoming titles on the Suggestion Wall page.");
   try { await loadTH(true); } catch (e) { sec.appendChild(h("p", { class: "dim", text: "Couldn't load the agenda." })); return; }
   const dates = [...new Set(cache.agenda.map(a => a.meeting).filter(Boolean))].sort().reverse();
   let pick = local.get("bg-th-date", "") || dates[0] || "";
