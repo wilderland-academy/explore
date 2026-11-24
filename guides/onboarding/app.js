@@ -46,6 +46,9 @@ function checks(s) {
 const stepDone = s => s.screens.every(x => read(x.id)) && checks(s).every(c => c.done);
 const recorded = s => !!(P.journey && P.journey.done && P.journey.done[s.id]);
 const firstOpen = () => { const i = STEPS.findIndex(s => !stepDone(s)); return i < 0 ? STEPS.length : i; };
+// A step a guide has finished stays open to revisit, even if a step before it gained new screens since.
+const finished = s => stepDone(s) || recorded(s);
+const reachable = (s, i) => i <= firstOpen() || finished(s);
 const isAdmin = () => user && ADMINS.includes((user.email || "").toLowerCase());
 // A finished step is recorded once (that's what unlocks the site), and this device's nav is told right away.
 async function record(s) {
@@ -63,9 +66,9 @@ async function record(s) {
 function nav(cur) {
   const n = $("#steps"); n.innerHTML = ""; const open = firstOpen();
   STEPS.forEach((s, i) => {
-    const done = stepDone(s), lock = i > open;
-    n.appendChild(h(lock ? "span" : "a", { class: "st" + (done ? " done" : "") + (lock ? " lock" : "") + (s.id === cur ? " on" : ""), href: lock ? null : "#" + s.id, title: lock ? "Opens after " + STEPS[i - 1].name : null }, [
-      h("i", { text: done ? "✓" : lock ? "🔒" : String(i + 1) }), h("span", null, [h("b", { text: s.name }), h("small", { text: done ? "Done" : lock ? "Locked" : i === open ? "You're here" : s.time })])
+    const done = finished(s), lock = !reachable(s, i), updated = !stepDone(s) && recorded(s);
+    n.appendChild(h(lock ? "span" : "a", { class: "st" + (done ? " done" : "") + (lock ? " lock" : "") + (s.id === cur ? " on" : ""), href: lock ? null : "#" + s.id, title: lock ? "Opens after " + STEPS[i - 1].name : done ? "Open to review any time" : null }, [
+      h("i", { text: done ? "✓" : lock ? "🔒" : String(i + 1) }), h("span", null, [h("b", { text: s.name }), h("small", { text: updated ? "Done · new screens to read" : done ? "Done · review any time" : lock ? "Locked" : i === open ? "You're here" : s.time })])
     ]));
   });
   const nSaved = Object.values(P.saved || {}).filter(Boolean).length;
@@ -149,6 +152,10 @@ function bottom(sec, back, nextLabel, onNext) {
 function screenView(sec, s, i, n) {
   const x = s.screens[n];
   head(sec, s, i, `${n + 1} of ${s.screens.length}`); sec.append(stepper(s, n));
+  // Reviewing a finished step: jump to any screen (or the checkpoint) to look something up.
+  if (finished(s)) sec.append(h("nav", { class: "toc", "aria-label": "In this training" }, [h("span", { text: "Jump to:" }),
+    ...s.screens.map((y, k) => h("a", { href: `#${s.id}/${k + 1}`, class: k === n ? "on" : "", "aria-current": k === n ? "page" : null, text: (read(y.id) ? "" : "● ") + y.title })),
+    s.quiz || s.checks ? h("a", { href: `#${s.id}/check`, text: "Checkpoint" }) : null]));
   if (n === 0) sec.append(h("p", { class: "lede", text: s.intro }));
   sec.append(h("h1", { text: x.title }));
   // An illustration for the screen, in the site's textured-landscape style (/guides/onboarding/art.js).
@@ -242,7 +249,7 @@ function route() {
   const open = firstOpen();
   if (id === "finish" && open >= STEPS.length) { nav("finish"); return finishView(sec); }
   let i = STEPS.findIndex(s => s.id === id);
-  if (i < 0 || i > open) {   // locked or unknown: resume where they are
+  if (i < 0 || !reachable(STEPS[i], i)) {   // locked or unknown: resume where they are
     if (open >= STEPS.length) return location.replace("#finish");
     const s = STEPS[open], n = s.screens.findIndex(x => !read(x.id));
     return location.replace("#" + s.id + "/" + (n < 0 ? "check" : n + 1));
@@ -251,7 +258,8 @@ function route() {
   if (sub === "check" && (s.quiz || s.checks)) return checkView(sec, s, i);
   if (sub === "done" && stepDone(s)) return doneView(sec, s, i);
   const n = parseInt(sub, 10);
-  if (!(n >= 1 && n <= s.screens.length)) { const k = s.screens.findIndex(x => !read(x.id)); return location.replace("#" + s.id + "/" + (stepDone(s) ? "done" : k < 0 ? "check" : k + 1)); }
+  // Opening a step: its first unread screen, or (finished) its first screen, to review from the start.
+  if (!(n >= 1 && n <= s.screens.length)) { const k = s.screens.findIndex(x => !read(x.id)); return location.replace("#" + s.id + "/" + (k >= 0 ? k + 1 : finished(s) ? 1 : "check")); }
   screenView(sec, s, i, n - 1);
 }
 addEventListener("hashchange", route);
