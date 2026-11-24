@@ -648,7 +648,9 @@
     picks = picks.concat(hiddenPicks); hiddenPicks = [];
     locked = b;
     if (b) {
-      state.band = b; save('wl-band', b); state.sub = null;
+      // Not saved: it's the student's own band, set again on every visit. Saving it here made the page differ from the
+      // account copy on every load, and the account sync reloaded the page over and over.
+      state.band = b; state.sub = null;
       hiddenPicks = picks.filter(function (id) { return !bandOpen(BYID[id].b); });
       picks = picks.filter(function (id) { return bandOpen(BYID[id].b); });
     }
