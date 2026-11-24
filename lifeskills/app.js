@@ -10,6 +10,7 @@
 //   lsStudents/{sid}/entries/*  one pass or not yet each                                 (private)
 //   lsBoard/{sid}               short name, band, working[], passed[]                     (all school accounts)
 //   labs/{id}                   the Life Skill Labs schedule                              (staff; linked parents)
+//   lsGoals/{sid}               the student's goals from /goals/ (a JSON copy)             (staff; the student; linked parents)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -125,7 +126,7 @@ const errText = e => {
 
 // ---------- state ----------
 // test: the tester's test view ("guide" | "student" | "parent"), real: the tester's own email (S.email is the test account's).
-const S = { user: null, email: "", role: null, admin: false, students: {}, entries: {}, boards: {}, mine: [], saved: {}, labs: null, parentBands: [], test: null, real: "", testBand: "" };
+const S = { user: null, email: "", role: null, admin: false, students: {}, entries: {}, boards: {}, mine: [], saved: {}, goals: {}, labs: null, parentBands: [], test: null, real: "", testBand: "" };
 // The band every band choice starts on: a guide's own band, a parent's (youngest) child's, the test accounts' band in a
 // test view. Admins and guests without a band start on All.
 function myBand() {
@@ -172,7 +173,7 @@ async function loadEntries(sid) {
   S.entries[sid].forEach(e => { if (e.ct && !BYID[e.cid]) addCustom({ id: e.cid, t: e.ct, k: e.k, lab: e.lab || "", labTitle: e.labTitle || "" }); });
 }
 async function loadAll() {
-  S.students = {}; S.entries = {}; S.boards = {}; S.mine = [];
+  S.students = {}; S.entries = {}; S.boards = {}; S.mine = []; S.goals = {};
   // The test accounts are only for a test view, and a test view only sees them (so nothing real is changed).
   const keep = x => !!x.test === !!S.test;
   const testOnly = c => S.test ? query(collection(db, c), where("test", "==", true)) : collection(db, c);
@@ -192,14 +193,14 @@ async function loadAll() {
   } else if (S.role === "student") {
     const snap = await getDocs(query(collection(db, "lsStudents"), where("email", "==", S.email), ...(S.test ? [where("test", "==", true)] : [])));
     snap.forEach(d => { S.students[d.id] = { id: d.id, ...d.data() }; S.mine.push(d.id); });
-    await Promise.all(S.mine.map(loadEntries));
+    await Promise.all(S.mine.map(sid => Promise.all([loadEntries(sid), loadGoals(sid)])));
     const b = await getDocs(collection(db, "lsBoard")); b.forEach(d => S.boards[d.id] = { id: d.id, ...d.data() });
   } else if (S.role === "parent") {
     const snap = await getDocs(query(collection(db, "lsStudents"), where("parents", "array-contains", S.email), ...(S.test ? [where("test", "==", true)] : [])));
     snap.forEach(d => { const x = { id: d.id, ...d.data() }; if (!keep(x)) return; S.students[d.id] = x; S.mine.push(d.id); });
     S.mine.sort((a, b) => S.students[a].name.localeCompare(S.students[b].name));
     await Promise.all(S.mine.map(async sid => {
-      await loadEntries(sid);
+      await Promise.all([loadEntries(sid), loadGoals(sid)]);
       try { const b = await getDoc(doc(db, "lsBoard", sid)); if (b.exists()) S.boards[sid] = { id: sid, ...b.data() }; } catch (e) { /* board is optional for families */ }
     }));
     try { await loadLabs(true); } catch (e) { /* not linked yet: the schedule says so */ }
@@ -213,12 +214,19 @@ async function loadSaved() {
     const bySchool = {}; Object.values(S.students).forEach(s => { if (s.email) bySchool[s.email.toLowerCase()] = s.id; });
     const snap = await getDocs(collectionGroup(db, "sites"));
     snap.forEach(d => {
-      if (d.id !== "challenges") return;
       const x = d.data(), sid = bySchool[String(x.email || "").toLowerCase()]; if (!sid) return;
+      // Goals (/goals/): staff read the student's own saved copy, which the same rule already lets them see.
+      if (d.id === "goals") { try { S.goals[sid] = JSON.parse(JSON.parse(x.data || "{}")["wl-goals"] || "null"); } catch (e) { } return; }
+      if (d.id !== "challenges") return;
       let picks = []; try { picks = JSON.parse(JSON.parse(x.data || "{}")["wl-picks"] || "[]"); } catch (e) { picks = []; }
       S.saved[sid] = [...new Set(picks.filter(c => BYID[c]))];
     });
   } catch (e) { console.warn("Life Skills: couldn't read saved challenges", e); S.saved = null; }
+}
+// A student's goals for parents and the student themself: the copy /goals/ shares at lsGoals/{sid}.
+async function loadGoals(sid) {
+  try { const g = await getDoc(doc(db, "lsGoals", sid)); if (g.exists()) S.goals[sid] = JSON.parse(g.data().data || "null"); }
+  catch (e) { console.warn("Life Skills: couldn't read goals", e); }
 }
 // Saved challenges for one student, grouped by life skill, leaving out ones they've already passed.
 function savedBySkill(sid) {
@@ -529,7 +537,8 @@ function record(sid, opts = {}) {
         h("div", { class: "panel" }, [h("h2", { class: "h", text: `Year goal: ${goal} in every life skill` }),
           h("p", { class: "muted" }, [h("b", { style: { color: "var(--ink)" }, text: `${done} of 8 skills met. ` }), missingSkills.length === 8 ? "No passes yet this year." : missingSkills.length ? "Not started yet: " + missingSkills.join(", ") + "." : "Every life skill has a pass this year."]), skillsList]),
         h("div", { class: "panel" }, [h("h2", { class: "h", text: s.band === "K–1" ? "This year" : sum.rank ? "Rank: " + sum.rank : "On the trail" }), rankLine, s.band === "K–1" ? h("p", { class: "big", text: String(sum.year) }) : trackBar(sid)])
-      ])
+      ]),
+      goalsPanel(sid, opts)
     ])),
     h("section", { class: "band tint" }, h("div", { class: "wrap stack" }, [
       h("h2", { class: "h", text: "Working on" }), workingList(sid, opts.self),
@@ -543,6 +552,42 @@ function record(sid, opts = {}) {
       opts.parent ? h("p", { class: "small muted" }, ["Each feat is a challenge shown to a guide in person, or passed off at home by the rules in ", h("a", { href: "/challenges/parents.html", text: "Passing off at home" }), ". Not yets always say what to practice and when to try again."]) : null
     ])),
     opts.parent ? homeSupport(sid) : null
+  ]);
+}
+
+// The goals a student set on /goals/ (S.goals[sid]): current ones by week, month and school year, with progress, and
+// the last few finished or past. Shown to guides, parents and the student on the student's record.
+const GSPAN = { week: "This week", month: "This month", year: "This school year" };
+const GAREA = { life: "Life Skills", acad: "Academics", store: "Camp Store", project: "Project", habit: "Habit or behavior" };
+function goalsPanel(sid, opts) {
+  const s = S.students[sid], name = firstName(s.name), data = (S.goals || {})[sid], list = (data && data.list) || [], now = today();
+  const pad = n => String(n).padStart(2, "0"), iso = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const at = str => { const [y, m, d] = str.split("-").map(Number); return new Date(y, m - 1, d); };
+  const sy = d => iso(new Date(d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1, 7, 1));
+  const start = g => { const d = at(g.due); return g.span === "week" ? iso(new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7)) : g.span === "month" ? iso(new Date(d.getFullYear(), d.getMonth(), 1)) : sy(d); };
+  const passes = summary(sid).passes;
+  const prog = g => g.area === "life" && g.kind === "count" ? { at: passes.filter(p => p.date >= start(g) && p.date <= g.due).length, of: g.n }
+    : g.area === "life" && g.kind === "one" ? { at: passes.some(p => p.cid === g.item && p.date >= sy(at(g.due))) ? 1 : 0, of: 1, one: true }
+    : (g.area === "acad" && g.kind === "count") || g.area === "store" ? { at: Number(g.at) || 0, of: Number(g.n) || 0, unit: g.area === "store" ? "blazes" : g.unit, typed: true } : null;
+  const state = g => { const p = prog(g); return g.done || (p && !p.typed && p.of && p.at >= p.of) ? "done" : g.due < now ? "past" : "current"; };
+  const cur = list.filter(g => state(g) === "current"), old = list.filter(g => state(g) !== "current").sort((a, b) => (b.done || b.due).localeCompare(a.done || a.due)).slice(0, 6);
+  const row = g => {
+    const p = prog(g), st = state(g);
+    const line = p && !p.one ? `${p.at} of ${p.of}${p.unit ? " " + p.unit : ""}${p.typed ? " (the student's count)" : " passed"}` : p && p.one ? (p.at ? "Passed" : "Not passed yet") : "";
+    return h("div", { class: "item" }, [h("span", { class: "bar", style: { background: g.area === "life" ? "#356B33" : g.area === "acad" ? "#2F5D8A" : "#8A6418" } }),
+      h("div", {}, [h("div", { class: "meta" }, [h("b", { text: GAREA[g.area] || "" }), ", " + (st === "done" ? "done" + (g.done ? " " + fmt(g.done) : "") : st === "past" ? "was due " + fmt(g.due) : "by " + fmt(g.due))]),
+        h("div", { class: "t", text: g.label || g.text || "" }),
+        line || g.why ? h("div", { class: "small muted", text: [line, g.why ? "Why: " + g.why : ""].filter(Boolean).join(". ") }) : null]), h("span")]);
+  };
+  const missing = [cur.some(g => g.area === "life") ? "" : "Life Skills", cur.some(g => g.area === "acad") ? "" : "academic"].filter(Boolean);
+  const intro = opts.staff ? `What ${name} set on the Goals page. Look at them together at the weekly 1:1.` : opts.parent ? `${name} sets these at school on the Goals page and reviews them with their guide each week.` : "From your Goals page.";
+  return h("div", { class: "panel stack" }, [
+    h("h2", { class: "h", text: "Goals" }), h("p", { class: "small muted", text: intro }),
+    missing.length ? h("p", { class: "small", style: { color: "#9C3F2A", fontWeight: "600" }, text: `No current ${missing.join(" or ")} goal. Every student is expected to keep one of each going.` }) : null,
+    cur.length ? h("div", { class: "stack" }, ["week", "month", "year"].filter(sp => cur.some(g => g.span === sp)).map(sp => h("div", {}, [h("h3", { class: "h", text: GSPAN[sp] }), h("div", { class: "items" }, cur.filter(g => g.span === sp).sort((a, b) => a.due.localeCompare(b.due)).map(row))])))
+      : h("p", { class: "empty", text: data ? "No current goals." : name + " hasn't set any goals yet" + (opts.staff ? " (or hasn't opened the Goals page signed in)." : ".") }),
+    old.length ? h("details", {}, [h("summary", { text: `Recently finished or past (${old.length})` }), h("div", { class: "items" }, old.map(row))]) : null,
+    opts.self ? h("div", {}, h("a", { class: "btn", href: "/goals/", text: "Open my goals" })) : null
   ]);
 }
 

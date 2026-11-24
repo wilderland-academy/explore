@@ -187,6 +187,14 @@ service cloud.firestore {
         allow delete: if staffSchool() || testStudent(sid);
       }
     }
+    // Each student's goals (/goals/): the student writes a copy here on every change; their guides, their linked
+    // parents and the student read it. Not on the crew board: other students can't see it.
+    match /lsGoals/{sid} {
+      allow read: if staffSchool() || lsSelf(sid) || lsParent(sid) || testStudent(sid);
+      allow write: if (lsSelf(sid) || testStudent(sid))
+        && request.resource.data.keys().hasOnly(['data', 'updated', 'test'])
+        && request.resource.data.data is string && request.resource.data.data.size() <= 100000;
+    }
     // The crew board: short names, what each student is working on and has passed. No not yets, notes or emails.
     match /lsBoard/{sid} {
       allow read: if school() || lsParent(sid) || (tester() && resource.data.test == true);
