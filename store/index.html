@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Camp Store · Wilderland Explore</title>
-<meta name="description" content="Things worth saving your blazes for: 176 toys, tools, games and gear, and 65 experiences, picked for Wilderland students.">
+<meta name="description" content="Things worth saving your blazes for: 176 toys, tools, games and gear, 30 experiences, and rewards from guides, picked for Wilderland students.">
 <meta name="theme-color" content="#015640">
 <link rel="icon" href="/books/f/icon.png">
 <link rel="stylesheet" href="/wl.css">
@@ -78,6 +78,22 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
 .card .how{font-size:12.5px;color:var(--dim);margin:0} .card .how b{color:#c9d6cc;font-weight:600}
 .card .lim{font-size:12px;color:var(--neon);margin:0}
 .th.thx{display:grid;place-items:center;font-size:20px;background:var(--shelf2)}
+.gr{margin:8px 0 18px;padding:18px;border:1px solid rgba(213,243,103,.35);border-radius:16px;background:var(--shelf)}
+.gr h2{font-size:20px;display:flex;align-items:center;gap:10px} .gr .tag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0b2b20;background:var(--lamp);border-radius:999px;padding:3px 8px}
+.gr .sub{color:var(--dim);font-size:14px;margin:4px 0 12px} .gr .err{color:#ffb4a2;font-size:14px}
+.grf{display:grid;gap:10px} .grf label{display:grid;gap:4px;font-size:13px;color:var(--dim)} .grf .r1{display:flex;gap:10px;flex-wrap:wrap} .grf .grow{flex:1;min-width:220px}
+.grf input,.grf textarea{font:inherit;font-size:15px;color:var(--paper,#eef3ea);background:rgba(8,20,15,.6);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:9px 11px}
+.grf .em{width:64px;text-align:center;font-size:20px} .grf input[type=number]{width:110px}
+.grf fieldset{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;display:grid;gap:8px} .grf legend{font-size:13px;color:var(--dim);padding:0 4px}
+.grf .rad{display:inline-flex;align-items:center;gap:6px;color:var(--paper,#eef3ea);font-size:14px;margin-right:10px}
+.grf .kids{display:grid;gap:8px} .grf .krow{display:flex;gap:6px;flex-wrap:wrap;align-items:center} .grf .krow input{flex:1;min-width:180px}
+.grf .krow button{font:600 12.5px/1 Inter,sans-serif;color:var(--lamp);background:transparent;border:1px solid rgba(213,243,103,.4);border-radius:999px;padding:7px 10px;cursor:pointer} .grf .krow button.on{background:var(--lamp);color:#0b2b20}
+.grf .klist{max-height:220px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 12px;padding:6px;border-radius:10px;background:rgba(8,20,15,.4)}
+.grf .klist label{display:flex;align-items:center;gap:6px;color:var(--paper,#eef3ea);font-size:14px} .grf .klist small{color:var(--dim)}
+.grf .picked{font-size:13px;color:var(--neon);margin:0} .grf .acts{display:flex;gap:12px;align-items:center} .grf .acts .save{width:auto;padding:10px 16px}
+.lnk{background:none;border:0;color:var(--lamp);font:600 13px/1 Inter,sans-serif;cursor:pointer;padding:6px}
+.grl{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px} .grl li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(8,20,15,.45)} .grl li.off{opacity:.55}
+.grl .em{font-size:22px} .grl .t{flex:1;font-size:14px} .grl small{color:var(--dim)} .gr h3{font-size:15px;margin:16px 0 0}
 </style>
 </head>
 <body data-gated class="wl-pending">
@@ -89,7 +105,7 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
 <section class="hero">
   <div>
     <h1>What are you <span>saving for?</span></h1>
-    <p>Every blaze you earn is worth 50 cents here. There are things: sports, skate, animals, style, gross science, games, tools, books, and more, all built to last. And there are experiences: lunch with a guide, hosting a party for your crew, a morning shadowing a pro, a night under the stars. Add anything to your list and watch the bars fill up.</p>
+    <p>Every blaze you earn is worth 50 cents here. Sports, skate, animals, style, gross science, games, tools, books, and more, all built to last. Plus experiences: pie a guide, a Nerf war, lunch ordered in, a lounge pass for a week. Your guides can also add rewards made just for you. Add anything to your list and watch the bars fill up.</p>
   </div>
   <div class="blz">
     <h2>My blazes</h2>
@@ -98,6 +114,7 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
     <div class="wish" id="wish"></div>
   </div>
 </section>
+<section class="gr" id="gr" hidden></section>
 <section class="feat" id="feat" hidden></section>
 <div class="ctrl"><div class="in">
   <input id="q" type="search" placeholder="Search the store" autocomplete="off">
@@ -107,66 +124,149 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
 </div></div>
 <p class="count" id="count"></p>
 <div class="grid" id="grid"></div>
-<p class="fine">Prices for things are typical US retail in November 2026, rounded to the nearest dollar; the real cost on redemption day may differ a little. Items marked with a warning need a guide: knives and the multi-tool require Wilderland's knife certification, the fire steel and model rockets are used only with a guide present, and the slackline and scooter follow the school's safety rules. Nothing here is a blind box, a surprise egg or a collectible pack: every item is exactly what it says.</p>
-<p class="fine"><b>How experiences are priced.</b> Each one says what it takes. Its price is the cash it costs (food, supplies, tickets) at 2 blazes a dollar, plus 1 blaze for every minute of a guide's time beyond normal supervision, and half again for minutes that take a guide away from their crew or happen outside school hours. So a lunch with a guide is about $8 of pizza (16 blazes) plus 30 minutes of a guide who needs someone to cover for them (45 blazes). Guides decide when each experience can happen; the limit on each card says how often.</p>
+<p class="fine">Prices are typical US retail in November 2026, rounded to the nearest dollar; the real cost on redemption day may differ a little. Items marked with a warning need a guide: knives and the multi-tool require Wilderland's knife certification, the fire steel and model rockets are used only with a guide present, and the slackline and scooter follow the school's safety rules. Nothing here is a blind box, a surprise egg or a collectible pack: every item is exactly what it says.</p>
+<p class="fine">Experiences are redeemed with a guide, who picks the day. Anything that involves a guide getting pied, taped, soaked or dressed up only happens with guides who signed up for it. Prices for experiences are set by how much kids want them and how rare they are, and never below what they cost the school.</p>
 <p class="fine">The grade buttons show what kids in each grade band tend to want most. Every student can save anything in the store.</p>
 </main>
 <script src="products.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const KEY="wl-store";
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-// One list for things and experiences. b = blazes. bands = the grade bands it appeals to (k1 24 58).
-CATS.exp=CATS.exp||["Experiences","🎟️","#c7f1ee"];
-const ITEMS=PRODUCTS.map(p=>Object.assign({},p,{b:Math.round(p.p*2),bands:APPEAL[p.id]||"k1 24 58",x:false}))
- .concat(EXPERIENCES.map(x=>Object.assign({},x,{c:"exp",b:expBlazes(x),bands:x.g,x:true})));
-const BY=Object.fromEntries(ITEMS.map(i=>[i.id,i]));
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const BANDKEY={"K–1":"k1","2–4":"24","5–8":"58"},BANDS=["K–1","2–4","5–8"];
+CATS.guide=["From your guides","🎁","#f3c6a5"];
+CATS.exp=["Experiences","🎟️","#c7f1ee"];
+// Things from products.js; b = blazes, bands = the grade bands it appeals to (k1 24 58).
+const THINGS=PRODUCTS.map(p=>Object.assign({},p,{b:Math.round(p.p*2),bands:APPEAL[p.id]||"k1 24 58"}))
+ .concat(EXPERIENCES.map(x=>Object.assign({},x,{c:"exp",bands:x.g})));
+// Rewards guides add (Firestore storeRewards). Each becomes an item with id "r-<doc id>", c "guide".
+let REWARDS=[],ITEMS=THINGS.slice(),BY={};
+const rebuild=()=>{ITEMS=REWARDS.filter(r=>r.show).map(r=>r.item).concat(THINGS);BY=Object.fromEntries(ITEMS.map(i=>[i.id,i]))};
+rebuild();
 let S={have:0,wish:[]};
 try{S=Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
-S.wish=(S.wish||[]).filter(id=>BY[id]);
+// Guide rewards load after sign-in, so keep their ids on the list until then.
+S.wish=(S.wish||[]).filter(id=>BY[id]||/^r-/.test(id));
 const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const tier=b=>b<=20?"quick":b<=60?"little":b<=150?"big":"dream";
-// The grade band starts on the visitor's own (students from their tracker record, guides from their band, parents from
-// their youngest child) and holds once they pick one here.
+// The grade band starts on the visitor's own and holds once they pick one here.
 const startBand=()=>{const b=window.wlBand?window.wlBand({all:true}):"All";return BANDS.includes(b)?b:"All"};
 let BAND=startBand(),PICKED=false,CAT="all",TIER="all",Q="";
-document.addEventListener("wl-role",()=>{if(PICKED)return;const b=startBand();if(b!==BAND){BAND=b;draw()}});
-const fits=i=>BAND==="All"||i.bands.split(" ").includes(BANDKEY[BAND]);
+const fits=i=>i.c==="guide"||BAND==="All"||i.bands.split(" ").includes(BANDKEY[BAND]);
 const bandText=i=>{const k=i.bands.split(" ");return k.length===3?"All grades":"Grades "+(k.includes("k1")?"K":k.includes("24")?"2":"5")+"–"+(k.includes("58")?"8":k.includes("24")?"4":"1")};
-function soft(hex){return hex+"55"}
-function card(p){const [cn,ce,cc]=CATS[p.c],on=S.wish.includes(p.id),can=S.have>=p.b&&S.have>0;
- const top=p.x?`<div class="top xp"><span class="cat">${ce} ${cn}</span><span class="age">${bandText(p)}</span><span class="big" aria-hidden="true">${p.e}</span></div>`
+function card(p){const [cn,ce,cc]=CATS[p.c],on=S.wish.includes(p.id),can=S.have>=p.b&&S.have>0,g=p.c==="guide",xp=p.c==="exp";
+ const top=xp?`<div class="top xp"><span class="cat">${ce} ${cn}</span><span class="age">${bandText(p)}</span><span class="big" aria-hidden="true">${esc(p.e)}</span></div>`:g?`<div class="top xp"><span class="cat">${p.mine?"Just for you":"🎁 From your guides"}</span><span class="age">${esc(p.from)}</span><span class="big" aria-hidden="true">${esc(p.e)}</span></div>`
   :`<div class="top"><span class="cat">${ce} ${cn}</span><span class="age" title="${bandText(p)}">${p.a}+</span><img src="img/${p.id}.jpg" alt="${esc(p.n)}" loading="lazy" width="480" height="480"></div>`;
- return `<article class="card${p.x?" isx":""}" style="--c:${cc};--c-soft:${soft(cc)}">${top}
- <div class="body"><h3>${esc(p.n)}</h3><p class="why">${esc(p.why)}</p>${p.x?`<p class="how"><b>What it takes:</b> ${esc(p.how)}</p><p class="lim">${esc(p.lim)}</p>`:""}${p.sup?`<p class="sup">⚠ ${esc(p.sup)}</p>`:""}
- <div class="price"><b>${p.b} blazes</b>${p.x?"":`<span>about $${p.p}</span>`}${can?`<span class="can">You can get this</span>`:""}</div>
+ return `<article class="card${g||xp?" isx":""}" style="--c:${cc};--c-soft:${cc}55">${top}
+ <div class="body"><h3>${esc(p.n)}</h3><p class="why">${esc(p.why)}</p>${xp?`<p class="lim">${esc(p.lim)}</p>`:""}${p.sup?`<p class="sup">⚠ ${esc(p.sup)}</p>`:""}
+ <div class="price"><b>${p.b} blazes</b>${g||xp?"":`<span>about $${p.p}</span>`}${can?`<span class="can">You can get this</span>`:""}</div>
  <button class="save${on?" on":""}" data-w="${p.id}">${on?"On my list ✓":"Save for this"}<span>${on?"":"+"}</span></button></div></article>`}
-function feat(){const box=$("#feat");if(BAND==="All"||CAT!=="all"||TIER!=="all"||Q){box.hidden=true;return}
- const l=(FEATURED[BAND]||[]).map(id=>BY[id]).filter(Boolean);if(!l.length){box.hidden=true;return}
- box.hidden=false;box.innerHTML=`<h2>Picked for grades ${BAND}</h2><p class="sub">What kids in grades ${BAND} save for most${BAND!=="K–1"?", experiences first":""}. Everything else is below.</p><div class="rail">${l.map(card).join("")}</div>`}
+function feat(){const box=$("#feat");if(CAT!=="all"||TIER!=="all"||Q){box.hidden=true;return}
+ const mine=ITEMS.filter(i=>i.c==="guide"&&i.mine);
+ const l=mine.concat(BAND==="All"?[]:(FEATURED[BAND]||[]).map(id=>BY[id]).filter(Boolean));
+ if(!l.length){box.hidden=true;return}
+ box.hidden=false;box.innerHTML=`<h2>${BAND==="All"?"Just for you":"Picked for grades "+BAND}</h2><p class="sub">${mine.length?"Rewards your guides made for you come first. ":""}${BAND==="All"?"":`Then what kids in grades ${BAND} save for most. `}Everything else is below.</p><div class="rail">${l.map(card).join("")}</div>`}
 function render(){
- const fset=new Set(BAND==="All"?[]:FEATURED[BAND]||[]);
- const list=ITEMS.filter(p=>fits(p)&&(CAT==="all"||p.c===CAT)&&(TIER==="all"||tier(p.b)===TIER)&&(!Q||(p.n+" "+p.why+" "+(p.how||"")+" "+CATS[p.c][0]).toLowerCase().includes(Q)));
- // Things kids in this band tend to want most come first, then by price.
- const rank=p=>BAND==="All"?0:p.bands.split(" ").length;
+ const list=ITEMS.filter(p=>fits(p)&&(CAT==="all"||p.c===CAT)&&(TIER==="all"||tier(p.b)===TIER)&&(!Q||(p.n+" "+p.why+" "+CATS[p.c][0]).toLowerCase().includes(Q)));
+ // Guide rewards first, then things kids in this band tend to want most, then by price.
+ const rank=p=>p.c==="guide"?0:BAND==="All"?1:p.bands.split(" ").length;
  list.sort((a,b)=>rank(a)-rank(b)||a.b-b.b);
  $("#grid").innerHTML=list.map(card).join("")||`<p style="color:var(--dim)">Nothing matches. Try another word, or All grades.</p>`;
- const nx=list.filter(p=>p.x).length;
- $("#count").textContent=`${list.length-nx} things and ${nx} experiences${BAND==="All"?"":" for grades "+BAND} · ${ITEMS.length} in the store`;
+ $("#count").textContent=`${list.length} of ${ITEMS.length}${BAND==="All"?"":" · grades "+BAND}`;
+ $("#cats").innerHTML=`<button data-c="all" class="${CAT==="all"?"on":""}">Everything</button>`+[["exp",CATS.exp]].concat(Object.entries(CATS).filter(([k])=>k!=="exp"&&(k!=="guide"||ITEMS.some(i=>i.c==="guide")))).map(([k,[n,e]])=>`<button data-c="${k}" class="${CAT===k?"on":""}">${e} ${n}</button>`).join("");
  feat();renderWish();
 }
 function renderWish(){const w=S.wish.map(id=>BY[id]).filter(Boolean);
- $("#wish").innerHTML=w.length?`<ul>${w.map(p=>{const pct=Math.min(100,S.have/p.b*100);return `<li>${p.x?`<span class="th thx" aria-hidden="true">${p.e}</span>`:`<img class="th" src="img/${p.id}.jpg" alt="">`}<span>${esc(p.n)} <small style="color:var(--dim)">· ${p.b} blazes</small> ${S.have>=p.b?'<span class="ok">ready!</span>':`<small style="color:var(--dim)">· ${p.b-S.have} to go</small>`}</span><button data-x="${p.id}" aria-label="Remove">×</button><span class="bar"><i style="width:${pct}%"></i></span></li>`}).join("")}</ul>`:`<p style="color:var(--dim);font-size:14px;margin:0">Tap “Save for this” on anything below and it shows up here with a progress bar.</p>`}
+ $("#wish").innerHTML=w.length?`<ul>${w.map(p=>{const pct=Math.min(100,S.have/p.b*100);return `<li>${p.c==="guide"||p.c==="exp"?`<span class="th thx" aria-hidden="true">${esc(p.e)}</span>`:`<img class="th" src="img/${p.id}.jpg" alt="">`}<span>${esc(p.n)} <small style="color:var(--dim)">· ${p.b} blazes</small> ${S.have>=p.b?'<span class="ok">ready!</span>':`<small style="color:var(--dim)">· ${p.b-S.have} to go</small>`}</span><button data-x="${p.id}" aria-label="Remove">×</button><span class="bar"><i style="width:${pct}%"></i></span></li>`}).join("")}</ul>`:`<p style="color:var(--dim);font-size:14px;margin:0">Tap “Save for this” on anything below and it shows up here with a progress bar.</p>`}
 function draw(){$("#bands").innerHTML=["All"].concat(BANDS).map(b=>`<button data-b="${b}" class="${b===BAND?"on":""}" aria-pressed="${b===BAND}">${b==="All"?"All grades":"Grades "+b}</button>`).join("");render()}
-$("#cats").innerHTML=`<button data-c="all" class="on">Everything</button><button data-c="exp">${CATS.exp[1]} ${CATS.exp[0]}</button>`+Object.entries(CATS).filter(([k])=>k!=="exp").map(([k,[n,e]])=>`<button data-c="${k}">${e} ${n}</button>`).join("");
+
+// ---------- Guide rewards (Firestore storeRewards, over REST with the sign-in from /auth.js) ----------
+// A reward is for named students (to: their school emails, from the Life Skills tracker roster) or for everyone in some
+// grade bands (open: true, bands). Students can read only open rewards and ones naming them (firestore.rules); staff read
+// and manage all of them here. Redeeming still happens with a guide and Basecamp.
+const FS="https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
+async function tok(){const u=window.wlFirebase&&window.wlFirebase.auth.currentUser;if(!u)throw new Error("signed out");return u.getIdToken()}
+function val(v){if(!v)return null;if("stringValue"in v)return v.stringValue;if("integerValue"in v)return Number(v.integerValue);if("doubleValue"in v)return v.doubleValue;if("booleanValue"in v)return v.booleanValue;if("timestampValue"in v)return v.timestampValue;if("arrayValue"in v)return(v.arrayValue.values||[]).map(val);if("mapValue"in v)return Object.fromEntries(Object.entries(v.mapValue.fields||{}).map(([k,x])=>[k,val(x)]));return null}
+const docOf=d=>({id:d.name.split("/").pop(),...Object.fromEntries(Object.entries(d.fields||{}).map(([k,v])=>[k,val(v)]))});
+const enc=v=>Array.isArray(v)?{arrayValue:{values:v.map(enc)}}:typeof v==="boolean"?{booleanValue:v}:typeof v==="number"?{integerValue:String(Math.round(v))}:{stringValue:String(v)};
+async function req(url,opt){const r=await fetch(url,Object.assign({},opt,{headers:Object.assign({Authorization:"Bearer "+await tok(),"Content-Type":"application/json"},(opt||{}).headers||{})}));if(!r.ok)throw Object.assign(new Error("Firestore "+r.status),{status:r.status});return r.json()}
+const query=where=>req(FS+":runQuery",{method:"POST",body:JSON.stringify({structuredQuery:{from:[{collectionId:"storeRewards"}],where}})}).then(j=>j.filter(x=>x.document).map(x=>docOf(x.document)));
+async function listAll(coll){const out=[];let page="";do{const j=await req(`${FS}/${coll}?pageSize=300${page?"&pageToken="+encodeURIComponent(page):""}`);(j.documents||[]).forEach(d=>out.push(docOf(d)));page=j.nextPageToken||""}while(page);return out}
+const first=n=>String(n||"").trim().split(/\s+/)[0]||"";
+let ROLE=null,STAFF=false,ROSTER=[],GERR="";
+function toItem(r,me){const mine=!r.open&&(r.to||[]).includes(me);
+ return {show:r.active!==false&&(STAFF?r.open:(mine||(r.open&&(!(r.bands||[]).length||!ROLE||!ROLE.band||(r.bands||[]).includes(ROLE.band))))),raw:r,
+  item:{id:"r-"+r.id,c:"guide",n:r.n,why:r.why||"",b:r.b,e:r.e||"🎁",bands:"k1 24 58",mine,from:r.byName?"From "+first(r.byName):"From your guides"}}}
+async function loadRewards(){
+ const me=String((ROLE&&ROLE.email)||"").toLowerCase();
+ try{
+  const docs=STAFF?await listAll("storeRewards"):(await Promise.all([query({fieldFilter:{field:{fieldPath:"to"},op:"ARRAY_CONTAINS",value:{stringValue:me}}}),query({fieldFilter:{field:{fieldPath:"open"},op:"EQUAL",value:{booleanValue:true}}})])).flat();
+  const seen=new Set();REWARDS=docs.filter(d=>!seen.has(d.id)&&seen.add(d.id)).map(r=>toItem(r,me));GERR="";
+ }catch(e){REWARDS=[];GERR=e.status===403?"Guide rewards are off until firestore.rules is published in the Firebase console.":"Couldn't load guide rewards ("+e.message+")."}
+ rebuild();S.wish=S.wish.filter(id=>BY[id]||(/^r-/.test(id)&&GERR));render();if(STAFF)drawGR();
+}
+// Staff: add, edit, hide and delete rewards.
+let EDIT=null,PICK=new Set(),PBAND="All",PQ="";
+function drawGR(){const box=$("#gr");if(!STAFF){box.hidden=true;return}box.hidden=false;
+ const e=EDIT||{n:"",why:"",b:"",e:"🎁",open:false,bands:[],to:[]};
+ const names=em=>{const s=ROSTER.find(x=>x.email===em);return s?s.name:em};
+ const studs=ROSTER.filter(s=>(PBAND==="All"||s.band===PBAND)&&(!PQ||s.name.toLowerCase().includes(PQ)));
+ box.innerHTML=`<h2>Rewards from guides <span class="tag">Staff only</span></h2>
+ <p class="sub">Add something a particular kid would love, or a reward for a whole grade band. Students see rewards made for them first, with your first name on it. Only staff and the students named can see a personal reward. Redeem it the usual way, in Basecamp.</p>
+ ${GERR?`<p class="err">${esc(GERR)}</p>`:""}
+ <form id="grf" class="grf">
+  <div class="r1"><label>Emoji<input name="e" value="${esc(e.e)}" maxlength="8" class="em"></label><label class="grow">Reward<input name="n" value="${esc(e.n)}" maxlength="80" required placeholder="Ride along on the snowplow route with Scott"></label><label>Blazes<input name="b" type="number" min="1" max="5000" value="${esc(e.b)}" required></label></div>
+  <label>Note to the student (optional)<textarea name="why" maxlength="300" rows="2" placeholder="You asked about this in September. It's yours if you want it.">${esc(e.why)}</textarea></label>
+  <fieldset><legend>Who it's for</legend>
+   <label class="rad"><input type="radio" name="who" value="kids" ${e.open?"":"checked"}> Specific students</label>
+   <label class="rad"><input type="radio" name="who" value="bands" ${e.open?"checked":""}> Everyone in grades: ${BANDS.map(b=>`<label class="rad"><input type="checkbox" name="bands" value="${b}" ${(e.bands||[]).includes(b)?"checked":""}> ${b}</label>`).join("")}</label>
+   <div class="kids" ${e.open?"hidden":""}>
+    <div class="krow"><input id="pq" type="search" placeholder="Find a student" value="${esc(PQ)}">${["All"].concat(BANDS).map(b=>`<button type="button" class="${PBAND===b?"on":""}" data-pb="${b}">${b==="All"?"All":b}</button>`).join("")}</div>
+    <div class="klist">${ROSTER.length?studs.map(s=>`<label><input type="checkbox" data-kid="${esc(s.email)}" ${PICK.has(s.email)?"checked":""}> ${esc(s.name)} <small>${esc(s.band)}</small></label>`).join("")||"<p>No one matches.</p>":"<p>No student records yet. Students are added in the Student Roster.</p>"}</div>
+    <p class="picked">${PICK.size?"For: "+[...PICK].map(em=>esc(names(em))).join(", "):"Pick at least one student."}</p>
+   </div>
+  </fieldset>
+  <div class="acts"><button class="save on" type="submit">${EDIT&&EDIT.id?"Save changes":"Add to the store"}</button>${EDIT&&EDIT.id?`<button type="button" class="lnk" data-gcancel>Cancel</button>`:""}<span id="grmsg" role="status"></span></div>
+ </form>
+ <h3>In the store now (${REWARDS.length})</h3>
+ ${REWARDS.length?`<ul class="grl">${REWARDS.slice().sort((a,b)=>String(b.raw.created).localeCompare(String(a.raw.created))).map(x=>{const r=x.raw;return `<li class="${r.active===false?"off":""}"><span class="em">${esc(r.e||"🎁")}</span><span class="t"><b>${esc(r.n)}</b> · ${r.b} blazes<br><small>${r.open?"Everyone in grades "+esc((r.bands||[]).join(", ")||"K–8"):"For "+esc((r.to||[]).map(names).join(", "))} · added by ${esc(first(r.byName)||"a guide")}${r.active===false?" · hidden":""}</small></span><button type="button" class="lnk" data-gedit="${r.id}">Edit</button><button type="button" class="lnk" data-ghide="${r.id}">${r.active===false?"Show":"Hide"}</button><button type="button" class="lnk" data-gdel="${r.id}">Delete</button></li>`}).join("")}</ul>`:`<p class="sub">None yet.</p>`}`}
+async function saveGR(f){const m=$("#grmsg");const fd=new FormData(f);const open=fd.get("who")==="bands";
+ const data={n:String(fd.get("n")||"").trim().slice(0,80),why:String(fd.get("why")||"").trim().slice(0,300),b:Math.max(1,Math.min(5000,parseInt(fd.get("b"))||0)),e:(String(fd.get("e")||"").trim()||"🎁").slice(0,8),
+  open,bands:open?fd.getAll("bands"):[],to:open?[]:[...PICK],active:EDIT&&EDIT.id?EDIT.active!==false:true,by:String(ROLE.email||"").toLowerCase(),byName:(window.wlAuthState&&window.wlAuthState.user&&window.wlAuthState.user.displayName)||"",updated:Date.now()};
+ if(!data.n||!data.b){m.textContent="Give it a name and a price.";return}
+ if(open&&!data.bands.length){m.textContent="Pick at least one grade band.";return}
+ if(!open&&!data.to.length){m.textContent="Pick at least one student.";return}
+ if(EDIT&&EDIT.id){data.by=EDIT.by||data.by;data.byName=EDIT.byName||data.byName}
+ data.created=EDIT&&EDIT.id?EDIT.created:Date.now();
+ const id=EDIT&&EDIT.id?EDIT.id:Array.from(crypto.getRandomValues(new Uint8Array(20)),x=>"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[x%62]).join("");
+ m.textContent="Saving…";
+ try{await req(`${FS}/storeRewards/${id}`,{method:"PATCH",body:JSON.stringify({fields:Object.fromEntries(Object.entries(data).map(([k,v])=>[k,enc(v)]))})});EDIT=null;PICK=new Set();PQ="";await loadRewards();$("#grmsg").textContent="Saved."}
+ catch(e){m.textContent=e.status===403?"Not allowed: publish the new firestore.rules in the Firebase console.":"Couldn't save ("+e.message+")."}}
+async function setGR(id,patch){try{await req(`${FS}/storeRewards/${id}?`+Object.keys(patch).map(k=>"updateMask.fieldPaths="+k).join("&"),{method:"PATCH",body:JSON.stringify({fields:Object.fromEntries(Object.entries(patch).map(([k,v])=>[k,enc(v)]))})});await loadRewards()}catch(e){alert("Couldn't change it ("+e.message+").")}}
+async function delGR(id){try{await req(`${FS}/storeRewards/${id}`,{method:"DELETE"});await loadRewards()}catch(e){alert("Couldn't delete it ("+e.message+").")}}
+document.addEventListener("submit",e=>{if(e.target.id==="grf"){e.preventDefault();saveGR(e.target)}});
+document.addEventListener("input",e=>{if(e.target.id==="pq"){PQ=e.target.value.trim().toLowerCase();EDIT=Object.assign({},EDIT||{},formNow($("#grf")));const at=e.target.selectionStart;drawGR();const q=$("#pq");q.focus();q.setSelectionRange(at,at)}});
+document.addEventListener("change",e=>{const k=e.target.closest("[data-kid]");if(k){k.checked?PICK.add(k.dataset.kid):PICK.delete(k.dataset.kid);const f=$("#grf");EDIT=Object.assign({},EDIT||{},formNow(f));drawGR();return}
+ if(e.target.name==="who"){const f=$("#grf");EDIT=Object.assign({},EDIT||{},formNow(f));drawGR()}});
+function formNow(f){const fd=new FormData(f);return{n:fd.get("n"),why:fd.get("why"),b:fd.get("b"),e:fd.get("e"),open:fd.get("who")==="bands",bands:fd.getAll("bands")}}
+document.addEventListener("wl-role",e=>{const r=e.detail||null;ROLE=r;STAFF=!!r&&r.role==="staff";
+ if(!PICKED){const b=startBand();if(b!==BAND){BAND=b;draw()}}
+ if(!r||r.role==="parent"){REWARDS=[];rebuild();render();drawGR();return}
+ if(STAFF)listAll("lsStudents").then(l=>{ROSTER=l.filter(s=>s.email&&!s.test).map(s=>({email:String(s.email).toLowerCase(),name:s.name||s.email,band:s.band||""})).sort((a,b)=>a.name.localeCompare(b.name));drawGR()}).catch(()=>{});
+ loadRewards()});
+
 $("#have").value=S.have||"";
 document.addEventListener("click",e=>{
  const bd=e.target.closest("[data-b]");if(bd){BAND=bd.dataset.b;PICKED=true;draw();return}
- const c=e.target.closest("[data-c]");if(c){CAT=c.dataset.c;document.querySelectorAll("[data-c]").forEach(b=>b.classList.toggle("on",b===c));render();return}
+ const c=e.target.closest("[data-c]");if(c){CAT=c.dataset.c;render();return}
  const t=e.target.closest("[data-t]");if(t){TIER=t.dataset.t;document.querySelectorAll("[data-t]").forEach(b=>b.classList.toggle("on",b===t));render();return}
  const w=e.target.closest("[data-w]");if(w){const id=w.dataset.w;S.wish=S.wish.includes(id)?S.wish.filter(x=>x!==id):S.wish.concat(id);store();render();return}
- const x=e.target.closest("[data-x]");if(x){S.wish=S.wish.filter(i=>i!==x.dataset.x);store();render()}
+ const x=e.target.closest("[data-x]");if(x){S.wish=S.wish.filter(i=>i!==x.dataset.x);store();render();return}
+ const pb=e.target.closest("[data-pb]");if(pb){PBAND=pb.dataset.pb;EDIT=Object.assign({},EDIT||{},formNow($("#grf")));drawGR();return}
+ const ge=e.target.closest("[data-gedit]");if(ge){const r=(REWARDS.find(x=>x.raw.id===ge.dataset.gedit)||{}).raw;if(r){EDIT=Object.assign({},r);PICK=new Set(r.to||[]);drawGR();$("#gr").scrollIntoView({behavior:"smooth"})}return}
+ if(e.target.closest("[data-gcancel]")){EDIT=null;PICK=new Set();drawGR();return}
+ const gh=e.target.closest("[data-ghide]");if(gh){const r=(REWARDS.find(x=>x.raw.id===gh.dataset.ghide)||{}).raw;if(r)setGR(r.id,{active:r.active===false});return}
+ const gd=e.target.closest("[data-gdel]");if(gd){if(confirm("Delete this reward? Students who saved it will lose it from their list."))delGR(gd.dataset.gdel);return}
 });
 $("#q").addEventListener("input",e=>{Q=e.target.value.trim().toLowerCase();render()});
 $("#have").addEventListener("input",e=>{S.have=Math.max(0,Math.min(99999,parseInt(String(e.target.value).replace(/[^0-9]/g,""))||0));store();render()});

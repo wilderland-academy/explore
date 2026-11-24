@@ -386,3 +386,16 @@ the `PAGES` list at the top of `/search.js`.
   supervision, ×1.5 for minutes that pull a guide off their crew or fall outside school hours, rounded to 5 (`GUIDE_RATE`,
   `expBlazes` in `products.js`). The reasoning (status, respect, choice, private recognition) is in the comment there.
   Redeeming still happens with a guide and Basecamp; guides decide when each can run.
+
+## Camp Store: better experiences and rewards from guides (Nov 23, 2026, evening)
+- **The first 65 experiences are gone.** Kids found them lame, and many were jobs (lead a Lab, run the store, chair Town
+  Hall). `EXPERIENCES` in `store/products.js` now holds 30 that follow one rule: something a kid would pick on a free
+  afternoon. Friends, food, freedom, a little thrill and sanctioned mischief (pie a guide, Nerf war vs. guides, lounge pass,
+  lunch ordered in, sleep-in pass, crew lock-in). The research behind it is in the comment above the list. Prices (`b`) are
+  set by how much kids want them and how scarce they are, never below the cost to the school. Mischief only happens with
+  guides who sign up for it.
+- **Rewards from guides.** Staff see a "Rewards from guides" panel on `/store/`: name, emoji, blazes, an optional note, and
+  who it's for (specific students picked from the Life Skills roster, or everyone in some grade bands). Students see rewards
+  made for them first ("Just for you", "From Scott"), plus open ones for their band. Firestore `storeRewards`; a personal
+  reward can be read only by staff and the students named (`to` holds their school emails). Edit, hide and delete in the panel.
+  **Publish `firestore.rules` in the Firebase console** or the panel says guide rewards are off.
