@@ -116,7 +116,7 @@ import { STEPS } from "/guides/onboarding/data.js";
 const u = await ready(); if (u) {
   const P = await loadProgress(), done = (P.journey && P.journey.done) || {}, read = Object.keys((P.journey && P.journey.read) || {}).length;
   const i = STEPS.findIndex(s => !done[s.id]);
-  document.getElementById("onbs").textContent = i < 0 ? "Complete. Every step stays open for review, with the Dig deeper library." : `Step ${i + 1} of ${STEPS.length}: ${STEPS[i].name}. ` + (i === 0 && !read ? "Start here: each step you finish adds its part of the site here." : "Pick up where you left off.");
+  document.getElementById("onbs").textContent = i < 0 ? "Complete. Every step stays open for review, with any Dig deeper picks you saved." : `Step ${i + 1} of ${STEPS.length}: ${STEPS[i].name}. ` + (i === 0 && !read ? "Start here: each step you finish adds its part of the site here." : "Pick up where you left off.");
 }
 </script>
 </body>
