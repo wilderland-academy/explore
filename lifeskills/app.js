@@ -76,7 +76,8 @@ const RANKS = {
   "2–4": [[4, "Fox"], [16, "Badger"], [32, "Elk"], [48, "Moose"]],
   "5–8": [[4, "Tracker"], [16, "Pathfinder"], [32, "Ranger"], [48, "Vanguard"], [64, "Trailblazer"]]
 };
-const goalFor = band => band === "K–1" ? 3 : 2;
+// Every band, K–1 included, aims for 2 per life skill a year (16 in all). K–1 challenges are always part of a Life Skill Lab.
+const goalFor = band => 2;
 
 // ---------- small helpers ----------
 const $ = s => document.querySelector(s);
@@ -496,7 +497,7 @@ function record(sid, opts = {}) {
       h("span", { class: "dots", style: { color: k.col }, "aria-label": `${Math.min(n, goal)} of ${goal}${n > goal ? `, plus ${n - goal} extra` : ""}` }, [...Array(goal)].map((_, i) => h("span", { class: "dot" + (i < n ? " on" : "") })).concat(n > goal ? [h("span", { class: "extra", text: "+" + (n - goal) })] : []))]);
   }));
   const rankLine = s.band === "K–1"
-    ? h("p", { class: "muted", text: "K–1 has no ranks. Each child aims for 3 passes in every life skill this year." })
+    ? h("p", { class: "muted", text: "K–1 has no ranks. Each child aims for 2 passes in every life skill this year, through Life Skill Labs." })
     : h("p", { class: "muted" }, [h("b", { style: { color: "var(--ink)" }, text: `${sum.trail} credits on the grades ${s.band} trail. ` }),
         (sum.nextRank && sum.nextRank[0] === sum.milestone + 4 ? `Next: ${sum.nextRank[1]} at ${sum.nextRank[0]}. ` : `Next milestone at ${sum.milestone + 4}` + (sum.nextRank ? `, then ${sum.nextRank[1]} at ${sum.nextRank[0]}. ` : ". ")) + "Every 4 credits is a milestone, celebrated at Honor Court."]);
   const staffBits = opts.staff ? h("div", { class: "row noprint" }, [
@@ -672,8 +673,8 @@ function overview() {
   } else {
     const table = h("table", { class: "ov" }, [
       h("caption", { class: "small muted", style: { textAlign: "left", padding: "14px 18px 4px" }, text: savedView
-        ? `Challenges each student has saved to their plan in each life skill (not yet passed), out of the year goal of ${ovBand === "All" ? "2 (3 in K–1)" : goal}. Point at or tap a count to see which ones.`
-        : `Credits this school year per life skill. A filled circle means the year goal of ${ovBand === "All" ? "2 (3 in K–1)" : goal} is met.` }),
+        ? `Challenges each student has saved to their plan in each life skill (not yet passed), out of the year goal of ${goal}. Point at or tap a count to see which ones.`
+        : `Credits this school year per life skill. A filled circle means the year goal of ${goal} is met.` }),
       h("thead", {}, h("tr", {}, [h("th", { scope: "col", text: "Student" }), ...W.skills.map(k => h("th", { scope: "col", title: k.n, style: { borderTopColor: k.col }, text: SHORT[k.k] })),
         h("th", { scope: "col", text: savedView ? "Saved" : "This year" }), h("th", { scope: "col", text: "Trail" }), h("th", { scope: "col", style: { textAlign: "left" }, text: "Last pass" })])),
       h("tbody", {}, rows.map(s => {

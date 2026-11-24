@@ -103,7 +103,7 @@ function skills() {
   s.append(pick, detail);
   s.appendChild(h("h3", { text: "How a challenge works" }));
   s.appendChild(h("div", { class: "steps" }, D.CHALLENGE_STEPS.map(x => h("div", null, [h("b", { text: x[0] }), x[1]]))));
-  s.appendChild(card("", [h("p", { text: "Grades 2–8 aim for at least 2 passed challenges in each Life Skill a year. In K–1, guides run the challenges with the whole group and aim for at least 3 per Life Skill." }), h("div", { class: "row" }, [h("a", { class: "btn", style: "text-decoration:none", href: "/challenges/", text: "Explore the challenges" }), h("a", { class: "btn ghost", style: "text-decoration:none", href: "/challenges/parents.html", text: "Passing off at home" })])]));
+  s.appendChild(card("", [h("p", { text: "Grades 2–8 aim for at least 2 passed challenges in each Life Skill a year. In K–1, every challenge is part of a Life Skill Lab, led by a guide with the whole group, and each child aims for 2 per Life Skill too." }), h("div", { class: "row" }, [h("a", { class: "btn", style: "text-decoration:none", href: "/challenges/", text: "Explore the challenges" }), h("a", { class: "btn ghost", style: "text-decoration:none", href: "/challenges/parents.html", text: "Passing off at home" })])]));
   return s;
 }
 

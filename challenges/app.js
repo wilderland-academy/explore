@@ -50,7 +50,7 @@
     return 'rgb(' + m(r) + ',' + m(g) + ',' + m(b) + ')';
   }
   function skillVars(s) { return '--c:' + s.col + ';--tint:' + tint(s.col, 0.85); }
-  function target() { return state.band === 'K–1' ? 3 : 2; }
+  function target() { return 2; }   // every band, K–1 included: 2 per life skill a year
   function guideMode() { return state.band === 'K–1'; }
   function imgFor(cid) { return D.img && D.img[cid]; }
   function credit(m) {
@@ -122,8 +122,8 @@
 
   function renderYear() {
     var t = target();
-    document.getElementById('year-goal').textContent = t === 1
-      ? 'In K–1, cover at least 3 challenges in each of the 8 life skills this year, at least 2 a week.'
+    document.getElementById('year-goal').textContent = state.band === 'K–1'
+      ? 'In K–1, every challenge is part of a Life Skill Lab, led by a guide with the whole crew. Each child aims for 2 in each of the 8 life skills this year.'
       : 'Finish 2 challenges in each of the 8 life skills this year. An Epic counts as 2. Challenges you save show as lined dots; a dot fills in when you pass.';
     document.getElementById('year-skills').innerHTML = D.skills.map(function (s) {
       // Filled: passed (from the Life Skills tracker, for a signed-in student). Lined: saved to the plan, not passed yet.
