@@ -138,12 +138,12 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   (`?t=<id>`). Session room records in the Field Guide are separate and stay where they are (`mentor/{uid}/sessions`).
 - **Lab builder.** Adapted from Ian's "Wilderland Guide Builder" prototype: four ways in (a Life Skill, an idea, a challenge on the
   site, a plan to review), using the Skill Map and challenges in `challenges/data.js`. Every draft is scored on the K-8 Life Skills
-  Workshop Scorecard (nine indicators, 1 to 3) and pushed toward 3s. The rules are `guides/lifeskills/builder/rules.txt`, written
+  Life Skill Lab Scorecard (nine indicators, 1 to 3) and pushed toward 3s. The rules are `guides/lifeskills/builder/rules.txt`, written
   from the Scorecard, the Challenge System doc and the Valley Builders lab; replace them with Ian's `builder-rules.md` if he wants
   his exact wording (keep the Scorecard and output-order sections, which the page relies on). A "Lab builder" tab appears in the Life
   Skills sub-nav only inside the staff guides. Guests (Ian) can use it.
 - **Epic Labs** (added later Nov 21): `guides/lifeskills/builder/epics.js` holds example Epic Labs for each band (three for K–1, four for 2–4 and 5–8) (weeks-long Labs that end in a real, public feat),
-  each with its Skill Map abilities, how it meets high standards, high support and high autonomy, Test to Pass, showcase,
+  each with its Skill Map abilities, how it meets high standards, high support and high autonomy, Skill Validation, showcase,
   safety and a rough cost. They appear as the first way into the Lab builder ("An epic Lab to adapt"); a guide picks one,
   sets band, time and notes, and the builder writes the full week-by-week plan and scores it. Link straight to one with
   `/guides/lifeskills/builder/?epic=<id>`. Places marked [CONFIRM] still need checking.

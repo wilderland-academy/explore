@@ -1,5 +1,5 @@
 // Lab builder (staff): build a Challenge, Skill Lab or Project, or review a plan, scored on the K-8 Life Skills
-// Workshop Scorecard. Adapted from Ian's "Wilderland Guide Builder" prototype. The Skill Map and the 404 challenges
+// Life Skill Lab Scorecard. Adapted from Ian's "Wilderland Guide Builder" prototype. The Skill Map and the 404 challenges
 // come from /challenges/data.js (window.WL); the writing rules are rules.txt; AI goes through the staff relay
 // (mentorConfig/main); every draft is saved to the guide's private history (/guides/log.js).
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
@@ -97,7 +97,7 @@ const chip = (label, pressed, onclick, extra = {}) => el("button", { class: "chi
 function draw() {
   app.replaceChildren(
     el("div", { class: "wrap page-head" }, el("h1", { text: "Build a Lab that's truly excellent" }),
-      el("p", { text: "Start from whatever you have: a skill you need to teach, an idea you love, a challenge already on the site, or a plan you wrote. Every draft is scored against the K-8 Life Skills Workshop Scorecard and pushed toward a 3 on all nine indicators." })),
+      el("p", { text: "Start from whatever you have: a skill you need to teach, an idea you love, a challenge already on the site, or a plan you wrote. Every draft is scored against the K-8 Life Skill Lab Scorecard and pushed toward a 3 on all nine indicators." })),
     el("div", { class: "wrap" }, step1(), step2(), step3(), recent()));
 }
 
@@ -180,7 +180,7 @@ function epicCard(e) {
     el("p", { class: "feat", text: e.feat }),
     el("p", { class: "note", text: e.skills.map(compLabel).map(x => x.split(" › ").pop()).join(" · ") }),
     el("details", {}, el("summary", { text: "How it hits the Scorecard" }),
-      el("dl", {}, [["High standards", e.standards], ["High support", e.support], ["High autonomy", e.autonomy], ["Test to Pass", e.test], ["Showcase", e.showcase], ["Safety", e.safety], ["Worth knowing", e.note]].flatMap(([k, v]) => v ? [el("dt", { text: k }), el("dd", { text: v })] : []))),
+      el("dl", {}, [["High standards", e.standards], ["High support", e.support], ["High autonomy", e.autonomy], ["Skill Validation", e.test], ["Showcase", e.showcase], ["Safety", e.safety], ["Worth knowing", e.note]].flatMap(([k, v]) => v ? [el("dt", { text: k }), el("dd", { text: v })] : []))),
     on ? el("p", { class: "note", text: "Chosen: set the details below." }) : null);
 }
 function skillPanel() {
@@ -261,7 +261,7 @@ function step2() {
   const n = [];
   if (st.band === "K–1" && st.type === "Challenge" && st.way !== "review") n.push(el("div", { class: "box warn", text: "K–1 students don't run Challenges on their own. The builder will make it guide-led (the guide runs it, each child shows the skill alone), or switch to a Skill Lab." }));
   if (st.band === "2–4" && st.type === "Project") n.push(el("div", { class: "box warn", text: "Projects for 2–4 are by exception: the student asks, and the guide and a parent agree. Otherwise a Challenge or Lab builds the skills first." }));
-  if (st.way === "existing" && st.chAct === "lab") n.push(el("div", { class: "box ok", text: "A Lab built from a Challenge keeps that Challenge's Test to Pass, and the Challenge comes off this group's menu for the year." }));
+  if (st.way === "existing" && st.chAct === "lab") n.push(el("div", { class: "box ok", text: "A Lab built from a Challenge keeps that Challenge's Skill Validation, and the Challenge comes off this group's menu for the year." }));
   if (st.comp && st.band && st.way !== "review" && st.type === "Challenge" && !countFor(st.comp)[BANDS.indexOf(st.band)]) n.push(el("div", { class: "box gap", text: `There's no ${st.band} challenge for this ability yet. This one fills a gap.` }));
   p.append(...n);
   if (st.way !== "review") {
@@ -298,7 +298,7 @@ function buildPrompt() {
   let req;
   if (st.way === "review") req = `Mode D: review this plan a guide wrote.${st.band ? ` Age band: ${st.band}.` : ""}\n\nThe plan:\n"""\n${st.plan.trim()}\n"""`;
   else if (st.way === "existing") {
-    req = { lab: `Mode B: build a Skill Lab from this Challenge for ${st.band}. Keep its Test to Pass exactly, and note that the Challenge comes off this group's menu for the year.`,
+    req = { lab: `Mode B: build a Skill Lab from this Challenge for ${st.band}. Keep its Skill Validation exactly, and note that the Challenge comes off this group's menu for the year.`,
       band: `Mode A: build a version of this Challenge for the ${st.band} band. Keep the same specific ability; change the size, bar and support to fit the age.`,
       epic: `Mode A: build a harder Epic version of this Challenge (2 to 3 weeks, counts as 2) for ${st.band}, with checkpoints.`,
       improve: `Mode D, then Mode A: score this Challenge on the Scorecard as written, then give an improved version in the Challenge Card template and score that.` }[st.chAct] + `\n\nThe starting challenge (from the site):\n${challengeBrief(st.ch, true)}`;
@@ -308,7 +308,7 @@ function buildPrompt() {
   }
   if (isEpic()) {
     const e = epicBy[st.epic];
-    req = `Mode B, Epic Lab: build a full Epic Skill Lab for the ${st.band} band, starting from this example. Keep the feat and the bar unless the guide's notes change them. Fill in the whole plan week by week, with the specific steps that get every child from where they start to the feat, how adults and outside experts are used, the Test to Pass for each skill target, and the showcase. If the guide's band differs from the example's (${e.band}), adapt the feat so it is still impressive for that age.\n\nThe example:\nTitle: ${e.title}\nFeat: ${e.feat}\nLength: ${e.weeks}\nSkill targets: ${e.skills.map(id => compLabel(id) + " (" + id + ")").join("; ")}\nHigh standards: ${e.standards}\nHigh support: ${e.support}\nHigh autonomy: ${e.autonomy}\nTest to Pass: ${e.test}\nShowcase: ${e.showcase}\nSafety: ${e.safety}\nCost: ${e.cost}\nNotes: ${e.note || ""}`;
+    req = `Mode B, Epic Lab: build a full Epic Skill Lab for the ${st.band} band, starting from this example. Keep the feat and the bar unless the guide's notes change them. Fill in the whole plan week by week, with the specific steps that get every child from where they start to the feat, how adults and outside experts are used, the Skill Validation for each skill target, and the showcase. If the guide's band differs from the example's (${e.band}), adapt the feat so it is still impressive for that age.\n\nThe example:\nTitle: ${e.title}\nFeat: ${e.feat}\nLength: ${e.weeks}\nSkill targets: ${e.skills.map(id => compLabel(id) + " (" + id + ")").join("; ")}\nHigh standards: ${e.standards}\nHigh support: ${e.support}\nHigh autonomy: ${e.autonomy}\nSkill Validation: ${e.test}\nShowcase: ${e.showcase}\nSafety: ${e.safety}\nCost: ${e.cost}\nNotes: ${e.note || ""}`;
   }
   if (st.time.trim()) req += `\nTime we have: ${st.time.trim()}`;
   if (st.notes.trim()) req += `\nOther notes from the guide: ${st.notes.trim()}`;
@@ -378,7 +378,7 @@ function scoreCard(sc) {
   const total = s.reduce((a, b) => a + b, 0), threes = s.filter(n => n === 3).length;
   const nexts = (sc.next || []).slice();
   return el("div", { class: "score" },
-    el("div", { class: "tot" }, el("b", { text: total + "/27" }), el("span", { text: `${threes} of 9 indicators at Excellent · K-8 Life Skills Workshop Scorecard` })),
+    el("div", { class: "tot" }, el("b", { text: total + "/27" }), el("span", { text: `${threes} of 9 indicators at Excellent · K-8 Life Skill Lab Scorecard` })),
     el("div", { class: "srows" }, s.map((n, i) => el("div", { class: "srow s" + n }, el("b", { text: (i + 1) + ". " + INDICATORS[i] }), el("div", {}, el("div", { class: "pips", "aria-label": n + " of 3, " + LEVEL[n] }, el("i"), el("i"), el("i")), el("span", { class: "note", text: LEVEL[n] })), el("span", { class: "w", text: (sc.why || [])[i] || "" }),
       n < 3 && nexts.length ? el("span", { class: "nx", text: "To reach 3: " + nexts.shift() }) : null))),
     el("p", { class: "note", text: "Claude's honest read of the draft as written. Check it against the scorecard yourself before you run the Lab." }));

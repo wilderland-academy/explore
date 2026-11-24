@@ -83,17 +83,17 @@ const skills = svg("The eight Life Skills as eight flags along one ridge: Energy
   pill(380, 36, "Each year: 2 passes in every Life Skill (3 in K–1)", { size: 15, dark: true })
 );
 
-// 3. Skill Labs: learn it together, then each student takes their own Test to Pass.
-const labs = svg("A Skill Lab: a guide teaches a crew together, then each student takes their own Test to Pass at a finish line.",
+// 3. Skill Labs: learn it together, then each student takes their own Skill Validation.
+const labs = svg("A Skill Lab: a guide teaches a crew together, then each student takes their own Skill Validation at a finish line.",
   F + sky() + `<polygon points="${pts([[-20, 170], [100, 140], [230, 160], [360, 128], [500, 156], [640, 130], [780, 150], [780, 320], [-20, 320]])}" fill="#bcd3b1"/>` +
   ground(230, "#3a8f5b") + `<polygon points="${pts([[-20, 280], [200, 272], [420, 282], [600, 274], [780, 280], [780, 320], [-20, 320]])}" fill="#155f37"/>` +
   pine(24, 236, 1.5) + pine(330, 230, 1.2) + pine(744, 236, 1.6) +
   `<rect x="74" y="176" width="70" height="46" rx="3" fill="${CREAM}"/><path d="M84 190h44M84 202h30M84 212h38" stroke="#7f978b" stroke-width="3" stroke-linecap="round"/><path d="M90 222l-6 26M128 222l6 26" stroke="#5b4a2e" stroke-width="3"/>` +
   hiker(166, 258, 3.1, LIME, "#36507a", "#6b4426", -1) + hiker(204, 262, 2.3, "#e2674a", "#2c3b52", "#3b2a20", -1) + hiker(232, 266, 2.3, "#8fb3d9", "#36507a", "#6b4426", -1) + hiker(258, 260, 2.3, "#f5c542", "#2c3b52", "#3b2a20", -1) + hiker(282, 266, 2.3, "#c58bd6", "#36507a", "#3b2a20", -1) +
-  `<path d="M560 268V168M700 268V168" stroke="#5b4a2e" stroke-width="5" stroke-linecap="round"/><rect x="560" y="170" width="140" height="34" fill="${CREAM}"/>` +
+  `<path d="M560 268V168M700 268V168" stroke="#5b4a2e" stroke-width="5" stroke-linecap="round"/><rect x="556" y="170" width="148" height="34" fill="${CREAM}"/>` +
   `<path d="M560 268h140" stroke="${CREAM}" stroke-width="3" stroke-dasharray="8 6"/>` +
   hiker(640, 266, 2.6, "#e2674a") + hiker(724, 272, 2.2, "#f5c542", "#2c3b52", "#6b4426", -1) + hiker(536, 274, 2.6, LIME, "#36507a", "#6b4426") + "</g>" +
-  `<text x="630" y="193" text-anchor="middle" style="font:800 15px Inter,system-ui,sans-serif;fill:${INK}">TEST TO PASS</text>` +
+  `<text x="630" y="193" text-anchor="middle" style="font:800 13px Inter,system-ui,sans-serif;fill:${INK}">SKILL VALIDATION</text>` +
   `<path d="M330 120 Q420 96 500 122" stroke="${INK}" stroke-width="3" fill="none" stroke-dasharray="2 8" stroke-linecap="round"/><polygon points="${pts([[494, 112], [510, 126], [490, 130]])}" fill="${INK}"/>` +
   pill(190, 52, "1. Learn it together", { size: 15, dark: true }) + pill(630, 52, "2. Each student tests alone", { size: 15, dark: true })
 );
