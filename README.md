@@ -355,3 +355,34 @@ the `PAGES` list at the top of `/search.js`.
   `<header class="nav wlsub">` in `/wl.css`: same height, title and links, so nothing shifts between them. The tracker's
   account menu moved into the top bar, where the sign-in chip is everywhere else, and Parents › Challenges now shows the
   chip too. The students' tracker and Challenges keep their own header.
+
+## 500 more books, "Read it, not for me", and the Camp Store's grades and experiences (Nov 23, 2026)
+- **The Lantern Stacks has 1,436 books.** 500 were added on one `BOOKS.push(...)` line right after the first one in `books/index.html`
+  (same fields as the rest; keep its `"id": "x", "t": "..."` spacing, because `/search.js` and the Student Roster find titles by
+  that pattern). The mix: genuine classics (Newbery and Caldecott winners, Westerns, Shakespeare, Poe, Wells), modern classics,
+  gateway books (graphic novels, manga, Goosebumps, Choose Your Own Adventure, first chapter books, early readers for K–1) and
+  interest-first nonfiction for kids who say they don't like reading: sports heroes, survival guides, gross science, Who Would Win?,
+  Guinness, LEGO and Minecraft, cars and trains, field guides for Utah birds and Rocky Mountain tracks. A few are local: The Great
+  Brain (Adenville, Utah), Philo Farnsworth, Desert Solitaire, Between a Rock and a Hard Place, Dragon's Gate and Ten Mile Day
+  (Promontory), and books by Utah authors (Brandon Mull, Shannon Hale, Ally Condie, Obert Skye).
+  - Every new Lexile is an estimate (`v: 0`, shown with ≈) until someone checks it against a published list. Awards were added to
+    `AWD`, and matching books were added to the Life List sets in `LSETS` (translated, farm and ranch, disaster, TV, plays...).
+  - The new books have no cover photos yet; they use the drawn covers. Covers come from Open Library, which this build
+    environment could not reach.
+- **Read it, not for me.** Every book page has "I read it. Not for me", with optional reasons (too slow, too scary, too sad, too
+  hard, too easy, not my kind of story, didn't like the ending). Stored in `lantern-stacks` as `nope` (ids) and `nwhy` (reasons), so
+  it syncs with the shelf. These books count as read for the Life List and for the Lexile estimate (unless marked too hard or too
+  easy). `nopePen()` pushes similar books down everywhere recommendations are made (book pages, For you, New ground, Moments, the
+  new "Picked from your shelf" row on the home page); a reason aims the penalty (too scary lowers spooky books, too hard lowers
+  books at that level and up). A book marked not-for-me shows "Try something different" instead of look-alikes. The shelf has a
+  "Read it, not for me" list (`#nope`), and the Student Roster shows it with the reasons (`NWHY` in `guides/roster/app.js`, keep
+  in step with `NWHY` in `books/index.html`). The shelf text now says guides can see it, which was already true.
+- **Camp Store grades.** `APPEAL` in `store/products.js` lists the grade bands each product appeals to (not the same as its
+  minimum age). The store starts on the visitor's band (`window.wlBand`), has All grades / K–1 / 2–4 / 5–8 buttons, puts
+  band-specific things first, and opens with "Picked for grades …" (`FEATURED`, editorial, experiences first from grade 2 up).
+- **Experiences are in the store.** 65 experiences (50 new, built mostly for grades 5–8, plus the 15 earlier ideas; the old
+  "Pizza lunch" became "Lunch with any guide you choose") are now savable store items in an Experiences category, with what each
+  takes and how often it can happen. Price = 2 blazes per dollar of cash cost + 1 blaze per guide minute beyond normal
+  supervision, ×1.5 for minutes that pull a guide off their crew or fall outside school hours, rounded to 5 (`GUIDE_RATE`,
+  `expBlazes` in `products.js`). The reasoning (status, respect, choice, private recognition) is in the comment there.
+  Redeeming still happens with a guide and Basecamp; guides decide when each can run.

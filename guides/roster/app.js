@@ -104,7 +104,7 @@ const canPilot = () => S.admin || !!S.test;
 const pkey = s => s.email ? key(s.email) : "sid:" + s.id;
 function person(email) {
   const k = key(email);
-  return S.people[k] || (S.people[k] = { email: k, name: "", band: "", guide: "", uid: "", sid: "", grade: "", parents: [], school: "", picks: [], sparks: [], saved: [], want: [], chats: [], alerts: [], coach: null });
+  return S.people[k] || (S.people[k] = { email: k, name: "", band: "", guide: "", uid: "", sid: "", grade: "", parents: [], school: "", picks: [], sparks: [], saved: [], want: [], nope: [], nwhy: {}, chats: [], alerts: [], coach: null });
 }
 // A tester's test view (the test guide) sees the test accounts, plus the test band's real students on the roster (view
 // only, so it looks like a real guide's roster); everyone else never sees the test accounts.
@@ -134,7 +134,7 @@ async function loadAll() {
     const j = k => { try { return JSON.parse(data[k]); } catch (e) { return null; } };
     if (d.id === "challenges") p.picks = (j("wl-picks") || []).filter(id => CH[id]);
     if (d.id === "projects") p.sparks = (j("atlas-sparks") || []).filter(x => x && x.t);
-    if (d.id === "books") { const b = j("lantern-stacks") || {}; p.saved = b.saved || []; p.want = b.want || []; }
+    if (d.id === "books") { const b = j("lantern-stacks") || {}; p.saved = b.saved || []; p.want = b.want || []; p.nope = Array.isArray(b.nope) ? b.nope : []; p.nwhy = b.nwhy || {}; }
   });
   chats.forEach(c => person(c.email).chats.push(c));
   alerts.forEach(a => person(a.email).alerts.push(a));
@@ -164,6 +164,8 @@ function badge() {
   const open = S.alerts.filter(a => a.status === "open");
   document.dispatchEvent(new CustomEvent("wl-alerts", { detail: { open: open.length, urgent: open.filter(a => a.severity === "urgent").length } }));
 }
+// Reasons a student can give for "Read it, not for me" on /books/ (keep in step with NWHY there).
+const NWHY = { slow: "too slow", scary: "too scary", sad: "too sad", hard: "too hard to read", easy: "too easy", kind: "not their kind of story", ending: "didn't like the ending" };
 async function bookTitles() {
   if (S.books) return S.books;
   try {
@@ -370,7 +372,7 @@ async function vStudent(k) {
   const p = S.people[key(k)] || S.people[k];
   if (!p) return `<p class="crumb"><a href="#roster">← Roster</a></p><p class="empty">No student with that email.</p>`;
   const allowed = S.admin || S.myBands.includes(p.band);
-  const books = allowed && (p.saved.length || p.want.length) ? await bookTitles() : {};
+  const books = allowed && (p.saved.length || p.want.length || (p.nope || []).length) ? await bookTitles() : {};
   const sec = (t, items, empty) => `<section class="card"><h3>${t}</h3>${items.length ? `<ul class="items">${items.join("")}</ul>` : `<p class="muted small">${empty}</p>`}</section>`;
   const ls = p.sid ? `/guides/lifeskills/#s=${encodeURIComponent(p.sid)}` : "";
   return (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") + `<p class="crumb"><a href="#roster">← Roster</a></p>` +
@@ -383,6 +385,7 @@ async function vStudent(k) {
       ${sec(`Project sparks saved (${p.sparks.length})`, p.sparks.map(x => `<li>${esc(x.t)}</li>`), "None saved.")}
       ${sec(`Books on their shelf (${p.saved.length})`, p.saved.map(id => `<li>${esc(books[id] || id)}</li>`), "None saved.")}
       ${sec(`Books they want to read (${p.want.length})`, p.want.map(id => `<li>${esc(books[id] || id)}</li>`), "None yet.")}
+      ${sec(`Read it, not for me (${(p.nope || []).length})`, (p.nope || []).map(id => `<li>${esc(books[id] || id)}${(p.nwhy[id] || []).length ? ` <span class="meta">· ${esc(p.nwhy[id].map(k => NWHY[k] || k).join(", "))}</span>` : ""}</li>`), "None marked.")}
     </div>` : `<p class="empty">This student is outside your grade band, so their saved things aren't shown. Their AI conversations are below.</p>`) +
     `<section style="display:flex;flex-direction:column;gap:10px"><h2>Mr. Fox conversations (${p.chats.length})</h2>${p.chats.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>About</th><th class="num">Messages</th><th>Flag</th><th>Last</th><th></th></tr></thead><tbody>${p.chats.sort((a, b) => b.updated - a.updated).map(chatRow).join("")}</tbody></table></div>` : `<p class="empty">No conversations.</p>`}</section>`;
 }

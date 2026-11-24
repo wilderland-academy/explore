@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Camp Store · Wilderland Explore</title>
-<meta name="description" content="Things worth saving your blazes for: 176 toys, tools, games and gear picked for Wilderland students.">
+<meta name="description" content="Things worth saving your blazes for: 176 toys, tools, games and gear, and 65 experiences, picked for Wilderland students.">
 <meta name="theme-color" content="#015640">
 <link rel="icon" href="/books/f/icon.png">
 <link rel="stylesheet" href="/wl.css">
@@ -62,19 +62,22 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
 .card .save{margin-top:6px;font:600 13px/1 Inter,sans-serif;color:var(--paper);background:transparent;border:1px solid var(--line);border-radius:10px;padding:9px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
 .card .save.on{color:#0b2b20;background:var(--lamp);border-color:var(--lamp)}
 .card .can{margin-left:auto;font:600 11px/1 Inter,sans-serif;color:#0b2b20;background:var(--lamp);padding:5px 8px;border-radius:999px;white-space:nowrap}
-.exp{margin:10px 0 40px;padding:22px;border-radius:18px;background:linear-gradient(135deg,rgba(213,243,103,.08),transparent),var(--shelf);border:1px solid var(--line)}
-.exp h2{font-size:22px;margin-bottom:4px}
-.exp p.sub{color:var(--dim);margin:0 0 14px;font-size:14px}
-.exp ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
-.exp li{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--ink);border:1px solid var(--line)}
-.exp li span.e{font-size:26px}
-.exp li b{display:block;font-size:14.5px}
-.exp li small{color:var(--dim);display:block;font-size:12.5px;margin-top:2px}
-.exp li i{font-style:normal;color:var(--lamp);font-weight:700;margin-left:auto;white-space:nowrap;font-size:14px}
 .fine{color:#7f978b;font-size:13px;max-width:70ch;padding-bottom:40px}
 @media (max-width:760px){.hero{grid-template-columns:1fr;gap:16px;padding-top:22px}.card .top{aspect-ratio:1/1}}
 .card .price .can{color:#0b2b20}
 .th{width:34px;height:34px;border-radius:8px;background:#fff;object-fit:contain;padding:2px}
+.bands{display:flex;gap:6px;flex-wrap:wrap}
+.bands button{font:600 13px/1 Inter,sans-serif;color:var(--lamp);background:transparent;border:1px solid rgba(213,243,103,.4);border-radius:999px;padding:8px 12px;cursor:pointer}
+.bands button.on{background:var(--lamp);color:#0b2b20;border-color:var(--lamp)}
+.feat{margin:6px 0 8px}
+.feat h2{font-size:22px} .feat .sub{color:var(--dim);margin:2px 0 12px;font-size:14px}
+.feat .rail{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,250px);gap:14px;overflow-x:auto;padding-bottom:12px;scroll-snap-type:x proximity}
+.feat .rail .card{scroll-snap-align:start}
+.card .top.xp{background:linear-gradient(150deg,var(--c-soft),rgba(8,20,15,.2)),var(--shelf2)}
+.card .top.xp .big{font-size:64px;line-height:1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
+.card .how{font-size:12.5px;color:var(--dim);margin:0} .card .how b{color:#c9d6cc;font-weight:600}
+.card .lim{font-size:12px;color:var(--neon);margin:0}
+.th.thx{display:grid;place-items:center;font-size:20px;background:var(--shelf2)}
 </style>
 </head>
 <body data-gated class="wl-pending">
@@ -86,7 +89,7 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
 <section class="hero">
   <div>
     <h1>What are you <span>saving for?</span></h1>
-    <p>Every blaze you earn is worth 50 cents here. Something here for every kind of kid: sports, skate, animals, style, gross science, games, tools, books, and more. Things that last, games people fight over, gear guides actually use. Nothing that breaks by Tuesday. Add things to your list and watch the bars fill up.</p>
+    <p>Every blaze you earn is worth 50 cents here. There are things: sports, skate, animals, style, gross science, games, tools, books, and more, all built to last. And there are experiences: lunch with a guide, hosting a party for your crew, a morning shadowing a pro, a night under the stars. Add anything to your list and watch the bars fill up.</p>
   </div>
   <div class="blz">
     <h2>My blazes</h2>
@@ -95,46 +98,71 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
     <div class="wish" id="wish"></div>
   </div>
 </section>
+<section class="feat" id="feat" hidden></section>
 <div class="ctrl"><div class="in">
   <input id="q" type="search" placeholder="Search the store" autocomplete="off">
+  <div class="bands" id="bands" role="group" aria-label="Grades"></div>
   <div class="tiers" id="tiers"><button data-t="all" class="on">All prices</button><button data-t="quick">Quick win · up to 20</button><button data-t="little">Save a little · 21–60</button><button data-t="big">Big goal · 61–150</button><button data-t="dream">Dream · 150+</button></div>
   <div class="chips" id="cats"></div>
 </div></div>
 <p class="count" id="count"></p>
 <div class="grid" id="grid"></div>
-<section class="exp"><h2>Beyond things</h2><p class="sub">Ideas the guides could offer too. These aren't in the store yet; ask your guide.</p><ul id="exp"></ul></section>
-<p class="fine">Prices are typical US retail in November 2026 and rounded to the nearest dollar; the real cost on redemption day may differ a little. Items marked with a warning need a guide: knives and the multi-tool require Wilderland's knife certification, the fire steel and model rockets are used only with a guide present, and the slackline and scooter follow the school's safety rules. Nothing here is a blind box, a surprise egg or a collectible pack: every item is exactly what it says.</p>
+<p class="fine">Prices for things are typical US retail in November 2026, rounded to the nearest dollar; the real cost on redemption day may differ a little. Items marked with a warning need a guide: knives and the multi-tool require Wilderland's knife certification, the fire steel and model rockets are used only with a guide present, and the slackline and scooter follow the school's safety rules. Nothing here is a blind box, a surprise egg or a collectible pack: every item is exactly what it says.</p>
+<p class="fine"><b>How experiences are priced.</b> Each one says what it takes. Its price is the cash it costs (food, supplies, tickets) at 2 blazes a dollar, plus 1 blaze for every minute of a guide's time beyond normal supervision, and half again for minutes that take a guide away from their crew or happen outside school hours. So a lunch with a guide is about $8 of pizza (16 blazes) plus 30 minutes of a guide who needs someone to cover for them (45 blazes). Guides decide when each experience can happen; the limit on each card says how often.</p>
+<p class="fine">The grade buttons show what kids in each grade band tend to want most. Every student can save anything in the store.</p>
 </main>
 <script src="products.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const KEY="wl-store";
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// One list for things and experiences. b = blazes. bands = the grade bands it appeals to (k1 24 58).
+CATS.exp=CATS.exp||["Experiences","🎟️","#c7f1ee"];
+const ITEMS=PRODUCTS.map(p=>Object.assign({},p,{b:Math.round(p.p*2),bands:APPEAL[p.id]||"k1 24 58",x:false}))
+ .concat(EXPERIENCES.map(x=>Object.assign({},x,{c:"exp",b:expBlazes(x),bands:x.g,x:true})));
+const BY=Object.fromEntries(ITEMS.map(i=>[i.id,i]));
+const BANDKEY={"K–1":"k1","2–4":"24","5–8":"58"},BANDS=["K–1","2–4","5–8"];
 let S={have:0,wish:[]};
 try{S=Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
-S.wish=(S.wish||[]).filter(id=>PRODUCTS.some(p=>p.id===id));
-const store=()=>localStorage.setItem(KEY,JSON.stringify(S));
-const blz=p=>Math.round(p*2);
-const tier=p=>{const b=blz(p);return b<=20?"quick":b<=60?"little":b<=150?"big":"dream"};
-let CAT="all",TIER="all",Q="";
+S.wish=(S.wish||[]).filter(id=>BY[id]);
+const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const tier=b=>b<=20?"quick":b<=60?"little":b<=150?"big":"dream";
+// The grade band starts on the visitor's own (students from their tracker record, guides from their band, parents from
+// their youngest child) and holds once they pick one here.
+const startBand=()=>{const b=window.wlBand?window.wlBand({all:true}):"All";return BANDS.includes(b)?b:"All"};
+let BAND=startBand(),PICKED=false,CAT="all",TIER="all",Q="";
+document.addEventListener("wl-role",()=>{if(PICKED)return;const b=startBand();if(b!==BAND){BAND=b;draw()}});
+const fits=i=>BAND==="All"||i.bands.split(" ").includes(BANDKEY[BAND]);
+const bandText=i=>{const k=i.bands.split(" ");return k.length===3?"All grades":"Grades "+(k.includes("k1")?"K":k.includes("24")?"2":"5")+"–"+(k.includes("58")?"8":k.includes("24")?"4":"1")};
 function soft(hex){return hex+"55"}
-function card(p){const [cn,ce,cc]=CATS[p.c],b=blz(p.p),on=S.wish.includes(p.id),can=S.have>=b&&S.have>0;
- return `<article class="card" style="--c:${cc};--c-soft:${soft(cc)}"><div class="top"><span class="cat">${ce} ${cn}</span><span class="age">${p.a}+</span><img src="img/${p.id}.jpg" alt="${p.n}" loading="lazy" width="480" height="480"></div>
- <div class="body"><h3>${p.n}</h3><p class="why">${p.why}</p>${p.sup?`<p class="sup">⚠ ${p.sup}</p>`:""}
- <div class="price"><b>${b} blazes</b><span>about $${p.p}</span>${can?`<span class="can">You can get this</span>`:""}</div>
+function card(p){const [cn,ce,cc]=CATS[p.c],on=S.wish.includes(p.id),can=S.have>=p.b&&S.have>0;
+ const top=p.x?`<div class="top xp"><span class="cat">${ce} ${cn}</span><span class="age">${bandText(p)}</span><span class="big" aria-hidden="true">${p.e}</span></div>`
+  :`<div class="top"><span class="cat">${ce} ${cn}</span><span class="age" title="${bandText(p)}">${p.a}+</span><img src="img/${p.id}.jpg" alt="${esc(p.n)}" loading="lazy" width="480" height="480"></div>`;
+ return `<article class="card${p.x?" isx":""}" style="--c:${cc};--c-soft:${soft(cc)}">${top}
+ <div class="body"><h3>${esc(p.n)}</h3><p class="why">${esc(p.why)}</p>${p.x?`<p class="how"><b>What it takes:</b> ${esc(p.how)}</p><p class="lim">${esc(p.lim)}</p>`:""}${p.sup?`<p class="sup">⚠ ${esc(p.sup)}</p>`:""}
+ <div class="price"><b>${p.b} blazes</b>${p.x?"":`<span>about $${p.p}</span>`}${can?`<span class="can">You can get this</span>`:""}</div>
  <button class="save${on?" on":""}" data-w="${p.id}">${on?"On my list ✓":"Save for this"}<span>${on?"":"+"}</span></button></div></article>`}
+function feat(){const box=$("#feat");if(BAND==="All"||CAT!=="all"||TIER!=="all"||Q){box.hidden=true;return}
+ const l=(FEATURED[BAND]||[]).map(id=>BY[id]).filter(Boolean);if(!l.length){box.hidden=true;return}
+ box.hidden=false;box.innerHTML=`<h2>Picked for grades ${BAND}</h2><p class="sub">What kids in grades ${BAND} save for most${BAND!=="K–1"?", experiences first":""}. Everything else is below.</p><div class="rail">${l.map(card).join("")}</div>`}
 function render(){
- const list=PRODUCTS.filter(p=>(CAT==="all"||p.c===CAT)&&(TIER==="all"||tier(p.p)===TIER)&&(!Q||(p.n+" "+p.why+" "+CATS[p.c][0]).toLowerCase().includes(Q)));
- list.sort((a,b)=>a.p-b.p);
- $("#grid").innerHTML=list.map(card).join("")||`<p style="color:var(--dim)">Nothing matches. Try another word.</p>`;
- $("#count").textContent=`${list.length} of ${PRODUCTS.length} things`;
- renderWish();
+ const fset=new Set(BAND==="All"?[]:FEATURED[BAND]||[]);
+ const list=ITEMS.filter(p=>fits(p)&&(CAT==="all"||p.c===CAT)&&(TIER==="all"||tier(p.b)===TIER)&&(!Q||(p.n+" "+p.why+" "+(p.how||"")+" "+CATS[p.c][0]).toLowerCase().includes(Q)));
+ // Things kids in this band tend to want most come first, then by price.
+ const rank=p=>BAND==="All"?0:p.bands.split(" ").length;
+ list.sort((a,b)=>rank(a)-rank(b)||a.b-b.b);
+ $("#grid").innerHTML=list.map(card).join("")||`<p style="color:var(--dim)">Nothing matches. Try another word, or All grades.</p>`;
+ const nx=list.filter(p=>p.x).length;
+ $("#count").textContent=`${list.length-nx} things and ${nx} experiences${BAND==="All"?"":" for grades "+BAND} · ${ITEMS.length} in the store`;
+ feat();renderWish();
 }
-function renderWish(){const w=S.wish.map(id=>PRODUCTS.find(p=>p.id===id));
- $("#wish").innerHTML=w.length?`<ul>${w.map(p=>{const b=blz(p.p),pct=Math.min(100,S.have/b*100);return `<li><img class="th" src="img/${p.id}.jpg" alt=""><span>${p.n} <small style="color:var(--dim)">· ${b} blazes</small> ${S.have>=b?'<span class="ok">ready!</span>':`<small style="color:var(--dim)">· ${b-S.have} to go</small>`}</span><button data-x="${p.id}" aria-label="Remove">×</button><span class="bar"><i style="width:${pct}%"></i></span></li>`}).join("")}</ul>`:`<p style="color:var(--dim);font-size:14px;margin:0">Tap “Save for this” on anything below and it shows up here with a progress bar.</p>`}
-$("#cats").innerHTML=`<button data-c="all" class="on">Everything</button>`+Object.entries(CATS).map(([k,[n,e]])=>`<button data-c="${k}">${e} ${n}</button>`).join("");
-$("#exp").innerHTML=EXPERIENCES.map(x=>`<li><span class="e">${x.e}</span><div><b>${x.n}</b><small>${x.why}</small></div><i>${blz(x.p)} blz</i></li>`).join("");
+function renderWish(){const w=S.wish.map(id=>BY[id]).filter(Boolean);
+ $("#wish").innerHTML=w.length?`<ul>${w.map(p=>{const pct=Math.min(100,S.have/p.b*100);return `<li>${p.x?`<span class="th thx" aria-hidden="true">${p.e}</span>`:`<img class="th" src="img/${p.id}.jpg" alt="">`}<span>${esc(p.n)} <small style="color:var(--dim)">· ${p.b} blazes</small> ${S.have>=p.b?'<span class="ok">ready!</span>':`<small style="color:var(--dim)">· ${p.b-S.have} to go</small>`}</span><button data-x="${p.id}" aria-label="Remove">×</button><span class="bar"><i style="width:${pct}%"></i></span></li>`}).join("")}</ul>`:`<p style="color:var(--dim);font-size:14px;margin:0">Tap “Save for this” on anything below and it shows up here with a progress bar.</p>`}
+function draw(){$("#bands").innerHTML=["All"].concat(BANDS).map(b=>`<button data-b="${b}" class="${b===BAND?"on":""}" aria-pressed="${b===BAND}">${b==="All"?"All grades":"Grades "+b}</button>`).join("");render()}
+$("#cats").innerHTML=`<button data-c="all" class="on">Everything</button><button data-c="exp">${CATS.exp[1]} ${CATS.exp[0]}</button>`+Object.entries(CATS).filter(([k])=>k!=="exp").map(([k,[n,e]])=>`<button data-c="${k}">${e} ${n}</button>`).join("");
 $("#have").value=S.have||"";
 document.addEventListener("click",e=>{
+ const bd=e.target.closest("[data-b]");if(bd){BAND=bd.dataset.b;PICKED=true;draw();return}
  const c=e.target.closest("[data-c]");if(c){CAT=c.dataset.c;document.querySelectorAll("[data-c]").forEach(b=>b.classList.toggle("on",b===c));render();return}
  const t=e.target.closest("[data-t]");if(t){TIER=t.dataset.t;document.querySelectorAll("[data-t]").forEach(b=>b.classList.toggle("on",b===t));render();return}
  const w=e.target.closest("[data-w]");if(w){const id=w.dataset.w;S.wish=S.wish.includes(id)?S.wish.filter(x=>x!==id):S.wish.concat(id);store();render();return}
@@ -142,7 +170,7 @@ document.addEventListener("click",e=>{
 });
 $("#q").addEventListener("input",e=>{Q=e.target.value.trim().toLowerCase();render()});
 $("#have").addEventListener("input",e=>{S.have=Math.max(0,Math.min(99999,parseInt(String(e.target.value).replace(/[^0-9]/g,""))||0));store();render()});
-render();
+draw();
 </script>
 <script type="module" src="/auth.js" data-site="store"></script>
 </body>
