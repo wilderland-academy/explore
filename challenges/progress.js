@@ -136,7 +136,7 @@ function drawProgress() {
   const row = (cid, extra, del) => `<li><span class="bar" style="background:${colOf(cid)}"></span><div>${(BYID[cid] || {}).custom ? `<span class="plink">${esc(title(cid))}</span>` : `<button class="plink" type="button" data-open="${cid}">${esc(title(cid))}</button>`}${extra || ""}</div>${del ? `<button class="x" type="button" data-unwork="${cid}" aria-label="Stop working on ${esc(title(cid))}">${icon("x")}</button>` : ""}</li>`;
   prog.innerHTML = `<div class="wrap prog">
     <div class="prog-head"><p class="eyebrow">My progress</p><h2 id="progress-title">${esc(firstName(me.name) || "Your")}${firstName(me.name) ? "'s" : ""} trail</h2>
-      <p class="muted">Grades ${esc(band)}${me.guide ? " · Field Guide: " + esc(me.guide) : ""}. Your guide records each pass and not yet.</p></div>
+      <p class="muted">Grades ${esc(band)}${me.guide ? " · Field Guide: " + esc(me.guide) : ""}. Your guide records each pass and not yet. <a href="/goals/">Set your goals →</a></p></div>
     <div class="prog-grid">${rankCard}
       <div class="pcard"><h3>Year goal: ${goal} in every life skill</h3><ul class="pskills">${skills}</ul><p class="muted">${done} of 8 skills met this year.</p></div></div>
     <div class="prog-grid">
