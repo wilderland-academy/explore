@@ -31,6 +31,7 @@ const PAGES = [
   ["Store", "/store/", "s", "shop buy"],
   ["Ideas and Town Hall", "/suggest/", "s", "suggestion box vote town hall"],
   ["Guides home", "/guides/", "g", "staff"],
+  ["Student Info", "/guides/student-info/", "g", "directory contacts parents pickup emergency allergies allergy photo permission birthdays medical"],
   ["Mentor Mindset Field Guide", "/fieldguide/", "g", "mentor mindset coaching required training"],
   ["Field Guide: coach's tent", "/fieldguide/#coach", "g", "ask coach situation"],
   ["Field Guide: weekly 1:1s", "/fieldguide/#oneonone", "g", "one on one coaching weekly session 1:1 notes"],
@@ -80,8 +81,8 @@ const PAGES = [
 const SITES_FOR = { staff: "hsgp", parent: "hsp", student: "hs", anon: "hsp" };
 
 // ---------- the index, built in pieces as each source arrives ----------
-const IX = { pages: [], challenges: [], books: [], projects: [], students: [], labs: [], behavior: [], handbook: [], policies: [] };
-const GROUPS = [["pages", "Pages", 6], ["students", "Students", 6], ["challenges", "Challenges", 8], ["labs", "Labs", 5], ["handbook", "Staff Handbook", 6], ["policies", "Policies", 6], ["behavior", "Behavior Guide", 5], ["books", "Books", 6], ["projects", "Project ideas", 6]];
+const IX = { pages: [], challenges: [], books: [], projects: [], students: [], info: [], labs: [], behavior: [], handbook: [], policies: [] };
+const GROUPS = [["pages", "Pages", 6], ["students", "Students", 6], ["info", "Student Info", 6], ["challenges", "Challenges", 8], ["labs", "Labs", 5], ["handbook", "Staff Handbook", 6], ["policies", "Policies", 6], ["behavior", "Behavior Guide", 5], ["books", "Books", 6], ["projects", "Project ideas", 6]];
 let loading = 0, built = false;
 const add = (g, items) => { IX[g] = items; draw(); };
 async function job(f) { loading++; draw(); try { await f(); } catch (e) { console.warn("Search:", e); } loading--; draw(); }
@@ -154,7 +155,16 @@ function build() {
       const studentsP = k !== "staff" ? null : fsList("lsStudents", tok).then(ss => add("students", ss.filter(s => s.test === test)
         .sort((a, b) => String(a.name).localeCompare(String(b.name)))
         .map(s => ({ t: s.name, u: "/guides/roster/#s=" + encodeURIComponent(s.email ? String(s.email).toLowerCase() : "sid:" + s.id), sub: `Student · grades ${s.band || "?"}${s.email ? " · " + s.email : ""}`, w: s.email })))).catch(() => { });
-      await Promise.all([labsP, studentsP]);
+      // Student Info (directory, pickup, allergies, photo permission, birthday), for staff: straight to the student's card.
+      // Only names go into the search list; the details stay on the Student Info page.
+      const infoP = k !== "staff" || test ? null : (async () => {
+        const r = await fetch(`${FS}/studentInfo?pageSize=300&mask.fieldPaths=first&mask.fieldPaths=last&mask.fieldPaths=nick&mask.fieldPaths=grade&mask.fieldPaths=band`, { headers: { Authorization: "Bearer " + tok } });
+        if (!r.ok) return;
+        const v = x => x && x.stringValue || "";
+        add("info", ((await r.json()).documents || []).map(d => ({ id: d.name.split("/").pop(), f: d.fields || {} })).filter(d => d.id !== "meta")
+          .map(({ id, f }) => ({ t: v(f.first) + (v(f.nick) ? " (" + v(f.nick) + ")" : "") + " " + v(f.last), u: "/guides/student-info/#s=" + id, sub: `Student Info · ${v(f.grade) === "K" ? "K" : "grade " + v(f.grade)} · family, pickup, allergies, photo permission, birthday`, w: v(f.nick) + " student info allergy pickup" })));
+      })().catch(() => { });
+      await Promise.all([labsP, studentsP, infoP]);
     });
     // The Staff Handbook, full text (school staff only; it's read from the relay, never stored in the site).
     if (k === "staff" && String((role() || {}).real || (role() || {}).email || "").endsWith("@wilderland.academy") && !test) job(async () => {
