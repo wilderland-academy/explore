@@ -13,7 +13,7 @@ export const STEPS = [
     unlocks: null,
     screens: [
       { id: "w-how", kind: "text", title: "How this works", text: [
-        "Eight short steps, in order: Welcome, Life Skills, Students, Trail Partner, the Mentor Mindset, Behavior, Parent Communication, and our policies. Everything you need is right here. Read a screen, press Next.",
+        "Eight short steps, in order: Welcome, Life Skills, the Mentor Mindset, Behavior, Parent Communication, Students, Trail Partner, and our policies. Everything you need is right here. Read a screen, press Next.",
         ["Each step ends with a short checkpoint. Pass it and that part of the Guides site appears for you. Until then it stays out of sight, so you only see what you've trained for.", "Checkpoints have three different sets of questions that take turns. If you don't pass, the next try asks different questions.", "Your place is saved. Close the tab any time and pick up where you left off.", "Some screens end with Dig deeper: books, articles, podcasts and studies on that topic, if you want more. They're optional. Save any of them for later."]
       ] },
       { id: "w-why", kind: "text", title: "Why we train this way", text: [
@@ -85,41 +85,6 @@ export const STEPS = [
       { id: "d-duckworth", on: "l-coaching2", t: "study", title: "Self-regulation strategies improve self-discipline in adolescents", by: "Duckworth et al., 2011", url: "https://doi.org/10.1080/01443410.2010.506003", note: "A 30-minute wish-obstacle-plan exercise, over 60% more practice done." },
       { id: "d-dubois", on: "l-coaching2", t: "study", title: "Effectiveness of mentoring programs for youth: a meta-analytic review", by: "DuBois, Holloway, Valentine & Cooper, 2002", url: "https://doi.org/10.1023/A:1014628810714", note: "Why weekly, steady 1:1 contact matters." }
     ] },
-
-  { id: "students", name: "Students", icon: "🧒", time: "10 minutes",
-    intro: "The Students page: every student, their parents, and the safety information you need before you take a child anywhere.",
-    unlocks: { name: "Students", what: "Every student and their parents, pickup, allergies and photo permissions, Mr. Fox alerts, and every student conversation with Mr. Fox." },
-    screens: [
-      { id: "s-page", kind: "text", title: "One page for every student", text: [
-        "The Students page has four tabs:",
-        ["Students and parents: every student, their parents and their guide. Any guide can add a student or link a parent. A parent sees their child's record only after you add their email and they confirm it.", "Pickup, allergies & photos: what the office keeps on each child. Family contacts, authorized pickup and do-not-release, emergency and health notes, allergies, photo permission and birthday.", "Alerts: when a student's message to Mr. Fox is worrying or breaks the rules. Every staff member sees every alert.", "All AI conversations: every student conversation with Mr. Fox."]
-      ] },
-      { id: "s-safety", kind: "text", title: "Check before you go", text: [
-        "Red and amber tags on a student mean look closer. Read the notices at the top of your band first.",
-        ["Pickup: check authorized pickup and do-not-release before you hand a child to anyone you don't know. A “Do not release” tag means never to that person.", "Allergies: check your band's allergy tags before any food, cooking or event. “No allergy form” means unknown, not clear: check with the family before food is shared.", "Photos: check before you take or share a photo. “No photos” means do not photograph. “Community only” has limits: read the note on the student's card.", "Only admins change this information, by importing the office's lists. If something looks wrong, tell an admin."]
-      ] },
-      { id: "s-care", kind: "text", title: "Handle it with care", text: [
-        ["It's confidential: family contacts, health, custody and safety. Look it up when you need it. Don't copy it into messages, documents or AI tools, Trail Partner included.", "Urgent alerts come with what to do now. If a student may be harmed, Utah law requires your own report to DCFS (1-855-323-3237, any time) or the police, right away. Telling an admin doesn't replace it.", "Read an alert, do what it says, then mark it reviewed with a note on what you did."]
-      ] }
-    ],
-    quiz: "students",
-    dig: [] },
-
-  { id: "partner", name: "Trail Partner", icon: "🐲", time: "5 minutes",
-    intro: "Trail Partner is an AI fellow guide for thinking things through. Here's what it knows, where your conversations go, and how to use it well.",
-    unlocks: { name: "Trail Partner", what: "The 🐲 button on every staff page, and the Trail Partner page with all your conversations." },
-    screens: [
-      { id: "t-what", kind: "text", title: "A fellow guide, any time", text: [
-        "Trail Partner knows the Staff Handbook, the Behavior Policy and how Wilderland works: the Mentor Mindset, Our Approach, At Home, the Parent Comms rules and the Lab builder rules. Ask it the way you'd ask an experienced guide.",
-        ["“A student keeps disrupting the Lab. What does our policy say to do?”", "“Help me plan what to say to a parent who is upset.”", "“What's our procedure if a child gets hurt outside?”"],
-        "Open it with the 🐲 button at the top of any staff page. The Trail Partner page shows every conversation."
-      ] },
-      { id: "t-use", kind: "text", title: "Use it well", text: [
-        ["It can be wrong. Check anything about safety or the law with an admin.", "Your conversations are private: only you can see them. Every conversation with Trail Partner and the other coaches (Mentor Mindset, Behavior, Parent Communication) and every Lab builder draft is saved there. Reopen or delete any of them.", "Describe the situation, not the child's file. Leave out last names and anything from Pickup, allergies & photos."]
-      ] }
-    ],
-    quiz: "partner",
-    dig: [] },
 
   { id: "mentor", name: "Mentor Mindset", icon: "🌱", time: "45 minutes",
     intro: "How we coach every student: keep the real standard, show belief and give real help, and leave the thinking and choices with the student.",
@@ -214,6 +179,41 @@ export const STEPS = [
       { id: "d-kraftrogers", on: "p-clear", t: "study", title: "The underutilized potential of teacher-to-parent communication: evidence from a field experiment", by: "Kraft & Rogers, 2015, Economics of Education Review", url: "https://www.hks.harvard.edu/publications/underutilized-potential-teacher-parent-communication-evidence-field-experiment-0", note: "Weekly one-sentence messages cut the share failing to earn credit from 15.8% to 9.3%. Messages about what to improve worked best." },
       { id: "d-bergman", on: "p-clear", t: "study", title: "Leveraging Parents through Low-Cost Technology", by: "Bergman & Chan, 2021, Journal of Human Resources (J-PAL summary)", url: "https://www.povertyactionlab.org/node/2353", note: "Automated texts about missed work and absences improved outcomes." }
     ] },
+
+  { id: "students", name: "Students", icon: "🧒", time: "10 minutes",
+    intro: "The Students page: every student, their parents, and the safety information you need before you take a child anywhere.",
+    unlocks: { name: "Students", what: "Every student and their parents, pickup, allergies and photo permissions, Mr. Fox alerts, and every student conversation with Mr. Fox." },
+    screens: [
+      { id: "s-page", kind: "text", title: "One page for every student", text: [
+        "The Students page has four tabs:",
+        ["Students and parents: every student, their parents and their guide. Any guide can add a student or link a parent. A parent sees their child's record only after you add their email and they confirm it.", "Pickup, allergies & photos: what the office keeps on each child. Family contacts, authorized pickup and do-not-release, emergency and health notes, allergies, photo permission and birthday.", "Alerts: when a student's message to Mr. Fox is worrying or breaks the rules. Every staff member sees every alert.", "All AI conversations: every student conversation with Mr. Fox."]
+      ] },
+      { id: "s-safety", kind: "text", title: "Check before you go", text: [
+        "Red and amber tags on a student mean look closer. Read the notices at the top of your band first.",
+        ["Pickup: check authorized pickup and do-not-release before you hand a child to anyone you don't know. A “Do not release” tag means never to that person.", "Allergies: check your band's allergy tags before any food, cooking or event. “No allergy form” means unknown, not clear: check with the family before food is shared.", "Photos: check before you take or share a photo. “No photos” means do not photograph. “Community only” has limits: read the note on the student's card.", "Only admins change this information, by importing the office's lists. If something looks wrong, tell an admin."]
+      ] },
+      { id: "s-care", kind: "text", title: "Handle it with care", text: [
+        ["It's confidential: family contacts, health, custody and safety. Look it up when you need it. Don't copy it into messages, documents or AI tools, Trail Partner included.", "Urgent alerts come with what to do now. If a student may be harmed, Utah law requires your own report to DCFS (1-855-323-3237, any time) or the police, right away. Telling an admin doesn't replace it.", "Read an alert, do what it says, then mark it reviewed with a note on what you did."]
+      ] }
+    ],
+    quiz: "students",
+    dig: [] },
+
+  { id: "partner", name: "Trail Partner", icon: "🐲", time: "5 minutes",
+    intro: "Trail Partner is an AI fellow guide for thinking things through. Here's what it knows, where your conversations go, and how to use it well.",
+    unlocks: { name: "Trail Partner", what: "The 🐲 button on every staff page, and the Trail Partner page with all your conversations." },
+    screens: [
+      { id: "t-what", kind: "text", title: "A fellow guide, any time", text: [
+        "Trail Partner knows the Staff Handbook, the Behavior Policy and how Wilderland works: the Mentor Mindset, Our Approach, At Home, the Parent Comms rules and the Lab builder rules. Ask it the way you'd ask an experienced guide.",
+        ["“A student keeps disrupting the Lab. What does our policy say to do?”", "“Help me plan what to say to a parent who is upset.”", "“What's our procedure if a child gets hurt outside?”"],
+        "Open it with the 🐲 button at the top of any staff page. The Trail Partner page shows every conversation."
+      ] },
+      { id: "t-use", kind: "text", title: "Use it well", text: [
+        ["It can be wrong. Check anything about safety or the law with an admin.", "Your conversations are private: only you can see them. Every conversation with Trail Partner and the other coaches (Mentor Mindset, Behavior, Parent Communication) and every Lab builder draft is saved there. Reopen or delete any of them.", "Describe the situation, not the child's file. Leave out last names and anything from Pickup, allergies & photos."]
+      ] }
+    ],
+    quiz: "partner",
+    dig: [] },
 
   { id: "policies", name: "Our policies", icon: "📜", time: "1 to 2 hours",
     intro: "The Staff Handbook and our staff policies, right here. Then a short knowledge check on each one in effect, written fresh from the policy text each time.",

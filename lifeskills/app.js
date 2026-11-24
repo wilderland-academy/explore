@@ -278,12 +278,13 @@ function main(kids) { const m = $("#app"); m.innerHTML = ""; m.append(...[kids].
 const head = (title, sub) => h("div", { class: "wrap page-head" }, [h("h1", { text: title }), sub ? h("p", { text: sub }) : null]);
 function navLinks(items) {
   // Items are [id, label, href]. A link to a view on this same page (PATH#view) becomes a plain #view link.
-  items = items.map(([id, label, href]) => [id, label, href && href.startsWith(PATH + "#") ? "" : href]);
+  // (It keeps that link's own view: Labs is #schedule, not #labs, which no view answers to.)
+  items = items.map(([id, label, href]) => [id, label, href && href.startsWith(PATH + "#") ? href.slice(PATH.length) : href]);
   // Views that sit under another menu item: Labs holds the schedule; Validate was Log.
   const ALIAS = { schedule: "labs", log: "validate" }, raw = location.hash.slice(1).split("=")[0] || items[0][0];
   const cur = items.some(x => x[0] === raw) ? raw : ALIAS[raw] || raw;
   const nav = $("#links"); nav.innerHTML = "";
-  items.forEach(([id, label, href]) => nav.append(h("a", { href: href || "#" + id, text: label, "aria-current": !href && cur === id ? "page" : null })));
+  items.forEach(([id, label, href]) => nav.append(h("a", { href: href || "#" + id, text: label, "aria-current": (!href || href.startsWith("#")) && cur === id ? "page" : null })));
 }
 // The Life Skills menu for this site, from /lifeskills/subnav.js (one list for every Life Skills page).
 const SUBNAV = window.WLSubnav || { guides: [["overview", "Overview", "/guides/lifeskills/#overview"]], parents: [] };
@@ -1234,7 +1235,8 @@ function route() {
     if (v === "log" || v === "validate") return main(validateView(arg));
     // Old links to the roster here go to the Student Roster.
     if (v === "roster") { location.replace(ROSTER + (arg ? "#edit=" + arg : "#roster")); return; }
-    if (v === "schedule") return main(scheduleView(arg, true));
+    // #labs (old menu links) is the Labs schedule too.
+    if (v === "schedule" || v === "labs") return main(scheduleView(v === "labs" ? undefined : arg, true));
     if (v === "board") return main(boardView());
     return main(overview());
   }

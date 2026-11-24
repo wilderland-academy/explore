@@ -102,6 +102,15 @@
   function creditsIn(skill) {
     return picksIn(skill).reduce(function (a, c) { return a + (c.cr || 1); }, 0);
   }
+  // Credits passed in a life skill (status from progress.js), and credits saved to the plan but not passed yet.
+  function passedIn(skill) {
+    return Object.keys(status).reduce(function (a, id) {
+      var c = BYID[id]; return status[id] === 'pass' && c && D.comps[c.c].k === skill ? a + (c.cr || 1) : a;
+    }, 0);
+  }
+  function savedIn(skill) {
+    return picksIn(skill).filter(function (c) { return status[c.id] !== 'pass'; }).reduce(function (a, c) { return a + (c.cr || 1); }, 0);
+  }
 
   // ---------- masthead strip + year tracker ----------
   document.getElementById('strip').innerHTML = D.skills.map(function (s) {
@@ -115,13 +124,14 @@
     var t = target();
     document.getElementById('year-goal').textContent = t === 1
       ? 'In K–1, cover at least 3 challenges in each of the 8 life skills this year, at least 2 a week.'
-      : 'Finish 2 challenges in each of the 8 life skills this year. An Epic counts as 2. Save challenges to your plan and they fill in here.';
+      : 'Finish 2 challenges in each of the 8 life skills this year. An Epic counts as 2. Challenges you save show as lined dots; a dot fills in when you pass.';
     document.getElementById('year-skills').innerHTML = D.skills.map(function (s) {
-      var n = Math.min(creditsIn(s.k), t), dots = '';
-      for (var i = 0; i < t; i++) dots += '<span class="dot' + (i < n ? ' on' : '') + '"></span>';
-      return '<li><button class="ys' + (n >= t ? ' done' : '') + '" data-skill="' + s.k + '" style="' + skillVars(s) + '"' +
+      // Filled: passed (from the Life Skills tracker, for a signed-in student). Lined: saved to the plan, not passed yet.
+      var p = Math.min(passedIn(s.k), t), n = Math.min(p + savedIn(s.k), t), dots = '';
+      for (var i = 0; i < t; i++) dots += '<span class="dot' + (i < p ? ' on' : i < n ? ' saved' : '') + '"></span>';
+      return '<li><button class="ys' + (p >= t ? ' done' : '') + '" data-skill="' + s.k + '" style="' + skillVars(s) + '"' +
         (state.skill === s.k ? ' aria-current="true"' : '') +
-        ' aria-label="' + esc(s.n) + ': ' + n + ' of ' + t + ' picked">' +
+        ' aria-label="' + esc(s.n) + ': ' + p + ' of ' + t + ' passed, ' + (n - p) + ' more saved">' +
         '<span class="ys-name">' + esc(s.n) + '</span><span class="dots">' + dots + '</span></button></li>';
     }).join('');
   }
@@ -731,7 +741,7 @@
   window.WLC = {
     open: openDetail,
     band: function () { return state.band; },
-    setStatus: function (m, hooks) { status = m || {}; statusHooks = hooks || null; renderTree(); renderSearch(); if (detail.open) { var t = detail.querySelector('[data-cid]'); if (t) openDetail(t.getAttribute('data-cid')); } }
+    setStatus: function (m, hooks) { status = m || {}; statusHooks = hooks || null; renderYear(); renderTree(); renderSearch(); if (detail.open) { var t = detail.querySelector('[data-cid]'); if (t) openDetail(t.getAttribute('data-cid')); } }
   };
 
   // ---------- a link straight to one challenge: #c=EN-03.2 (from challenge links anywhere on Explore) ----------

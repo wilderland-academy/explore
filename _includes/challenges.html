@@ -65,8 +65,7 @@
 </section>
 
 <main>
-{% if include.site == "students" %}  <section class="progress" id="progress" aria-labelledby="progress-title" hidden></section>
-{% endif %}  <section class="year" id="year" aria-labelledby="year-title">
+  <section class="year" id="year" aria-labelledby="year-title">
     <div class="year-head">
       <h2 id="year-title">Your year</h2>
       <p id="year-goal"></p>
@@ -105,7 +104,9 @@
     <div class="search-results" id="search-results" hidden aria-live="polite"></div>
   </section>
 
-</main>
+{% if include.site == "students" %}  <!-- My progress sits below the Life Skills map. -->
+  <section class="progress" id="progress" aria-labelledby="progress-title" hidden></section>
+{% endif %}</main>
 {% if include.site == "students" %}<section class="crew" id="crew" aria-labelledby="crew-title" hidden></section>
 {% endif %}
 
