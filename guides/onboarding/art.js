@@ -113,17 +113,16 @@ const challenges = svg("Challenges: at a trailhead signpost, a student picks one
   pill(232, 36, "The student chooses", { size: 15, dark: true }) + pill(560, 36, "You verify the pass", { size: 15, dark: true })
 );
 
-// 5. 1:1 coaching: guide and student by the fire, last week's plan and this week's if-then plan on the board.
-const coaching = svg("A weekly 1:1: a guide and a student talk by a campfire. Beside them, a board with the student's if-then plan.",
+// 5. 1:1 coaching: guide and student by the fire, with wise feedback on the board.
+const coaching = svg("A weekly 1:1: a guide and a student talk by a campfire. Beside them, a board with wise feedback: I'm giving you feedback because I know you can reach a high standard.",
   F + sky("#e9e4d8") + `<circle cx="96" cy="58" r="20" fill="#f5c542"/>` +
   `<polygon points="${pts([[-20, 180], [110, 150], [240, 170], [380, 136], [520, 168], [660, 140], [780, 160], [780, 320], [-20, 320]])}" fill="#bcd3b1"/>` +
   ground(238, "#3a8f5b") + `<polygon points="${pts([[-20, 288], [260, 282], [520, 290], [780, 284], [780, 320], [-20, 320]])}" fill="#155f37"/>` +
   pine(40, 244, 1.7) + pine(84, 248, 1.2) + pine(730, 246, 1.8) +
     hiker(206, 270, 3.4, LIME, "#36507a", "#6b4426") + fire(256, 272) + hiker(304, 270, 2.8, "#e2674a", "#2c3b52", "#3b2a20", -1) +
   `<rect x="430" y="118" width="230" height="128" rx="4" fill="${CREAM}"/><path d="M450 246l-8 40M640 246l8 40" stroke="#5b4a2e" stroke-width="4"/>` + "</g>" +
-  `<text x="446" y="146" style="font:800 13px Inter,system-ui,sans-serif;fill:#5b4a2e">THIS WEEK</text>` +
-  `<text x="446" y="176" style="font:700 17px 'Iowan Old Style',Georgia,serif;fill:${INK}">If ____ happens,</text><text x="446" y="202" style="font:700 17px 'Iowan Old Style',Georgia,serif;fill:${INK}">then I will ____.</text>` +
-  `<text x="446" y="230" style="font:600 12.5px Inter,system-ui,sans-serif;fill:#5b4a2e">Next 1:1: same day next week</text>` +
+  `<text x="446" y="146" style="font:800 13px Inter,system-ui,sans-serif;fill:#5b4a2e">WISE FEEDBACK</text>` +
+  `<text x="446" y="178" style="font:700 17px 'Iowan Old Style',Georgia,serif;fill:${INK}">“I&#8217;m giving you feedback</text><text x="446" y="204" style="font:700 17px 'Iowan Old Style',Georgia,serif;fill:${INK}">because I know you can</text><text x="446" y="230" style="font:700 17px 'Iowan Old Style',Georgia,serif;fill:${INK}">reach a high standard.”</text>` +
   pill(254, 64, "Every student, every week", { size: 15, dark: true }) + pill(254, 104, "They choose · you hold the bar", { size: 13 })
 );
 
