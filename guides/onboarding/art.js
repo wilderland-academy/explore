@@ -80,7 +80,7 @@ const skills = svg("The eight Life Skills as eight flags along one ridge: Energy
   `<polygon points="${pts([[-20, 214], [140, 206], [300, 214], [460, 204], [620, 212], [780, 206], [780, 320], [-20, 320]])}" fill="#155f37"/>` +
   SKILLS.map((_, i) => `<polygon points="${pts([[42 + i * 93, ridgeY(i)], [52 + i * 93, ridgeY(i) - 12], [62 + i * 93, ridgeY(i)]])}" fill="#7f978b"/>` + flag(52 + i * 93, ridgeY(i) - 10, 42, FLAGC[i])).join("") + "</g>" +
   SKILLS.map((n, i) => n.map((t, k) => `<text x="${52 + i * 93}" y="${236 + k * 17}" text-anchor="middle" style="font:800 13.5px Inter,system-ui,sans-serif;fill:${CREAM}">${t.replace("&", "&amp;")}</text>`).join("")).join("") +
-  pill(380, 36, "Each year: 2 passes in every Life Skill (3 in K–1)", { size: 15, dark: true })
+  pill(380, 36, "Each year: 2 passes in every Life Skill, K–8", { size: 15, dark: true })
 );
 
 // 3. Skill Labs: learn it together, then each student takes their own Skill Validation.

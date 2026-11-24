@@ -13,7 +13,8 @@ const RANKS = {
   "2–4": [[4, "Fox"], [16, "Badger"], [32, "Elk"], [48, "Moose"]],
   "5–8": [[4, "Tracker"], [16, "Pathfinder"], [32, "Ranger"], [48, "Vanguard"], [64, "Trailblazer"]]
 };
-const goalFor = band => band === "K–1" ? 3 : 2;
+// Every band, K–1 included, aims for 2 per life skill a year (16 in all). K–1 challenges are always part of a Life Skill Lab.
+const goalFor = band => 2;
 const yearStart = () => { const d = new Date(), y = d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1; return y + "-08-01"; };
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = iso => { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
@@ -125,7 +126,7 @@ function drawProgress() {
   const done = W.skills.filter(k => (sum.per[k.k] || 0) >= goal).length;
   const next = sum.nextRank && sum.nextRank[0] === sum.milestone + 4 ? `Next: ${sum.nextRank[1]} at ${sum.nextRank[0]} credits.` : `Next milestone at ${sum.milestone + 4} credits` + (sum.nextRank ? `, then ${sum.nextRank[1]} at ${sum.nextRank[0]}.` : ".");
   const rankCard = band === "K–1"
-    ? `<div class="pcard"><h3>This year</h3><p class="big">${sum.year}<span> passes</span></p><p class="muted">K–1 has no ranks. Aim for 3 passes in every life skill.</p></div>`
+    ? `<div class="pcard"><h3>This year</h3><p class="big">${sum.year}<span> passes</span></p><p class="muted">K–1 has no ranks. Aim for 2 passes in every life skill, through Life Skill Labs.</p></div>`
     : `<div class="pcard"><h3>${sum.rank ? "Rank: " + esc(sum.rank) : "On the trail"}</h3><p class="big">${sum.trail}<span> credits</span></p>${track(sum, band)}<p class="muted">${esc(next)} Every 4 credits is a milestone at Honor Court.</p></div>`;
   const skills = W.skills.map(k => {
     const n = sum.per[k.k] || 0;
