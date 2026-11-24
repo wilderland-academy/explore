@@ -66,6 +66,10 @@ h3.h{font:700 18px/24px var(--font-sans);letter-spacing:-.3px}
 .stack{display:flex;flex-direction:column;gap:16px}
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:20px}
+.plain-list{margin:0;padding-left:18px;display:grid;gap:6px}
+.panel.launch{border-left:4px solid var(--lime-600,#9ccc2f);background:#f7fbe9}
+.panel.launch p{margin:0}
 
 /* Panels: ground color, no outlines */
 .panel{background:var(--mist);border-radius:var(--radius-lg);padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}

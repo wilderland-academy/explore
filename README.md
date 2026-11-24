@@ -417,8 +417,15 @@ the `PAGES` list at the top of `/search.js`.
 - Students set goals for this week, this month and the school year: Life Skills (progress from tracker passes),
   academics (apps by grade from the 2026–27 family packet, in `goals/apps.js`), Camp Store, projects, habits or behavior.
   A current Life Skills goal and a current academic goal are expected; the page flags a missing one.
-- Saved in localStorage `wl-goals`, synced by `/auth.js` (site `goals`), and copied on every change to `lsGoals/{sid}`.
-- Guides and parents see them in a Goals panel on the student's Life Skills record (`/guides/lifeskills/#s=<sid>`,
-  `/parents/lifeskills/`). Guides read the student's synced copy (the existing `sites` rule); parents read `lsGoals`.
-- `firestore.rules` adds `lsGoals`; paste the file into the Firebase console to publish it. Until then parents see
-  "hasn't set any goals yet" and the student's copy to `lsGoals` fails quietly (their own goals still save).
+- Saved in localStorage `wl-goals` and synced by `/auth.js` (site `goals`) like the other student sites.
+
+## Parent profiles and shared copies, added Nov 24, 2026
+
+- `/auth.js` copies a student's books, challenges, goals and projects to `lsShared/{sid}/sites/{site}` on every save,
+  and once a day copies all four (so older saves show up). Guides, the student and linked parents can read them.
+- Each child's profile (`/parents/lifeskills/#c=<sid>`) shows a launch note (until Mar 1, 2027), goals, saved
+  challenges, books finished and wanted, and saved project ideas. Guides see the same on `/guides/lifeskills/#s=<sid>`.
+- `/parents/challenges/` lists each child's passed and saved challenges and tags them on the map (`challenges/family.js`).
+- The home pass-off guide and log moved to `/parents/passoff/` (old `/challenges/parents.html` and `log.html` redirect).
+- A tester's "view as parent" also shows the tester's own real children (records listing the tester's email as a parent).
+- `firestore.rules` adds `lsShared` (replacing `lsGoals`): paste it into the Firebase console to publish.

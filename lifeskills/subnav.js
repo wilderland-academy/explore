@@ -17,7 +17,7 @@
     parents: [
       ["challenges", "Challenges", "/parents/challenges/"],
       ["schedule", "Labs schedule", "/parents/lifeskills/#schedule"],
-      ["athome", "Passing off at home", "/challenges/parents.html"]
+      ["athome", "Passing off at home", "/parents/passoff/"]
     ]
   };
   window.WLSubnav = L;
@@ -34,9 +34,15 @@
   });
   Array.prototype.forEach.call(document.querySelectorAll("[data-ls-subnav]"), function (nav) {
     var site = nav.getAttribute("data-ls-subnav"), cur = nav.getAttribute("data-current") || "";
-    var items = (site === "parents" ? [["child", "My child", "/parents/lifeskills/"]] : []).concat(L[site] || []);
-    nav.innerHTML = items.map(function (x) {
-      return '<a href="' + esc(x[2]) + '"' + (x[0] === cur ? ' aria-current="page"' : "") + ">" + esc(x[1]) + "</a>";
-    }).join("");
+    // "My children" once the tracker (or the Challenges page) has seen more than one child (localStorage "wl-kids").
+    var draw = function () {
+      var kids = 0; try { kids = Number(localStorage.getItem("wl-kids")) || 0; } catch (e) { }
+      var items = (site === "parents" ? [["child", kids > 1 ? "My children" : "My child", "/parents/lifeskills/"]] : []).concat(L[site] || []);
+      nav.innerHTML = items.map(function (x) {
+        return '<a href="' + esc(x[2]) + '"' + (x[0] === cur ? ' aria-current="page"' : "") + ">" + esc(x[1]) + "</a>";
+      }).join("");
+    };
+    draw();
+    if (site === "parents") document.addEventListener("wl-kids", draw);
   });
 })();

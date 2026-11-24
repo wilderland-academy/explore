@@ -81,6 +81,36 @@ async function push() {
   const body = { fields: { data: { stringValue: JSON.stringify(readLocal()) }, updated: { timestampValue: new Date().toISOString() }, email: { stringValue: view ? TEST.student : user.email || "" }, ...(view ? { test: { booleanValue: true } } : {}) } };
   const r = await fetch(DOC(user.uid), { method: "PATCH", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
   setState(r.ok ? "saved" : "error");
+  if (r.ok) share(SITE, body.fields.data.stringValue);
+}
+// A copy for the student's guides and linked parents (their profile on /parents/lifeskills/ and /guides/lifeskills/):
+// lsShared/{sid}/sites/{site}. Only these sites; the Camp Store list stays private. A failed copy never blocks a save.
+const SHARED = ["books", "challenges", "goals", "projects"];
+async function share(site, data) {
+  const r0 = window.wlRole;
+  if (!user || !SHARED.includes(site) || !r0 || r0.role !== "student" || !r0.sid) return;
+  try {
+    const fields = { data: { stringValue: data }, updated: { timestampValue: new Date().toISOString() }, ...(view ? { test: { booleanValue: true } } : {}) };
+    const r = await fetch(`${FS}/lsShared/${r0.sid}/sites/${site}`, { method: "PATCH", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify({ fields }) });
+    if (!r.ok) throw new Error(site + " " + r.status);
+  } catch (e) { console.warn("Wilderland: couldn't share with guides and parents:", e); }
+}
+// Once a day per student on this device, copy every shared site (not just this one), so a parent sees what was saved
+// before sharing existed, or on a site the student hasn't opened since.
+async function shareAll() {
+  const r0 = window.wlRole; if (!user || !r0 || r0.role !== "student" || !r0.sid) return;
+  const k = "wl-shared-" + user.uid + (view ? "#test" : ""), day = new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem(k) === day) return;
+  origSet.call(localStorage, k, day);
+  const base = DOC(user.uid).replace(/\/sites\/[^/]*$/, "/sites/");
+  for (const site of SHARED) {
+    try {
+      const r = await fetch(base + site, { headers: { Authorization: "Bearer " + await token() } });
+      if (!r.ok) continue;
+      const d = (((await r.json()).fields || {}).data || {}).stringValue;
+      if (d) await share(site, d);
+    } catch (e) { }
+  }
 }
 const schedulePush = () => { if (!user) return; setState("saving"); clearTimeout(pushTimer); pushTimer = setTimeout(push, 1200); };
 
@@ -155,7 +185,7 @@ function render() {
   const links = SITES.map(([n, p]) => `<a href="${p}" class="${here.startsWith(p) ? "here" : ""}">${n}</a>`).join("");
   if (!user && family) {
     host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${view ? "🧪" : esc((family.email || "?")[0].toUpperCase())}</span><span>${view ? "Test parent" : "Parent"}</span></button>
-    ${open ? `<div class="menu"><p>${view ? `Test parent (you're ${esc(family.email)}).` : `Signed in as ${esc(family.email)}, a family account.`}</p><a href="/parents/lifeskills/">Life Skills tracker</a><a href="/challenges/parents.html">Passing off at home</a><a href="/parents/">Parents home</a>${testSec()}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
+    ${open ? `<div class="menu"><p>${view ? `Test parent (you're ${esc(family.email)}).` : `Signed in as ${esc(family.email)}, a family account.`}</p><a href="/parents/lifeskills/">Life Skills tracker</a><a href="/parents/passoff/">Passing off at home</a><a href="/parents/">Parents home</a>${testSec()}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
     return;
   }
   if (!user) {
@@ -216,6 +246,7 @@ const FS = `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/dat
 let roleSeq = 0;
 function sendRole(r) {
   window.wlRole = r;
+  if (r && r.role === "student" && r.sid) setTimeout(shareAll, 0);
   try { if (r) origSet.call(localStorage, "wl-role", JSON.stringify({ e: r.email, r: r.role, b: r.band || null, s: r.sid || null, g: r.grade || null, bs: r.bands || null, t: r.test || null, x: r.real || null })); else origRemove.call(localStorage, "wl-role"); } catch (e) { }
   document.dispatchEvent(new CustomEvent("wl-role", { detail: r }));
 }

@@ -82,7 +82,7 @@
     if (c.how && c.how.length) h += '<div class="wlch-sec"><h3>' + (c.b === "K–1" ? "How to run it (for guides)" : "How to do it") + "</h3><ol>" + c.how.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ol></div>";
     if (c.st && c.st.length) h += '<div class="wlch-sec"><h3>' + (c.z === "Epic" ? "Checkpoints" : "Stages") + "</h3><ol>" + c.st.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ol></div>";
     if (c.r && c.r.length && D.res) h += '<div class="wlch-sec"><h3>Where to learn</h3><ul>' + c.r.map(function (i) { var r = D.res[i]; return r ? '<li><a href="' + esc(r[2]) + '" target="_blank" rel="noopener">' + esc(r[0]) + "</a> <small>" + esc(r[1]) + "</small></li>" : ""; }).join("") + "</ul></div>";
-    if (HOME[c.p]) h += '<div class="wlch-sec"><h3>' + (PARENT ? "At home" : "Passing it off") + "</h3><p>" + esc(HOME[c.p]) + ' <a href="/challenges/parents.html">How passing off at home works</a></p></div>';
+    if (HOME[c.p]) h += '<div class="wlch-sec"><h3>' + (PARENT ? "At home" : "Passing it off") + "</h3><p>" + esc(HOME[c.p]) + ' <a href="/parents/passoff/">How passing off at home works</a></p></div>';
     h += '<div class="wlch-acts"><a class="go" href="' + MAP + "#c=" + encodeURIComponent(c.id) + '">Open on the Challenges map</a><button class="ghost" type="button" data-wlch-close>Back</button></div>';
     return h;
   }

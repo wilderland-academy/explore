@@ -76,7 +76,7 @@ const PAGES = [
   ["Life Skills (parents)", "/parents/lifeskills/", "p", "my child progress tracker"],
   ["Labs schedule (parents)", "/parents/lifeskills/#schedule", "p", "labs calendar"],
   ["Challenges (parents)", "/parents/challenges/", "p", "challenge map"],
-  ["Passing off at home", "/challenges/parents.html", "p", "pass off home log sheet"],
+  ["Passing off at home", "/parents/passoff/", "p", "pass off home log sheet"],
   ["How Mr. Fox keeps students safe", "/parents/ai/", "p", "ai safety coach"]
 ];
 const SITES_FOR = { staff: "hsgp", parent: "hsp", student: "hs", anon: "hsp" };

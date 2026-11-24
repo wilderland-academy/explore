@@ -1,5 +1,5 @@
 // Wilderland at Home: content for the parent site. Sources: Lower and Upper Campus Parent Handbooks (Oct 2026),
-// Parent Partnership Guide (Spring 2026), Parent Education Night packet, /challenges/parents.html, and Yeager's 10 to 25.
+// Parent Partnership Guide (Spring 2026), Parent Education Night packet, /parents/passoff/, and Yeager's 10 to 25.
 // Plain language for parents. Avoid em dashes in copy.
 
 export const BANDS = { k1: "Grades K–1", g24: "Grades 2–4", g58: "Grades 5–8" };
@@ -100,7 +100,7 @@ export const MOMENTS = [
 // home is reading and a weekly look. Part time: on home weekdays the family runs the academic block (app targets in 2–8,
 // the reading routine in K–1) and Life Skills challenge work. School ASSIGNS home-weekday work; it does not supervise it.
 // Say "weekday", not "school day": part-time home days are often homeschool days.
-const PASSOFF = "/challenges/parents.html";
+const PASSOFF = "/parents/passoff/";
 export const WEEK = {
   k1: {
     growth: "In our K–1 Montessori environment we expect a full year of growth each year, with the emphasis on independence and joy in learning, not speed.",
@@ -184,7 +184,7 @@ export const MATH = {
 export const EXPLORE = [
   { name: "Life Skills Challenges", href: "/challenges/", img: "🧗", what: "The map of “I can” challenges across Wilderland's eight Life Skills. Turn on the “Can do at home” filter to find ones your family can work on together.",
     how: ["Let your child choose the challenge. That's the autonomy.", "Coach before the attempt: practice plan, gear, encouragement. That's the support.", "Judge the attempt word for word against the “I can” sentence. No hints, no “close enough.” That's the standard."],
-    more: ["Home pass-off guide for parents", "/challenges/parents.html"], note: "In K–1, challenges are run by guides at school, so this is mostly for grades 2–8." },
+    more: ["Home pass-off guide for parents", "/parents/passoff/"], note: "In K–1, challenges are run by guides at school, so this is mostly for grades 2–8." },
   { name: "Atlas of Sparks", href: "/projects/", img: "✨", what: "A giant map of real projects people have made, including standout projects by kids, to spark ideas for your child's own passion project.",
     how: ["Explore side by side and ask “Which one would you want to try?”", "Take a wild idea seriously. Ask what it would take.", "Help find gear, places and people. Leave the planning and the doing to them."], note: "Projects begin in grades 5–8. Younger children follow passion pursuits at school." },
   { name: "The Lantern Stacks", href: "/books/", img: "📚", what: "An exhibit of great books for ages 7–16, connected by theme, genre and feeling, with ways in for readers who don't think they like reading.",

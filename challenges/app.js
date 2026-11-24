@@ -6,6 +6,8 @@
   var SITE = document.body.getAttribute('data-site') || 'students', STUDENT = SITE === 'students';
   // Progress from the Life Skills tracker (set by progress.js for a signed-in student): cid -> 'pass' | 'working'.
   var status = {}, statusHooks = null;
+  // Parents: each child's passed and saved challenges, from /challenges/family.js. kidsOn[cid] = [{ n: first name, st: 'pass'|'saved' }]
+  var kidsOn = {};
   var SK = {}, BYID = {};
   D.skills.forEach(function (s) { SK[s.k] = s; });
   D.ch.forEach(function (c) { BYID[c.id] = c; });
@@ -199,6 +201,7 @@
     if (anyHobby(c)) tags += '<span class="tag tag-hob">' + icon('sparkles') + 'Bring your hobby</span>';
     if (c.b === 'K–1') tags += '<span class="tag">' + icon('users') + 'Guide-led</span>';
     if (c.gate) tags += '<span class="tag">' + icon('shield-alert') + 'Safety Gate</span>';
+    (kidsOn[c.id] || []).slice().reverse().forEach(function (f) { tags = '<span class="tag ' + (f.st === 'pass' ? 'tag-pass' : 'tag-work') + '">' + icon(f.st === 'pass' ? 'circle-check' : 'bookmark') + esc(f.n) + (f.st === 'pass' ? ' passed' : ' saved it') + '</span>' + tags; });
     if (status[c.id] === 'pass') tags = '<span class="tag tag-pass">' + icon('circle-check') + 'Passed</span>' + tags;
     else if (status[c.id] === 'working') tags = '<span class="tag tag-work">' + icon('flag') + 'Working on it</span>' + tags;
     return '<div class="ch' + (status[c.id] === 'pass' ? ' ch-passed' : '') + '"><button class="ch-open" data-open="' + c.id + '"><span class="ch-text">' + esc(c.t) + '</span>' +
@@ -373,7 +376,7 @@
     var home = 'vlot'.indexOf(c.p) >= 0;
     return '<div class="home-box' + (c.p === 's' ? ' gate' : home ? '' : ' school') + '"><h3>' + icon(m[0]) + esc(m[1]) + '</h3><p>' + esc(m[2]) + '</p>' +
       '<div class="row">' + (home ? '<button class="btn btn-sm" type="button" data-copy-email="' + c.id + '">' + icon('copy') + 'Copy email for the Field Guide</button>' : '') +
-      '<a class="btn btn-sm ghost" href="/challenges/parents.html#' + m[3] + '">' + esc(m[4]) + '</a></div></div>';
+      '<a class="btn btn-sm ghost" href="/parents/passoff/#' + m[3] + '">' + esc(m[4]) + '</a></div></div>';
   }
   function emailFor(c) {
     var L = ['Subject: Home pass-off: [child’s first name and last initial], ' + c.id, '',
@@ -751,6 +754,7 @@
   window.WLC = {
     open: openDetail,
     band: function () { return state.band; },
+    setFamily: function (m) { kidsOn = m || {}; renderTree(); renderSearch(); },
     setStatus: function (m, hooks) { status = m || {}; statusHooks = hooks || null; renderYear(); renderTree(); renderSearch(); if (detail.open) { var t = detail.querySelector('[data-cid]'); if (t) openDetail(t.getAttribute('data-cid')); } }
   };
 

@@ -37,23 +37,8 @@
   // ---------- saved data ----------
   let S = { grade: "", list: [] };
   try { const v = JSON.parse(localStorage.getItem(KEY) || "null"); if (v && Array.isArray(v.list)) S = { grade: v.grade || "", list: v.list }; } catch (e) { }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } share(); };
-  // A copy for the student's guides and parents: lsGoals/{sid} (readable by staff, the student and their linked parents;
-  // see firestore.rules). Each goal carries its label so other pages can show it without this page's lists.
-  let shareT = 0;
-  function share() {
-    clearTimeout(shareT);
-    shareT = setTimeout(async () => {
-      const u = window.wlFirebase && window.wlFirebase.auth.currentUser;
-      if (!u || !ROLE || ROLE.role !== "student" || !ROLE.sid) return;
-      const data = JSON.stringify({ grade: S.grade, list: S.list.map(g => Object.assign({}, g, { label: title(g) })) });
-      const fields = { data: { stringValue: data }, updated: { timestampValue: new Date().toISOString() }, ...(ROLE.test ? { test: { booleanValue: true } } : {}) };
-      try {
-        const r = await fetch(`${FS}/lsGoals/${ROLE.sid}`, { method: "PATCH", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" }, body: JSON.stringify({ fields }) });
-        if (!r.ok) throw new Error("share " + r.status);
-      } catch (e) { console.warn("Goals: couldn't share with guides and parents", e); }
-    }, 1000);
-  }
+  // /auth.js copies this to the student's account and to lsShared/{sid}/sites/goals for their guides and parents.
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
 
   // ---------- who's signed in, and their Life Skills passes ----------
   let ROLE = null, PASSES = null, BAND = null;   // PASSES: [{ cid, date }] once loaded
@@ -76,7 +61,7 @@
     ROLE = r || null;
     BAND = r && r.band || BAND;
     if (r && r.role === "student" && !S.grade && /^[2-8]$/.test(String(r.grade || "").trim())) { S.grade = String(r.grade).trim(); save(); }
-    if (r && r.role === "student" && r.sid) { share(); loadPasses(r.sid).then(draw).catch(e => { console.warn("Goals:", e); draw(); }); }
+    if (r && r.role === "student" && r.sid) { loadPasses(r.sid).then(draw).catch(e => { console.warn("Goals:", e); draw(); }); }
     else draw();
   }
 
