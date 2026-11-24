@@ -1,6 +1,6 @@
 // Epic Life Skill Labs: example options for each band, used as starting points in the Lab builder.
 // An Epic Lab runs for weeks (sometimes a whole term) and ends in a real, public feat that a child, a parent or a stranger
-// would call impressive. It follows the Workshop Scorecard: high standards (the bar is real and never lowered), high support
+// would call impressive. It follows the Life Skill Lab Scorecard: high standards (the bar is real and never lowered), high support
 // (skills taught in steps, adults and experts beside them) and high autonomy (students make real decisions and own roles).
 // Inspired by Alpha School, which reports pre-K students building a real treehouse with power tools, swimming long distances
 // and building 1,000-piece sets (we have no pool, so swimming isn't an option here), and whose published K–1 goals include learning to swim and 5-mile bike races. We have less

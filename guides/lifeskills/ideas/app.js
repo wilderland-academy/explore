@@ -69,7 +69,7 @@ function builderLink(x) {
 // The Epic Lab's plan, folded away.
 function epicDetails(e) {
   return el("details", {}, el("summary", { text: "How it hits the Scorecard" }),
-    el("dl", {}, [["High standards", e.standards], ["High support", e.support], ["High autonomy", e.autonomy], ["Test to Pass", e.test], ["Showcase", e.showcase], ["Safety", e.safety], ["Worth knowing", e.note]].flatMap(([k, v]) => v ? [el("dt", { text: k }), el("dd", { text: v })] : [])));
+    el("dl", {}, [["High standards", e.standards], ["High support", e.support], ["High autonomy", e.autonomy], ["Skill Validation", e.test], ["Showcase", e.showcase], ["Safety", e.safety], ["Worth knowing", e.note]].flatMap(([k, v]) => v ? [el("dt", { text: k }), el("dd", { text: v })] : [])));
 }
 function card(x) {
   const sk = SKILL[x.k] || { n: x.k, col: "#4d4d51" };

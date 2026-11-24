@@ -522,7 +522,7 @@ const MENTOR_PUBLIC = [
   ["Our Approach (how Wilderland works, written for parents)", "/parents/approach/data.js"],
   ["Wilderland at Home (daily routine, full time and part time, written for parents)", "/parents/athome/data.js"],
   ["Parent communication rules", "/guides/parents/skill.txt"],
-  ["Life Skill Lab builder rules and the Workshop Scorecard", "/guides/lifeskills/builder/rules.txt"]
+  ["Life Skill Lab builder rules and the Life Skill Lab Scorecard", "/guides/lifeskills/builder/rules.txt"]
 ];
 // Staff policies beyond the handbook (Guides › Policies, /guides/policies/). Their text is in DOCS too, never in this repo.
 // Keep the keys in step with DOCS in /guides/policies/index.html. Update a label when a draft is adopted.

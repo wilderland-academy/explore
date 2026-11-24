@@ -51,7 +51,7 @@ const PAGES = [
   ["Add a Lab", "/guides/lifeskills/#schedule=new", "g", "new lab"],
   ["Lab builder", "/guides/lifeskills/builder/", "g", "design lab scorecard"],
   ["Skill Lab ideas", "/guides/lifeskills/ideas/", "g", "lab ideas alpha workshops library"],
-  ["How Labs run (Alpha's playbook)", "/guides/lifeskills/playbook/", "g", "alpha workshop test2pass playbook"],
+  ["How Labs run (Alpha's playbook)", "/guides/lifeskills/playbook/", "g", "alpha workshop test2pass skill validation playbook"],
   ["Validate a challenge", "/guides/lifeskills/#validate", "g", "log pass not yet validate"],
   ["Validate a group (end of a Lab)", "/guides/lifeskills/#validate=group", "g", "log pass many students lab"],
   ["Crew board (guides)", "/guides/lifeskills/#board", "g", "crew working"],

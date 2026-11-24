@@ -223,7 +223,7 @@ export const ITEMS = [
       "Alpha uses software and mastery learning, plus incentives, to speed up academics so the rest of the day can go to other things.",
       "Malkus presses on what's known so far. The first graduating class was small (twelve students), and most students come from well-off families, so results are hard to judge yet."
     ],
-    here: [["mastery", "Our days are modeled on Alpha's: mastery learning in the morning, life-skills workshops in the afternoon."], ["screens", "Screens are used for mastery work, then put away."]],
+    here: [["mastery", "Our days are modeled on Alpha's: mastery learning in the morning, Life Skill Labs in the afternoon."], ["screens", "Screens are used for mastery work, then put away."]],
     differ: "Alpha inspired our full day, mornings and afternoons, and we trained with Alpha School in fall 2025. We adapted it for a nature-based school: our afternoons are outdoors, and our K–1 is Montessori.",
     ask: ["What would you want to see before believing any school's results, including ours?"],
     tryit: "Ask your child's guide how they know your child has mastered a skill, and what “mastered” means in that app.",
