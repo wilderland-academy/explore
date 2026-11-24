@@ -116,8 +116,11 @@ async function syncOnSignIn() {
     origSet.call(localStorage, LINK(), LINKID());
     applying = false;
     if (KEYS.some(k => (next[k] ?? null) !== (remote[k] ?? null))) await push(); else setState("saved");
-    // The page read localStorage when it loaded, so reload once to show the student's saved things.
-    if (changed) location.reload();
+    // The page read localStorage when it loaded, so reload once to show the student's saved things. Only once: a page
+    // that rewrites one of its keys on load (Challenges sets the student's own grade band) would otherwise differ from
+    // the account copy on every load and reload forever. After the one reload, its own write wins and is pushed.
+    const RK = "wl-sync-reloaded-" + SITE, last = Number(sessionStorage.getItem(RK) || 0);
+    if (changed && Date.now() - last > 60000) { sessionStorage.setItem(RK, String(Date.now())); location.reload(); }
   } catch (e) { applying = false; console.warn("Wilderland sync:", e); setState("error"); }
 }
 
