@@ -65,6 +65,12 @@ textarea{min-height:110px;resize:vertical}
 .srow .nx{grid-column:1/-1;color:#7c1f08;background:#a3290b0f;border-radius:6px;padding:6px 9px}
 @media (max-width:640px){.srow{grid-template-columns:1fr 90px}.srow .w{grid-column:1/-1}}
 .epics{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.libq{width:100%;font:400 16px/24px var(--font-sans);color:var(--ink);background:var(--white);border:1px solid var(--silver);border-radius:var(--radius-sm);padding:10px 12px}
+.liblist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.libopt{cursor:pointer;background:var(--white);border-radius:var(--radius-sm);padding:9px 12px;display:flex;flex-direction:column;gap:2px;border:2px solid transparent}
+.libopt b{font:700 16px/21px var(--font-sans);color:var(--ink)} .libopt span{font-size:13.5px;color:var(--fg-muted)}
+.libopt:hover,.libopt.on{border-color:var(--forest);background:var(--lime-tint)}
+.libnone{font-size:14.5px;color:var(--fg-muted);padding:6px 2px}
 .epic{background:var(--white);border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;gap:8px;border:2px solid transparent}
 .epic.on{border-color:var(--forest);background:var(--lime-tint)}
 .epic h3{font:700 20px/26px var(--font-sans);color:var(--fg-brand)}

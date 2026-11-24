@@ -5,6 +5,7 @@
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import { coachLog, autosaver } from "/guides/log.js";
 import { EPICS } from "./epics.js";
+import { LIBRARY, SOURCES } from "../ideas/ideas.js";
 
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const GUESTS = ["ian@silverlineventures.com", "online@bodyform.com", "ian.silverberg@gmail.com"];   // keep in step with auth.js
@@ -29,6 +30,12 @@ const st = { way: null, skill: null, sub: null, comp: null, idea: "", matches: n
 // The account's band may arrive after the page has started (first visit on this device).
 document.addEventListener("wl-role", () => { if (!st.bandPicked && !st.way) { st.band = myB(); st.qBand = myAll(); st.eBand = myAll(); } });
 const epicBy = Object.fromEntries(EPICS.map(e => [e.id, e]));
+// The Skill Lab ideas library (/guides/lifeskills/ideas/): our Epic Labs and other schools' workshops, by id.
+const libBy = Object.fromEntries(LIBRARY.map(x => [x.id, x]));
+// "An existing idea": an Epic Lab (st.epic) builds from the full example; any other idea (st.lib) goes through the idea
+// path (match it to a specific ability, then build).
+const isEpic = () => st.way === "lib" && !!st.epic;
+const isIdea = () => st.way === "idea" || (st.way === "lib" && !st.epic && !!st.lib);
 let turns = [], lastDraft = "", threadId = null, busy = false, status = "", stop = "", recentCache = null;
 const save = autosaver(() => log, () => { status = "Couldn't save this draft to your history. Copy it before you leave."; drawOut(); });
 
@@ -46,18 +53,17 @@ async function onAuth(u) {
   if (!RULES) { try { const r = await fetch("rules.txt", { cache: "no-cache" }); if (r.ok) RULES = await r.text(); } catch (e) { RULES = ""; } }
   log = coachLog(db, u);
   if (my !== seq) return;
-  const ep = new URLSearchParams(location.search).get("epic");
-  if (ep && epicBy[ep]) { pickEpic(epicBy[ep]); history.replaceState(null, "", location.pathname); }
-  // From Skill Lab ideas (/guides/lifeskills/ideas/): start from "A cool idea" with the idea filled in.
-  const qs = new URLSearchParams(location.search), idea = qs.get("idea");
-  if (idea) {
-    Object.assign(st, { way: "idea", idea: idea.slice(0, 1500), type: "Skill Lab" });
-    if (BANDS.includes(qs.get("band"))) Object.assign(st, { band: qs.get("band"), bandPicked: true });
-    history.replaceState(null, "", location.pathname);
-  }
+  // From Skill Lab ideas (/guides/lifeskills/ideas/): ?epic=<id> or ?idea=<id> opens "An existing idea" on it.
+  // An ?idea= that isn't an id is free text (older links), which starts "A cool idea" with it filled in.
+  const qs = new URLSearchParams(location.search), ep = qs.get("epic"), idea = qs.get("idea");
+  if (ep && epicBy[ep]) pickEpic(epicBy[ep]);
+  else if (idea && libBy[idea]) pickLib(libBy[idea]);
+  else if (idea) Object.assign(st, { way: "idea", idea: idea.slice(0, 1500), type: "Skill Lab" });
+  if ((ep || idea) && BANDS.includes(qs.get("band"))) Object.assign(st, { band: qs.get("band"), bandPicked: true });
+  if (ep || idea) history.replaceState(null, "", location.pathname);
   const t = new URLSearchParams(location.search).get("t");
   if (t) {
-    try { const x = await log.get(t); if (x && x.site === "labs") { turns = x.messages || []; threadId = x.id; lastDraft = [...turns].reverse().find(m => m.role === "assistant")?.content || ""; Object.assign(st, x.meta && x.meta.st ? x.meta.st : {}); firstShown = (x.meta && x.meta.firstShown) || ""; } } catch (e) { console.warn(e); }
+    try { const x = await log.get(t); if (x && x.site === "labs") { turns = x.messages || []; threadId = x.id; lastDraft = [...turns].reverse().find(m => m.role === "assistant")?.content || ""; Object.assign(st, x.meta && x.meta.st ? x.meta.st : {}); if (st.way === "epic") Object.assign(st, { way: "lib", lib: st.epic }); firstShown = (x.meta && x.meta.firstShown) || ""; } } catch (e) { console.warn(e); }
     history.replaceState(null, "", location.pathname);
   }
   draw();
@@ -96,10 +102,10 @@ function draw() {
 }
 
 function step1() {
-  const ways = [["epic", "An epic Lab to adapt", "Weeks-long Labs that end in a real feat, for every band. Make one yours."], ["skill", "A Life Skill to build", "Pick from the Skill Map. See which abilities have no challenges yet."], ["idea", "A cool idea", "Describe the activity. The builder suggests the Life Skill it really builds."], ["existing", "A challenge on the site", "Run it as a Skill Lab, make a version for another age, or an Epic."], ["review", "A plan I already wrote", "Paste it. Get its scorecard and the 2–3 changes that matter most."]];
+  const ways = [["lib", "An existing idea", "Search our Skill Lab ideas, from our Epic Labs to workshops other schools have run, and build off one."], ["skill", "A Life Skill to build", "Pick from the Skill Map. See which abilities have no challenges yet."], ["idea", "A cool idea", "Describe the activity. The builder suggests the Life Skill it really builds."], ["existing", "A challenge on the site", "Run it as a Skill Lab, make a version for another age, or an Epic."], ["review", "A plan I already wrote", "Paste it. Get its scorecard and the 2–3 changes that matter most."]];
   const sec = el("section", { class: "step" }, el("span", { class: "stepn", text: "Step 1" }), el("h2", { text: "What do you have to start with?" }),
     el("div", { class: "ways", role: "group", "aria-label": "Ways to start" }, ways.map(([k, b, s]) => el("button", { class: "way", type: "button", "aria-pressed": String(st.way === k), onclick: () => { st.way = k; if (k === "review") st.type = null; draw(); } }, el("b", { text: b }), el("span", { text: s })))));
-  if (st.way === "epic") sec.append(epicPanel());
+  if (st.way === "lib") sec.append(libPanel());
   if (st.way === "skill") sec.append(skillPanel());
   if (st.way === "idea") sec.append(ideaPanel());
   if (st.way === "existing") sec.append(existingPanel());
@@ -109,25 +115,73 @@ function step1() {
   return sec;
 }
 function pickEpic(e) {
-  Object.assign(st, { way: "epic", epic: e.id, band: e.band, type: "Skill Lab", comp: e.skills[0], time: e.weeks, eBand: st.eBand || e.band });
+  Object.assign(st, { way: "lib", lib: e.id, epic: e.id, band: e.band, type: "Skill Lab", comp: e.skills[0], time: e.weeks, eBand: st.eBand || e.band, matches: null, libQ: "" });
 }
-function epicPanel() {
+function pickLib(x) {
+  if (x.src === "epic") return pickEpic(epicBy[x.id]);
+  Object.assign(st, { way: "lib", lib: x.id, epic: null, comp: null, matches: null, type: "Skill Lab", libQ: "",
+    idea: `${x.t}: ${x.d}${x.n ? " (Our note: " + x.n + ")" : ""}` });
+  if (!st.bandPicked && x.b.length === 1) st.band = x.b[0];
+}
+// Search the ideas library: type to filter, arrow keys and Enter to choose (a combobox with a listbox of up to 8).
+const LEN_T = { day: "A day or less", short: "1–2 weeks", mid: "3–5 weeks", session: "6–8 weeks", year: "All year" };
+const libNorm = t => String(t || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+function libMatches(q) {
+  const w = libNorm(q).split(/\s+/).filter(Boolean);
+  const hay = x => libNorm([x.t, x.d, x.n, ...(x.b || [])].join(" "));
+  const list = w.length ? LIBRARY.filter(x => w.every(t => hay(x).includes(t))) : LIBRARY.filter(x => x.src === "epic" && (!st.eBand || x.b.includes(st.eBand)));
+  // Title matches first.
+  return list.sort((a, b) => (w.length && w.every(t => libNorm(a.t).includes(t)) ? 0 : 1) - (w.length && w.every(t => libNorm(b.t).includes(t)) ? 0 : 1)).slice(0, 8);
+}
+function libPanel() {
   const p = el("div", { class: "panel" });
-  p.append(el("p", { class: "note", text: "Alpha reports its pre-K students building a real treehouse with power tools, swimming long distances and building 1,000-piece sets, over weeks or months. We have less money and higher ratios, so each option here says what support it needs and roughly what it costs. Every one follows the Workshop Scorecard: high standards, high support, high autonomy." }));
-  p.append(el("div", { class: "chips", role: "group", "aria-label": "Band" }, [["", "All bands"], ...BANDS.map(b => [b, b])].map(([b, lab]) => chip(lab, st.eBand === b, () => { st.eBand = b; draw(); }))));
-  const list = EPICS.filter(e => !st.eBand || e.band === st.eBand);
-  p.append(el("div", { class: "epics" }, list.map(e => {
-    const on = st.epic === e.id;
-    return el("article", { class: "epic" + (on ? " on" : "") },
-      el("div", { class: "etop" }, el("span", { class: "cn", text: e.band }), el("span", { class: "cn", text: e.weeks }), el("span", { class: "cn", title: "$ uses what we have · $$ a few hundred dollars · $$$ over about $1,000 or a paid partner", text: e.cost })),
-      el("h3", { text: e.title }),
-      el("p", { class: "feat", text: e.feat }),
-      el("p", { class: "note", text: e.skills.map(compLabel).map(x => x.split(" › ").pop()).join(" · ") }),
-      el("details", {}, el("summary", { text: "How it hits the Scorecard" }),
-        el("dl", {}, [["High standards", e.standards], ["High support", e.support], ["High autonomy", e.autonomy], ["Test to Pass", e.test], ["Showcase", e.showcase], ["Safety", e.safety], ["Worth knowing", e.note]].flatMap(([k, v]) => v ? [el("dt", { text: k }), el("dd", { text: v })] : []))),
-      el("button", { class: "btn " + (on ? "lime" : "go"), type: "button", text: on ? "Chosen: set the details below" : "Make this one ours", onclick: () => { pickEpic(e); draw(); $("#step2")?.scrollIntoView({ behavior: "smooth", block: "start" }); } }));
-  })));
+  const input = el("input", { type: "search", id: "libq", class: "libq", role: "combobox", "aria-autocomplete": "list", "aria-expanded": "false", "aria-controls": "liblist", autocomplete: "off", placeholder: "Search ideas: treehouse, bike, food truck, podcast…", value: st.libQ || "" });
+  const list = el("ul", { id: "liblist", class: "liblist", role: "listbox", "aria-label": "Ideas" });
+  let opts = [], act = -1;
+  const choose = x => { pickLib(x); draw(); $(x.src === "epic" ? "#step2" : "#idea")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  const paint = () => {
+    // Once an idea is chosen, the list stays closed until the guide searches again.
+    opts = !input.value && st.lib ? [] : libMatches(input.value);
+    act = Math.min(act, opts.length - 1);
+    input.setAttribute("aria-expanded", String(opts.length > 0));
+    input.setAttribute("aria-activedescendant", act >= 0 ? "libopt-" + act : "");
+    list.replaceChildren(...opts.map((x, i) => el("li", { id: "libopt-" + i, role: "option", class: "libopt" + (i === act ? " on" : ""), "aria-selected": String(i === act), onmousedown: e => { e.preventDefault(); choose(x); } },
+      el("b", { text: x.t }), el("span", { text: [x.src === "epic" ? "Epic Lab" : null, (x.b || []).join(", "), x.weeks || LEN_T[x.len]].filter(Boolean).join(" · ") }))));
+    if (!opts.length && (input.value || !st.lib)) list.append(el("li", { class: "libnone", text: "No ideas match. Try another word, or describe your own under “A cool idea.”" }));
+  };
+  input.addEventListener("input", () => { st.libQ = input.value; act = -1; paint(); });
+  input.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown") { e.preventDefault(); act = Math.min(act + 1, opts.length - 1); paint(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); act = Math.max(act - 1, -1); paint(); }
+    else if (e.key === "Enter" && opts.length) { e.preventDefault(); choose(opts[Math.max(act, 0)]); }
+  });
+  p.append(el("div", { class: "field" }, el("label", { class: "lbl", for: "libq", text: "Find an idea" }), input,
+    el("span", { class: "note", text: input.value ? "" : "Our Epic Labs are listed first. Type to search all " + LIBRARY.length + " ideas, or " }, input.value ? null : el("a", { href: "/guides/lifeskills/ideas/" }, "browse them with filters"), input.value ? null : ".")), list);
+  paint();
+  const x = st.lib && libBy[st.lib];
+  if (x) {
+    if (x.src === "epic") p.append(el("div", { class: "epics" }, epicCard(epicBy[x.id])));
+    else {
+      const links = (x.s || []).filter(k => SOURCES[k]);
+      p.append(el("article", { class: "epic on" },
+        el("div", { class: "etop" }, el("span", { class: "cn", text: (x.b || []).join(", ") }), el("span", { class: "cn", text: LEN_T[x.len] })),
+        el("h3", { text: x.t }), el("p", { class: "feat", text: x.d }), x.n ? el("p", { class: "note", text: "Our note: " + x.n }) : null,
+        links.length ? el("p", { class: "note" }, "Learn more: ", links.flatMap((k, i) => [i ? " · " : "", el("a", { href: SOURCES[k][1], target: "_blank", rel: "noopener" }, SOURCES[k][0])])) : null));
+      p.append(el("p", { class: "note", text: "Next: find the specific ability this builds. Edit the idea first if you'd like to change it." }), ideaPanel());
+    }
+  }
   return p;
+}
+function epicCard(e) {
+  const on = st.epic === e.id;
+  return el("article", { class: "epic" + (on ? " on" : "") },
+    el("div", { class: "etop" }, el("span", { class: "cn", text: e.band }), el("span", { class: "cn", text: e.weeks }), el("span", { class: "cn", title: "$ uses what we have · $$ a few hundred dollars · $$$ over about $1,000 or a paid partner", text: e.cost })),
+    el("h3", { text: e.title }),
+    el("p", { class: "feat", text: e.feat }),
+    el("p", { class: "note", text: e.skills.map(compLabel).map(x => x.split(" › ").pop()).join(" · ") }),
+    el("details", {}, el("summary", { text: "How it hits the Scorecard" }),
+      el("dl", {}, [["High standards", e.standards], ["High support", e.support], ["High autonomy", e.autonomy], ["Test to Pass", e.test], ["Showcase", e.showcase], ["Safety", e.safety], ["Worth knowing", e.note]].flatMap(([k, v]) => v ? [el("dt", { text: k }), el("dd", { text: v })] : []))),
+    on ? el("p", { class: "note", text: "Chosen: set the details below." }) : null);
 }
 function skillPanel() {
   const p = el("div", { class: "panel" });
@@ -193,16 +247,16 @@ function existingPanel() {
   return p;
 }
 
-function ready1() { return st.way === "review" ? true : st.way === "existing" ? !!(st.ch && st.chAct) : st.way === "epic" ? !!st.epic : !!st.comp; }
+function ready1() { return st.way === "review" ? true : st.way === "existing" ? !!(st.ch && st.chAct) : isEpic() ? true : !!st.comp; }
 function step2() {
   if (!ready1()) return null;
   const sec = el("section", { class: "step", id: "step2" }, el("span", { class: "stepn", text: "Step 2" }), el("h2", { text: "The details" }));
   const p = el("div", { class: "panel" });
   if (st.way === "review") p.append(el("p", {}, el("b", { text: "Reviewing " }), "your plan against the scorecard."));
-  else if (st.way === "epic") p.append(el("p", {}, el("b", { text: "Starting from: " }), epicBy[st.epic].title, el("br"), el("b", { text: "Skills: " }), epicBy[st.epic].skills.map(compLabel).join("; ")));
+  else if (isEpic()) p.append(el("p", {}, el("b", { text: "Starting from: " }), epicBy[st.epic].title, el("br"), el("b", { text: "Skills: " }), epicBy[st.epic].skills.map(compLabel).join("; ")));
   else p.append(el("p", {}, el("b", { text: "Skill: " }), compLabel(st.comp), st.ch ? el("span", {}, el("br"), el("b", { text: "From: " }), el("a", { class: "wl-ch", href: "/guides/challenges/#c=" + st.ch.id, "data-wl-ch": st.ch.id, text: st.ch.t })) : null));
-  if (st.way === "epic") p.append(el("p", { class: "note", text: "Change the band, the time or the notes to fit your crew (number of kids, adults you can count on, budget, season). The builder keeps the feat and the high bar unless you tell it otherwise." }));
-  if (st.way !== "review" && st.way !== "existing" && st.way !== "epic") p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: "What are we making?" }), el("div", { class: "chips" }, TYPES.map(t => chip(t, st.type === t, () => { st.type = t; draw(); }, { disabled: t === "Project" && st.band === "K–1" ? true : null })))));
+  if (isEpic()) p.append(el("p", { class: "note", text: "Change the band, the time or the notes to fit your crew (number of kids, adults you can count on, budget, season). The builder keeps the feat and the high bar unless you tell it otherwise." }));
+  if (st.way !== "review" && st.way !== "existing" && !isEpic()) p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: "What are we making?" }), el("div", { class: "chips" }, TYPES.map(t => chip(t, st.type === t, () => { st.type = t; draw(); }, { disabled: t === "Project" && st.band === "K–1" ? true : null })))));
   p.append(el("div", { class: "field" }, el("span", { class: "lbl", text: st.way === "review" ? "Age band (optional)" : "Age band" }), el("div", { class: "chips" }, BANDS.map(b => chip(b, st.band === b, () => { st.band = b; st.bandPicked = true; if (b === "K–1" && st.type === "Project") st.type = "Skill Lab"; draw(); })))));
   const n = [];
   if (st.band === "K–1" && st.type === "Challenge" && st.way !== "review") n.push(el("div", { class: "box warn", text: "K–1 students don't run Challenges on their own. The builder will make it guide-led (the guide runs it, each child shows the skill alone), or switch to a Skill Lab." }));
@@ -250,9 +304,9 @@ function buildPrompt() {
       improve: `Mode D, then Mode A: score this Challenge on the Scorecard as written, then give an improved version in the Challenge Card template and score that.` }[st.chAct] + `\n\nThe starting challenge (from the site):\n${challengeBrief(st.ch, true)}`;
   } else {
     req = `Mode ${{ Challenge: "A", "Skill Lab": "B", Project: "C" }[st.type]}: build a ${st.type} for the ${st.band} band.`;
-    if (st.way === "idea") req += `\nThe guide's idea: """${st.idea.trim()}"""\nKeep the guide's idea as the vehicle, but shape it so passing requires the specific ability.`;
+    if (isIdea()) req += `\nThe guide's idea: """${st.idea.trim()}"""\nKeep the guide's idea as the vehicle, but shape it so passing requires the specific ability.`;
   }
-  if (st.way === "epic") {
+  if (isEpic()) {
     const e = epicBy[st.epic];
     req = `Mode B, Epic Lab: build a full Epic Skill Lab for the ${st.band} band, starting from this example. Keep the feat and the bar unless the guide's notes change them. Fill in the whole plan week by week, with the specific steps that get every child from where they start to the feat, how adults and outside experts are used, the Test to Pass for each skill target, and the showcase. If the guide's band differs from the example's (${e.band}), adapt the feat so it is still impressive for that age.\n\nThe example:\nTitle: ${e.title}\nFeat: ${e.feat}\nLength: ${e.weeks}\nSkill targets: ${e.skills.map(id => compLabel(id) + " (" + id + ")").join("; ")}\nHigh standards: ${e.standards}\nHigh support: ${e.support}\nHigh autonomy: ${e.autonomy}\nTest to Pass: ${e.test}\nShowcase: ${e.showcase}\nSafety: ${e.safety}\nCost: ${e.cost}\nNotes: ${e.note || ""}`;
   }
@@ -262,9 +316,9 @@ function buildPrompt() {
 }
 function requestSummary() {
   if (st.way === "review") return "Review my plan" + (st.band ? " (" + st.band + ")" : "") + ":\n\n" + st.plan.trim();
-  if (st.way === "epic") return ["Make this Epic Lab ours: " + epicBy[st.epic].title + " for " + st.band, st.time.trim() ? "Time: " + st.time.trim() : "", st.notes.trim() ? "Notes: " + st.notes.trim() : ""].filter(Boolean).join("\n");
+  if (isEpic()) return ["Make this Epic Lab ours: " + epicBy[st.epic].title + " for " + st.band, st.time.trim() ? "Time: " + st.time.trim() : "", st.notes.trim() ? "Notes: " + st.notes.trim() : ""].filter(Boolean).join("\n");
   const what = st.way === "existing" ? { lab: "Run this challenge as a Skill Lab", band: "A version of this challenge for another age band", epic: "A harder Epic version of this challenge", improve: "Review and improve this challenge" }[st.chAct] + ": " + st.ch.t : "Build a " + st.type;
-  return [what + (st.band ? " for " + st.band : ""), st.comp ? "Skill: " + compLabel(st.comp) : "", st.way === "idea" ? "My idea: " + st.idea.trim() : "", st.time.trim() ? "Time: " + st.time.trim() : "", st.notes.trim() ? "Notes: " + st.notes.trim() : ""].filter(Boolean).join("\n");
+  return [what + (st.band ? " for " + st.band : ""), st.comp ? "Skill: " + compLabel(st.comp) : "", isIdea() ? "My idea: " + st.idea.trim() : "", st.time.trim() ? "Time: " + st.time.trim() : "", st.notes.trim() ? "Notes: " + st.notes.trim() : ""].filter(Boolean).join("\n");
 }
 let firstShown = "";
 function system() { return RULES + "\n\nToday is " + new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) + "."; }

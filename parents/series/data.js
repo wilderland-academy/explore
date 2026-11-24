@@ -223,8 +223,8 @@ export const ITEMS = [
       "Alpha uses software and mastery learning, plus incentives, to speed up academics so the rest of the day can go to other things.",
       "Malkus presses on what's known so far. The first graduating class was small (twelve students), and most students come from well-off families, so results are hard to judge yet."
     ],
-    here: [["mastery", "Our mornings borrow Alpha's mastery model."], ["screens", "Screens are used for mastery work, then put away."]],
-    differ: "We borrow Alpha's mornings, not the whole model. Our afternoons are outdoors, our K–1 is Montessori.",
+    here: [["mastery", "Our days are modeled on Alpha's: mastery learning in the morning, life-skills workshops in the afternoon."], ["screens", "Screens are used for mastery work, then put away."]],
+    differ: "Alpha inspired our full day, mornings and afternoons, and we trained with Alpha School in fall 2025. We adapted it for a nature-based school: our afternoons are outdoors, and our K–1 is Montessori.",
     ask: ["What would you want to see before believing any school's results, including ours?"],
     tryit: "Ask your child's guide how they know your child has mastered a skill, and what “mastered” means in that app.",
     link: ["Listen on Pocket Casts", "https://pocketcasts.com/podcast/the-report-card-with-nat-malkus/d6aa06d0-9792-0139-c11f-0acc26574db2/alpha-school-with-mackenzie-price/276b75a1-99fa-4150-a92b-01c5a67d3791"] },
@@ -361,6 +361,6 @@ export const READS = [
 
 export const READ_GROUPS = {
   movement: ["The bigger movement", "Wilderland is one of thousands of microschools. Here's what reporters and researchers are finding, good and bad."],
-  alpha: ["On Alpha, both sides", "Our mornings borrow from Alpha School. These are the two most useful outside looks at it."],
+  alpha: ["On Alpha, both sides", "Alpha School inspired our full day, mornings and afternoons. We trained with Alpha in fall 2025, then adapted it for a nature-based school. These are the two most useful outside looks at Alpha."],
   research: ["Research we keep coming back to", "Short reads and one tool, shared by our team."]
 };
