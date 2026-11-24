@@ -44,10 +44,16 @@ export const STEPS = [
       ] },
       { id: "l-skills", kind: "text", art: "skills", title: "The eight Life Skills", text: [
         "Wilderland teaches eight Life Skills: Energy, Self-Governance, Character & Grit, Adaptability & Ingenuity, Value Creation, Storytelling & Speaking, Fellowship, and Nature & Living Systems. Each has sub-skills and specific abilities, mapped on the Skill Map. Content is the vehicle; the skill is the point.",
-        ["The yearly goal: in grades 2–8, at least 2 passes in every Life Skill. In K–1, at least 3 per Life Skill for each child, from guide-run challenges (plan on at least 2 a week).", "Passes come from Lab tests and from Challenges. Both count toward the goal.", "Progress lives in two places: the printed wall chart, where students see each other getting hard things done, and the Life Skills tracker, which families can see from home."]
+        ["The yearly goal in grades 2–8: 16 Challenges, chosen by each student, 2 in every Life Skill. An Epic counts as 2. In K–1, at least 3 per Life Skill for each child, from guide-run challenges (plan on at least 2 a week).", "Passes from a Lab's Skill Validation count toward the goal too.", "Progress lives in two places: the printed wall chart, where students see each other getting hard things done, and the Life Skills tracker, which families can see from home."]
+      ] },
+      { id: "l-map", kind: "text", art: "skillmap", title: "The Skill Map", text: [
+        "The Skill Map is how the eight Life Skills become things a child can actually do. Each Life Skill breaks into subskills, each subskill into competencies, and each competency into Challenges: one “I can…” statement with a Skill Validation, at the right level for each grade band.",
+        "It ties the whole afternoon together:",
+        ["Challenges come straight from the map. Students browse it, filter it (things they can do at home, Epics, their hobby) and save the ones they want to their plan.", "Life Skill Labs aim at competencies on the map. A Lab built from a Challenge keeps that Challenge's Skill Validation exactly.", "In the weekly 1:1, the map is what you and the student look at together: where they stand in each Life Skill, and which Challenge comes next.", "A Passion Project usually grows out of a branch of the map a student wants to take much further."],
+        "Not every grade has a Challenge for every subskill. The map keeps only meaningful milestones from K to 8, with no filler steps. Once you finish this step, the full map is under Life Skills › Challenges on your Guides site."
       ] },
       { id: "l-labs3", kind: "text", art: "labs", title: "1. Life Skill Labs", text: [
-        "Life Skill Labs are the flagship experiences of the afternoon, and everyone takes part. They're high-energy, often themed, and can run for a whole session, up to about two months, building toward a real, public feat. Every student should be excited to be part of them, and that excitement should pull them to finish their academic work, too.",
+        "Life Skill Labs are the flagship experiences of the afternoon, and everyone takes part. They're high-energy, often themed, and each one runs 3 to 8 weeks, building toward a real, public feat. Every student should be excited to be part of them, and that excitement should pull them to finish their academic work, too.",
         "Labs aren't required to tie into academics, though they're welcome to. Plan them ahead, on purpose. In a Lab you lead a crew through learning and practicing a skill together. Then run a quick testing session: each student takes their own Skill Validation. Not every student passes every Lab, but every pass counts toward their yearly goal.",
         "The strongest Labs pass four tests: anyone can see the pass (a time, a count, a weight, or a yes from someone outside school); the Skill Validation itself fits in one Lab week (one day in K–1); kids can practice it here; and it leaves something to show.",
         ["Design backward from the Skill Validation. Name its quality bar: Score it, Make something happen, or Satisfy the expert.", "Make it thrilling by changing the arena (race an adult, a real audience, a real event), never the bar.", "Epic Life Skill Labs run for weeks and end in a real, public feat. Every band can do them, K–1 included.", "A Lab built from an existing Challenge keeps that Challenge's Skill Validation exactly.", "Score every plan on the Life Skill Lab Scorecard: 9 indicators, 1 to 3 each. Aim for 3 on every one, and score honestly.", "Safety gates come before the activity (fire card, knife card, tool card and so on). Field days need at least two approved adults with every group, permission slips and a transport plan.", "First names only in anything public, and no photos without a release on file. Students can't use Claude (Anthropic requires users to be 18 or older)."]
@@ -73,6 +79,11 @@ export const STEPS = [
         ["Executive functioning: they plan the work, start without being prompted, manage their time, and push through setbacks.", "Self-teaching: they can learn something new from books, videos and experts, without being taught step by step."],
         "They aren't a default assignment. Before saying yes, ask both questions: does this student truly care about this, and can they carry it on their own? Look at what they've already done. An Epic Challenge finished with every checkpoint met is strong evidence. If either answer is not yet, keep the door open and route them through the Challenges and Labs that build those skills first. That's a path, not a no.",
         ["Grades 7–8: encouraged, once a student has found something they're excited about. Real audiences and real responsibility.", "Grades 2–6: open to any student who meets the criteria.", "K–1: no Projects."]
+      ] },
+      { id: "l-year", kind: "text", art: "year", title: "A year at a glance", text: [
+        "The school year runs from September to May. Here's roughly how the afternoon adds up for one student in grades 2–8:",
+        ["Life Skill Labs: each runs 3 to 8 weeks, one after another, so a crew moves through about 5 to 10 Labs a year. Everyone takes part.", "Challenges: 16 a year, chosen by the student, 2 in each Life Skill. That's about 2 a month, at 3 to 8 hours of work a week, with up to 3 on the go at once.", "Honor Court: a milestone every 4 credits, so 4 milestones for a student who reaches 16.", "1:1 Coaching: every week, all year.", "Passion Projects: about 25 hours each, with start, halfway and finish milestones, for the students who are ready. Mostly 7th and 8th graders."],
+        "In K–1, guides run the Challenges with the whole crew: at least 3 per Life Skill for each child, and at least 2 a week."
       ] }
     ],
     quiz: "lifeskills",
@@ -96,8 +107,8 @@ export const STEPS = [
       { id: "d-dubois", on: "l-coaching2", t: "study", title: "Effectiveness of mentoring programs for youth: a meta-analytic review", by: "DuBois, Holloway, Valentine & Cooper, 2002", url: "https://doi.org/10.1023/A:1014628810714", note: "Why weekly, steady 1:1 contact matters." }
     ] },
 
-  { id: "mentor", name: "Mentor Mindset", icon: "🌱", time: "45 minutes",
-    intro: "How we coach every student: keep the real standard, show belief and give real help, and leave the thinking and choices with the student.",
+  { id: "mentor", name: "Mentor Mindset", icon: "🌱", time: "1 hour",
+    intro: "An introduction to how we coach every student: keep the real standard, show belief and give real help, and leave the thinking and choices with the student. When you finish, the full Mentor Mindset Field Guide opens, and that's where the real training continues.",
     unlocks: { name: "Mentor Mindset and the Session Room", what: "The full Field Guide, the AI practice range and coach, and the Session Room for recording and reviewing weekly 1:1s." },
     screens: [
       { id: "m-quad", kind: "quad", art: "mountain", title: "Four mindsets" },
@@ -108,6 +119,8 @@ export const STEPS = [
         ["Standard: did I keep the real bar, out loud?", "Support: did I show belief and offer a concrete way to help?", "Autonomy: did I leave the thinking and the next choice with them?"]
       ] },
       { id: "m-evidence", kind: "evidence", title: "What the studies found" },
+      { id: "m-hs1", kind: "techniques", part: 1, title: "High support, part 1: in the moment" },
+      { id: "m-hs2", kind: "techniques", part: 2, title: "High support, part 2: the culture we build" },
       { id: "m-spot", kind: "ctx", title: "What each mindset sounds like" },
       { id: "m-phrases", kind: "phrases", title: "Say this instead" },
       { id: "m-moments", kind: "moments", title: "When a student says…" },
@@ -117,6 +130,11 @@ export const STEPS = [
       { id: "m-habit", kind: "text", title: "Making it stick", text: [
         "We're learning a new professional skill together, on the same three pillars we use with students: every guide uses mentor responses consistently (standard), with short rehearsals, a partner and the coach (support), choosing your own words and focus (autonomy).",
         ["Weekly, together: ten minutes at team meeting, one real situation, two people rehearse it out loud.", "Weekly, solo: two reps on the practice range and one if-then plan.", "Any time: a do-over with a student. “I didn't handle that the way I want to. Can I try again?”"]
+      ] },
+      { id: "m-next", kind: "text", title: "Keep going: the full Field Guide", text: [
+        "This step was an introduction. The Mentor Mindset is a professional skill, and we expect every guide to keep building it all year in the full Field Guide, which opens when you finish this step.",
+        "What's waiting there:",
+        ["The Lookout: a game for spotting enforcer and protector moves.", "The Phrasebook and Trail moments: what to say instead, and what to say right now.", "Rough terrain: jaded and shut-down students. Campfire: stories of where it worked.", "The Practice range: rehearse real situations and get scored. Aim for two reps a week.", "The Coach's tent: ask about a real situation you're facing.", "Weekly 1:1s and the Session room: run, record and review your coaching sessions.", "The Pack list: how we make it stick as a team."]
       ] }
     ],
     quiz: "mentor",
@@ -124,16 +142,16 @@ export const STEPS = [
       { id: "d-1025", on: "m-quad", t: "book", title: "10 to 25: The Science of Motivating Young People", by: "David Yeager (2024)", note: "The book this whole step comes from." },
       { id: "d-tilt450", on: "m-quad", t: "podcast", title: "Dr. David Yeager on What the Science Says About Motivating Young People", by: "Tilt Parenting, episode 450", url: "https://www.tiltparenting.com/session450", note: "Enforcer, protector and mentor, explained by Yeager himself." },
       { id: "d-kawasaki", on: "m-quad", t: "podcast", title: "David Yeager: The Science of Motivating Young People", by: "Remarkable People with Guy Kawasaki", url: "https://guykawasaki.com/david-yeager-the-science-of-motivating-young-people/", note: "Transcript on the page." },
-      { id: "d-gratitude", on: "m-why", t: "podcast", title: "#151: David Yeager on the Mentor Mindset", by: "Evolving with Gratitude (Lainie Rowell), March 2026", url: "https://podbay.fm/p/evolving-with-gratitude/e/1774962180", note: "Wise feedback and what real support looks like, 45 minutes." },
+      { id: "d-gratitude", on: "m-hs1", t: "podcast", title: "#151: David Yeager on the Mentor Mindset", by: "Evolving with Gratitude (Lainie Rowell), March 2026", url: "https://podbay.fm/p/evolving-with-gratitude/e/1774962180", note: "Wise feedback and what real support looks like, 45 minutes." },
       { id: "d-wise", on: "m-why", t: "study", title: "Wise critiques help students succeed", by: "Yeager et al., 2014", url: "https://sparq.stanford.edu/solutions/wise-critiques-help-students-succeed", note: "The 19-word note: revisions rose from about 17% to 71%." },
       { id: "d-okonofua", on: "m-evidence", t: "study", title: "Brief intervention to encourage empathic discipline cuts suspension rates in half", by: "Okonofua, Paunesku & Walton, 2016, PNAS", url: "https://doi.org/10.1073/pnas.1523698113", note: "Suspensions fell from 9.6% to 4.8%." },
-      { id: "d-synergistic", on: "m-evidence", t: "study", title: "A synergistic mindsets intervention protects adolescents from stress", by: "Yeager et al., 2022, Nature", url: "https://doi.org/10.1038/s41586-022-04907-7", note: "Stress as fuel: 63% vs 47% pass rates in the hardest courses." },
-      { id: "d-belong", on: "m-evidence", t: "study", title: "When students feel they belong, they thrive", by: "Walton & Cohen, 2011", url: "https://sparq.stanford.edu/solutions/when-students-feel-they-belong-they-thrive", note: "A one-hour belonging exercise halved a three-year grade gap." },
+      { id: "d-synergistic", on: "m-hs2", t: "study", title: "A synergistic mindsets intervention protects adolescents from stress", by: "Yeager et al., 2022, Nature", url: "https://doi.org/10.1038/s41586-022-04907-7", note: "Stress as fuel: 63% vs 47% pass rates in the hardest courses." },
+      { id: "d-belong", on: "m-hs2", t: "study", title: "When students feel they belong, they thrive", by: "Walton & Cohen, 2011", url: "https://sparq.stanford.edu/solutions/when-students-feel-they-belong-they-thrive", note: "A one-hour belonging exercise halved a three-year grade gap." },
       { id: "d-coaching", on: "m-habit", t: "study", title: "The effect of teacher coaching on instruction and achievement", by: "Kraft, Blazar & Hogan, 2018", url: "https://annenberg.brown.edu/publications/effect-teacher-coaching-instruction-and-achievement-meta-analysis-causal-evidence", note: "Why we rehearse: 60 causal studies." }
     ] },
 
   { id: "behavior", name: "Behavior", icon: "🪜", time: "1 hour",
-    intro: "The valley floor under the Mentor Mindset: how we keep every child safe, in school and getting along. The standards every guide holds the same way, and the tools you choose with judgment.",
+    intro: "An introduction to the valley floor under the Mentor Mindset: how we keep every child safe, in school and getting along. The standards every guide holds the same way, and the tools you choose with judgment. When you finish, the full Behavior Guide opens for everything this step leaves out.",
     unlocks: { name: "the Behavior Guide", what: "The Behavior Guide, the AI behavior coach, the weekly Freedom Level tracker and the Town Hall agenda." },
     screens: [
       { id: "b-standards", kind: "standards", art: "valley", title: "The Standard: what every guide does the same way" },
@@ -141,7 +159,11 @@ export const STEPS = [
       { id: "b-freedom", kind: "freedom", title: "Freedom Levels" },
       { id: "b-knots", kind: "knots", title: "Real situations", ids: ["treefort", "late", "girlgroup"] },
       { id: "b-toolkit", kind: "toolkit", title: "The toolkit: your judgment" },
-      { id: "b-wiring", kind: "wiring", title: "Different wiring" }
+      { id: "b-wiring", kind: "wiring", title: "Different wiring" },
+      { id: "b-next", kind: "text", title: "Keep going: the full Behavior Guide", text: [
+        "This step covered the essentials. The full Behavior Guide, which opens when you finish this step, is where you'll keep learning and where you'll go when something happens.",
+        ["The Tier ladder in full, with exact counts for every behavior.", "More Knots: real scenarios, untangled step by step.", "The full Toolkit and Different wiring pages, with the research behind each.", "The Evidence: what the research says, honestly.", "Ask the coach: untangle a situation you're facing.", "The Freedom Level tracker and Town Hall agenda you'll use every week.", "The Living doc: open questions and proposals you can weigh in on."]
+      ] }
     ],
     quiz: "behavior",
     dig: [

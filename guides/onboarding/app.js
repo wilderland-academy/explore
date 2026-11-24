@@ -86,6 +86,9 @@ const fold = (summary, kids, open) => { const d = h("details", { class: "fold" }
 const QUAD = { E: ["Enforcer", "High standards, low support", "“I set the bar. Reaching it is your problem.”", "Gets compliance while you're watching. Costs trust, and the student learns that you think little of them."], M: ["Mentor", "High standards, high support", "“The bar is high, I know you can reach it, and I'm in it with you.”", "The student hears respect. Hard feedback lands as a compliment."], A: ["Apathetic", "Low standards, low support", "“Whatever.”", "Checked out. Rare among people who chose this work."], P: ["Protector", "Low standards, high support", "“This is too much for you. Let me take it off your plate.”", "Feels kind in the moment. The student hears that you doubt them, and loses the chance to find out they can."] };
 const RENDER = {
   text: s => s.text.map(para),
+  // The named High Support techniques (from /fieldguide/data.js), one fold each; s.part picks the screen's half.
+  techniques: s => [h("p", { class: "dim", text: "Tap each technique to open it. Each one is something you can use with a student today." }),
+    h("div", { class: "list" }, FG.HIGH_SUPPORT.filter(t => t.part === s.part).map((t, k) => fold([h("b", { text: t.name }), h("small", { text: t.short })], t.body.map(para), k === 0)))],
   map: () => [h("p", { text: "The Guides site grows with you. Each step you finish adds its part of the site; until then, that part stays out of sight. Here's what's coming, in order:" }), h("div", { class: "list" }, STEPS.filter(x => x.unlocks).map(x => card([h("b", { text: x.icon + " " + x.name }), h("p", { class: "dim", text: "Opens " + x.unlocks.name + ": " + x.unlocks.what })])))],
   quad: () => {
     const out = h("div"), box = h("div", { class: "quadwrap" });
