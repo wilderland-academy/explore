@@ -9,42 +9,75 @@
 <link rel="icon" href="/books/f/icon.png"><link rel="apple-touch-icon" href="/books/f/icon-180.png">
 <link rel="stylesheet" href="/wl.css">
 <style>
-/* The front door: three sites, one for each kind of visitor. Same dark look as the Students home. */
+/* The front door is the sign-in page. Signed in, /wlnav.js sends each person to their own site (or back to ?next=). */
 @font-face{font-family:"Uncut Sans";src:url(/books/f/us-700.woff2) format("woff2");font-weight:700;font-display:swap}
 @font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 body{margin:0;min-height:100vh;background:radial-gradient(900px 500px at 15% -10%,rgba(213,243,103,.12),transparent 70%),#08140f;color:#f6f8ea;font:400 16px/1.55 Inter,system-ui,sans-serif}
 .in{max-width:1120px;margin:0 auto;padding:0 20px}
-h1{font:700 clamp(36px,5.6vw,62px)/1.02 "Uncut Sans",Inter,sans-serif;letter-spacing:-.03em;margin:56px 0 12px;max-width:16ch}
+.door{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:center;min-height:calc(100vh - 160px);padding:40px 0}
+h1{font:700 clamp(36px,5.6vw,62px)/1.02 "Uncut Sans",Inter,sans-serif;letter-spacing:-.03em;margin:0 0 14px;max-width:14ch}
 h1 span{color:#d5f367}
-.lede{max-width:52ch;color:#c9d6cc;font-size:18px;margin:0 0 34px}
-.doors{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.door{display:flex;flex-direction:column;gap:12px;min-height:280px;padding:26px 24px 22px;border-radius:20px;background:#0f231c;border:1px solid #28493d;border-top:6px solid var(--c);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
-.door:hover{border-color:var(--c);transform:translateY(-2px)}
-.door:focus-visible{outline:3px solid #d5f367;outline-offset:3px}
-.door .who{font:700 12px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
-.door b{font:700 34px/1.05 "Uncut Sans",Inter,sans-serif;letter-spacing:-.02em}
-.door p{margin:0;color:#a9bbb0;font-size:15.5px}
-.door ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
-.door li{font-size:13px;color:#d9e4dc;background:#16302a;border-radius:999px;padding:5px 10px}
-.door i{font-style:normal;margin-top:auto;color:var(--c);font-weight:600}
-.s{--c:#d5f367}.g{--c:#7fd6a8}.p{--c:#ffb59f}
-footer{color:#7f978b;font-size:13px;padding:44px 0}
-@media (max-width:860px){.doors{grid-template-columns:1fr}.door{min-height:0}h1{margin-top:34px}}
+.lede{max-width:46ch;color:#c9d6cc;font-size:18px;margin:0}
+.box{background:#0f231c;border:1px solid #28493d;border-radius:20px;padding:30px 28px;display:flex;flex-direction:column;gap:16px}
+.box h2{font:700 26px/1.1 "Uncut Sans",Inter,sans-serif;margin:0}
+.box p{margin:0;color:#a9bbb0;font-size:15px}
+.box b{color:#f6f8ea;font-weight:600}
+.go{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:999px;padding:13px 20px;font:600 16px Inter,sans-serif;cursor:pointer;background:#d5f367;color:#0b2b20}
+.go:disabled{opacity:.6;cursor:default}
+.go svg{width:20px;height:20px}
+.ghost{background:transparent;color:#f6f8ea;border:1px solid #28493d}
+.who{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;font-size:14.5px;color:#c9d6cc}
+.who li{display:flex;gap:10px}.who li i{font-style:normal;color:#d5f367;font-weight:700;min-width:64px}
+.who a{color:#d5f367}
+.msg{border-left:3px solid #e9a23b;padding:4px 0 4px 12px;color:#f6f8ea !important}
+footer{color:#7f978b;font-size:13px;padding:24px 0 40px}
+@media (max-width:860px){.door{grid-template-columns:1fr;gap:24px;min-height:0;padding-top:28px}}
 </style>
 </head>
 <body>
 <div class="wlbar" data-wlnav="home" data-auth="off"></div><script src="/wlnav.js"></script>
 <script type="module" src="/auth.js" data-site="home"></script>
 <main class="in">
-<h1>Welcome to <span>Wilderland Explore.</span></h1>
-<p class="lede">Three sites, one for each of us. Pick yours.</p>
-<div class="doors">
-  <a class="door s" href="/students/"><span class="who">For students</span><b>Students</b><p>Find your next book, pick a challenge, see your Life Skills trail and your crew, and spark a project.</p><ul><li>Books</li><li>Challenges and your progress</li><li>Projects</li><li>Mr. Fox</li><li>Store</li></ul><i>Go to Students →</i></a>
-  <a class="door g" href="/guides/"><span class="who">For guides and staff</span><b>Guides</b><p>Everything a guide needs: mentoring, behavior, Life Skills, and writing to families.</p><ul><li>Mentor Mindset</li><li>Behavior</li><li>Life Skills</li><li>Challenges</li><li>Parent Comms</li><li>Students</li></ul><i>Go to Guides →</i></a>
-  <a class="door p" href="/parents/"><span class="who">For parents and families</span><b>Parents</b><p>How school works, what to do at home, the ideas behind it, and your child's Life Skills progress.</p><ul><li>At Home</li><li>Our Approach</li><li>Field Notes</li><li>Life Skills</li><li>Challenges</li></ul><i>Go to Parents →</i></a>
+<div class="door">
+  <div>
+    <h1>Welcome to <span>Wilderland Explore.</span></h1>
+    <p class="lede">One sign-in for students, guides and families. Sign in and we'll take you to your own site.</p>
+  </div>
+  <div class="box" id="signin" aria-live="polite">
+    <h2>Sign in</h2>
+    <p id="state">Checking whether you're already signed in…</p>
+    <button class="go" type="button" id="google" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.8 3.6-4.9 6.7-4.9z"/></svg>Sign in with Google</button>
+    <button class="go ghost" type="button" id="out" hidden>Sign out</button>
+    <ul class="who">
+      <li><i>Students</i><span>Use your <b>@wilderland.academy</b> school account.</span></li>
+      <li><i>Guides</i><span>Use your <b>@wilderland.academy</b> school account.</span></li>
+      <li><i>Families</i><span>Use the Google account you gave the school. Signed up with an email and password instead? <a href="/parents/lifeskills/">Sign in here</a>.</span></li>
+    </ul>
+  </div>
 </div>
 </main>
+<script type="module">
+// The sign-in page's own states. Moving signed-in people to their site happens in /wlnav.js when /auth.js says who they are.
+const $ = s => document.getElementById(s);
+const show = (text, signIn, signOut, warn) => { $("state").textContent = text; $("state").className = warn ? "msg" : ""; $("google").hidden = !signIn; $("out").hidden = !signOut; };
+while (!window.wlFirebase) await new Promise(r => setTimeout(r, 50));
+const auth = window.wlFirebase.auth;
+if (auth.authStateReady) await auth.authStateReady();
+const next = /[?&]next=/.test(location.search);
+const settle = () => {
+  const u = auth.currentUser;
+  if (!u) return show(next ? "Sign in to open that page." : "Sign in to continue.", true, false);
+  if (window.wlRole && window.wlRole.role) return show("Signed in. Taking you to your site…", false, false);
+  if (!u.emailVerified) return show("Your account's email isn't confirmed yet. Open the confirmation email we sent, then come back here.", false, true, true);
+  show("Checking your account…", false, false);
+  setTimeout(() => { if (auth.currentUser && !(window.wlRole && window.wlRole.role)) show("This account (" + (auth.currentUser.email || "") + ") isn't set up for Explore yet. Try another account, or ask your guide or the school office.", true, true, true); }, 8000);
+};
+document.addEventListener("wl-role", settle); document.addEventListener("wl-auth", settle); settle();
+$("google").onclick = () => window.wlSignIn && window.wlSignIn();
+$("out").onclick = async () => { const { signOut } = await import("https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js"); await signOut(auth); try { localStorage.removeItem("wl-role"); } catch (e) { } location.reload(); };
+</script>
 <footer class="in">Wilderland Academy · Eden, Utah · <a href="https://my.wilderland.academy/" style="color:inherit">Basecamp, the academic portal ↗</a></footer>
 </body>
 </html>

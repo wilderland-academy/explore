@@ -5,6 +5,7 @@
 import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, addDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import * as D from "./data.js";
 import { coachLog, autosaver } from "/guides/log.js";
+import { deal } from "/guides/training/quiz.js";
 
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
 const $ = (s, r) => (r || document).querySelector(s);
@@ -112,11 +113,21 @@ async function loadProgress() {
   progress = local.get("bg-progress-" + (user && user.uid), {});
   try { const s = await getDoc(doc(db, "behaviorProgress", user.uid)); if (s.exists()) progress = Object.assign({}, progress, s.data().badges || {}); } catch (e) { }
 }
+// Saved with merge: the same document also holds the onboarding journey and the other training quizzes (/guides/training/quiz.js).
+async function putProgress() {
+  local.set("bg-progress-" + user.uid, progress);
+  try { await setDoc(doc(db, "behaviorProgress", user.uid), { name: user.displayName || me(), email: me(), badges: progress, certified: D.MODULES.every(m => progress[m.id] && progress[m.id].passed), updated: Date.now() }, { merge: true }); } catch (e) { }
+}
 async function saveBadge(id, score, total) {
   const prev = progress[id] || {}; const passed = score >= D.MODULES.find(m => m.id === id).pass;
-  progress[id] = { best: Math.max(prev.best || 0, score), total, passed: !!(prev.passed || passed), at: Date.now() };
-  local.set("bg-progress-" + user.uid, progress);
-  try { await setDoc(doc(db, "behaviorProgress", user.uid), { name: user.displayName || me(), email: me(), badges: progress, certified: D.MODULES.every(m => progress[m.id] && progress[m.id].passed), updated: Date.now() }); } catch (e) { }
+  progress[id] = { ...prev, best: Math.max(prev.best || 0, score), total, passed: !!(prev.passed || passed), at: Date.now(), last: score };
+  await putProgress();
+}
+// An attempt counts when it starts, so leaving or reloading mid-quiz also moves on to the next question set.
+function startAttempt(id) {
+  const prev = progress[id] || {}, n = prev.attempts || 0;
+  progress[id] = { ...prev, attempts: n + 1 }; putProgress();
+  return n;
 }
 const earned = () => D.MODULES.filter(m => progress[m.id] && progress[m.id].passed).length;
 
@@ -319,7 +330,7 @@ VIEWS.evidence = sec => {
 VIEWS.training = (sec, sub) => {
   const m = D.MODULES.find(x => x.id === sub);
   if (m) return quizView(sec, m);
-  head(sec, "Behavior <span>badges</span>", "Short drills on the standards. Earn all six to be certified on our behavior standards. Retake any time; your best score counts.");
+  head(sec, "Behavior <span>badges</span>", "Short drills on the standards. Earn all six to be certified on our behavior standards. Each badge has three sets of questions, and every try takes the next set, so a retake never repeats the questions you just saw. Your best score counts.");
   const cert = D.MODULES.every(x => progress[x.id] && progress[x.id].passed);
   if (cert) sec.appendChild(card("S-edge", [h("h2", { text: "🏅 Certified on the behavior standards" }), h("p", { text: "You've passed every module. Leadership can see that on the training roster." })]));
   const g = h("div", { class: "grid g3" });
@@ -327,21 +338,29 @@ VIEWS.training = (sec, sub) => {
   sec.appendChild(g);
   sec.appendChild(card("", [h("p", { class: "small", text: "Badges are saved to your account. Admins can see who has earned which badges, not individual answers." })]));
 };
-function buildQuestions(m) {
-  if (m.kind === "sort") return shuffle(D.SORT).slice(0, 10).map(s => ({ p: s[0], o: ["Tier 0", "Tier 1", "Tier 2", "Tier 3"], a: s[1], w: D.TIERS[s[1]].q }));
-  if (m.kind === "kinds") return shuffle(D.SORTKIND).slice(0, 10).map(s => ({ p: s[0], o: ["Standard", "Toolkit"], a: s[1] === "standard" ? 0 : 1, w: s[2] }));
-  if (m.kind === "knots") return shuffle(D.KNOTS).slice(0, 10).map(k => { const o = shuffle(k.opts); return { p: k.title + ": " + k.q, ctx: k.story, o: o.map(x => x[0]), a: o.findIndex(x => x[1]), w: o.find(x => x[1])[2] }; });
-  return shuffle(m.qs).map(q => ({ p: q[0], o: q[1], a: q[2], w: q[3] }));
+// Three separate question sets per badge. Sorting pools are split the same way every time, kinds spread evenly.
+const SETS = {
+  sort: () => deal(D.SORT, s => s[1]),
+  kinds: () => deal(D.SORTKIND, s => s[1]),
+  knots: () => deal(D.KNOTS.map(k => ({ k, quiz: false })).concat(D.QUIZ_KNOTS.map(k => ({ k, quiz: true }))), x => x.quiz)
+};
+const setsFor = m => m.sets || SETS[m.kind]();
+function buildQuestions(m, n) {
+  const sets = setsFor(m), set = sets[n % sets.length];
+  if (m.kind === "sort") return shuffle(set).map(s => ({ p: s[0], o: ["Tier 0", "Tier 1", "Tier 2", "Tier 3"], a: s[1], w: D.TIERS[s[1]].q }));
+  if (m.kind === "kinds") return shuffle(set).map(s => ({ p: s[0], o: ["Standard", "Toolkit"], a: s[1] === "standard" ? 0 : 1, w: s[2] }));
+  if (m.kind === "knots") return shuffle(set).map(({ k }) => { const o = shuffle(k.opts); return { p: k.title + ": " + k.q, ctx: k.story, o: o.map(x => x[0]), a: o.findIndex(x => x[1]), w: o.find(x => x[1])[2] }; });
+  return shuffle(set).map(q => { const order = shuffle(q[1].map((x, i) => i)); return { p: q[0], o: order.map(i => q[1][i]), a: order.indexOf(q[2]), w: q[3] }; });
 }
 function quizView(sec, m) {
   back(sec, "#training", "All badges");
   head(sec, m.icon + " " + esc(m.name), m.blurb + " Pass with " + m.pass + " or more.");
-  const qs = buildQuestions(m); let i = 0, score = 0; const box = card("", []);
+  const qs = buildQuestions(m, startAttempt(m.id)); let i = 0, score = 0; const box = card("", []);
   const show = () => {
     box.innerHTML = "";
     if (i >= qs.length) {
       const passed = score >= m.pass; saveBadge(m.id, score, qs.length);
-      box.append(h("h2", { text: passed ? "Badge earned: " + m.name : "Not yet: " + score + " of " + qs.length }), h("p", { class: "big", text: score + " / " + qs.length }), h("p", { class: "dim", text: passed ? "Nice work. Your best score is saved." : "You need " + m.pass + ". The explanations after each question are the fastest way to close the gap." }), h("div", { class: "row" }, [h("button", { class: "btn", text: "Try again", onclick: () => route() }), h("a", { class: "btn ghost", style: "text-decoration:none", href: "#training", text: "All badges" })]));
+      box.append(h("h2", { text: passed ? "Badge earned: " + m.name : "Not yet: " + score + " of " + qs.length }), h("p", { class: "big", text: score + " / " + qs.length }), h("p", { class: "dim", text: passed ? "Nice work. Your best score is saved." : "You need " + m.pass + ". Read back over the explanations, then try again. The next try uses a different set of questions." }), h("div", { class: "row" }, [h("button", { class: "btn", text: passed ? "Take it again" : "Try again (new questions)", onclick: () => route() }), h("a", { class: "btn ghost", style: "text-decoration:none", href: "#training", text: "All badges" })]));
       return;
     }
     const q = qs[i]; const opts = h("div", { class: "opts" }), why = h("div");

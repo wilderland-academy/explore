@@ -3,6 +3,8 @@
 import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, addDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import * as D from "./data.js";
 import { coachLog, autosaver } from "/guides/log.js";
+import { mountQuiz } from "/guides/training/quiz.js";
+import { MENTOR } from "/guides/training/banks.js";
 // Coach's tent conversations and scored practice reps are saved to each guide's private history (/guides/partner/).
 const saveLog = autosaver(() => user && db ? coachLog(db, user) : null, () => console.warn("Couldn't save to history"));
 
@@ -52,7 +54,7 @@ const clamp4 = x => Math.max(0, Math.min(4, Math.round(Number(x) || 0)));
 const meter = (label, v) => h("div", { class: "score" }, [h("span", { text: label }), h("div", { class: "meter" }, [h("i", { style: "width:" + v * 25 + "%" })]), h("b", { text: v + "/4" })]);
 
 /* ---------------- routing ---------------- */
-const STOPS = [["map", "Map", ""], ["start", "Trailhead", "The idea in five minutes"], ["evidence", "The evidence", "What the studies found"], ["spot", "Lookout", "Spot enforcer and protector moves"], ["phrases", "Phrasebook", "Say this instead"], ["moments", "Trail moments", "What to say right now"], ["trust", "Rough terrain", "Jaded and shut-down kids"], ["stories", "Campfire", "Where it worked"], ["practice", "Practice range", "Rehearse and get scored"], ["coach", "Coach's tent", "Ask about a real situation"], ["oneonone", "Weekly 1:1s", "Run the weekly coaching session"], ["sessions", "Session room", "Record, review, plan the next one"], ["habits", "Pack list", "How we make it stick"]];
+const STOPS = [["map", "Map", ""], ["start", "Trailhead", "The idea in five minutes"], ["evidence", "The evidence", "What the studies found"], ["spot", "Lookout", "Spot enforcer and protector moves"], ["phrases", "Phrasebook", "Say this instead"], ["moments", "Trail moments", "What to say right now"], ["trust", "Rough terrain", "Jaded and shut-down kids"], ["stories", "Campfire", "Where it worked"], ["practice", "Practice range", "Rehearse and get scored"], ["coach", "Coach's tent", "Ask about a real situation"], ["oneonone", "Weekly 1:1s", "Run the weekly coaching session"], ["sessions", "Session room", "Record, review, plan the next one"], ["habits", "Pack list", "How we make it stick"], ["checkpoint", "Checkpoint", "Earn your Mentor Mindset badge"]];
 function buildNav() { const nav = $("#nav"); nav.innerHTML = ""; STOPS.concat(isAdmin ? [["admin", "Admin", ""]] : []).forEach(s => nav.appendChild(h("a", { href: "#" + s[0], text: s[1] }))); }
 const VIEWS = {};
 function route() {
@@ -438,6 +440,12 @@ function sessView(sec) {
 addEventListener("beforeunload", e => { if (live.on) { e.preventDefault(); e.returnValue = ""; } });
 
 /* ---------------- pack list (habits) ---------------- */
+// The Mentor Mindset checkpoint: three sets of questions that take turns (/guides/training/), part of guide onboarding.
+VIEWS.checkpoint = sec => {
+  head(sec, "The <span>checkpoint</span>", "Eight questions on the moves in this guide. Pass to earn your Mentor Mindset badge, one step of guide onboarding.");
+  const box = card("", []); sec.appendChild(box); mountQuiz(box, MENTOR);
+  sec.appendChild(card("", [h("p", { class: "small" }, ["Part of ", h("a", { href: "/guides/onboarding/", text: "guide onboarding" }), ". If you don't pass, the next try uses a different set of questions."])]));
+};
 VIEWS.habits = sec => {
   head(sec, "The <span>pack</span> list", "We're learning a new professional skill together, on the same three pillars we use with students.");
   sec.appendChild(h("div", { class: "grid g3" }, [card("M-edge", [h("h3", { text: "High standard" }), h("p", { class: "dim", text: "Every guide uses mentor responses consistently, including on hard days with hard kids." })]), card("M-edge", [h("h3", { text: "High support" }), h("p", { class: "dim", text: "Short rehearsals, a partner, this guide, the coach, and leadership practicing and getting it wrong in front of you." })]), card("M-edge", [h("h3", { text: "High autonomy" }), h("p", { class: "dim", text: "You choose the skill, the student and your own words. The scripts here are starting points." })])]));

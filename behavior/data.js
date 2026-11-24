@@ -136,7 +136,9 @@ export const SORT = [
   ["Humming while doing math, not bothering anyone nearby", 0], ["Blurting out an answer during a group lesson", 0], ["Pacing at the back of the room while thinking", 0], ["Forgetting to push in a chair again", 0], ["Narrating their own Lego build out loud", 0], ["Strong body odor", 0],
   ["Closing a classmate's laptop as a joke", 1], ["Hiding a classmate's pencil case", 1], ["Laughing at someone's drawing while they work", 1], ["Repeatedly chatting to someone who has asked to focus", 1], ["Changing a setting on another student's computer", 1], ["Talking over another student in circle", 1],
   ["Shoving someone off the bench", 2], ["Telling the group not to play with one particular student", 2], ["Making fun of a classmate's family in front of the group", 2], ["Taking someone's cards and refusing to give them back", 2], ["Following a student who has clearly asked for space", 2], ["Spreading a rumor about a classmate", 2], ["Tripping someone on the trail", 2],
-  ["Punching a classmate in the stomach", 3], ["Saying they're going to bring a gun and shoot someone's family", 3], ["Throwing a heavy stick at a classmate", 3], ["Putting someone in a chokehold", 3], ["Pantsing a classmate", 3], ["Cornering a younger student behind the shed to scare them", 3], ["Calling a classmate a slur about their race", 3]
+  ["Punching a classmate in the stomach", 3], ["Saying they're going to bring a gun and shoot someone's family", 3], ["Throwing a heavy stick at a classmate", 3], ["Putting someone in a chokehold", 3], ["Pantsing a classmate", 3], ["Cornering a younger student behind the shed to scare them", 3], ["Calling a classmate a slur about their race", 3],
+  ["Sharpening a pencil for the third time during a lesson", 0], ["Standing a little too close to a classmate in line, not aggressively", 0],
+  ["Moving a classmate's materials off their table while they're working", 1], ["Blocking a classmate from getting to their cubby on purpose", 2]
 ];
 
 /* Standard or Toolkit? [statement, "standard"|"toolkit", why] */
@@ -155,7 +157,22 @@ export const SORTKIND = [
   ["Building a self-management plan with a student", "toolkit", "An evidence-based option for patterns, chosen by the guide."],
   ["Emailing parents after a second Tier 2 in the same week", "standard", "Two Tier 2s in a school week triggers the email."],
   ["Moving the lesson outside so a restless student can walk while listening", "toolkit", "Your judgment about the route; the standard stays."],
-  ["Following the crisis policy when a student writes about wanting to die", "standard", "Never coach through a safety disclosure alone."]
+  ["Following the crisis policy when a student writes about wanting to die", "standard", "Never coach through a safety disclosure alone."],
+  ["Delivering a red card right away after a Tier 2", "standard", "The first step of every Tier 2 response."],
+  ["Keeping an Open Coaching Session in your morning schedule", "standard", "Every guide protects one. Don't fill it with prep or admin."],
+  ["Reviewing Freedom Levels weekly, on the week's pattern", "standard", "Weekly, on the pattern, never on one moment."],
+  ["Recording a Tier 2 incident the same day", "standard", "Every Tier 2 and Tier 3 is documented the same day."],
+  ["Describing an incident to a family without naming the other children", "standard", "Never name other children to a family."],
+  ["Giving a guide-supported Peace Talk at least 20 protected minutes", "standard", "At least 20 minutes, with the guide as a neutral mediator."],
+  ["Having the student's own Field Guide lead the return after a Tier 3", "standard", "Even if a substitute handled the incident."],
+  ["Offering a short, optional mindfulness practice to a student who finds it calming", "toolkit", "One option among many. A mindfulness curriculum did no better than ordinary SEL in the largest trial."],
+  ["Teaching the whole band about ADHD and autism without singling anyone out", "toolkit", "A good move where differences have become a target. Your call."],
+  ["Writing a Personal Fire Drill plan with a student and their family", "toolkit", "Useful for some kids. Don't make it a requirement for everyone."],
+  ["Using the four-part Nonviolent Communication script to help a student say something hard", "toolkit", "A communication script with a weak research base. Use it when it helps."],
+  ["Running the band up a hill before seated work", "toolkit", "Vigorous movement is fuel. When and how is your judgment."],
+  ["Asking the six meaning questions slowly during a blowup", "toolkit", "A choice for blowups that run on a misreading."],
+  ["Opening hard feedback with the wise-feedback sentence", "toolkit", "Good practice, your call. It needs real critique and help after it."],
+  ["Reflecting back what a student said before anything else", "toolkit", "Empathic listening is an option. Don't stay there so long that the standard never gets named."]
 ];
 
 /* ------------------------------------------------------------------ */
@@ -359,6 +376,23 @@ export const KNOTS = [
     trap: "Winning the argument. You can't, and trying makes you the opponent.", research: [] }
 ];
 
+/* Extra scenarios for the Knot Untangler badge only (not shown on the Knots page), so each of its three question sets
+   has scenarios a guide hasn't just read. Same shape as KNOTS: opts are [text, correct, why]. */
+export const QUIZ_KNOTS = [
+  { id: "q-third", title: "Before morning snack", story: "In grades 2 to 4, a boy has already had a reminder for talking over others and then moved to sit by the guide. At 10:15 he closes a classmate's laptop as a joke.", q: "What happens now?",
+    opts: [["A yellow card and a text home. It's his third Tier 1 today.", true, "Reminder, then proximity, then a yellow card and a text home on the third Tier 1 in a day."], ["A red card and a SMART Restore.", false, "Closing a laptop as a joke is Tier 1 disruption, not harm. Red cards are for Tier 2."], ["Call a parent meeting today.", false, "A parent meeting is for the same Tier 1 behavior on 3 or more days in a school week."]] },
+  { id: "q-shove", title: "Peace Talk, please", story: "A student was shoved off the bench at lunch, hard. He asks for a Peace Talk with the boy who shoved him.", q: "What's the right response?",
+    opts: [["Let them set up a student-led Peace Talk after lunch.", false, "A Peace Talk is never the right tool for physical aggression."], ["Treat the shove as Tier 2: red card, care for the student who was shoved first, then a SMART Restore once the other boy is calm.", true, "Shoving is Tier 2 harm. Care for the harmed student comes first."], ["Send the boy who shoved home for a full day.", false, "Tier 3 is for immediate or serious threats, like punching or choking. A shove off a bench is Tier 2."]] },
+  { id: "q-announce", title: "Levels at morning meeting", story: "A co-guide suggests reading out everyone's new Freedom Levels at morning meeting, to motivate the students who dropped.", q: "What do you say?",
+    opts: [["Good idea, as long as it's done kindly.", false, "Levels are never announced to the group or posted as a ranking."], ["No. Levels are shared privately at each student's one-on-one, tied to the domain's criteria.", true, "A level change is a private conversation, not a public mark."], ["Only announce the students who went up.", false, "Announcing some still makes the rest public by omission."]] },
+  { id: "q-new", title: "Week two", story: "A new fifth grader in his second week blurts answers, wanders during focus time, and on Thursday pushes a classmate hard enough that she falls.", q: "How does the normalization period apply?",
+    opts: [["It covers everything. New students get a pass until they settle.", false, "Normalization is time and support, not a pass on safety."], ["Give time and support for the blurting and wandering, and still respond to the push as harm: Tier 2.", true, "Anything that hurts someone still gets a safety response, even during normalization."], ["New students don't get a normalization period in grades 5 to 8.", false, "Every band, K–8, has one for new students. Returning students don't need one."]] },
+  { id: "q-restore", title: "The unfinished restore", story: "A student had a Tier 2 on Monday. On Wednesday her SMART Restore still isn't done, and she wants to join the afternoon workshop.", q: "What does the standard say?",
+    opts: [["Let her go. The incident was two days ago.", false, "The restore is her next work, and it was due by the end of Tuesday."], ["The restore comes first. Normal activities wait until her Field Guide signs it off.", true, "The SMART Restore is the student's next work; normal activities wait for the sign-off."], ["It becomes a Tier 3 for not finishing.", false, "Tier is set by impact, not by an overdue restore."]] },
+  { id: "q-journal", title: "A line in the reflection", story: "Reading a fourth grader's weekly reflection, you find: “I wish I wasn't alive.” She asks you not to tell anyone.", q: "What do you do?",
+    opts: [["Promise to keep it between you so she keeps trusting you.", false, "Never promise a child secrecy about safety."], ["Stop and follow the Mental Health Crisis Policy now, and involve leadership the same day.", true, "Any mention of wanting to die goes straight to the crisis policy. It's beyond coaching."], ["Bring it up at next week's 1:1.", false, "Safety disclosures don't wait."]] }
+];
+
 /* ------------------------------------------------------------------ */
 /* NEURODIVERGENT CHILDREN: the Different Wiring page. */
 export const ND = {
@@ -428,12 +462,14 @@ export const ND_TIPS = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* TRAINING: modules and questions. Each question: [prompt, [options], correctIndex, why] */
+/* TRAINING: modules and questions. Each question: [prompt, [options], correctIndex, why].
+   Every module has three separate question sets; each attempt takes the next one (behavior/app.js). The sorting
+   modules split their pools (SORT, SORTKIND, KNOTS plus QUIZ_KNOTS) into three sets the same way every time. */
 export const MODULES = [
   { id: "tiers", name: "Tier Tracker", icon: "🪜", pass: 8, blurb: "Sort real behaviors into Tiers 0 to 3.", kind: "sort" },
   { id: "kinds", name: "Standard Bearer", icon: "📏", pass: 8, blurb: "Tell the standards from the toolkit.", kind: "kinds" },
   { id: "counts", name: "Exact Counts", icon: "🔢", pass: 5, blurb: "The numbers that keep us consistent.", kind: "mcq",
-    qs: [
+    sets: [[
       ["How many reminders on the same Tier 0 behavior in a day before it can become Tier 1 (if it affects another student)?", ["1", "2", "3", "5"], 1, "After 2 reminders or coaching attempts, if it continues and affects someone."],
       ["Which Tier 1 offense in a single day earns a yellow card and a text home?", ["1st", "2nd", "3rd", "4th"], 2, "Reminder, proximity, then yellow card."],
       ["When can a guide call a parent meeting for Tier 1?", ["After any yellow card", "When the same Tier 1 behavior happens on 3 or more days in a school week", "After 10 Tier 1s in a month", "Never for Tier 1"], 1, "3 or more days within 5 school days."],
@@ -441,9 +477,25 @@ export const MODULES = [
       ["How many Tier 2 incidents in one school week trigger a parent email?", ["1", "2", "3", "4"], 1, "Two in a week: email with all incident reports."],
       ["How many concerns about the same student can lead to a restorative Town Hall?", ["1", "2", "3 or more", "Never"], 2, "3 or more, convened by the guide and class president, never to shame."],
       ["How much protected time does a guide-supported Peace Talk get?", ["5 minutes", "At least 20 minutes", "An hour", "Whatever's left before lunch"], 1, "At least 20 protected minutes."]
-    ] },
+    ], [
+      ["What happens on the 2nd Tier 1 in a day?", ["A reminder", "Move closer to the guide and lose seating preference", "A yellow card", "A red card"], 1, "1st: reminder. 2nd: proximity and loss of seating preference. 3rd: yellow card and a text home."],
+      ["2 or more Tier 1s against the same student in one day lead to…", ["A parent meeting", "A Peace Talk with the peace stone and an act of kindness for that student before scheduled work resumes", "A red card", "Nothing extra"], 1, "Repair with the person affected comes before scheduled work."],
+      ["A Tier 3 happens at 2:40 p.m. on a Tuesday. What's the earliest the student can return?", ["Wednesday morning", "Thursday, after the parent-guide conversation", "The following Monday", "Whenever the parents decide"], 1, "A Tier 3 means a full school day away, so a late-day Tier 3 means the next school day too. Return needs the parent-guide conversation and a repair plan."],
+      ["A Tier 2 happens Thursday afternoon. When is the SMART Restore due?", ["At dismissal Thursday", "By the end of the school day Friday", "Next Monday", "Next Thursday"], 1, "By the end of the following school day, signed off by the Field Guide."],
+      ["A Tier 1 behavior becomes Tier 2 only when…", ["It happens twice", "A yellow card and a Peace Talk have both been used and the impact turns into actual harm", "A parent complains", "The guide is out of patience"], 1, "Escalation follows pattern and impact."],
+      ["At a Town Hall, students aim to do about how much of the talking?", ["50%", "75%", "About 95%", "100%; guides don't speak"], 2, "Guides speak last and least, about 5 percent."],
+      ["How long is a Tier 3 send-home?", ["The rest of that day only", "A full school day", "Three days", "Until the student apologizes"], 1, "Same rule in every band, K–8. It's not a suspension and never framed as one."]
+    ], [
+      ["A student hums during work, has had 2 reminders today, keeps humming, and his tablemate can't concentrate. It's now…", ["Still Tier 0", "Tier 1", "Tier 2", "Tier 3"], 1, "After 2 reminders on the same behavior in a day, if it continues and affects another student, it becomes Tier 1."],
+      ["The same Tier 1 behavior shows up Monday, Wednesday and Thursday. The guide…", ["Must send the student home", "May call a parent meeting", "Gives a red card", "Waits for a fourth day"], 1, "3 or more days in a school week."],
+      ["After a Tier 2, who gets the guide's care first?", ["The student who caused the harm", "The harmed student: safety, feelings, dignity", "The bystanders", "The parents"], 1, "Step two of every Tier 2 response, right after the red card."],
+      ["Two Tier 2s in one school week. What goes home?", ["A text", "An email to the parents with all the incident reports", "A phone call only", "Nothing until a third"], 1, "The same threshold for every family."],
+      ["Before a student returns from a Tier 3, which is required?", ["A written apology", "A parent-guide conversation and an agreed repair plan", "A Town Hall", "A Freedom Level drop"], 1, "No return without both."],
+      ["When are Tier 2 and Tier 3 incidents documented?", ["The same day", "By Friday", "At the next coaching meeting", "Only if parents ask"], 0, "Patterns are invisible without records."],
+      ["How long is a K–1 Peace Talk?", ["Under five minutes, always guide-led", "At least 20 minutes", "As long as it takes", "K–1 doesn't use Peace Talks"], 0, "At the peace table, with a feelings chart and sentence starters."]
+    ] ] },
   { id: "freedom", name: "Freedom Keeper", icon: "🧭", pass: 6, blurb: "Domains, rungs and the summit.", kind: "mcq",
-    qs: [
+    sets: [[
       ["Where does every student start?", ["Level 1", "Level 2", "Level 3 in every domain", "Wherever last year ended"], 2, "Level 3 is the baseline in all four domains."],
       ["A student had one rough lunch this week and was great otherwise. Table level?", ["Drop one rung", "Drop two rungs", "Hold. One moment isn't a pattern.", "Drop to Level 1"], 2, "Look for the week's pattern, not a single moment."],
       ["A student is ready to move from Level 2 to Level 4 in Field Block. What do you do?", ["Move to 4", "Move to 3 this week", "Move to 5", "Wait for the term to end"], 1, "One rung at a time."],
@@ -451,10 +503,26 @@ export const MODULES = [
       ["How does Level 5 happen?", ["A guide awards it", "Students vote", "Level 4 in all four domains at once", "Perfect attendance"], 2, "It's a whole-child status."],
       ["How do students learn their levels?", ["Posted ranking", "Announced at Town Hall", "Privately at their one-on-one", "Email to the class"], 2, "Never as a public ranking."],
       ["A student struggles on Nature Walk but is excellent at the Table. You…", ["Drop all domains", "Adjust only Nature Walk", "Drop Table to match", "Hold all"], 1, "Domains stay separate."]
-    ] },
-  { id: "knots", name: "Knot Untangler", icon: "🪢", pass: 9, blurb: "Pick the right first move in real scenarios.", kind: "knots" },
+    ], [
+      ["What are the four Freedom Level domains?", ["Math, Reading, Writing, Science", "Academic Block, Nature Walk, Table, Field Block", "Morning, Lunch, Afternoon, Dismissal", "Respect, Effort, Safety, Kindness"], 1, "Four separate domains, each with its own criteria."],
+      ["A student had a consistently hard week in Academic Block. You…", ["Drop every domain one rung", "Move Academic Block down one rung and name what moves them back up", "Drop Academic Block to Level 1", "Hold, since levels never drop"], 1, "One rung, one domain, with the path back made visible."],
+      ["What does Nature Walk Level 3 allow?", ["Carrying a hatchet, knife or saw", "Exploring and playing freely while staying in the guide's view", "Staying within 20 feet of the guide", "Staying right beside the guide"], 1, "Level 4 adds tools; Level 2 is within 20 feet; Level 1 is within 10 feet."],
+      ["How do you describe Freedom Levels to a family?", ["As rewards for good behavior", "As privileges paired with the behavior that makes them safe and workable", "As a ranking of the class", "As punishments when they drop"], 1, "Freedom Levels are not rewards."],
+      ["At Table Level 4, a student may…", ["Sit next to a guide", "Eat and head off to play without checking off first", "Eat anywhere on campus", "Skip lunch"], 1, "Level 3 eats in designated areas and checks off with a guide before playing."],
+      ["Before stepping a child down a level, ask…", ["Did their parents agree?", "Can't or won't? If the barrier is a skill or a sensory load, change the support first.", "How many reminders did they get?", "What did the other guides do?"], 1, "Keep the standard; change the route."],
+      ["In K–1, Freedom Levels are used for…", ["All four domains", "The Nature Walk only", "Lunch only", "Nothing"], 1, "The rest of the K–1 day runs on Montessori freedom within limits, with a fresh start each morning."]
+    ], [
+      ["How often are Freedom Levels reviewed?", ["Daily", "Weekly", "Monthly", "Each term"], 1, "Weekly, on the week's pattern."],
+      ["Academic Block Level 1 means…", ["Working from the couches", "Working in a one-person enclosed desk space", "Sitting at any open table", "Working outside"], 1, "Offer that desk as a choice at any level too, so it never only means “in trouble.”"],
+      ["A student's Nature Walk level drops after a tool near-miss. What happens to Table, Academic Block and Field Block?", ["They drop too", "They stay where they are", "They drop to Level 1", "They freeze until the next term"], 1, "Domains stay separate."],
+      ["Which is a Level 5 privilege?", ["Skipping Academic Block", "Leading class meetings and town halls", "Choosing their own grades", "Carrying a hatchet without a second guide's confirmation"], 1, "Level 5 is earned automatically with Level 4 in all four domains."],
+      ["When a level changes, the student should hear…", ["Nothing; the chart says it", "Exactly which behavior moved them, tied to the domain's criteria", "How they compare with classmates", "That it's final for the term"], 1, "Tie the change to the criteria."],
+      ["Nature Walk Level 2 means…", ["Carrying tools", "Staying within 20 feet of the guide and away from risky areas", "Exploring freely in view", "Staying home from the walk"], 1, "Level 1 is right beside the guide, within 10 feet."],
+      ["A student steps down a level. What else should they hear?", ["Nothing more; it's a consequence", "What the higher level looks like, and an offer to build toward it together", "Which classmates are higher", "That they'll stay there a month"], 1, "Make the path back visible."]
+    ] ] },
+  { id: "knots", name: "Knot Untangler", icon: "🪢", pass: 5, blurb: "Pick the right first move in real scenarios.", kind: "knots" },
   { id: "wiring", name: "Different Wiring", icon: "🧠", pass: 6, blurb: "Supporting neurodivergent students.", kind: "mcq",
-    qs: [
+    sets: [[
       ["A student hums and taps while working and nobody else is affected. Tier?", ["0", "1", "2", "None, but write it up"], 0, "Tier 0. Coach and support."],
       ["What does the double empathy problem say?", ["Autistic people lack empathy", "Misunderstanding runs both ways between neurotypes", "Everyone has two kinds of empathy", "Empathy can't be taught"], 1, "Mixed-neurotype communication breaks down; autistic-to-autistic works well."],
       ["During a meltdown, the best adult move is usually…", ["Ask lots of questions to understand", "Fewer words, more space, safety first", "Firm consequences right away", "Ignore it entirely"], 1, "Teach later, when the brain is back online."],
@@ -462,7 +530,23 @@ export const MODULES = [
       ["A child with ADHD forgets steps every transition. What helps most?", ["A talk about responsibility", "Help at the point of performance: a checklist where the task happens", "Losing recess", "A Tier 1"], 1, "Barkley's point-of-performance principle."],
       ["What's true about masking?", ["It shows a child is coping well", "It's linked to worse mental health and exhaustion", "Only adults do it", "It's a sign of manipulation"], 1, "Cook et al., 2021."],
       ["Before touching an autistic student on the shoulder, you should…", ["Do it quickly", "Ask first, or wave", "Only touch from behind", "Never speak to them"], 1, "Unexpected touch can feel like a shock."]
-    ] }
+    ], [
+      ["What does Inclusive Excellence mean?", ["Lower bars for students who learn differently", "The same high bar for every child, and as much support as each needs to reach it", "Separate classes by ability", "Only the strongest students clear the bar"], 1, "A label changes the route, never the standard."],
+      ["A child who is struggling is usually…", ["Choosing to misbehave", "Behaving under stress or running into a lagging skill", "Seeking attention", "Testing the guide"], 1, "Ask: can't, or won't? Most of the time it's can't."],
+      ["With an autistic student who needs to hear something hard, you…", ["Hint so it lands softly", "Say exactly what you mean, without sarcasm or hints", "Use a joke to break the ice", "Say it in front of a friend for support"], 1, "Literal is respectful."],
+      ["A student holds it together all day and falls apart at home. That may be…", ["Proof the day went well", "The cost of masking", "A home problem only", "Manipulation"], 1, "A calm day at school isn't proof of an easy day."],
+      ["What does the research say about aerobic exercise and ADHD?", ["No effect", "Moderate to large benefits for attention and executive function in a 2015 meta-analysis", "It makes symptoms worse", "Only adults benefit"], 1, "Movement is fuel, not a reward."],
+      ["Before a transition, give warnings at…", ["10 and 5 minutes", "5 minutes and 1 minute", "Only at the moment", "No warnings; it builds flexibility"], 1, "Precorrection and priming. Surprise is the enemy."],
+      ["The Academic Block Level 1 enclosed desk should be…", ["Only for students in trouble", "Offered as a choice at any level, so it never only means “in trouble”", "Removed", "Assigned by seniority"], 1, "Some autistic students would pick it for themselves on a loud day."]
+    ], [
+      ["What does “exclusive excellence” describe?", ["A high bar with high support", "A high bar with little support: whoever can't clear it falls away", "A low bar with warmth", "Neglect"], 1, "The enforcer. Inclusive non-excellence is the protector. We aim for inclusive excellence."],
+      ["Emotion dysregulation in ADHD is…", ["Rare", "Common and a big driver of impairment, so plan for it", "Always a choice", "Only in teenagers"], 1, "Don't treat each outburst as a choice."],
+      ["Taking away movement as a consequence for a student with ADHD…", ["Teaches responsibility", "Removes the very thing that helps", "Is required by the standard", "Works if done privately"], 1, "Movement isn't a reward to be earned."],
+      ["In a Peace Talk, a student can't name a feeling yet. You…", ["Move on without it", "Let them point to a feelings chart, or write first", "Name it for them and continue", "End the Peace Talk"], 1, "Eye contact is optional too."],
+      ["Why practice a Personal Fire Drill plan when the student is calm?", ["To fill time", "Sensing your own body's signals is often harder for neurodivergent kids; practice builds the map they'll need under stress", "Because parents require it", "It replaces the tier system"], 1, "Point back to the plan in the moment instead of improvising."],
+      ["A neurodivergent student repeats a shocking threat they heard in a game. That changes…", ["Nothing at all", "What you teach afterward, not the first safety steps", "The tier, down to Tier 0", "Whether you tell leadership"], 1, "Serious threats are Tier 3 until leadership has assessed them."],
+      ["A student narrates his math out loud. Best first response?", ["Tier 1 right away", "Treat it as Tier 0 and let him choose a seat where narrating doesn't land on anyone", "Ask him to stop forever", "Send him to the regulation space"], 1, "Narrating and humming are often how a child holds focus."]
+    ] ] }
 ];
 
 /* ------------------------------------------------------------------ */
