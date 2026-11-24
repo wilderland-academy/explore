@@ -399,3 +399,10 @@ the `PAGES` list at the top of `/search.js`.
   made for them first ("Just for you", "From Scott"), plus open ones for their band. Firestore `storeRewards`; a personal
   reward can be read only by staff and the students named (`to` holds their school emails). Edit, hide and delete in the panel.
   **Publish `firestore.rules` in the Firebase console** or the panel says guide rewards are off.
+
+## Challenges: grade defaults and clearer saved dots (Nov 24, 2026)
+- A signed-in 5th or 6th grader now starts on Grades 5–6 (7th and 8th graders already started on 7–8). Both lists include
+  challenges for all of 5–8, and the Grades buttons still show the other grades or all of 5–8 (`gradeDefault` in
+  `challenges/app.js`).
+- The year tracker says what the dots mean: "2 passed · 3 saved" under each life skill (Epics noted, since they fill 2 dots),
+  and every save beyond the goal of 2 adds a gray lined dot, so no save is hidden.

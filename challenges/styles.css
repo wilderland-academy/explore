@@ -112,11 +112,14 @@ main{max-width:1180px;margin:0 auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
 .ys:focus-visible{outline:3px solid var(--green);outline-offset:2px}
 .ys[aria-current="true"]{background:var(--tint)}
 .ys-name{font-weight:600;font-size:14px;line-height:1.25;color:var(--ink)}
-.dots{display:flex;gap:6px}
+.dots{display:flex;flex-wrap:wrap;gap:6px}
 .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--c)}
 .dot.on{background:var(--c)}
 /* Saved to the plan, not passed yet: lined, so only a pass looks filled. */
 .dot.saved{background:repeating-linear-gradient(135deg,var(--c) 0 2px,transparent 2px 5px)}
+/* Saved beyond the goal of 2: gray lined, one per extra save. */
+.dot.saved.extra{border-color:#9aa39c;background:repeating-linear-gradient(135deg,#9aa39c 0 2px,transparent 2px 5px)}
+.ys-count{font-size:12.5px;line-height:1.2;color:var(--muted,#5b6660)}
 .ys.done .ys-name::after{content:" ✓";color:var(--c)}
 
 /* ---------- explore / tree ---------- */
