@@ -115,6 +115,8 @@ main{max-width:1180px;margin:0 auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
 .dots{display:flex;gap:6px}
 .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--c)}
 .dot.on{background:var(--c)}
+/* saved to the plan, not passed yet: thin stripes, never solid */
+.dot.plan{border-style:dashed;background:repeating-linear-gradient(135deg,var(--c) 0 2px,transparent 2px 5px)}
 .ys.done .ys-name::after{content:" ✓";color:var(--c)}
 
 /* ---------- explore / tree ---------- */

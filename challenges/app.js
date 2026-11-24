@@ -102,6 +102,17 @@
   function creditsIn(skill) {
     return picksIn(skill).reduce(function (a, c) { return a + (c.cr || 1); }, 0);
   }
+  // The year board: credits passed (from the Life Skills tracker) fill a dot solid; saved-but-not-passed credits only
+  // stripe it, so a plan never looks finished.
+  function passedIn(skill) {
+    return Object.keys(status).reduce(function (a, id) {
+      var c = BYID[id];
+      return a + (c && status[id] === 'pass' && D.comps[c.c].k === skill ? (c.cr || 1) : 0);
+    }, 0);
+  }
+  function savedIn(skill) {
+    return picksIn(skill).reduce(function (a, c) { return a + (status[c.id] === 'pass' ? 0 : (c.cr || 1)); }, 0);
+  }
 
   // ---------- masthead strip + year tracker ----------
   document.getElementById('strip').innerHTML = D.skills.map(function (s) {
@@ -115,13 +126,13 @@
     var t = target();
     document.getElementById('year-goal').textContent = t === 1
       ? 'In K–1, cover at least 3 challenges in each of the 8 life skills this year, at least 2 a week.'
-      : 'Finish 2 challenges in each of the 8 life skills this year. An Epic counts as 2. Save challenges to your plan and they fill in here.';
+      : 'Pass 2 challenges in each of the 8 life skills this year. An Epic counts as 2. A saved challenge shows as a striped dot and turns solid once your guide records your pass.';
     document.getElementById('year-skills').innerHTML = D.skills.map(function (s) {
-      var n = Math.min(creditsIn(s.k), t), dots = '';
-      for (var i = 0; i < t; i++) dots += '<span class="dot' + (i < n ? ' on' : '') + '"></span>';
+      var n = Math.min(passedIn(s.k), t), m = Math.min(savedIn(s.k), t - n), dots = '';
+      for (var i = 0; i < t; i++) dots += '<span class="dot' + (i < n ? ' on' : i < n + m ? ' plan' : '') + '"></span>';
       return '<li><button class="ys' + (n >= t ? ' done' : '') + '" data-skill="' + s.k + '" style="' + skillVars(s) + '"' +
         (state.skill === s.k ? ' aria-current="true"' : '') +
-        ' aria-label="' + esc(s.n) + ': ' + n + ' of ' + t + ' picked">' +
+        ' aria-label="' + esc(s.n) + ': ' + n + ' of ' + t + ' passed' + (m ? ', ' + m + ' more saved to your plan' : '') + '">' +
         '<span class="ys-name">' + esc(s.n) + '</span><span class="dots">' + dots + '</span></button></li>';
     }).join('');
   }
@@ -134,13 +145,13 @@
     document.getElementById('col-skills').innerHTML =
       '<p class="col-title">8 life skills</p>' +
       D.skills.map(function (s) {
-        var n = Math.min(creditsIn(s.k), t);
+        var n = Math.min(passedIn(s.k), t);
         return '<button class="node" role="listitem" data-skill="' + s.k + '" style="' + skillVars(s) + '"' +
           (state.skill === s.k ? ' aria-current="true"' : '') + '>' +
           '<span class="badge">' + icon(s.i) + '</span>' +
           '<span class="node-text"><span class="node-name">' + esc(s.n) + '</span>' +
           '<span class="node-sub">' + S[s.k].count + ' challenge' + (S[s.k].count === 1 ? '' : 's') + '</span></span>' +
-          (guideMode() ? '' : '<span class="prog">' + n + '/' + t + '</span>') + '</button>';
+          (guideMode() || !STUDENT ? '' : '<span class="prog" title="Passed this year">' + n + '/' + t + '</span>') + '</button>';
       }).join('');
   }
 
@@ -490,7 +501,7 @@
     var t = target();
     Array.prototype.forEach.call(document.querySelectorAll('#col-skills .node'), function (n) {
       var pill = n.querySelector('.prog');
-      if (pill) pill.textContent = Math.min(creditsIn(n.dataset.skill), t) + '/' + t;
+      if (pill) pill.textContent = Math.min(passedIn(n.dataset.skill), t) + '/' + t;
     });
     if (picksDlg.open) renderPicks();
   }
@@ -731,7 +742,7 @@
   window.WLC = {
     open: openDetail,
     band: function () { return state.band; },
-    setStatus: function (m, hooks) { status = m || {}; statusHooks = hooks || null; renderTree(); renderSearch(); if (detail.open) { var t = detail.querySelector('[data-cid]'); if (t) openDetail(t.getAttribute('data-cid')); } }
+    setStatus: function (m, hooks) { status = m || {}; statusHooks = hooks || null; renderYear(); renderTree(); renderSearch(); if (detail.open) { var t = detail.querySelector('[data-cid]'); if (t) openDetail(t.getAttribute('data-cid')); } }
   };
 
   // ---------- a link straight to one challenge: #c=EN-03.2 (from challenge links anywhere on Explore) ----------
