@@ -46,6 +46,13 @@
         <button class="band" data-band="2–4" aria-pressed="false">2–4</button>
         <button class="band" data-band="5–8" aria-pressed="false">5–8</button>
       </div>
+      <div class="grsplit" id="grsplit" role="group" aria-labelledby="grsplit-label" hidden>
+        <span class="bands-label" id="grsplit-label">Show challenges for</span>
+        <button class="gr" type="button" data-gr="all" aria-pressed="true">All of 5–8</button>
+        <button class="gr gr56" type="button" data-gr="5–6" aria-pressed="false">Grades 5–6</button>
+        <button class="gr gr78" type="button" data-gr="7–8" aria-pressed="false">Grades 7–8</button>
+        <p class="grsplit-note" id="grsplit-note" aria-live="polite"></p>
+      </div>
 {% if include.site == "students" %}      <p class="coach-find" data-coach-only hidden><button class="btn-lime" type="button" data-coach-find><span aria-hidden="true">🦊</span> Find a challenge with Mr. Fox</button></p>
 {% endif %}    </div>
     <figure class="hero-photo">
