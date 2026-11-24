@@ -217,10 +217,12 @@ function snippet(body, words) {
   const a = Math.max(0, i - 50);
   return (a ? "…" : "") + body.slice(a, a + 150).trim() + "…";
 }
+// Parts of the Guides site a guide hasn't trained for yet stay out of search too (/wlnav.js decides, from onboarding).
+const shown = it => !it.u || !window.wlHiddenPath || !window.wlHiddenPath(it.u);
 function results(q) {
   const nq = norm(q).trim(), words = nq.split(/\s+/).filter(Boolean);
-  if (!words.length) return [["pages", IX.pages.slice(0, 8)]];
-  return GROUPS.map(([g, , max]) => [g, IX[g].map(it => [score(it, words, nq), it]).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, max).map(x => x[1])]).filter(x => x[1].length);
+  if (!words.length) return [["pages", IX.pages.filter(shown).slice(0, 8)]];
+  return GROUPS.map(([g, , max]) => [g, IX[g].filter(shown).map(it => [score(it, words, nq), it]).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, max).map(x => x[1])]).filter(x => x[1].length);
 }
 
 // ---------- the dialog ----------

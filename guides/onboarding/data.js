@@ -1,6 +1,6 @@
 // Guide onboarding: one continuous path through everything a Wilderland guide needs. Each step is a short run of
-// screens with one big Next button, then a checkpoint. Finishing a step unlocks that part of the Guides site
-// (wlnav.js keeps the rest locked until then, so nothing is overwhelming on day one).
+// screens with one big Next button, then a checkpoint. Finishing a step adds that part of the Guides site
+// (wlnav.js keeps the rest hidden until then: no tab, no card, no search result). Life Skills comes first.
 // Screen kinds are laid out by app.js: text, quad, phrases, moments, evidence, trust, practice, oneonone, standards,
 // tiers, freedom, knots, toolkit, wiring, doc. Kinds that pull from the Field Guide or Behavior Guide data stay in step
 // with those guides automatically. Edit text here.
@@ -13,8 +13,8 @@ export const STEPS = [
     unlocks: null,
     screens: [
       { id: "w-how", kind: "text", title: "How this works", text: [
-        "Six short steps, in order: Welcome, the Mentor Mindset, Behavior, Life Skills, Parent Communication, and our policies. Everything you need is right here. Read a screen, press Next.",
-        ["Each step ends with a short checkpoint. Pass it and that part of the Guides site opens for you. Until then it stays locked, so you only have to think about one thing at a time.", "Checkpoints have three different sets of questions that take turns. If you don't pass, the next try asks different questions.", "Your place is saved. Close the tab any time and pick up where you left off.", "Each step ends with Dig deeper: books, articles, podcasts and studies, if you want more. Save any of them for later."]
+        "Six short steps, in order: Welcome, Life Skills, the Mentor Mindset, Behavior, Parent Communication, and our policies. Everything you need is right here. Read a screen, press Next.",
+        ["Each step ends with a short checkpoint. Pass it and that part of the Guides site appears for you. Until then it stays out of sight, so you only see what you've trained for.", "Checkpoints have three different sets of questions that take turns. If you don't pass, the next try asks different questions.", "Your place is saved. Close the tab any time and pick up where you left off.", "Each step ends with Dig deeper: books, articles, podcasts and studies, if you want more. Save any of them for later."]
       ] },
       { id: "w-why", kind: "text", title: "Why we train this way", text: [
         "Wilderland runs on high standards, high support and high autonomy, for students and for us. We hired experienced educators on purpose, and we're also an ambitious school: as research on what motivates students moves, we change how we work.",
@@ -23,6 +23,65 @@ export const STEPS = [
       { id: "w-map", kind: "map", title: "What opens as you go" }
     ],
     dig: [] },
+
+  { id: "lifeskills", name: "Life Skills", icon: "🏔️", time: "45 minutes",
+    intro: "Start here: the vision for the Life Skills afternoon, and its four parts in the order a student climbs them. Skill Labs, Challenges, weekly 1:1 coaching, and Passion Projects for the students who are ready for them.",
+    unlocks: { name: "Life Skills and the Student Roster", what: "The Life Skills tracker (validate passes and not yets), the Labs schedule, Lab ideas, How Labs run, the AI Lab builder, and the Student Roster." },
+    screens: [
+      { id: "l-vision", kind: "text", title: "The Life Skills afternoon", text: [
+        "Mornings build academic foundations. Afternoons are where students become capable people. They learn the eight Life Skills by doing real things, mostly outdoors, often in front of real people.",
+        "The goal is children who break their own ceilings: who can do things that would impress an adult, and know it because they proved it. Status comes from doing hard things. It never comes from prizes or from pleasing a grown-up.",
+        "The afternoon has four parts. Each one hands the student more of the wheel:",
+        ["Skill Labs: you lead and the whole crew learns. The core curriculum every student takes part in.", "Challenges: the student chooses and you verify. One student proves one ability, whenever they're ready.", "1:1 Coaching: every student, every week. Where students own their goals and choose what's next.", "Passion Projects: the student leads and you advise. Only for students who have found a real passion and can run their own learning."],
+        "That order is on purpose. Researchers call it the gradual release of responsibility (Pearson & Gallagher, 1983): show it, practice it together, then let the learner carry it. A review of decades of studies found that beginners learn less when left to figure things out alone, and that guidance should ease off only as skill grows (Kirschner, Sweller & Clark, 2006). So Labs come first, and Passion Projects wait until a student is ready.",
+        ["High standards: the bar never moves, for any child.", "High support: Labs, coaching, and retries that aren't rationed.", "High autonomy: it grows as a student shows they can carry it."]
+      ] },
+      { id: "l-skills", kind: "text", title: "The eight Life Skills", text: [
+        "Wilderland teaches eight Life Skills: Energy, Self-Governance, Character & Grit, Adaptability & Ingenuity, Value Creation, Storytelling & Speaking, Fellowship, and Nature & Living Systems. Each has sub-skills and specific abilities, mapped on the Skill Map. Content is the vehicle; the skill is the point.",
+        ["The yearly goal: in grades 2–8, at least 2 passes in every Life Skill. In K–1, at least 3 per Life Skill for each child, from guide-run challenges (plan on at least 2 a week).", "Passes come from Lab tests and from Challenges. Both count toward the goal.", "Progress lives in two places: the printed wall chart, where students see each other getting hard things done, and the Life Skills tracker, which families can see from home."]
+      ] },
+      { id: "l-labs2", kind: "text", title: "1. Skill Labs", text: [
+        "Skill Labs are the core curriculum. Every student takes part, and you plan them ahead, on purpose. In a Lab you lead a crew through learning and practicing a skill together. Right after, run a quick testing session: each student takes their own Test to Pass. Not every student passes every Lab, but every pass counts toward their yearly goal.",
+        "The strongest Labs pass four tests: anyone can see the pass (a time, a count, a weight, or a yes from someone outside school); the whole crew can do it in one Lab week (one day in K–1); kids can practice it here; and it leaves something to show.",
+        ["Design backward from the Test to Pass. Name its quality bar: Score it, Make something happen, or Satisfy the expert.", "Make it thrilling by changing the arena (race an adult, a real audience, a real event), never the bar.", "Epic Skill Labs run for weeks and end in a real, public feat. Every band can do them, K–1 included.", "A Lab built from an existing Challenge keeps that Challenge's Test to Pass exactly.", "Score every plan on the Workshop Scorecard: 9 indicators, 1 to 3 each. Aim for 3 on every one, and score honestly.", "Safety gates come before the activity (fire card, knife card, tool card and so on). Field days need at least two approved adults with every group, permission slips and a transport plan.", "First names only in anything public, and no photos without a release on file. Students can't use Claude (Anthropic requires users to be 18 or older)."]
+      ] },
+      { id: "l-challenges2", kind: "text", title: "2. Challenges", text: [
+        "Challenges are where choice comes in. Students pick their own from the Challenge map and work on them on their own, usually 3 to 8 hours a week. You verify the pass.",
+        "A Challenge is one “I can…” statement with a Test to Pass: observable, scored or event-based, and hard to pass without the skill. Sizes: a Week (about 3 to 8 hours of work), a Practice skill tested whenever the student is ready (like a timed mile), or an Epic (about 2 to 3 weeks, 2 credits, with start, halfway and finish checkpoints).",
+        ["Pass or not yet. No partial credit and no lowered bar.", "A not yet always says exactly what was missing and how to practice. It never goes on the wall, and retries aren't rationed.", "Knowledge checks (“say the 3 fire rules”) are Steps that unlock a challenge, never the pass itself.", "Record passes and not yets in the tracker the day you see them. Every 4 credits is a milestone, celebrated at Honor Court.", "Some challenges can be passed off at home. Parents hold the same bar: video in one continuous take from the last 7 days, a parent log, a witness note, or a turnaround check. A video can't replace a guide on Safety Gates.", "K–1 has no independent Challenges: the guide runs them and each child shows the skill alone. In 2–4, a challenge from the 5–8 band counts as a Stretch.", "No prizes for passing. Status comes from doing hard things and from specific spoken recognition. No public leaderboards."]
+      ] },
+      { id: "l-coaching", kind: "text", title: "3. 1:1 Coaching Sessions", text: [
+        "Every student meets one-on-one with their guide every week. It isn't optional, and it isn't only for students who are struggling. If a week gets away from you, make it up before the next week ends. Most take 10 to 20 minutes; K–1 is shorter and more concrete.",
+        "The 1:1 is where a student steers their own afternoon. They look at where they stand across the eight Life Skills, choose their next Challenge, and plan how to get it done. You hold the bar; they own the goal.",
+        ["Read last week first: last week's notes, what they said they'd do, and your one thing.", "Start with them. Ask how the week went and listen. Follow what they say with a real question.", "Check the commitment. Name exactly what went well. If it didn't happen, get curious: “What got in the way?” No lecture.", "They pick this week's goal. The student proposes it; you hold the bar.", "Make an if-then plan: “If ___ happens, then I will ___.” They say it back; you write it down.", "Close with the next date. Name the day of next week's 1:1, then save your notes."],
+        "Watch for readiness. The 1:1 is where you'll notice a student who has found a real passion, and where you'll see whether they can plan and follow through on their own. That's the doorway to a Passion Project.",
+        "Recording a 1:1 (it becomes text; audio is never saved) needs a parent's written consent on the student's page and the student's okay that day. Otherwise, take notes. The Mentor Mindset step, next, teaches how to coach in these sessions and opens the Session Room."
+      ] },
+      { id: "l-projects2", kind: "text", title: "4. Passion Projects", text: [
+        "A Passion Project is about 25 hours of student-driven building, with milestones at the start, halfway and finish, shown to real people at the end. A finished project isn't automatically a passing one: the work has to meet the bar.",
+        "Passion Projects only happen for a student who has found a real passion and is equipped to run it. Equipped means two things:",
+        ["Executive functioning: they plan the work, start without being prompted, manage their time, and push through setbacks.", "Self-teaching: they can learn something new from books, videos and experts, without being taught step by step."],
+        "They aren't a default assignment. Before saying yes, ask both questions: does this student truly care about this, and can they carry it on their own? Look at what they've already done. An Epic Challenge finished with every checkpoint met is strong evidence. If either answer is not yet, keep the door open and route them through the Challenges and Labs that build those skills first. That's a path, not a no.",
+        ["K–1: no Projects.", "2–4: only by exception, when the student asks and the guide and a parent agree.", "5–8: the full range, with real audiences and real responsibility."]
+      ] }
+    ],
+    quiz: "lifeskills",
+    dig: [
+      { id: "d-pearson", t: "study", title: "The instruction of reading comprehension", by: "Pearson & Gallagher, 1983, Contemporary Educational Psychology", url: "https://doi.org/10.1016/0361-476X(83)90019-X", note: "Where “gradual release of responsibility” comes from: the shape of our afternoon." },
+      { id: "d-ksc", t: "study", title: "Why minimal guidance during instruction does not work", by: "Kirschner, Sweller & Clark, 2006, Educational Psychologist", url: "https://doi.org/10.1207/s15326985ep4102_1", note: "Why beginners need Labs before independent work, and why guidance eases off only as skill grows." },
+      { id: "d-zimmerman", t: "study", title: "Becoming a self-regulated learner: an overview", by: "Zimmerman, 2002, Theory Into Practice", url: "https://doi.org/10.1207/s15430421tip4102_2", note: "Plan, do, reflect: what a student ready for a Passion Project can already do. Five readable pages." },
+      { id: "d-diamond", t: "study", title: "Interventions shown to aid executive function development in children 4 to 12 years old", by: "Diamond & Lee, 2011, Science", url: "https://doi.org/10.1126/science.1204529", note: "What builds executive function: repeated practice with steadily rising challenge." },
+      { id: "d-hidden", t: "book", title: "Hidden Potential: The Science of Achieving Greater Things", by: "Adam Grant (2023)", note: "Character skills over talent, and how they're built." },
+      { id: "d-pblbook", t: "book", title: "Setting the Standard for Project Based Learning", by: "John Larmer, John Mergendoller & Suzie Boss (ASCD, 2015)", note: "The book behind Gold Standard PBL." },
+      { id: "d-tenpercent", t: "podcast", title: "Adam Grant on the Science of Potential and Achievement", by: "Ten Percent Happier", url: "https://www.tenpercent.com/tph/podcast-episode/adam-grant-hidden-potential", note: "Why character skills matter and how to develop them." },
+      { id: "d-woop", t: "podcast", title: "WOOP, There It Is! 4 Steps to Achieve Your Goals", by: "Hidden Brain (NPR) with Gabriele Oettingen", url: "https://www.npr.org/transcripts/477379965", note: "Wish, outcome, obstacle, plan: the if-then plan behind our 1:1s." },
+      { id: "d-futureed", t: "podcast", title: "Future of Education Podcast", by: "MacKenzie Price, co-founder of Alpha School", url: "https://podcasts.apple.com/us/podcast/id1673109764", note: "How Alpha runs its life-skills afternoons, which our day borrows from." },
+      { id: "d-gold", t: "article", title: "Gold Standard PBL: Essential Project Design Elements", by: "PBLWorks", url: "https://www.pblworks.org/blog/gold-standard-pbl-essential-project-design-elements", note: "Seven elements of a strong project: useful for Passion Projects and Labs." },
+      { id: "d-woopguide", t: "article", title: "WOOP overview for classrooms", by: "Character Lab", url: "https://characterlab.org/wp-content/uploads/2019/03/CharacterLabWOOPoverview.pdf", note: "A one-page guide to teaching WOOP." },
+      { id: "d-gollwitzer", t: "study", title: "Implementation intentions and goal achievement: a meta-analysis", by: "Gollwitzer & Sheeran, 2006", url: "https://doi.org/10.1016/S0065-2601(06)38002-1", note: "94 tests; if-then plans have a medium-to-large effect." },
+      { id: "d-duckworth", t: "study", title: "Self-regulation strategies improve self-discipline in adolescents", by: "Duckworth et al., 2011", url: "https://doi.org/10.1080/01443410.2010.506003", note: "A 30-minute wish-obstacle-plan exercise, over 60% more practice done." },
+      { id: "d-dubois", t: "study", title: "Effectiveness of mentoring programs for youth: a meta-analytic review", by: "DuBois, Holloway, Valentine & Cooper, 2002", url: "https://doi.org/10.1023/A:1014628810714", note: "Why weekly, steady 1:1 contact matters." }
+    ] },
 
   { id: "mentor", name: "Mentor Mindset", icon: "🌱", time: "45 minutes",
     intro: "How we coach every student: keep the real standard, show belief and give real help, and leave the thinking and choices with the student.",
@@ -82,42 +141,6 @@ export const STEPS = [
       { id: "d-greenepod", t: "podcast", title: "Dr. Ross Greene Educators' Podcast", by: "Ross Greene", url: "https://podcasts.apple.com/podcast/id649017652", note: "Episodes on running Plan B with students, like “The Who, When, and What of Plan B.”" },
       { id: "d-mindshift", t: "article", title: "Ross Greene: What if bad behavior isn't the problem?", by: "KQED MindShift", url: "https://www.kqed.org/mindshift/66347/ross-greene-what-if-bad-behavior-isnt-the-problem", note: "Unsolved problems, not consequences." },
       { ref: "cps" }, { ref: "rp" }, { ref: "praise" }, { ref: "rewards" }, { ref: "ncaep" }, { ref: "dep" }, { ref: "mask" }, { ref: "pyramid" }
-    ] },
-
-  { id: "lifeskills", name: "Life Skills", icon: "🏔️", time: "30 minutes",
-    intro: "How students grow the eight Life Skills: weekly 1:1 coaching, Skill Labs, Challenges, and Passion Projects for the students who are ready for them.",
-    unlocks: { name: "Life Skills and the Student Roster", what: "The Life Skills tracker (validate passes and not yets), the Labs schedule, Lab ideas, How Labs run, the AI Lab builder, and the Student Roster." },
-    screens: [
-      { id: "l-big", kind: "text", title: "The big picture", text: [
-        "Wilderland teaches eight Life Skills: Energy, Self-Governance, Character & Grit, Adaptability & Ingenuity, Value Creation, Storytelling & Speaking, Fellowship, and Nature & Living Systems. Each has sub-skills and specific abilities, mapped on the Skill Map. Content is the vehicle; the skill is the point.",
-        ["Weekly 1:1 coaching keeps every student moving and owning their goals.", "Skill Labs teach a skill to a crew, and every student ends with their own Test to Pass.", "Challenges let one student prove one ability, whenever they're ready.", "Passion Projects are long, student-driven builds for students who are truly passionate about an idea and equipped with the skills to take it on."]
-      ] },
-      { id: "l-challenges", kind: "text", title: "Challenges", text: [
-        "A Challenge is one “I can…” statement with a Test to Pass: observable, scored or event-based, and hard to pass without the skill. Sizes: a Week (about 3 to 8 hours of work), a Practice skill tested whenever the student is ready (like a timed mile), or an Epic (about 2 to 3 weeks, 2 credits, with start, halfway and finish checkpoints).",
-        ["Pass or not yet. No partial credit and no lowered bar.", "A not yet always says exactly what was missing and how to practice. It never goes on the wall, and retries aren't rationed.", "Knowledge checks (“say the 3 fire rules”) are Steps that unlock a challenge, never the pass itself.", "Record passes and not yets in the tracker the day you see them. Every 4 credits is a milestone, celebrated at Honor Court.", "Some challenges can be passed off at home. Parents hold the same bar: video in one continuous take from the last 7 days, a parent log, a witness note, or a turnaround check. A video can't replace a guide on Safety Gates.", "K–1 has no independent Challenges: the guide runs them and each child shows the skill alone. In 2–4, a challenge from the 5–8 band counts as a Stretch.", "No prizes for passing. Status comes from doing hard things and from specific spoken recognition. No public leaderboards."]
-      ] },
-      { id: "l-labs", kind: "text", title: "Skill Labs", text: [
-        "In a Skill Lab, you lead a crew through learning and practicing a skill together, and each student ends with their own Test to Pass. The strongest Labs pass four tests: anyone can see the pass (a time, a count, a weight, or a yes from someone outside school); the whole crew can do it in one Lab week (one day in K–1); kids can practice it here; and it leaves something to show.",
-        ["Design backward from the Test to Pass. Name its quality bar: Score it, Make something happen, or Satisfy the expert.", "Make it thrilling by changing the arena (race an adult, a real audience, a real event), never the bar.", "Epic Skill Labs run for weeks and end in a real, public feat. Every band can do them, K–1 included.", "A Lab built from an existing Challenge keeps that Challenge's Test to Pass exactly.", "Score every plan on the Workshop Scorecard: 9 indicators, 1 to 3 each. Aim for 3 on every one, and score honestly.", "Safety gates come before the activity (fire card, knife card, tool card and so on). Field days need at least two approved adults with every group, permission slips and a transport plan.", "First names only in anything public, and no photos without a release on file. Students can't use Claude (Anthropic requires users to be 18 or older)."]
-      ] },
-      { id: "l-projects", kind: "text", title: "Passion Projects", text: [
-        "A Passion Project is about 25 hours of student-driven building, with milestones at the start, halfway and finish, shown to real people at the end. A finished project isn't automatically a passing one: the work has to meet the bar.",
-        "Passion Projects are only open to students who are truly passionate about the idea and equipped with the skills to take it on. They aren't a default assignment. Before saying yes, ask both questions: does this student really care about this, and do they have the skills to carry it? If either answer is not yet, keep the door open and route them through the Challenges and Labs that build those skills first. That's a path, not a no.",
-        ["K–1: no Projects.", "2–4: only by exception, when the student asks and the guide and a parent agree.", "5–8: the full range, with real audiences and real responsibility."]
-      ] }
-    ],
-    quiz: "lifeskills",
-    dig: [
-      { id: "d-hidden", t: "book", title: "Hidden Potential: The Science of Achieving Greater Things", by: "Adam Grant (2023)", note: "Character skills over talent, and how they're built." },
-      { id: "d-pblbook", t: "book", title: "Setting the Standard for Project Based Learning", by: "John Larmer, John Mergendoller & Suzie Boss (ASCD, 2015)", note: "The book behind Gold Standard PBL." },
-      { id: "d-tenpercent", t: "podcast", title: "Adam Grant on the Science of Potential and Achievement", by: "Ten Percent Happier", url: "https://www.tenpercent.com/tph/podcast-episode/adam-grant-hidden-potential", note: "Why character skills matter and how to develop them." },
-      { id: "d-woop", t: "podcast", title: "WOOP, There It Is! 4 Steps to Achieve Your Goals", by: "Hidden Brain (NPR) with Gabriele Oettingen", url: "https://www.npr.org/transcripts/477379965", note: "Wish, outcome, obstacle, plan: the if-then plan behind our 1:1s." },
-      { id: "d-futureed", t: "podcast", title: "Future of Education Podcast", by: "MacKenzie Price, co-founder of Alpha School", url: "https://podcasts.apple.com/us/podcast/id1673109764", note: "How Alpha runs its life-skills afternoons, which our day borrows from." },
-      { id: "d-gold", t: "article", title: "Gold Standard PBL: Essential Project Design Elements", by: "PBLWorks", url: "https://www.pblworks.org/blog/gold-standard-pbl-essential-project-design-elements", note: "Seven elements of a strong project: useful for Passion Projects and Labs." },
-      { id: "d-woopguide", t: "article", title: "WOOP overview for classrooms", by: "Character Lab", url: "https://characterlab.org/wp-content/uploads/2019/03/CharacterLabWOOPoverview.pdf", note: "A one-page guide to teaching WOOP." },
-      { id: "d-gollwitzer", t: "study", title: "Implementation intentions and goal achievement: a meta-analysis", by: "Gollwitzer & Sheeran, 2006", url: "https://doi.org/10.1016/S0065-2601(06)38002-1", note: "94 tests; if-then plans have a medium-to-large effect." },
-      { id: "d-duckworth", t: "study", title: "Self-regulation strategies improve self-discipline in adolescents", by: "Duckworth et al., 2011", url: "https://doi.org/10.1080/01443410.2010.506003", note: "A 30-minute wish-obstacle-plan exercise, over 60% more practice done." },
-      { id: "d-dubois", t: "study", title: "Effectiveness of mentoring programs for youth: a meta-analytic review", by: "DuBois, Holloway, Valentine & Cooper, 2002", url: "https://doi.org/10.1023/A:1014628810714", note: "Why weekly, steady 1:1 contact matters." }
     ] },
 
   { id: "parents", name: "Parent Communication", icon: "📨", time: "20 minutes",

@@ -105,26 +105,37 @@
     setTimeout(function () { if (document.documentElement.classList.contains("wl-gate")) gm.innerHTML = 'Still checking your sign-in. <a href="' + signInUrl() + '">Go to the sign-in page</a> or reload.'; }, 10000);
   }
   // ---------- Parts of the Guides site that open through onboarding ----------
-  // A guide sees every section in the menu from day one, so they know what's coming, but each one opens only after
-  // they finish its step in onboarding (/guides/onboarding/). Locked tabs and cards point to onboarding; a locked
-  // page shows what's waiting there and a button back to onboarding. Admins and outside guests see everything.
+  // A guide only sees the parts of the site they've trained for. Each section stays hidden (no tab, no card, no search
+  // result) until they finish its step in onboarding (/guides/onboarding/). A locked page visited directly goes straight
+  // to onboarding. Until we know what a guide has finished, their sections stay hidden too, so nothing flashes into
+  // view and back out. Admins and outside guests see everything. Never hidden: the Guides home, Onboarding, Student Info
+  // (safety information has to be there from day one), Trail Partner and Basecamp.
   // Who has unlocked what comes from /auth.js (or the Life Skills tracker) as a "wl-unlocks" event:
   // { e: email, all: true|false, done: [step ids] }, remembered on this device as "wl-unlocks".
   // Keep the step ids in step with /guides/onboarding/data.js.
   var LOCKS = [
-    { step: "mentor", name: "Mentor Mindset and the Session Room", tabs: ["mentor", "sessions"], path: /^\/fieldguide\//, what: "The Mentor Mindset Field Guide, the practice range and coach, and the Session Room for weekly 1:1s." },
-    { step: "behavior", name: "The Behavior Guide", tabs: ["behavior"], path: /^\/behavior\//, what: "The tiers, Freedom Levels, real scenarios, the behavior coach, the Freedom Level tracker and Town Hall." },
-    { step: "lifeskills", name: "Life Skills and the Student Roster", tabs: ["lifeskills", "roster"], path: /^\/guides\/(lifeskills|roster|challenges|students)\//, what: "The Life Skills tracker, the Labs schedule, Lab ideas, How Labs run, the Lab builder, and the Student Roster." },
-    { step: "parents", name: "Parent Comms", tabs: ["parentcomms"], path: /^\/guides\/parents\//, what: "The Parent Comms tool, which drafts any message to families with you and checks your own drafts." },
-    { step: "policies", name: "Policies and the Staff Handbook", tabs: ["policies"], path: /^\/guides\/(policies|handbook)\//, what: "Every staff policy and form in one place, searchable." }
+    { step: "lifeskills", tabs: ["lifeskills", "roster"], path: /^\/guides\/(lifeskills|roster|challenges|students)\// },
+    { step: "mentor", tabs: ["mentor", "sessions"], path: /^\/fieldguide\// },
+    { step: "behavior", tabs: ["behavior"], path: /^\/behavior\// },
+    { step: "parents", tabs: ["parentcomms"], path: /^\/guides\/parents\// },
+    { step: "policies", tabs: ["policies"], path: /^\/guides\/(policies|handbook)\// }
   ];
   var ONBOARD = "/guides/onboarding/";
   var unlocks = null; try { unlocks = JSON.parse(localStorage.getItem("wl-unlocks") || "null"); } catch (e) { }
   var who = function (c) { return String((c && (c.x || c.e)) || "").toLowerCase(); };
   if (unlocks && known && unlocks.e !== who(known)) unlocks = null;   // someone else's, from before
-  var staffNow = function () { var r = role || (known && known.r ? { role: known.r } : null); return key === "guides" && r && r.role === "staff"; };
-  function stepLocked(step) { return staffNow() && unlocks && !unlocks.all && (unlocks.done || []).indexOf(step) < 0; }
-  function tabLock(id) { for (var i = 0; i < LOCKS.length; i++) if (LOCKS[i].tabs.indexOf(id) >= 0 && stepLocked(LOCKS[i].step)) return LOCKS[i]; return null; }
+  var isStaff = function () { var r = role || (known && known.r ? { role: known.r } : null); return !!(r && r.role === "staff"); };
+  var staffNow = function () { return key === "guides" && isStaff(); };
+  // Locked: we know this guide hasn't finished the step. Hidden: locked, or we don't know yet.
+  function stepLocked(step) { return isStaff() && !!unlocks && !unlocks.all && (unlocks.done || []).indexOf(step) < 0; }
+  function stepHidden(step) { return isStaff() && (!unlocks || stepLocked(step)); }
+  function tabHidden(id) { for (var i = 0; i < LOCKS.length; i++) if (LOCKS[i].tabs.indexOf(id) >= 0 && stepHidden(LOCKS[i].step)) return true; return false; }
+  // For search (/search.js) and anything else that lists links: is this address in a section the visitor can't see yet?
+  window.wlHiddenPath = function (url) {
+    var path = String(url || "").replace(/^https?:\/\/[^\/]+/, "").split(/[?#]/)[0];
+    for (var i = 0; i < LOCKS.length; i++) if (LOCKS[i].path.test(path) && stepHidden(LOCKS[i].step)) return true;
+    return false;
+  };
   var PAGE = null; for (var li = 0; li < LOCKS.length; li++) if (LOCKS[li].path.test(location.pathname)) PAGE = LOCKS[li];
   // A guide's first visit to a section page since unlocks were remembered: wait to hear before showing it.
   var unlocksPending = function () { return !!PAGE && staffNow() && !unlocks; };
@@ -132,29 +143,27 @@
     document.documentElement.classList.add("wl-gate");
     var gs2 = document.createElement("style"); gs2.textContent = "html.wl-gate body{visibility:hidden}"; document.head.appendChild(gs2);
   }
-  var LCSS = "html.wl-locked body>*:not(.wlbar):not(.wl-lockpanel):not(script):not(style){display:none !important}" +
-    ".wl-lockpanel{max-width:640px;margin:56px auto;padding:30px 28px;border-radius:18px;background:#fffdf9;border:1px solid #ddd3c4;color:#231b24;font:400 16px/1.55 Inter,system-ui,sans-serif;display:flex;flex-direction:column;gap:12px}" +
-    ".wl-lockpanel h1{font:700 30px/1.15 'Iowan Old Style',Palatino,Georgia,serif;margin:0}.wl-lockpanel p{margin:0;color:#625a63}" +
-    ".wl-lockpanel a.go{align-self:flex-start;background:#01412f;color:#fff;border-radius:999px;padding:13px 24px;font-weight:600;text-decoration:none}" +
-    "[data-unlock].wl-lockd{opacity:.62;filter:grayscale(.7)}[data-unlock].wl-lockd .wl-lockbadge{display:inline-block}" +
-    ".wl-lockbadge{display:none;align-self:flex-start;font:700 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;background:#231b24;color:#fff;border-radius:99px;padding:3px 9px}" +
-    ".wlbar a.wlbar-locked{opacity:.6}.wlbar a.wlbar-locked span{margin-right:5px}";
+  // Cards that lead to a section (data-wl-unlock="<step id>", on the Guides home page) stay out of the page until
+  // it's open. For staff they're hidden from the first paint, so a locked card never shows for a moment.
+  // (Not "data-unlock": the Student Roster uses that for its Academics pilot buttons.)
+  var LCSS = "html.wl-locked body>*:not(.wlbar):not(script):not(style){display:none !important}" +
+    "html.wl-staffgate [data-wl-unlock]:not(.wl-open){display:none !important}";
+  (function () { var s = document.createElement("style"); s.id = "wl-lockcss"; s.textContent = LCSS; document.head.appendChild(s); })();
+  if (known && known.r === "staff") document.documentElement.classList.add("wl-staffgate");
+  var freshUnlocks = false, lockWait = null;
   function applyLocks() {
-    if (!document.getElementById("wl-lockcss")) { var s = document.createElement("style"); s.id = "wl-lockcss"; s.textContent = LCSS; document.head.appendChild(s); }
-    var lockedHere = PAGE && stepLocked(PAGE.step), panel = document.querySelector(".wl-lockpanel");
-    document.documentElement.classList.toggle("wl-locked", !!lockedHere);
-    if (lockedHere && !panel) {
-      panel = document.createElement("div"); panel.className = "wl-lockpanel"; panel.setAttribute("role", "region"); panel.setAttribute("aria-label", "Locked section");
-      panel.innerHTML = "<p>🔒 Opens after its step in onboarding</p><h1>" + esc(PAGE.name) + "</h1><p>Here's what's waiting: " + esc(PAGE.what) + "</p><p>We open the site one part at a time so nothing is overwhelming. Finish the step and this opens right away.</p><a class=\"go\" href=\"" + ONBOARD + "\">Continue onboarding →</a>";
-      bar.parentNode.insertBefore(panel, bar.nextSibling);
-    } else if (!lockedHere && panel) panel.remove();
-    document.querySelectorAll("[data-unlock]").forEach(function (el) {
-      var L = null; LOCKS.forEach(function (x) { if (x.step === el.getAttribute("data-unlock") && stepLocked(x.step)) L = x; });
-      if (!el.hasAttribute("data-href")) el.setAttribute("data-href", el.getAttribute("href") || "");
-      if (!el.querySelector(".wl-lockbadge")) { var b = document.createElement("span"); b.className = "wl-lockbadge"; b.textContent = "🔒 Opens after onboarding"; el.insertBefore(b, el.firstChild && el.firstChild.nextSibling); }
-      el.classList.toggle("wl-lockd", !!L); el.setAttribute("href", L ? ONBOARD : el.getAttribute("data-href"));
-      if (L) el.setAttribute("title", "Opens after you finish this step in onboarding"); else el.removeAttribute("title");
-    });
+    var staff = isStaff();
+    document.documentElement.classList.toggle("wl-staffgate", staff);
+    // A section this guide hasn't trained for is never shown: straight to onboarding. What this device remembers can be
+    // out of date (a step finished on another device), so the move waits for the fresh answer from /auth.js, with the
+    // page kept hidden meanwhile (and goes after 8 seconds if no answer comes).
+    var lockedHere = !!PAGE && staffNow() && stepLocked(PAGE.step);
+    document.documentElement.classList.toggle("wl-locked", lockedHere);
+    if (lockedHere) {
+      if (freshUnlocks) { location.replace(ONBOARD); return; }
+      if (!lockWait) lockWait = setTimeout(function () { if (document.documentElement.classList.contains("wl-locked")) location.replace(ONBOARD); }, 8000);
+    }
+    document.querySelectorAll("[data-wl-unlock]").forEach(function (el) { el.classList.toggle("wl-open", !staff || !stepHidden(el.getAttribute("data-wl-unlock"))); });
   }
   // Where the sign-in page sends someone: back to ?next= if it's on their own sites, otherwise their site's home.
   function homeDest(r) {
@@ -172,10 +181,9 @@
     return c === "mentor" && /^#sessions\b/.test(location.hash) ? "sessions" : c;
   }
   var cur = curTab();
-  // A tab for a section this guide hasn't unlocked yet: shown with a lock, pointing to onboarding.
+  // A tab for a section this guide hasn't trained for yet isn't drawn at all.
   function tabLink(t, cls) {
-    var L = tabLock(t.id);
-    if (L) return '<a href="' + ONBOARD + '" class="wlbar-locked' + (cls || "") + '" data-wl-tab="' + t.id + '" title="Opens after its onboarding step" aria-label="' + esc(t.label) + ' (locked until its onboarding step)"><span aria-hidden="true">🔒 </span>' + esc(t.label) + "</a>";
+    if (tabHidden(t.id)) return "";
     return '<a href="' + t.href + '"' + (cls ? ' class="' + cls.trim() + '"' : "") + ' data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.label) + "</a>";
   }
   var tabsHtml = function () { return site.tabs.map(function (t) {
@@ -447,7 +455,7 @@
   bar.setAttribute("data-wlnav-done", "");
   document.addEventListener("wl-role", function (e) { apply(e.detail); });
   document.addEventListener("wl-unlocks", function (e) {
-    var d = e.detail; unlocks = d && d.e ? d : null;
+    var d = e.detail; unlocks = d && d.e ? d : null; freshUnlocks = true;
     if (!unlocksPending() && role) ungate();
     applyLocks(); draw(); paintAlerts();
   });
