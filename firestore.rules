@@ -187,13 +187,13 @@ service cloud.firestore {
         allow delete: if staffSchool() || testStudent(sid);
       }
     }
-    // Each student's goals (/goals/): the student writes a copy here on every change; their guides, their linked
-    // parents and the student read it. Not on the crew board: other students can't see it.
-    match /lsGoals/{sid} {
+    // What a student keeps on the student sites (books, challenges, goals, project ideas), copied by /auth.js every
+    // time it saves, so their guides and their linked parents can see it on the student's profile. Other students can't.
+    match /lsShared/{sid}/sites/{site} {
       allow read: if staffSchool() || lsSelf(sid) || lsParent(sid) || testStudent(sid);
-      allow write: if (lsSelf(sid) || testStudent(sid))
+      allow write: if (lsSelf(sid) || testStudent(sid)) && site in ['books', 'challenges', 'goals', 'projects']
         && request.resource.data.keys().hasOnly(['data', 'updated', 'test'])
-        && request.resource.data.data is string && request.resource.data.data.size() <= 100000;
+        && request.resource.data.data is string && request.resource.data.data.size() <= 200000;
     }
     // The crew board: short names, what each student is working on and has passed. No not yets, notes or emails.
     match /lsBoard/{sid} {

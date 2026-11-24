@@ -1,7 +1,7 @@
 // Question banks for the staff training quizzes. Two or three separate sets per quiz: each attempt takes the next set
 // (see quiz.js), so a retake never repeats the questions just seen. Every question: [prompt, [options], correctIndex, why].
 // Sources: Mentor Mindset from /fieldguide/data.js and the Weekly 1:1s stop; Life Skills from the Lab builder rules
-// (/guides/lifeskills/builder/rules.txt), the Life Skills tracker and the home pass-off guide (/challenges/parents.html);
+// (/guides/lifeskills/builder/rules.txt), the Life Skills tracker and the home pass-off guide (/parents/passoff/);
 // Parent Communication from /guides/parents/skill.txt and the Behavior Guide (/behavior/data.js). Keep them in step
 // when those change. Policy checks are not here: their questions are written from the private policy text (quiz.js).
 import { fromRows } from "./quiz.js";

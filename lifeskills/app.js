@@ -10,7 +10,8 @@
 //   lsStudents/{sid}/entries/*  one pass or not yet each                                 (private)
 //   lsBoard/{sid}               short name, band, working[], passed[]                     (all school accounts)
 //   labs/{id}                   the Life Skill Labs schedule                              (staff; linked parents)
-//   lsGoals/{sid}               the student's goals from /goals/ (a JSON copy)             (staff; the student; linked parents)
+//   lsShared/{sid}/sites/{site} copies of what the student saved on books, challenges,    (staff; the student; linked parents)
+//                               goals and projects, written by /auth.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -126,7 +127,7 @@ const errText = e => {
 
 // ---------- state ----------
 // test: the tester's test view ("guide" | "student" | "parent"), real: the tester's own email (S.email is the test account's).
-const S = { user: null, email: "", role: null, admin: false, students: {}, entries: {}, boards: {}, mine: [], saved: {}, goals: {}, labs: null, parentBands: [], test: null, real: "", testBand: "" };
+const S = { user: null, email: "", role: null, admin: false, students: {}, entries: {}, boards: {}, mine: [], saved: {}, goals: {}, books: {}, sparks: {}, labs: null, parentBands: [], test: null, real: "", testBand: "" };
 // The band every band choice starts on: a guide's own band, a parent's (youngest) child's, the test accounts' band in a
 // test view. Admins and guests without a band start on All.
 function myBand() {
@@ -173,7 +174,7 @@ async function loadEntries(sid) {
   S.entries[sid].forEach(e => { if (e.ct && !BYID[e.cid]) addCustom({ id: e.cid, t: e.ct, k: e.k, lab: e.lab || "", labTitle: e.labTitle || "" }); });
 }
 async function loadAll() {
-  S.students = {}; S.entries = {}; S.boards = {}; S.mine = []; S.goals = {};
+  S.students = {}; S.entries = {}; S.boards = {}; S.mine = []; S.saved = {}; S.goals = {}; S.books = {}; S.sparks = {};
   // The test accounts are only for a test view, and a test view only sees them (so nothing real is changed).
   const keep = x => !!x.test === !!S.test;
   const testOnly = c => S.test ? query(collection(db, c), where("test", "==", true)) : collection(db, c);
@@ -193,40 +194,69 @@ async function loadAll() {
   } else if (S.role === "student") {
     const snap = await getDocs(query(collection(db, "lsStudents"), where("email", "==", S.email), ...(S.test ? [where("test", "==", true)] : [])));
     snap.forEach(d => { S.students[d.id] = { id: d.id, ...d.data() }; S.mine.push(d.id); });
-    await Promise.all(S.mine.map(sid => Promise.all([loadEntries(sid), loadGoals(sid)])));
+    await Promise.all(S.mine.map(sid => Promise.all([loadEntries(sid), loadShared(sid)])));
     const b = await getDocs(collection(db, "lsBoard")); b.forEach(d => S.boards[d.id] = { id: d.id, ...d.data() });
   } else if (S.role === "parent") {
     const snap = await getDocs(query(collection(db, "lsStudents"), where("parents", "array-contains", S.email), ...(S.test ? [where("test", "==", true)] : [])));
     snap.forEach(d => { const x = { id: d.id, ...d.data() }; if (!keep(x)) return; S.students[d.id] = x; S.mine.push(d.id); });
+    // A tester's test parent view also shows the tester's own real children (records that list the tester's email as a
+    // parent), view only, so a staff parent can see their family's real view.
+    if (S.test === "parent" && S.real) {
+      try {
+        const own = await getDocs(query(collection(db, "lsStudents"), where("parents", "array-contains", S.real)));
+        own.forEach(d => { const x = { id: d.id, ...d.data() }; if (x.test || S.students[d.id]) return; S.students[d.id] = { ...x, viewOnly: true }; S.mine.push(d.id); });
+      } catch (e) { console.warn("Life Skills: couldn't read your own children", e); }
+    }
     S.mine.sort((a, b) => S.students[a].name.localeCompare(S.students[b].name));
     await Promise.all(S.mine.map(async sid => {
-      await Promise.all([loadEntries(sid), loadGoals(sid)]);
+      await Promise.all([loadEntries(sid), loadShared(sid)]);
       try { const b = await getDoc(doc(db, "lsBoard", sid)); if (b.exists()) S.boards[sid] = { id: sid, ...b.data() }; } catch (e) { /* board is optional for families */ }
     }));
     try { await loadLabs(true); } catch (e) { /* not linked yet: the schedule says so */ }
+    // A tester (staff) in the test parent view can also read the students' own saved copies, for anything not shared yet.
+    if (S.test === "parent" && S.mine.some(sid => !S.students[sid].test)) { const was = S.saved; await loadSaved(true); if (S.saved === null) S.saved = was; }
+    try { localStorage.setItem("wl-kids", String(S.mine.length)); document.dispatchEvent(new CustomEvent("wl-kids", { detail: S.mine.length })); } catch (e) { }
+    if (S.mine.some(sid => (S.books[sid] || {}).n)) bookTitles().then(() => { if (/^#?(c=|$)/.test(location.hash)) route(); });
   }
 }
 // What each student saved to their Challenges plan (students/{uid}/sites/challenges, written by /auth.js; staff can
 // read them all, see firestore.rules). Matched to tracker records by school email. S.saved[sid] = [challenge ids].
-async function loadSaved() {
-  S.saved = {};
+// What a student saved on the student sites, from one site's saved copy (a JSON object of localStorage keys to strings):
+// challenges (S.saved[sid], challenge ids), goals (S.goals[sid]), books (S.books[sid]) and project ideas (S.sparks[sid]).
+function applySite(sid, site, raw) {
+  let data = {}; try { data = JSON.parse(raw || "{}") || {}; } catch (e) { return; }
+  const j = k => { try { return JSON.parse(data[k]); } catch (e) { return null; } };
+  if (site === "challenges") S.saved[sid] = [...new Set((j("wl-picks") || []).filter(c => BYID[c]))];
+  if (site === "goals") S.goals[sid] = j("wl-goals");
+  if (site === "projects") S.sparks[sid] = (j("atlas-sparks") || []).filter(x => x && x.t);
+  if (site === "books") { const b = j("lantern-stacks") || {}, saved = b.saved || [], want = b.want || [], nope = Array.isArray(b.nope) ? b.nope : []; S.books[sid] = { saved, want, nope, n: saved.length + want.length + nope.length }; }
+}
+// Staff: every student's own saved copies (the sites collection group; firestore.rules lets staff read them all),
+// matched to tracker records by school email. keep: leave what's already loaded (the test parent view).
+async function loadSaved(keep) {
+  if (!keep) S.saved = {};
   try {
     const bySchool = {}; Object.values(S.students).forEach(s => { if (s.email) bySchool[s.email.toLowerCase()] = s.id; });
     const snap = await getDocs(collectionGroup(db, "sites"));
-    snap.forEach(d => {
-      const x = d.data(), sid = bySchool[String(x.email || "").toLowerCase()]; if (!sid) return;
-      // Goals (/goals/): staff read the student's own saved copy, which the same rule already lets them see.
-      if (d.id === "goals") { try { S.goals[sid] = JSON.parse(JSON.parse(x.data || "{}")["wl-goals"] || "null"); } catch (e) { } return; }
-      if (d.id !== "challenges") return;
-      let picks = []; try { picks = JSON.parse(JSON.parse(x.data || "{}")["wl-picks"] || "[]"); } catch (e) { picks = []; }
-      S.saved[sid] = [...new Set(picks.filter(c => BYID[c]))];
-    });
-  } catch (e) { console.warn("Life Skills: couldn't read saved challenges", e); S.saved = null; }
+    snap.forEach(d => { const x = d.data(), sid = bySchool[String(x.email || "").toLowerCase()]; if (sid && !!x.test === !!S.students[sid].test) applySite(sid, d.id, x.data); });
+  } catch (e) { console.warn("Life Skills: couldn't read saved things", e); S.saved = null; }
 }
-// A student's goals for parents and the student themself: the copy /goals/ shares at lsGoals/{sid}.
-async function loadGoals(sid) {
-  try { const g = await getDoc(doc(db, "lsGoals", sid)); if (g.exists()) S.goals[sid] = JSON.parse(g.data().data || "null"); }
-  catch (e) { console.warn("Life Skills: couldn't read goals", e); }
+// Parents and the student: the copies /auth.js shares at lsShared/{sid}/sites/{site}.
+async function loadShared(sid) {
+  try { (await getDocs(collection(db, "lsShared", sid, "sites"))).forEach(d => applySite(sid, d.id, d.data().data)); }
+  catch (e) { console.warn("Life Skills: couldn't read what " + sid + " saved", e); }
+}
+// Book titles from the Books site's page (its catalog is inline there), once.
+let BOOKT = null;
+async function bookTitles() {
+  if (BOOKT) return BOOKT;
+  BOOKT = {};
+  try {
+    const t = await (await fetch("/books/")).text();
+    for (const x of t.matchAll(/\{id:"([^"]+)",t:"((?:[^"\\]|\\.)*)"/g)) BOOKT[x[1]] = x[2].replace(/\\"/g, '"');
+    for (const x of t.matchAll(/"id": "([^"]+)", "t": "((?:[^"\\]|\\.)*)"/g)) BOOKT[x[1]] = x[2].replace(/\\"/g, '"');
+  } catch (e) { }
+  return BOOKT;
 }
 // Saved challenges for one student, grouped by life skill, leaving out ones they've already passed.
 function savedBySkill(sid) {
@@ -312,7 +342,7 @@ function acct() {
   if (menuOpen) box.append(h("div", { class: "acct-menu" }, [
     h("p", { text: S.test ? `${roleName}. You're ${S.real}.` : `${roleName}. Signed in as ${S.email}.` }),
     S.role === "staff" ? h("a", { href: "/fieldguide/", text: "Field Guide" }) : null,
-    S.role !== "parent" ? h("a", { href: "/challenges/", text: "Challenges" }) : h("a", { href: "/challenges/parents.html", text: "Passing off at home" }),
+    S.role !== "parent" ? h("a", { href: "/challenges/", text: "Challenges" }) : h("a", { href: "/parents/passoff/", text: "Passing off at home" }),
     // Testers: switch to a test account (or back) from here.
     TESTERS.includes(S.real) && window.WLTest ? h("div", { html: window.WLTest.html() }) : null,
     h("button", { type: "button", text: "Sign out", onclick: async () => { menuOpen = false; try { localStorage.removeItem("wl-viewas"); } catch (e) { } await signOut(auth); location.hash = ""; } })
@@ -506,7 +536,7 @@ function record(sid, opts = {}) {
   }));
   const rankLine = s.band === "K–1"
     ? h("p", { class: "muted", text: "K–1 has no ranks. Each child aims for 2 passes in every life skill this year, through Life Skill Labs." })
-    : h("p", { class: "muted" }, [h("b", { style: { color: "var(--ink)" }, text: `${sum.trail} credits on the grades ${s.band} trail. ` }),
+    : h("p", { class: "muted" }, [h("b", { style: { color: "var(--ink)" }, text: `${sum.trail} credit${sum.trail === 1 ? "" : "s"} on the grades ${s.band} trail. ` }),
         (sum.nextRank && sum.nextRank[0] === sum.milestone + 4 ? `Next: ${sum.nextRank[1]} at ${sum.nextRank[0]}. ` : `Next milestone at ${sum.milestone + 4}` + (sum.nextRank ? `, then ${sum.nextRank[1]} at ${sum.nextRank[0]}. ` : ". ")) + "Every 4 credits is a milestone, celebrated at Honor Court."]);
   const staffBits = opts.staff ? h("div", { class: "row noprint" }, [
     h("a", { class: "btn go", href: "#validate=" + sid, text: "Validate a challenge" }),
@@ -533,6 +563,7 @@ function record(sid, opts = {}) {
       staffBits
     ])),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
+      opts.parent ? launchNote() : null,
       h("div", { class: "grid2" }, [
         h("div", { class: "panel" }, [h("h2", { class: "h", text: `Year goal: ${goal} in every life skill` }),
           h("p", { class: "muted" }, [h("b", { style: { color: "var(--ink)" }, text: `${done} of 8 skills met. ` }), missingSkills.length === 8 ? "No passes yet this year." : missingSkills.length ? "Not started yet: " + missingSkills.join(", ") + "." : "Every life skill has a pass this year."]), skillsList]),
@@ -542,15 +573,16 @@ function record(sid, opts = {}) {
     ])),
     h("section", { class: "band tint" }, h("div", { class: "wrap stack" }, [
       h("h2", { class: "h", text: "Working on" }), workingList(sid, opts.self),
-      opts.staff ? savedPanel(sid) : null,
+      opts.staff || opts.parent ? savedPanel(sid, opts.parent) : null,
       sum.notyets.length ? h("h2", { class: "h", style: { marginTop: "12px" }, text: "Not yet, with what to practice" }) : null,
       sum.notyets.length ? h("div", { class: "items" }, sum.notyets.map(e => entryRow(e, "notyet"))) : null
     ])),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
       h("h2", { class: "h", text: `Feats (${sum.passes.length})` }),
       sum.passes.length ? h("div", { class: "items" }, sum.passes.map(e => entryRow(e, "pass"))) : h("p", { class: "empty", text: "No passes yet. The first one is the hardest." }),
-      opts.parent ? h("p", { class: "small muted" }, ["Each feat is a challenge shown to a guide in person, or passed off at home by the rules in ", h("a", { href: "/challenges/parents.html", text: "Passing off at home" }), ". Not yets always say what to practice and when to try again."]) : null
+      opts.parent ? h("p", { class: "small muted" }, ["Each feat is a challenge shown to a guide in person, or passed off at home by the rules in ", h("a", { href: "/parents/passoff/", text: "Passing off at home" }), ". Not yets always say what to practice and when to try again."]) : null
     ])),
+    opts.self ? null : readingPanel(sid, opts),
     opts.parent ? homeSupport(sid) : null
   ]);
 }
@@ -613,16 +645,42 @@ function homeSupport(sid) {
       h("div", { class: "panel stack" }, [h("h3", { class: "h", text: "Challenges to try at home" }),
         h("p", { class: "small muted", text: home.length ? `These can be passed off at home with you. ${working.some(c => BYID[c].h) ? "The first are what " + name + " is working on; the rest" : "They"} are in the life skills where ${name} has the fewest passes this year.` : "" }),
         home.length ? savedList(home) : h("p", { class: "empty", text: name + " has met the year goal everywhere a home challenge fits. Nice work." }),
-        h("div", { class: "row" }, [h("a", { class: "btn", href: "/parents/challenges/", text: "Browse all challenges" }), h("a", { class: "btn plain", href: "/challenges/parents.html", text: "How passing off at home works" })])])
+        h("div", { class: "row" }, [h("a", { class: "btn", href: "/parents/challenges/", text: "Browse all challenges" }), h("a", { class: "btn plain", href: "/parents/passoff/", text: "How passing off at home works" })])])
     ])
   ]));
 }
 // Staff view of one student: what they saved to their Challenges plan, by life skill.
-function savedPanel(sid) {
+function savedPanel(sid, parent) {
   const by = savedBySkill(sid), n = Object.values(by).reduce((a, l) => a + l.length, 0);
-  return h("div", { class: "stack" }, [h("h2", { class: "h", style: { marginTop: "12px" }, text: `Saved to their plan (${n})` }),
+  return h("div", { class: "stack" }, [h("h2", { class: "h", style: { marginTop: "12px" }, text: `${parent ? "Challenges " + firstName(S.students[sid].name) + " saved" : "Saved to their plan"} (${n})` }),
+    parent ? h("p", { class: "small muted", text: "Challenges they've bookmarked on the Challenges site and plan to work toward." }) : null,
     n ? h("div", { class: "grid2" }, W.skills.filter(k => by[k.k]).map(k => h("div", { class: "panel" }, [h("p", { class: "sklbl", style: { color: k.col }, text: k.n }), savedList(by[k.k])])))
-      : h("p", { class: "empty", text: S.saved === null ? "Couldn't read saved challenges." : "Nothing saved (or they haven't signed in on Challenges yet)." })]);
+      : h("p", { class: "empty", text: S.saved === null ? "Couldn't read saved challenges." : parent ? "Nothing saved yet. Students save challenges on the Challenges site at school." : "Nothing saved (or they haven't signed in on Challenges yet)." })]);
+}
+// Books (finished: loved it, or read it and not for them; and want to read) and saved project ideas, from the
+// student sites. Guides and parents see it on the student's profile.
+function readingPanel(sid, opts) {
+  const name = firstName(S.students[sid].name), b = S.books[sid] || { saved: [], want: [], nope: [] }, sparks = S.sparks[sid] || [];
+  if (!BOOKT && (b.saved.length || b.want.length || b.nope.length)) bookTitles().then(route);
+  const t = id => (BOOKT || {})[id] || "…";
+  const list = (items, empty) => items.length ? h("ul", { class: "plain-list" }, items) : h("p", { class: "empty", text: empty });
+  const finished = b.saved.map(id => h("li", {}, [h("span", { text: t(id) }), h("span", { class: "small muted", text: " · loved it" })]))
+    .concat(b.nope.map(id => h("li", {}, [h("span", { text: t(id) }), h("span", { class: "small muted", text: " · read it, not for " + (opts.self ? "me" : "them") }) ])));
+  return h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
+    h("h2", { class: "h", text: "Reading and project ideas" }),
+    h("p", { class: "small muted", text: `What ${name} has saved on the Books and Projects sites at school.` }),
+    h("div", { class: "grid3" }, [
+      h("div", { class: "panel stack" }, [h("h3", { class: "h", text: `Books finished (${finished.length})` }), list(finished, "None marked yet.")]),
+      h("div", { class: "panel stack" }, [h("h3", { class: "h", text: `Wants to read (${b.want.length})` }), list(b.want.map(id => h("li", { text: t(id) })), "None saved yet.")]),
+      h("div", { class: "panel stack" }, [h("h3", { class: "h", text: `Project ideas saved (${sparks.length})` }), list(sparks.map(x => h("li", { text: x.t })), "None saved yet.")])
+    ])
+  ]));
+}
+// Parents: the tracker just launched (Nov 2026), so most profiles are nearly empty. Shown until spring 2027.
+function launchNote() {
+  if (today() >= "2027-03-01") return null;
+  return h("div", { class: "panel launch" }, [h("p", {}, [h("b", { text: "We just launched this. " }),
+    "Guides started recording Life Skills passes here in November 2026, and students are only now saving books, challenges and goals on these sites. Most students have only a pass or two so far, and many have none yet. If this page looks empty, your child isn't behind. Nearly everyone's does, and it fills in over the year."])]);
 }
 
 // ---------- guides: band overview ----------
@@ -1305,7 +1363,7 @@ function parentRoute(v, arg, preview) {
     if (!S.students[previewSid]) { const b = myBand(); previewSid = (all.find(s => s.band === b) || all[0]).id; }
     S.mine = [previewSid];
   }
-  if (!S.mine.length) { $("#links").innerHTML = ""; return main([head("Your account is ready", "We haven't linked it to your child yet. Ask your child's Field Guide to add this email to your child's record: " + S.email + ". Then reload this page."), h("div", { class: "wrap" }, h("a", { class: "btn go", href: "/challenges/parents.html", text: "How passing off at home works" }))]); }
+  if (!S.mine.length) { $("#links").innerHTML = ""; return main([head("Your account is ready", "We haven't linked it to your child yet. Ask your child's Field Guide to add this email to your child's record: " + S.email + ". Then reload this page."), h("div", { class: "wrap" }, h("a", { class: "btn go", href: "/parents/passoff/", text: "How passing off at home works" }))]); }
   navLinks(S.mine.map(id => ["c=" + id, firstName(S.students[id].name)]).concat(SUBNAV.parents));
   if (v === "schedule") { document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#schedule" ? "page" : "false")); return main(scheduleView(arg, false)); }
   const sid = v === "c" && S.mine.includes(arg) ? arg : S.mine[0];

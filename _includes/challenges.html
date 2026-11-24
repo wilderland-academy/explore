@@ -65,7 +65,9 @@
 </section>
 
 <main>
-  <section class="year" id="year" aria-labelledby="year-title">
+{% if include.site == "parents" %}  <!-- Your children's saved and passed challenges (drawn by /challenges/family.js). -->
+  <section class="progress" id="family" aria-labelledby="family-title" hidden></section>
+{% endif %}  <section class="year" id="year" aria-labelledby="year-title">
     <div class="year-head">
       <h2 id="year-title">Your year</h2>
       <p id="year-goal"></p>
@@ -187,7 +189,7 @@
     <div>
       <h2 id="parents-title">Passing off at home<span>High standards, high support</span></h2>
       <p>Parents can pass off some challenges from home: a video for skills your child can show on demand, a same-day log for habits, and a witness note for moments only you see. A pass from home is worth exactly the same as a pass at school, so it’s held to exactly the same sentence.</p>
-      <div class="actions"><a class="btn" href="/challenges/parents.html">Read the parent guide</a></div>
+      <div class="actions"><a class="btn" href="/parents/passoff/">Read the parent guide</a></div>
     </div>
     <ul>
       <li><svg class="ic" aria-hidden="true"><use href="/challenges/icons.svg#i-video"/></svg><span><b>Video</b> for skills shown on demand, like a timed run, a knot or a talk</span></li>
@@ -210,7 +212,7 @@
     </div>
     <div class="foot-links">
       <a href="https://wilderland.academy/">wilderland.academy</a>
-      <a href="/challenges/parents.html">Parent guide to home pass-offs</a>
+      <a href="/parents/passoff/">Parent guide to home pass-offs</a>
       <span>Icons from <a href="https://lucide.dev" rel="noopener">Lucide</a> (ISC license). Type is <a href="https://uncut.wtf/sans-serif/uncut-sans/" rel="noopener">Uncut Sans</a> by Kasper Nordkvist (<a href="/challenges/fonts/OFL.txt">SIL Open Font License</a>).</span>
     </div>
   </div>
@@ -245,6 +247,7 @@
 <script src="/challenges/modal.js"></script>
 {% if include.site == "students" %}<script type="module" src="/challenges/progress.js"></script>
 <script type="module" src="/coach/coach.js"></script>
+{% endif %}{% if include.site == "parents" %}<script type="module" src="/challenges/family.js"></script>
 {% endif %}<script type="module" src="/auth.js" data-site="{% if include.site == "parents" %}parents{% else %}challenges{% endif %}"></script>
 </body>
 </html>
