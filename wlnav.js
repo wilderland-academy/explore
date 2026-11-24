@@ -47,6 +47,8 @@
       { id: "suggest", label: "Ideas", href: "/suggest/" },
       BASECAMP] },
     guides: { name: "Guides", home: "/guides/", label: "Guides", tabs: [
+      // The one-way onboarding journey through everything below (/guides/onboarding/).
+      { id: "onboarding", label: "Onboarding", href: "/guides/onboarding/" },
       { id: "mentor", label: "Mentor Mindset", href: "/fieldguide/" },
       // Recording and reviewing 1:1 coaching sessions: a stop inside the Field Guide, with its own tab so it's one click away.
       { id: "sessions", label: "Session Room", href: "/fieldguide/#sessions" },
@@ -76,6 +78,39 @@
   if (!bar) return;
   var key = SITES[bar.getAttribute("data-wlnav")] ? bar.getAttribute("data-wlnav") : "home";
   var site = SITES[key];
+
+  // ---------- Sign-in gate ----------
+  // explore.wilderland.academy/ is the sign-in page. The Students, Guides and Parents sites open only for a signed-in
+  // account with a role (from /auth.js or the Life Skills tracker's "wl-role" event). Signed-out visitors are sent to
+  // the sign-in page, which brings them back here afterwards (?next=), or to their own site if this one isn't theirs.
+  // The tracker pages are left open: they show their own sign-in (the only place parents with an email-and-password
+  // account can sign in) and check access themselves. While a first visit waits to hear who this is, the page stays
+  // hidden. A role remembered on this device (cleared on sign-out) shows the page at once and is checked right after.
+  // This only steers the screen. These files are public; what's private is protected by the Firestore rules and the relay.
+  var TRACKER = /^\/(guides\/|parents\/)?lifeskills\/$/.test(location.pathname);
+  var GATED = key !== "home" && !TRACKER;
+  function signInUrl() { return "/?next=" + encodeURIComponent(location.pathname + location.search + location.hash); }
+  function ungate() { document.documentElement.classList.remove("wl-gate"); var m = document.querySelector(".wl-gatemsg"); if (m) m.remove(); }
+  var known = null; try { known = JSON.parse(localStorage.getItem("wl-role") || "null"); } catch (e) { }
+  if (GATED && !(known && known.r)) {
+    document.documentElement.classList.add("wl-gate");
+    var gs = document.createElement("style");
+    gs.textContent = "html.wl-gate body{visibility:hidden}html.wl-gate .wl-gatemsg{visibility:visible}.wl-gatemsg{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:24px;font:500 16px/1.5 Inter,system-ui,sans-serif;color:#7f978b;background:#f5f1ea;z-index:90}.wl-gatemsg a{color:#01412f;font-weight:600}";
+    document.head.appendChild(gs);
+    var gm = document.createElement("div"); gm.className = "wl-gatemsg"; gm.setAttribute("role", "status"); gm.textContent = "Checking your sign-in…";
+    document.body.appendChild(gm);
+    setTimeout(function () { if (document.documentElement.classList.contains("wl-gate")) gm.innerHTML = 'Still checking your sign-in. <a href="' + signInUrl() + '">Go to the sign-in page</a> or reload.'; }, 10000);
+  }
+  // Where the sign-in page sends someone: back to ?next= if it's on their own sites, otherwise their site's home.
+  function homeDest(r) {
+    var m = /[?&]next=([^&#]*)/.exec(location.search), n = "";
+    try { n = m ? decodeURIComponent(m[1]) : ""; } catch (e) { n = ""; }
+    if (!/^\/(?![\/\\])/.test(n) || /^\/(\?|#|$)/.test(n)) n = "";
+    var STU = /^\/(students|books|challenges|projects|coach|store|suggest|lifeskills)\//, PAR = /^\/(parents\/|challenges\/parents\.html)/;
+    if (r.role === "student") return n && STU.test(n) && !PAR.test(n) ? n : "/students/";
+    if (r.role === "parent") return n && (PAR.test(n) || STU.test(n)) ? n : "/parents/";
+    return n || "/guides/";
+  }
   // The current tab. The Session Room is a view of the Field Guide (/fieldguide/#sessions), so it follows the address.
   function curTab() {
     var c = bar.getAttribute("data-current") || "";
@@ -324,8 +359,11 @@
   }
   function apply(r) {
     r = r && r.role ? r : null;
+    if (key === "home" && r) { location.replace(homeDest(r)); return; }
+    if (GATED && !r) { location.replace(signInUrl()); return; }
     var go = allowed(r);
     if (go && location.pathname !== go.split("#")[0]) { location.replace(go); return; }
+    ungate();
     var was = JSON.stringify([role, tester, view]); role = r;
     tester = testerOf(r); view = r && r.test ? { as: r.test, band: r.band, by: r.real } : null;
     if (JSON.stringify([role, tester, view]) !== was) { draw(); paintAlerts(); }

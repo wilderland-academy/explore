@@ -108,6 +108,12 @@ article th{background:#f3eee5;font-weight:700}
       <div class="forms" id="forms"></div>
       <h2 class="h">Policies</h2>
       <div class="docs" id="docs"></div>
+      <h2 class="h">Check yourself</h2>
+      <p class="note">Short knowledge checks on the policies in effect. The questions are written fresh from the policy text each time, from a different part of the policy, so they help you stay current rather than test your memory of the last check. Passing both is the last step of <a href="/guides/onboarding/">guide onboarding</a>.</p>
+      <div class="docs" id="checks">
+        <div class="doc"><h3>Staff Handbook</h3><div data-check="handbook"></div></div>
+        <div class="doc"><h3>Role Clarity and Updates</h3><div data-check="policy-role-clarity"></div></div>
+      </div>
       <p class="note" style="margin-top:22px">A policy marked <span class="chip">Draft</span> hasn't been adopted by the Board yet. Something missing or out of date? Tell Alex.</p>
     </div>
   </div>
@@ -317,5 +323,13 @@ document.addEventListener("wl-auth", e => { if (!e.detail) start(null); });
 if (window.wlRole !== undefined) start(window.wlRole);
 </script>
 <script type="module" src="/auth.js" data-site="policies"></script>
+<script type="module">
+// Policy knowledge checks (/guides/training/quiz.js). Same records as onboarding's last step.
+import { mountPolicyCheck } from "/guides/training/quiz.js";
+const C = { "handbook": ["policy-handbook", "Staff Handbook"], "policy-role-clarity": ["policy-role-clarity", "Role Clarity and Updates policy"] };
+let done = false;
+const go = () => { if (done || document.getElementById("browse").classList.contains("hidden")) return; done = true; document.querySelectorAll("[data-check]").forEach(el => { const [id, label] = C[el.dataset.check]; mountPolicyCheck(el, { id, key: el.dataset.check, label, n: 6, pass: 5 }); }); };
+new MutationObserver(go).observe(document.getElementById("browse"), { attributes: true, attributeFilter: ["class"] }); go();
+</script>
 </body>
 </html>

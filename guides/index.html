@@ -43,6 +43,12 @@ p{margin:0}
 @media (max-width:640px){main{padding-top:22px;gap:20px}}
 .hb{--c:#6b4f1d}
 .pol{--c:#2f5d50}
+.onb{display:flex;align-items:center;gap:16px;flex-wrap:wrap;text-decoration:none;color:#f6f8ea;background:#0f231c;border-radius:14px;padding:18px 22px}
+.onb:hover{background:#01412f}
+.onb .ic{font-size:30px;line-height:1}
+.onb div{flex:1;min-width:220px;display:flex;flex-direction:column;gap:2px}
+.onb b{font:700 20px var(--display)}.onb span{color:#c9d6cc;font-size:15px}
+.onb i{font-style:normal;font-weight:700;color:#d5f367}
 </style>
 </head>
 <body>
@@ -81,6 +87,7 @@ p{margin:0}
     <h1>Everything a guide needs, <span>in one place.</span></h1>
   </header>
   <p class="gm"><a href="/guides/partner/"><span aria-hidden="true">🐲</span> Trail Partner</a><span>Think it through with a fellow guide. Your past conversations are there too.</span></p>
+  <a class="onb" href="/guides/onboarding/"><span class="ic" aria-hidden="true">🧭</span><div><b>Guide onboarding</b><span id="onbs">One path through everything below, in order, with a checkpoint at each step.</span></div><i>Open →</i></a>
   <header style="display:flex;flex-direction:column;gap:10px">
     <p class="lede">Guides for the work that matters most: how we mentor, how we hold the line on behavior, how students earn Life Skills, and how we talk with families. The menu at the top follows you through all of them.</p>
   </header>
@@ -101,5 +108,17 @@ p{margin:0}
 (function () { var m = /[?&]mentor(?:=([^&#]+))?/.exec(location.search); if (!m) return; location.replace("/guides/partner/" + (m[1] ? "#" + m[1] : "")); })();
 </script>
 <script type="module" src="/auth.js" data-site="guides"></script>
+<script type="module">
+// Where this guide is in onboarding (same rules as /guides/onboarding/app.js).
+import { ready, loadProgress, trainingRec } from "/guides/training/quiz.js";
+import { STEPS } from "/guides/onboarding/data.js";
+import { MODULES } from "/behavior/data.js";
+const u = await ready(); if (u) {
+  const P = await loadProgress(), read = id => !!(P.journey && P.journey.read && P.journey.read[id]);
+  const ok = s => s.lessons.every(l => read(l.id)) && (s.quiz === "behavior" ? MODULES.every(m => P.badges && P.badges[m.id] && P.badges[m.id].passed) : s.quiz ? trainingRec(P, s.quiz).passed : (s.checks || []).every(c => trainingRec(P, c.id).passed));
+  const i = STEPS.findIndex(s => !ok(s));
+  document.getElementById("onbs").textContent = i < 0 ? "Complete. Every step stays open for review." : `Step ${i + 1} of ${STEPS.length}: ${STEPS[i].name}.` + (i === 0 && !Object.keys((P.journey && P.journey.read) || {}).length ? " Start here." : " Pick up where you left off.");
+}
+</script>
 </body>
 </html>
