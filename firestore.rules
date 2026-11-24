@@ -150,6 +150,21 @@ service cloud.firestore {
     function lsSelf(sid) { return school() && lsStudent(sid).email == me(); }
     function lsParent(sid) { return verified() && me() in lsStudent(sid).parents; }
     function testStudent(sid) { return tester() && lsStudent(sid).test == true; }
+    // Camp Store rewards guides add (/store/). A reward is for named students (to: their school emails) or for everyone in
+    // some grade bands (open: true). Students can read only open rewards and ones naming them; staff read and manage all.
+    match /storeRewards/{id} {
+      allow read: if staffSchool() || (school() && (resource.data.open == true || me() in resource.data.to));
+      allow create, update: if staffSchool()
+        && request.resource.data.keys().hasOnly(['n', 'why', 'b', 'e', 'open', 'bands', 'to', 'active', 'by', 'byName', 'created', 'updated'])
+        && request.resource.data.n is string && request.resource.data.n.size() > 0 && request.resource.data.n.size() <= 80
+        && request.resource.data.why is string && request.resource.data.why.size() <= 300
+        && request.resource.data.b is int && request.resource.data.b >= 1 && request.resource.data.b <= 5000
+        && request.resource.data.e is string && request.resource.data.e.size() <= 16
+        && request.resource.data.open is bool && request.resource.data.active is bool
+        && request.resource.data.bands is list && request.resource.data.bands.size() <= 3
+        && request.resource.data.to is list && request.resource.data.to.size() <= 60;
+      allow delete: if staffSchool();
+    }
     match /lsStudents/{sid} {
       allow read: if staffSchool()
         || (school() && resource.data.email == me())

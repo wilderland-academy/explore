@@ -206,96 +206,54 @@ const PRODUCTS = [
   {id:"cookbook", n:"Complete Cookbook for Young Chefs", c:"books", p:20, a:8, e:"🍳", why:"Recipes from America's Test Kitchen that kids tested themselves. Cook dinner for your family."},
 ];
 // ---- Experiences (category "exp") ----
-// Around 4th grade, toys start to lose their pull and kids want experiences: time with adults they respect, status, real
-// responsibility, choice and time with friends (Yeager, Dahl & Dweck 2018 on adolescents and status and respect; teens in
-// a 2025 survey preferred private praise and messages home to public praise). So most of these are built for grades 5–8.
-//
-// How an experience is priced, so it is fair to students and honest about what it costs the school:
-//   blazes = 2 × cash (supplies, food, tickets; a blaze is worth $0.50)
-//          + GUIDE_RATE × guide minutes beyond normal supervision (planning, booking, running it)
-//            × 1.5 when it pulls a guide off the floor (someone has to cover the crew) or runs outside school hours
-//   rounded to the nearest 5, never below 5.
-// GUIDE_RATE is 1 blaze ($0.50) per guide minute, about $30 an hour with taxes and benefits. Utah teaching assistants
-// average about $37,000 a year (BLS 2025); guides lead and earn more, so treat this as a floor and change it here if needed.
-// cash = dollars, min = guide minutes, pull = takes a guide away from the crew, off = outside school hours,
-// g = grade bands it suits (k1 24 58), lim = how often it can be offered, how = what it takes (shown to students too),
-// sup = a rule that comes with it.
-const GUIDE_RATE = 1;
-const expBlazes = x => Math.max(5, Math.round((2 * (x.cash || 0) + GUIDE_RATE * (x.min || 0) * (x.pull || x.off ? 1.5 : 1)) / 5) * 5);
+// The first list (Nov 23, 2026) was full of jobs dressed up as rewards: lead a Lab, run the store, chair Town Hall. Kids
+// saw through it. This list follows one rule: a reward is something a kid would pick on a free afternoon. That means
+// friends, food, freedom, a little thrill and some sanctioned mischief, never a task.
+// The evidence behind it:
+// - What Alpha students actually buy: LEGO, merch, snacks and lounge access (MacKenzie Price, Future of Education, 2025).
+// - Middle schoolers asked what they want say tangible prizes, time with peers, and good news sent home (LiveSchool
+//   student-voice survey); teens preferred private praise, messages home and get-out-of-work passes (Floress et al.).
+// - Around puberty, peers prime the brain's reward system, and status, impressing friends and thrills gain value (Steinberg;
+//   Chein et al. 2011). So most of these are done with friends, are a little bit outrageous, or put a kid ahead of the line.
+// Prices are what kids will save for: the cost to us (2 blazes a dollar plus guide time) is a floor, and the most wanted
+// and scarcest ones cost more. Guides can add their own rewards for one child on this page, and those come first.
+// g = grade bands it suits (k1 24 58), lim = how often, sup = a rule that comes with it.
 const EXPERIENCES = [
-  // Time with an adult who takes you seriously
-  {id:"x-lunchguide", n:"Lunch with any guide you choose", e:"🍕", g:"24 58", cash:8, min:30, pull:1, lim:"Two a week across the school", why:"Just you and a guide (bring one friend if you want). Ask how they got here, what they were like at your age, what they would do in your shoes.", how:"$8 of pizza and 30 minutes of a guide, with someone covering their crew.", sup:"Held in an open, visible spot on campus."},
-  {id:"x-lunchfounder", n:"Lunch with a Wilderland founder", e:"🥪", g:"58", cash:8, min:45, lim:"One a month", why:"Lunch with one of the people who started the school. Bring a question or an idea for how Wilderland could be better. They will take notes.", how:"$8 of lunch and 45 minutes of a founder's time."},
-  {id:"x-walktalk", n:"Walk-and-talk hike with a guide", e:"🥾", g:"58", min:40, pull:1, lim:"One a week", why:"Forty minutes on the trail with a guide and a friend. Talk about anything, or nothing.", how:"40 minutes of a guide, with someone covering their crew.", sup:"Two students and a guide, on a trail other guides know you are on."},
-  {id:"x-skilllesson", n:"Private lesson in a guide's skill", e:"🪢", g:"24 58", min:30, pull:1, lim:"One a week", why:"Every guide is good at something: knots, chess, whittling, juggling, fly casting, drawing. Book thirty minutes to learn it from them.", how:"30 minutes of a guide, with someone covering their crew."},
-  {id:"x-expertcall", n:"Video call with a pro in your passion", e:"🎙️", g:"58", min:60, lim:"A few a term", why:"Into game design, marine biology, welding, the NBA? A guide finds a real professional and sets up a 20-minute call where you ask the questions.", how:"About an hour of a guide's time to find someone, write to them and run the call."},
-  {id:"x-shadowpro", n:"Shadow a local pro for a morning", e:"🧑‍🔧", g:"58", min:120, pull:1, lim:"A few a year", why:"Spend a morning with someone in the Valley doing a job you are curious about: a vet, a ski patroller, a chef, a mechanic, a builder.", how:"About two hours of a guide to arrange it and go with you.", sup:"Needs a signed permission slip and a guide with you the whole time."},
-  {id:"x-familyexpert", n:"Bring in a family member to teach", e:"👩‍🏫", g:"24 58", min:30, lim:"Two a month", why:"Your uncle shoes horses? Your mom is a pilot? Invite them to teach your crew for half an hour.", how:"30 minutes of a guide to plan it with your family and host."},
-  // Real responsibility and status
-  {id:"x-colab", n:"Co-lead a Life Skills Lab", e:"🧭", g:"58", cash:5, min:45, lim:"Once a term per student", why:"Plan a Lab with a guide, then run it for a younger crew. You teach, they pass off. Real responsibility.", how:"$5 of materials and 45 minutes of a guide to plan it with you."},
-  {id:"x-juniorguide", n:"Junior guide for a K–1 morning", e:"🧒", g:"58", min:15, lim:"Two a week", why:"Help the youngest crew through their morning: read to them, coach a challenge, keep a line moving. They will think you are famous.", how:"15 minutes of a guide to brief you. After that, you are helping."},
-  {id:"x-coachpass", n:"Coach a younger kid to a pass-off", e:"🏅", g:"58", min:15, lim:"Any week", why:"Pick a Life Skill you have passed. Coach a younger student until they pass it too. Their pass goes on the Crew board; your name goes with it.", how:"15 minutes of a guide to match you and check in."},
-  {id:"x-tourguide", n:"Give the tour to a visiting family", e:"🗺️", g:"58", min:15, lim:"When families visit", why:"Show a family thinking about Wilderland what a day here is really like. Nobody explains it better than a student.", how:"15 minutes of a guide to prep you and stay nearby."},
-  {id:"x-byline", n:"Write for the family newsletter, with your name on it", e:"📰", g:"24 58", min:20, lim:"Two an issue", why:"A story, an interview with a guide, a review, a comic. It goes out to every family with your byline.", how:"20 minutes of a guide to edit with you."},
-  {id:"x-townhall", n:"Chair a Town Hall", e:"🔨", g:"58", min:20, lim:"One per Town Hall", why:"Run the meeting: call on people, keep time, read out the decisions. The guides sit in the audience.", how:"20 minutes of a guide to prep the agenda with you."},
-  {id:"x-pitch", n:"Pitch an idea to the people who run the school", e:"💼", g:"58", min:30, lim:"One a month", why:"Ten minutes at a staff or board meeting to pitch a change: a new Lab, a new rule, a fix. Bring a plan. Some pitches get a yes.", how:"30 minutes of a guide to help you sharpen the pitch."},
-  {id:"x-storeclerk", n:"Run the Camp Store for a day", e:"🏪", g:"58", min:15, lim:"One a week", why:"Handle redemptions, check prices against Basecamp, keep the shelf straight.", how:"15 minutes of a guide to show you the system."},
-  {id:"x-stockitem", n:"Pick the next Camp Store item", e:"🛒", g:"24 58", min:15, lim:"One a month", why:"Find something worth saving for, under $25, and make the case. If it passes, it goes in the store with a note that you picked it.", how:"15 minutes of a guide to review it with you."},
-  {id:"x-namespot", n:"Name a trail, bench or tree on campus", e:"🪧", g:"58", cash:15, min:20, lim:"A few a year", why:"Your name for it goes on a small sign and stays after you graduate.", how:"$15 for the sign and 20 minutes of a guide."},
-  // Choice and privileges
-  {id:"x-chooselab", n:"Choose next week's Lab challenge for your crew", e:"🧪", g:"24 58", min:15, lim:"One a week", why:"Pick the challenge from the map. Your crew works on what you picked.", how:"15 minutes of a guide to fit it into the schedule."},
-  {id:"x-fridaypick", n:"Pick the Friday afternoon activity", e:"🗓️", g:"58", min:15, lim:"One a week", why:"Capture the flag, a hike, a build day, a tournament: your call, from the list guides can run.", how:"15 minutes of a guide to plan it."},
-  {id:"x-tripplanner", n:"Choose and plan the next crew field trip", e:"🚌", g:"58", min:30, lim:"One per trip", why:"Pick from the approved places, build the plan and budget, and present it to the crew.", how:"30 minutes of a guide to plan with you."},
-  {id:"x-djweek", n:"DJ the work blocks for a week", e:"🎧", g:"58", min:10, lim:"One a week", why:"Your playlist, guide-approved, for every work block that allows music, Monday to Friday.", how:"10 minutes of a guide to check the playlist."},
-  {id:"x-spotweek", n:"Claim the best spot for a week", e:"🛋️", g:"24 58", min:0, lim:"One a week", why:"The couch, the loft, the window seat. It's yours for five days.", how:"Nothing but a guide saying yes."},
-  {id:"x-friendsroom", n:"Lunch in a special room with three friends", e:"🍱", g:"24 58", min:0, lim:"Two a week", why:"A quiet room just for your group at lunch.", how:"Nothing extra. The room stays in a guide's line of sight."},
-  {id:"x-vipseat", n:"Front-row seat at the next showcase", e:"🎟️", g:"k1 24 58", min:0, lim:"A few per showcase", why:"Reserved seat with your name on it for you and your family.", how:"Nothing but a sign."},
-  {id:"x-costumeday", n:"Costume or pajama day for your crew", e:"🎭", g:"k1 24 58", min:5, lim:"One a month", why:"You pick the theme. Everyone in your crew dresses up.", how:"5 minutes of a guide to tell families."},
-  // Friends and the crew
-  {id:"x-themeparty", n:"Host a themed party for your crew", e:"🎉", g:"24 58", cash:40, min:60, lim:"One a month per band", why:"Pick a theme (80s, mystery dinner, Hawaiian, space), plan the food, music and games on a budget, and host it for your crew on a Friday afternoon.", how:"$40 of food and decorations and an hour of a guide to plan and run it."},
-  {id:"x-tournament", n:"Run a tournament you design", e:"🏆", g:"24 58", cash:5, min:20, lim:"Two a month", why:"Spikeball, chess, four square, Catan. You make the bracket, the rules and the trophy.", how:"$5 for a prize and 20 minutes of a guide."},
-  {id:"x-challengeguide", n:"Challenge a guide", e:"⚔️", g:"24 58", min:15, lim:"One a week", why:"A race, free throws, chess, a plank contest, a spelling bee. You pick the event. Bragging rights only.", how:"15 minutes of a guide."},
-  {id:"x-ctf", n:"Guides vs. students capture the flag", e:"🚩", g:"24 58", min:30, lim:"One a month", why:"Your whole crew against the guides. Guides do not go easy.", how:"30 minutes each of several guides during outdoor time."},
-  {id:"x-trailrace", n:"Design a trail race for your crew", e:"🏃", g:"58", cash:10, min:30, lim:"One a month", why:"Map the course, mark it, time it and hand out the ribbons.", how:"$10 for ribbons and 30 minutes of a guide to walk the course."},
-  {id:"x-escaperoom", n:"Build an escape room for your crew", e:"🔐", g:"58", cash:15, min:45, lim:"One a term", why:"Write the story, hide the clues, lock the boxes. Your crew tries to get out in 30 minutes.", how:"$15 of locks and props and 45 minutes of a guide."},
-  {id:"x-cookcrew", n:"Cook lunch for your crew", e:"🍳", g:"58", cash:30, min:60, lim:"One a month", why:"Plan a menu for 12 on a budget, write the shopping list, cook it and serve it.", how:"$30 of food and an hour of a guide in the kitchen with you.", sup:"Knives and stove with a guide present."},
-  {id:"x-pancakes", n:"Pancake breakfast for your crew", e:"🥞", g:"24 58", cash:20, min:60, off:1, lim:"One a month", why:"Before school starts, you and a guide flip pancakes for anyone in your crew who shows up early.", how:"$20 of food and an hour of a guide before school hours.", sup:"Families sign up for the early drop-off."},
-  {id:"x-guestday", n:"Bring a friend from another school for a day", e:"👋", g:"24 58", min:30, lim:"One a month", why:"Show a friend what your school is like. They join your crew for the day.", how:"30 minutes of a guide for paperwork and hosting.", sup:"Both families agree first."},
-  // Wild outdoors
-  {id:"x-crewhike", n:"Plan and lead a crew hike or snowshoe", e:"🏔️", g:"58", cash:20, min:60, pull:1, lim:"One a month", why:"Pick the route, check the weather, pack the map and compass, and lead your crew there and back.", how:"$20 for snacks or rentals and an hour of a second guide.", sup:"Route approved by a guide; two adults on every hike."},
-  {id:"x-snowshelter", n:"Build a snow shelter and eat lunch in it", e:"❄️", g:"24 58", min:45, lim:"Winter, one a week", why:"Dig a quinzhee with a friend and a guide. If it holds, you eat lunch inside.", how:"45 minutes of a guide during outdoor time."},
-  {id:"x-firecook", n:"Cook lunch over a fire you built", e:"🔥", g:"58", cash:10, min:45, lim:"Two a month", why:"Build the fire, cook foil packets or quesadillas, put it dead out.", how:"$10 of food and 45 minutes of a guide.", sup:"Fire certification required; a guide is there the whole time."},
-  {id:"x-rocketlaunch", n:"Launch day for your rocket", e:"🚀", g:"58", cash:15, min:30, lim:"Two a month", why:"Bring a model rocket you built (or the store's launch set) and fly it with a guide.", how:"$15 for engines and 30 minutes of a guide.", sup:"Launched only with a guide, in an open field."},
-  {id:"x-stargazing", n:"Stargazing night at North Fork Park", e:"🔭", g:"58", cash:10, min:120, off:1, lim:"One a term", why:"Your crew and families at the International Dark Sky Park up the road, with telescopes and hot cocoa. You pick the date and plan the sky tour.", how:"$10 of cocoa and two evening hours of a guide.", sup:"Families come too; parents drive."},
-  {id:"x-fishing", n:"Fishing morning at Pineview", e:"🎣", g:"24 58", cash:10, min:150, pull:1, lim:"A few a year", why:"A guide takes you and a friend fishing at Pineview Reservoir for a morning.", how:"$10 of bait and gear and about two and a half hours of a guide.", sup:"Permission slip. Utah requires a fishing license from age 12."},
-  {id:"x-climbgym", n:"Climbing gym trip with a friend", e:"🧗", g:"58", cash:40, min:150, pull:1, lim:"A few a year", why:"A morning at a climbing gym in Ogden for you and a friend, with a guide on belay.", how:"About $40 of admission and rentals and two and a half hours of a guide, including the drive.", sup:"Permission slip and a guide with you the whole time."},
-  // Make something that lasts
-  {id:"x-podcast", n:"Record a podcast episode with a guide", e:"🎙", g:"58", min:45, lim:"Two a month", why:"Interview a guide, a classmate or a visitor. The episode can be shared with families if you want.", how:"45 minutes of a guide to record and edit."},
-  {id:"x-premiere", n:"Premiere your short film or project", e:"🎬", g:"24 58", min:20, lim:"Two a month", why:"Your crew watches your film, slideshow or build. You take questions after.", how:"20 minutes of a guide to set it up."},
-  {id:"x-showcase", n:"Show your project to families at pickup", e:"🖼️", g:"24 58", min:20, lim:"Two a week", why:"A table, a sign and a stream of parents asking how you made it.", how:"20 minutes of a guide to set up."},
-  {id:"x-popupshop", n:"Run a pop-up shop at pickup", e:"🛍️", g:"58", min:20, lim:"Two a month", why:"Sell something you made: bracelets, baked goods, prints. You keep the books and the profit.", how:"20 minutes of a guide to set up and help with money."},
-  {id:"x-sticker", n:"Your design printed as 50 stickers", e:"🖍️", g:"24 58", cash:40, min:20, lim:"One a month", why:"Draw it, a guide helps you get it print-ready, and you get 50 real vinyl stickers to keep, trade or sell.", how:"$40 of printing and 20 minutes of a guide."},
-  {id:"x-mural", n:"Paint a panel for the school mural", e:"🎨", g:"24 58", cash:10, min:30, lim:"A few a term", why:"Your panel goes up on the wall and stays there.", how:"$10 of paint and 30 minutes of a guide."},
-  {id:"x-buildbudget", n:"$20 build budget for your own project", e:"🛠️", g:"58", cash:20, min:15, lim:"One a month", why:"Need wood, wire, a motor or fabric for an Atlas of Sparks project? A guide orders it with you.", how:"$20 of materials and 15 minutes of a guide."},
-  // Recognition at home
-  {id:"x-bragcall", n:"Brag call home", e:"📞", g:"k1 24 58", min:10, lim:"Any week", why:"A guide calls your family to tell them, in detail, something you did well. Just them, not the whole school.", how:"10 minutes of a guide."},
-  {id:"x-letterhome", n:"A handwritten letter home from your guide", e:"✉️", g:"k1 24 58", cash:1, min:10, lim:"Any week", why:"A real letter in the mail, from your guide to your family, about what you have been working on.", how:"$1 of stamp and paper and 10 minutes of a guide."},
-  // The originals (from the first store list), priced the same way
-  {id:"x-readaloud", n:"Pick the read-aloud book", e:"📣", g:"k1 24 58", min:5, lim:"When a book ends", why:"Your choice becomes the whole crew's next book.", how:"5 minutes of a guide to check it."},
-  {id:"x-djafternoon", n:"DJ the afternoon", e:"🎶", g:"24 58", min:5, lim:"Any day", why:"Your playlist (guide-approved) for one afternoon block.", how:"5 minutes of a guide to check the playlist."},
-  {id:"x-warmup", n:"Lead a Life Skill Lab warm-up", e:"🎤", g:"24 58", min:15, lim:"Any Lab", why:"Run the first ten minutes of a Lab. Real responsibility, real status.", how:"15 minutes of a guide to plan it with you."},
-  {id:"x-campfire", n:"Campfire and s'mores for your crew", e:"🏕️", g:"k1 24 58", cash:15, min:30, lim:"Two a month", why:"You host. Your crew comes. The guide brings the marshmallows.", how:"$15 of s'mores and 30 minutes of a guide.", sup:"A guide builds and watches the fire."},
-  {id:"x-guidefortheday", n:"Guide for a day", e:"🧑‍🏫", g:"58", min:60, lim:"One a month", why:"Shadow a guide for a day: plan a block, run a check-in, see the other side.", how:"About an hour of extra guide time across the day."},
-  {id:"x-dog", n:"Bring your dog to school for an hour", e:"🐕", g:"k1 24 58", min:15, lim:"One a week", why:"Your dog, your crew, one very good hour.", how:"15 minutes of a guide to check the plan with your family.", sup:"Guide and family approve first."},
-  {id:"x-recess", n:"Extra recess for your crew", e:"🏃", g:"k1 24", min:15, lim:"One a week", why:"Fifteen more minutes outside for everyone. You'll be popular.", how:"15 minutes of a guide."},
-  {id:"x-pe", n:"Pick the game for PE", e:"⚽", g:"k1 24 58", min:0, lim:"Any day", why:"Your sport, your rules (within reason).", how:"Nothing but a guide saying yes."},
-  {id:"x-teach", n:"Teach the crew something you're great at", e:"🛹", g:"k1 24 58", min:5, lim:"Any day", why:"Five minutes to show off a skill: a trick, a recipe, a card game, a drawing.", how:"5 minutes of a guide."},
-  {id:"x-snack", n:"Cook a snack with a guide", e:"🧑‍🍳", g:"k1 24 58", cash:8, min:30, lim:"Two a week", why:"Pick a simple recipe, make it together, share it with your crew.", how:"$8 of food and 30 minutes of a guide."},
-  {id:"x-lunchout", n:"Lunch outside with a friend", e:"🧺", g:"k1 24 58", min:0, lim:"Any day", why:"Picnic blanket, your pick of spot.", how:"Nothing but a guide saying yes."},
-  {id:"x-photographer", n:"Be the photographer for a day", e:"📷", g:"24 58", min:10, lim:"One a week", why:"Carry the school camera and capture the day. Your photos might end up on the website.", how:"10 minutes of a guide to show you the camera."},
-  {id:"x-realjob", n:"Help a guide with a real job", e:"🛠️", g:"24 58", min:0, lim:"Any week", why:"Fix something, build something, carry something important. Real work, real thanks.", how:"Nothing extra: you are helping."},
-  {id:"x-cocoa", n:"Hot cocoa for you and a friend", e:"☕", g:"k1 24 58", cash:2, min:5, lim:"Any day", why:"Ideal after a sledding morning.", how:"$2 of cocoa and 5 minutes of a guide."},
-  {id:"x-sitanywhere", n:"Sit anywhere you want for a day", e:"🪑", g:"k1 24 58", min:0, lim:"Any day", why:"Couch, floor, standing desk, guide's chair (ask nicely).", how:"Nothing but a guide saying yes."},
+  // Mess with a guide (guides opt in)
+  {id:"x-pie", n:"Pie a guide in the face", e:"🥧", b:60, g:"24 58", lim:"Two a month, school-wide", why:"Whipped cream, a paper plate and a guide who agreed to it. Your friends get to watch.", sup:"Only guides who sign up for it. Outside, with a towel ready."},
+  {id:"x-ducttape", n:"Duct-tape a guide to the wall", e:"🦆", b:40, g:"24 58", lim:"Once a month", why:"Buy a strip. Every student who buys one adds a strip. Does the guide stay up?", sup:"Guides who sign up only. Feet stay on the floor; tape goes over clothes, never skin or hair."},
+  {id:"x-snowballs", n:"Ten free snowball shots at a guide", e:"☃️", b:25, g:"24 58", lim:"Winter, any week", why:"The guide stands still. You get ten throws. Bring friends who are good aims.", sup:"Soft snow only, below the shoulders, at a guide who agreed."},
+  {id:"x-waterballoon", n:"Water balloon ambush on a guide", e:"🎈", b:40, g:"24 58", lim:"Warm months, two a month", why:"Twenty balloons, one guide and a head start for you.", sup:"Guides who sign up only."},
+  {id:"x-outfit", n:"Pick what a guide wears tomorrow", e:"🤡", b:50, g:"k1 24 58", lim:"Once a month per guide", why:"A banana suit, your favorite team's jersey, a tutu, a cape. They wear it all day.", sup:"Guides who sign up only; it has to be school-appropriate."},
+  {id:"x-nickname", n:"Give a guide a nickname for a day", e:"🏷️", b:20, g:"24 58", lim:"Once a week", why:"Everyone, guides included, has to call them by it until pickup.", sup:"Kind names only; the guide can veto one."},
+  {id:"x-hairspray", n:"Spray a guide's hair a crazy color", e:"🌈", b:45, g:"24 58", lim:"Once a month", why:"Washable color spray, your choice of color. They keep it till tomorrow.", sup:"Guides who sign up only."},
+  // Friends and food
+  {id:"x-restaurantlunch", n:"Order lunch in for you and a friend", e:"🍔", b:70, g:"24 58", lim:"One a week", why:"Pick from a few local spots and a guide brings it in. You and your friend eat it somewhere better than the usual table.", sup:"Up to about $25 for the two of you; families okay any allergies."},
+  {id:"x-movielunch", n:"Movie lunch with three friends", e:"🍿", b:60, g:"24 58", lim:"Two a month", why:"Pizza, popcorn and the first part of a movie you pick from the approved list, in a room just for you four.", sup:"Guide-approved movies; a guide nearby."},
+  {id:"x-cookies", n:"Fancy cookie box for your crew", e:"🍪", b:90, g:"k1 24 58", lim:"Once a month", why:"A box of the big bakery cookies, delivered at lunch. You hand them out. Everyone knows who brought them.", sup:"Families okay any allergies."},
+  {id:"x-cocoabar", n:"Hot cocoa bar for you and three friends", e:"☕", b:30, g:"k1 24 58", lim:"Any week in winter", why:"Whipped cream, marshmallows, sprinkles, candy canes. After sledding is best.", sup:""},
+  {id:"x-lunchguide", n:"Pizza lunch with your favorite guide and two friends", e:"🍕", b:45, g:"k1 24 58", lim:"Two a week, school-wide", why:"Pizza's on us. The guide brings the stories.", sup:"In an open spot on campus."},
+  {id:"x-crewparty", n:"Throw a party for your crew", e:"🎉", b:250, g:"24 58", lim:"Once a month per band", why:"You pick the theme, the music and the food. Guides set it up. A Friday afternoon your whole crew owes you for.", sup:"Guides make the final plan work."},
+  // Your own space and time
+  {id:"x-lounge", n:"Lounge pass for a week", e:"🛋️", b:60, g:"58", lim:"A few passes at a time", why:"The best room in the school, during free time and lunch, for you and anyone you invite.", sup:"Guides choose the room; it stays in sight."},
+  {id:"x-fort", n:"Build a giant fort with your friends", e:"🏰", b:35, g:"k1 24 58", lim:"One a week", why:"Blankets, tarps, rope, snow or sticks: one free block to build it, and you get to eat lunch in it.", sup:""},
+  {id:"x-sledding", n:"Sledding hill takeover", e:"🛷", b:40, g:"k1 24 58", lim:"Winter, two a week", why:"An extra 30 minutes on the hill for you and three friends while everyone else is inside.", sup:"A guide comes with you."},
+  {id:"x-nerf", n:"Nerf war: your crew vs. the guides", e:"🔫", b:200, g:"24 58", lim:"Once a month", why:"Foam darts, the whole campus, guides who do not go easy. You decide when it starts.", sup:"Eye protection on; guide-run rules."},
+  {id:"x-flashlight", n:"Flashlight tag night", e:"🔦", b:300, g:"58", lim:"Once a term", why:"Your crew back at school after dark for flashlight tag and capture the flag, with hot dogs.", sup:"Families sign up and pick up; two adults minimum."},
+  {id:"x-lockin", n:"Crew lock-in at school", e:"🌙", b:900, g:"58", lim:"Once a year, if approved", why:"The big one. Your crew stays the evening at school: games, a movie, pizza and a midnight snack. Pool blazes with your friends.", sup:"Needs approval from the school's leaders, family permission, and enough guides."},
+  {id:"x-trampoline", n:"Trampoline park or laser tag with three friends", e:"🤸", b:400, g:"24 58", lim:"A few a year", why:"A morning out at a trampoline park or laser tag arena with a guide.", sup:"Permission slips; families drive."},
+  // Freedom from the usual rules
+  {id:"x-headphones", n:"Your music in your ears for a week", e:"🎧", b:40, g:"58", lim:"Any week", why:"Headphones and your own playlist during independent work, all week.", sup:"Guide-approved playlist; off when a guide needs you."},
+  {id:"x-earlyout", n:"Leave the work block early", e:"🏃", b:25, g:"24 58", lim:"Once a week", why:"Done with your goals? Walk out 20 minutes early and go outside.", sup:"Only after your daily goals are met."},
+  {id:"x-chorepass", n:"Skip-a-chore pass", e:"🧹", b:20, g:"24 58", lim:"Twice a month", why:"Hand it in at clean-up. Someone else gets your job today.", sup:""},
+  {id:"x-latestart", n:"Sleep-in pass: arrive an hour late", e:"😴", b:60, g:"58", lim:"Once a month", why:"Sleep in one morning. You still have to hit your daily goals.", sup:"Your family has to agree and drive you."},
+  {id:"x-frontofline", n:"First in line for a week", e:"🥇", b:15, g:"k1 24 58", lim:"Any week", why:"Lunch, sleds, the field trip bus. You first.", sup:""},
+  {id:"x-guidechair", n:"The guide's chair for a day", e:"💺", b:15, g:"k1 24 58", lim:"Any day", why:"The rolling chair is yours till pickup.", sup:""},
+  {id:"x-dog", n:"Bring your dog to school", e:"🐕", b:40, g:"k1 24 58", lim:"One a week", why:"Your dog, your crew, one very good hour.", sup:"Guide and family approve first."},
+  {id:"x-pajamas", n:"Pajama day for you and a friend", e:"🩳", b:15, g:"k1 24 58", lim:"Any week", why:"Slippers, hoodie, the works.", sup:""},
+  {id:"x-campfire", n:"Campfire and s'mores for your crew", e:"🏕️", b:80, g:"k1 24 58", lim:"Two a month", why:"You call it. The guide builds the fire and brings the marshmallows.", sup:"A guide runs the fire."},
+  // Good news home
+  {id:"x-bragcall", n:"Brag call home", e:"📞", b:15, g:"k1 24 58", lim:"Any week", why:"A guide calls your family to tell them something specific you did well. Just them, not the whole school.", sup:""},
 ];
 
 // ---- Who each product appeals to most (grade bands: k1 = K–1, 24 = 2–4, 58 = 5–8) ----
@@ -321,10 +279,10 @@ const APPEAL = {
   "saw":"58","sharpener":"58","gluegun":"24 58","uno":"k1 24","kittens":"24 58","dutchblitz":"24 58","phase10":"24 58","mclabyrinth":"k1 24","kingoftokyo":"24 58","klask":"24 58","speedcube":"24 58",
   "sewing":"24","embroidery":"24 58"
 };
-// "Picked for your grades": the top of the store for each band, in order. Experiences lead from grade 2 up, because that is
-// when they start to beat toys; for 5–8 they lead the whole row.
+// "Picked for your grades": the top of the store for each band, in order, after any rewards guides made for that student.
+// From grade 2 up, experiences are mixed in near the top; around 4th grade they start to beat toys.
 const FEATURED = {
-  "K–1": ["squish","magnatiles","kite","bugviewer","catan-jr","seamonkeys","crystalmine","plusplus","x-vipseat","x-dog","x-costumeday","hotwheels","dogman","jellycat"],
-  "2–4": ["x-themeparty","x-lunchguide","x-challengeguide","x-snowshelter","lego-classic","gravitrax","perplexus","kendama","snap-jr","fossils","mcisland","minihoop","rushhour","x-tournament"],
-  "5–8": ["x-lunchguide","x-themeparty","x-walktalk","x-shadowpro","x-cookcrew","x-stargazing","x-colab","x-expertcall","spikeball","hydroflask","kanken","leatherman","instax","codenames","catan","microbit"]
+  "K–1": ["squish","magnatiles","kite","x-outfit","bugviewer","catan-jr","x-dog","seamonkeys","crystalmine","x-fort","plusplus","hotwheels","dogman","jellycat"],
+  "2–4": ["x-pie","lego-classic","x-nerf","gravitrax","x-snowballs","perplexus","kendama","x-fort","snap-jr","fossils","x-crewparty","mcisland","minihoop","rushhour"],
+  "5–8": ["x-pie","x-lounge","x-restaurantlunch","spikeball","x-nerf","hydroflask","x-movielunch","kanken","x-headphones","leatherman","x-crewparty","instax","x-lockin","codenames","catan","x-ducttape"]
 };
