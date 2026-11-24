@@ -1,7 +1,7 @@
 // Guide onboarding: one continuous path. Every screen is right here (content comes from the Field Guide and Behavior
 // Guide data, so it stays in step with them), one big Next button at a time, a checkpoint at the end of each step,
-// then the part of the site it unlocks and an optional Dig deeper list. Address: #<step>/<screen>, #<step>/check,
-// #<step>/done, #library, #team (admins).
+// then the part of the site it unlocks. Optional Dig deeper picks sit, folded, at the bottom of the screens they're
+// about. Address: #<step>/<screen>, #<step>/check, #<step>/done, #library (saved picks), #team (admins).
 // Progress: behaviorProgress/{uid} through /guides/training/quiz.js: journey.read.{screenId}, journey.done.{stepId}
 // (what unlocks the site: /auth.js reads it for /wlnav.js), training.*, badges.* (the Behavior badges, shared with the
 // Behavior Guide), saved.{resourceId}.
@@ -69,7 +69,8 @@ function nav(cur) {
     ]));
   });
   const nSaved = Object.values(P.saved || {}).filter(Boolean).length;
-  n.appendChild(h("a", { class: "st lib" + (cur === "library" ? " on" : ""), href: "#library" }, [h("i", { text: "📚" }), h("span", null, [h("b", { text: "Dig deeper" }), h("small", { text: nSaved ? nSaved + " saved" : "Books, podcasts, studies" })])]));
+  // Only what the guide saved from the Dig deeper picks on each screen (there's no long list of everything).
+  if (nSaved || cur === "library") n.appendChild(h("a", { class: "st lib" + (cur === "library" ? " on" : ""), href: "#library" }, [h("i", { text: "📚" }), h("span", null, [h("b", { text: "Saved for later" }), h("small", { text: nSaved + " saved" })])]));
   if (isAdmin()) n.appendChild(h("a", { class: "st" + (cur === "team" ? " on" : ""), href: "#team" }, [h("i", { text: "👥" }), h("span", null, [h("b", { text: "Team progress" }), h("small", { text: "Admins" })])]));
   const all = open >= STEPS.length;
   $("#meter").innerHTML = ""; $("#meter").append(h("b", { text: all ? `All ${STEPS.length} steps done` : `Step ${open + 1} of ${STEPS.length}` }), h("span", { class: "bar" }, [h("i", { style: `width:${Math.round(STEPS.filter(stepDone).length / STEPS.length * 100)}%` })]));
@@ -153,6 +154,9 @@ function screenView(sec, s, i, n) {
   // An illustration for the screen, in the site's textured-landscape style (/guides/onboarding/art.js).
   if (x.art && ART[x.art]) sec.append(h("figure", { class: "art", html: ART[x.art] }));
   sec.append(...RENDER[x.kind](x));
+  // Dig deeper: optional reading on this screen's topic (data.js: dig items with on: <screen id>), folded away.
+  const dg = (s.dig || []).filter(d => d.on === x.id);
+  if (dg.length) sec.append(fold([h("b", { text: "📚 Dig deeper (optional)" }), h("small", { text: `${dg.length} ${dg.length === 1 ? "pick" : "picks"} on this topic: books, podcasts, articles and studies. Save any for later.` })], [digList(dg)]));
   const last = n === s.screens.length - 1, hasCheck = !!(s.quiz || s.checks);
   bottom(sec, n > 0 ? `#${s.id}/${n}` : null, last ? (hasCheck ? "On to the checkpoint →" : "Finish this step →") : "Next →", async e => {
     e.currentTarget.disabled = true;
@@ -189,7 +193,6 @@ function doneView(sec, s, i) {
     : h("a", { class: "choice next-step", href: "#finish" }, [h("span", { class: "k", text: "All done" }), h("b", { text: "Finish onboarding →" }), h("span", { class: "d", text: "Every step stays open for review." })]);
   const view = s.unlocks && OPEN_LINK[s.id] ? h("a", { class: "choice open-page", href: OPEN_LINK[s.id] }, [h("span", { class: "k", text: "🔓 Just unlocked" }), h("b", { text: `Open ${s.unlocks.name} →` }), h("span", { class: "d", text: s.unlocks.what }), h("span", { class: "d", text: "Come back to onboarding any time from the Onboarding tab." })]) : null;
   sec.appendChild(h("div", { class: "choices" + (view ? "" : " one") }, view ? [view, go] : [go]));
-  if (s.dig && s.dig.length) sec.append(h("h2", { text: "Dig deeper (optional)" }), h("p", { class: "dim", text: "For whenever you want more. Save anything to come back to it during the year." }), digList(s.dig));
 }
 
 // ---------------- Dig deeper ----------------
@@ -206,19 +209,17 @@ function digList(items, onlySaved) {
     } });
     box.appendChild(h("div", { class: "res" }, [h("div", null, [h("small", { class: "k", text: KIND[r.t] || r.t }), r.url ? h("a", { href: r.url, target: "_blank", rel: "noopener", class: "rt", text: r.title + " ↗" }) : h("b", { class: "rt", text: r.title }), r.by ? h("small", { class: "by", text: r.by }) : null, r.note ? h("p", { class: "dim small", text: r.note }) : null]), btn]));
   });
-  if (!box.children.length) box.appendChild(h("p", { class: "dim", text: "Nothing saved yet. Tap ☆ Save on anything in Everything to keep it here." }));
+  if (!box.children.length) box.appendChild(h("p", { class: "dim", text: "Nothing saved yet. Tap ☆ Save on any Dig deeper pick at the bottom of an onboarding screen to keep it here." }));
   return box;
 }
-function libraryView(sec, onlySaved) {
-  const n = Object.values(P.saved || {}).filter(Boolean).length;
-  sec.append(h("h1", { text: "📚 Dig deeper" }), h("p", { class: "lede", text: "Books, articles, podcast episodes and studies behind each part of our work. Save the ones you want for ongoing learning through the year." }),
-    h("div", { class: "tabs" }, [h("a", { href: "#library", class: onlySaved ? "" : "on", text: "Everything" }), h("a", { href: "#library/saved", class: onlySaved ? "on" : "", text: `My saved (${n})` })]));
-  if (onlySaved) { sec.appendChild(digList(STEPS.flatMap(s => s.dig || []), true)); return; }
-  STEPS.filter(s => s.dig && s.dig.length).forEach(s => sec.append(h("h2", { text: s.icon + " " + s.name }), digList(s.dig)));
+// The guide's own saved Dig deeper picks. (#library and #library/saved both land here.)
+function libraryView(sec) {
+  sec.append(h("h1", { text: "📚 Saved for later" }), h("p", { class: "lede", text: "The Dig deeper picks you saved from onboarding screens, for ongoing learning through the year. All of it is optional." }),
+    digList(STEPS.flatMap(s => s.dig || []), true));
 }
 function finishView(sec) {
   sec.append(h("h1", { text: "🏔️ Onboarding complete" }), h("p", { class: "lede", text: "The whole Guides site is open to you now. Everything here stays open for review, and the policy checks can be taken again any time to stay current." }),
-    h("div", { class: "next" }, [h("a", { class: "btn ghost", href: "#library", text: "Dig deeper library" }), h("a", { class: "btn big", href: "/guides/", text: "Go to the Guides home →" })]));
+    h("div", { class: "next" }, [h("a", { class: "btn ghost", href: "#library", text: "Saved for later" }),h("a", { class: "btn big", href: "/guides/", text: "Go to the Guides home →" })]));
 }
 async function teamView(sec) {
   sec.append(h("h1", { text: "Team progress" }), h("p", { class: "lede", text: "Where each guide is, from their saved progress. Scores are best scores; individual answers aren't saved." }));
@@ -236,7 +237,7 @@ async function teamView(sec) {
 function route() {
   const [id, sub] = location.hash.slice(1).split("/"), sec = $("#view"); sec.innerHTML = "";
   scrollTo(0, 0);
-  if (id === "library") { nav("library"); return libraryView(sec, sub === "saved"); }
+  if (id === "library") { nav("library"); return libraryView(sec); }
   if (id === "team" && isAdmin()) { nav("team"); return teamView(sec); }
   const open = firstOpen();
   if (id === "finish" && open >= STEPS.length) { nav("finish"); return finishView(sec); }

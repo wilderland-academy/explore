@@ -4,8 +4,8 @@
 // Screen kinds are laid out by app.js: text, quad, phrases, moments, evidence, trust, practice, oneonone, standards,
 // tiers, freedom, knots, toolkit, wiring, doc. Kinds that pull from the Field Guide or Behavior Guide data stay in step
 // with those guides automatically. Edit text here.
-// DIG: optional books, articles, podcast episodes and studies for each section. Guides can save any of them to their
-// own list (#library) for ongoing training. Every link was checked when added (Nov 2026); keep it that way.
+// DIG: optional books, articles, podcast episodes and studies. Each has on: <screen id> and shows, folded, at the
+// bottom of that screen (a screen can have none). Guides can save any of them to their own list (#library). Every link was checked when added (Nov 2026); keep it that way.
 
 export const STEPS = [
   { id: "welcome", name: "Welcome", icon: "🧭", time: "5 minutes",
@@ -14,7 +14,7 @@ export const STEPS = [
     screens: [
       { id: "w-how", kind: "text", title: "How this works", text: [
         "Eight short steps, in order: Welcome, Life Skills, Students, Trail Partner, the Mentor Mindset, Behavior, Parent Communication, and our policies. Everything you need is right here. Read a screen, press Next.",
-        ["Each step ends with a short checkpoint. Pass it and that part of the Guides site appears for you. Until then it stays out of sight, so you only see what you've trained for.", "Checkpoints have three different sets of questions that take turns. If you don't pass, the next try asks different questions.", "Your place is saved. Close the tab any time and pick up where you left off.", "Each step ends with Dig deeper: books, articles, podcasts and studies, if you want more. Save any of them for later."]
+        ["Each step ends with a short checkpoint. Pass it and that part of the Guides site appears for you. Until then it stays out of sight, so you only see what you've trained for.", "Checkpoints have three different sets of questions that take turns. If you don't pass, the next try asks different questions.", "Your place is saved. Close the tab any time and pick up where you left off.", "Some screens end with Dig deeper: books, articles, podcasts and studies on that topic, if you want more. They're optional. Save any of them for later."]
       ] },
       { id: "w-why", kind: "text", title: "Why we train this way", text: [
         "Wilderland runs on high standards, high support and high autonomy, for students and for us. We hired experienced educators on purpose, and we're also an ambitious school: as research on what motivates students moves, we change how we work.",
@@ -70,20 +70,20 @@ export const STEPS = [
     ],
     quiz: "lifeskills",
     dig: [
-      { id: "d-pearson", t: "study", title: "The instruction of reading comprehension", by: "Pearson & Gallagher, 1983, Contemporary Educational Psychology", url: "https://doi.org/10.1016/0361-476X(83)90019-X", note: "Where “gradual release of responsibility” comes from: the shape of our afternoon." },
-      { id: "d-ksc", t: "study", title: "Why minimal guidance during instruction does not work", by: "Kirschner, Sweller & Clark, 2006, Educational Psychologist", url: "https://doi.org/10.1207/s15326985ep4102_1", note: "Why beginners need Labs before independent work, and why guidance eases off only as skill grows." },
-      { id: "d-zimmerman", t: "study", title: "Becoming a self-regulated learner: an overview", by: "Zimmerman, 2002, Theory Into Practice", url: "https://doi.org/10.1207/s15430421tip4102_2", note: "Plan, do, reflect: what a student ready for a Passion Project can already do. Five readable pages." },
-      { id: "d-diamond", t: "study", title: "Interventions shown to aid executive function development in children 4 to 12 years old", by: "Diamond & Lee, 2011, Science", url: "https://doi.org/10.1126/science.1204529", note: "What builds executive function: repeated practice with steadily rising challenge." },
-      { id: "d-hidden", t: "book", title: "Hidden Potential: The Science of Achieving Greater Things", by: "Adam Grant (2023)", note: "Character skills over talent, and how they're built." },
-      { id: "d-pblbook", t: "book", title: "Setting the Standard for Project Based Learning", by: "John Larmer, John Mergendoller & Suzie Boss (ASCD, 2015)", note: "The book behind Gold Standard PBL." },
-      { id: "d-tenpercent", t: "podcast", title: "Adam Grant on the Science of Potential and Achievement", by: "Ten Percent Happier", url: "https://www.tenpercent.com/tph/podcast-episode/adam-grant-hidden-potential", note: "Why character skills matter and how to develop them." },
-      { id: "d-woop", t: "podcast", title: "WOOP, There It Is! 4 Steps to Achieve Your Goals", by: "Hidden Brain (NPR) with Gabriele Oettingen", url: "https://www.npr.org/transcripts/477379965", note: "Wish, outcome, obstacle, plan: the if-then plan behind our 1:1s." },
-      { id: "d-futureed", t: "podcast", title: "Future of Education Podcast", by: "MacKenzie Price, co-founder of Alpha School", url: "https://podcasts.apple.com/us/podcast/id1673109764", note: "How Alpha runs its life-skills afternoons, which our day borrows from." },
-      { id: "d-gold", t: "article", title: "Gold Standard PBL: Essential Project Design Elements", by: "PBLWorks", url: "https://www.pblworks.org/blog/gold-standard-pbl-essential-project-design-elements", note: "Seven elements of a strong project: useful for Passion Projects and Labs." },
-      { id: "d-woopguide", t: "article", title: "WOOP overview for classrooms", by: "Character Lab", url: "https://characterlab.org/wp-content/uploads/2019/03/CharacterLabWOOPoverview.pdf", note: "A one-page guide to teaching WOOP." },
-      { id: "d-gollwitzer", t: "study", title: "Implementation intentions and goal achievement: a meta-analysis", by: "Gollwitzer & Sheeran, 2006", url: "https://doi.org/10.1016/S0065-2601(06)38002-1", note: "94 tests; if-then plans have a medium-to-large effect." },
-      { id: "d-duckworth", t: "study", title: "Self-regulation strategies improve self-discipline in adolescents", by: "Duckworth et al., 2011", url: "https://doi.org/10.1080/01443410.2010.506003", note: "A 30-minute wish-obstacle-plan exercise, over 60% more practice done." },
-      { id: "d-dubois", t: "study", title: "Effectiveness of mentoring programs for youth: a meta-analytic review", by: "DuBois, Holloway, Valentine & Cooper, 2002", url: "https://doi.org/10.1023/A:1014628810714", note: "Why weekly, steady 1:1 contact matters." }
+      { id: "d-pearson", on: "l-vision", t: "study", title: "The instruction of reading comprehension", by: "Pearson & Gallagher, 1983, Contemporary Educational Psychology", url: "https://doi.org/10.1016/0361-476X(83)90019-X", note: "Where “gradual release of responsibility” comes from: the shape of our afternoon." },
+      { id: "d-ksc", on: "l-vision", t: "study", title: "Why minimal guidance during instruction does not work", by: "Kirschner, Sweller & Clark, 2006, Educational Psychologist", url: "https://doi.org/10.1207/s15326985ep4102_1", note: "Why beginners need Labs before independent work, and why guidance eases off only as skill grows." },
+      { id: "d-zimmerman", on: "l-projects2", t: "study", title: "Becoming a self-regulated learner: an overview", by: "Zimmerman, 2002, Theory Into Practice", url: "https://doi.org/10.1207/s15430421tip4102_2", note: "Plan, do, reflect: what a student ready for a Passion Project can already do. Five readable pages." },
+      { id: "d-diamond", on: "l-challenges2", t: "study", title: "Interventions shown to aid executive function development in children 4 to 12 years old", by: "Diamond & Lee, 2011, Science", url: "https://doi.org/10.1126/science.1204529", note: "What builds executive function: repeated practice with steadily rising challenge." },
+      { id: "d-hidden", on: "l-skills", t: "book", title: "Hidden Potential: The Science of Achieving Greater Things", by: "Adam Grant (2023)", note: "Character skills over talent, and how they're built." },
+      { id: "d-pblbook", on: "l-projects2", t: "book", title: "Setting the Standard for Project Based Learning", by: "John Larmer, John Mergendoller & Suzie Boss (ASCD, 2015)", note: "The book behind Gold Standard PBL." },
+      { id: "d-tenpercent", on: "l-skills", t: "podcast", title: "Adam Grant on the Science of Potential and Achievement", by: "Ten Percent Happier", url: "https://www.tenpercent.com/tph/podcast-episode/adam-grant-hidden-potential", note: "Why character skills matter and how to develop them." },
+      { id: "d-woop", on: "l-coaching2", t: "podcast", title: "WOOP, There It Is! 4 Steps to Achieve Your Goals", by: "Hidden Brain (NPR) with Gabriele Oettingen", url: "https://www.npr.org/transcripts/477379965", note: "Wish, outcome, obstacle, plan: the if-then plan behind our 1:1s." },
+      { id: "d-futureed", on: "l-vision", t: "podcast", title: "Future of Education Podcast", by: "MacKenzie Price, co-founder of Alpha School", url: "https://podcasts.apple.com/us/podcast/id1673109764", note: "How Alpha runs its life-skills afternoons, which our day borrows from." },
+      { id: "d-gold", on: "l-labs2", t: "article", title: "Gold Standard PBL: Essential Project Design Elements", by: "PBLWorks", url: "https://www.pblworks.org/blog/gold-standard-pbl-essential-project-design-elements", note: "Seven elements of a strong project: useful for Passion Projects and Labs." },
+      { id: "d-woopguide", on: "l-coaching2", t: "article", title: "WOOP overview for classrooms", by: "Character Lab", url: "https://characterlab.org/wp-content/uploads/2019/03/CharacterLabWOOPoverview.pdf", note: "A one-page guide to teaching WOOP." },
+      { id: "d-gollwitzer", on: "l-coaching2", t: "study", title: "Implementation intentions and goal achievement: a meta-analysis", by: "Gollwitzer & Sheeran, 2006", url: "https://doi.org/10.1016/S0065-2601(06)38002-1", note: "94 tests; if-then plans have a medium-to-large effect." },
+      { id: "d-duckworth", on: "l-coaching2", t: "study", title: "Self-regulation strategies improve self-discipline in adolescents", by: "Duckworth et al., 2011", url: "https://doi.org/10.1080/01443410.2010.506003", note: "A 30-minute wish-obstacle-plan exercise, over 60% more practice done." },
+      { id: "d-dubois", on: "l-coaching2", t: "study", title: "Effectiveness of mentoring programs for youth: a meta-analytic review", by: "DuBois, Holloway, Valentine & Cooper, 2002", url: "https://doi.org/10.1023/A:1014628810714", note: "Why weekly, steady 1:1 contact matters." }
     ] },
 
   { id: "students", name: "Students", icon: "🧒", time: "10 minutes",
@@ -146,15 +146,15 @@ export const STEPS = [
     ],
     quiz: "mentor",
     dig: [
-      { id: "d-1025", t: "book", title: "10 to 25: The Science of Motivating Young People", by: "David Yeager (2024)", note: "The book this whole step comes from." },
-      { id: "d-tilt450", t: "podcast", title: "Dr. David Yeager on What the Science Says About Motivating Young People", by: "Tilt Parenting, episode 450", url: "https://www.tiltparenting.com/session450", note: "Enforcer, protector and mentor, explained by Yeager himself." },
-      { id: "d-kawasaki", t: "podcast", title: "David Yeager: The Science of Motivating Young People", by: "Remarkable People with Guy Kawasaki", url: "https://guykawasaki.com/david-yeager-the-science-of-motivating-young-people/", note: "Transcript on the page." },
-      { id: "d-gratitude", t: "podcast", title: "#151: David Yeager on the Mentor Mindset", by: "Evolving with Gratitude (Lainie Rowell), March 2026", url: "https://podbay.fm/p/evolving-with-gratitude/e/1774962180", note: "Wise feedback and what real support looks like, 45 minutes." },
-      { id: "d-wise", t: "study", title: "Wise critiques help students succeed", by: "Yeager et al., 2014", url: "https://sparq.stanford.edu/solutions/wise-critiques-help-students-succeed", note: "The 19-word note: revisions rose from about 17% to 71%." },
-      { id: "d-okonofua", t: "study", title: "Brief intervention to encourage empathic discipline cuts suspension rates in half", by: "Okonofua, Paunesku & Walton, 2016, PNAS", url: "https://doi.org/10.1073/pnas.1523698113", note: "Suspensions fell from 9.6% to 4.8%." },
-      { id: "d-synergistic", t: "study", title: "A synergistic mindsets intervention protects adolescents from stress", by: "Yeager et al., 2022, Nature", url: "https://doi.org/10.1038/s41586-022-04907-7", note: "Stress as fuel: 63% vs 47% pass rates in the hardest courses." },
-      { id: "d-belong", t: "study", title: "When students feel they belong, they thrive", by: "Walton & Cohen, 2011", url: "https://sparq.stanford.edu/solutions/when-students-feel-they-belong-they-thrive", note: "A one-hour belonging exercise halved a three-year grade gap." },
-      { id: "d-coaching", t: "study", title: "The effect of teacher coaching on instruction and achievement", by: "Kraft, Blazar & Hogan, 2018", url: "https://annenberg.brown.edu/publications/effect-teacher-coaching-instruction-and-achievement-meta-analysis-causal-evidence", note: "Why we rehearse: 60 causal studies." }
+      { id: "d-1025", on: "m-quad", t: "book", title: "10 to 25: The Science of Motivating Young People", by: "David Yeager (2024)", note: "The book this whole step comes from." },
+      { id: "d-tilt450", on: "m-quad", t: "podcast", title: "Dr. David Yeager on What the Science Says About Motivating Young People", by: "Tilt Parenting, episode 450", url: "https://www.tiltparenting.com/session450", note: "Enforcer, protector and mentor, explained by Yeager himself." },
+      { id: "d-kawasaki", on: "m-quad", t: "podcast", title: "David Yeager: The Science of Motivating Young People", by: "Remarkable People with Guy Kawasaki", url: "https://guykawasaki.com/david-yeager-the-science-of-motivating-young-people/", note: "Transcript on the page." },
+      { id: "d-gratitude", on: "m-why", t: "podcast", title: "#151: David Yeager on the Mentor Mindset", by: "Evolving with Gratitude (Lainie Rowell), March 2026", url: "https://podbay.fm/p/evolving-with-gratitude/e/1774962180", note: "Wise feedback and what real support looks like, 45 minutes." },
+      { id: "d-wise", on: "m-why", t: "study", title: "Wise critiques help students succeed", by: "Yeager et al., 2014", url: "https://sparq.stanford.edu/solutions/wise-critiques-help-students-succeed", note: "The 19-word note: revisions rose from about 17% to 71%." },
+      { id: "d-okonofua", on: "m-evidence", t: "study", title: "Brief intervention to encourage empathic discipline cuts suspension rates in half", by: "Okonofua, Paunesku & Walton, 2016, PNAS", url: "https://doi.org/10.1073/pnas.1523698113", note: "Suspensions fell from 9.6% to 4.8%." },
+      { id: "d-synergistic", on: "m-evidence", t: "study", title: "A synergistic mindsets intervention protects adolescents from stress", by: "Yeager et al., 2022, Nature", url: "https://doi.org/10.1038/s41586-022-04907-7", note: "Stress as fuel: 63% vs 47% pass rates in the hardest courses." },
+      { id: "d-belong", on: "m-evidence", t: "study", title: "When students feel they belong, they thrive", by: "Walton & Cohen, 2011", url: "https://sparq.stanford.edu/solutions/when-students-feel-they-belong-they-thrive", note: "A one-hour belonging exercise halved a three-year grade gap." },
+      { id: "d-coaching", on: "m-habit", t: "study", title: "The effect of teacher coaching on instruction and achievement", by: "Kraft, Blazar & Hogan, 2018", url: "https://annenberg.brown.edu/publications/effect-teacher-coaching-instruction-and-achievement-meta-analysis-causal-evidence", note: "Why we rehearse: 60 causal studies." }
     ] },
 
   { id: "behavior", name: "Behavior", icon: "🪜", time: "1 hour",
@@ -170,15 +170,15 @@ export const STEPS = [
     ],
     quiz: "behavior",
     dig: [
-      { id: "d-lostatschool", t: "book", title: "Lost at School", by: "Ross Greene", note: "Collaborative & Proactive Solutions (Plan B) in schools." },
-      { id: "d-explosive", t: "book", title: "The Explosive Child", by: "Ross Greene", note: "Kids do well if they can." },
-      { id: "d-selfreg", t: "book", title: "Self-Reg", by: "Stuart Shanker", note: "Reading behavior as stress, and co-regulation." },
-      { id: "d-unmasking", t: "book", title: "Unmasking Autism", by: "Devon Price", note: "What masking costs, from the inside." },
-      { id: "d-barkley", t: "book", title: "Taking Charge of ADHD", by: "Russell Barkley", note: "Help at the point of performance." },
-      { id: "d-thinkinclusive", t: "podcast", title: "From Punishment to Problem-Solving: The CPS Model Explained by Dr. Ross Greene", by: "Think Inclusive podcast, episode 1004", url: "https://mcie.org/think-inclusive/dr-ross-greene-using-collaborative-and-proactive-solutions-to-support-the-behavior-of-all-learners/", note: "Plan B in plain terms, with a transcript." },
-      { id: "d-greenepod", t: "podcast", title: "Dr. Ross Greene Educators' Podcast", by: "Ross Greene", url: "https://podcasts.apple.com/podcast/id649017652", note: "Episodes on running Plan B with students, like “The Who, When, and What of Plan B.”" },
-      { id: "d-mindshift", t: "article", title: "Ross Greene: What if bad behavior isn't the problem?", by: "KQED MindShift", url: "https://www.kqed.org/mindshift/66347/ross-greene-what-if-bad-behavior-isnt-the-problem", note: "Unsolved problems, not consequences." },
-      { ref: "cps" }, { ref: "rp" }, { ref: "praise" }, { ref: "rewards" }, { ref: "ncaep" }, { ref: "dep" }, { ref: "mask" }, { ref: "pyramid" }
+      { id: "d-lostatschool", on: "b-toolkit", t: "book", title: "Lost at School", by: "Ross Greene", note: "Collaborative & Proactive Solutions (Plan B) in schools." },
+      { id: "d-explosive", on: "b-toolkit", t: "book", title: "The Explosive Child", by: "Ross Greene", note: "Kids do well if they can." },
+      { id: "d-selfreg", on: "b-wiring", t: "book", title: "Self-Reg", by: "Stuart Shanker", note: "Reading behavior as stress, and co-regulation." },
+      { id: "d-unmasking", on: "b-wiring", t: "book", title: "Unmasking Autism", by: "Devon Price", note: "What masking costs, from the inside." },
+      { id: "d-barkley", on: "b-wiring", t: "book", title: "Taking Charge of ADHD", by: "Russell Barkley", note: "Help at the point of performance." },
+      { id: "d-thinkinclusive", on: "b-toolkit", t: "podcast", title: "From Punishment to Problem-Solving: The CPS Model Explained by Dr. Ross Greene", by: "Think Inclusive podcast, episode 1004", url: "https://mcie.org/think-inclusive/dr-ross-greene-using-collaborative-and-proactive-solutions-to-support-the-behavior-of-all-learners/", note: "Plan B in plain terms, with a transcript." },
+      { id: "d-greenepod", on: "b-toolkit", t: "podcast", title: "Dr. Ross Greene Educators' Podcast", by: "Ross Greene", url: "https://podcasts.apple.com/podcast/id649017652", note: "Episodes on running Plan B with students, like “The Who, When, and What of Plan B.”" },
+      { id: "d-mindshift", on: "b-knots", t: "article", title: "Ross Greene: What if bad behavior isn't the problem?", by: "KQED MindShift", url: "https://www.kqed.org/mindshift/66347/ross-greene-what-if-bad-behavior-isnt-the-problem", note: "Unsolved problems, not consequences." },
+      { ref: "cps", on: "b-toolkit" }, { ref: "rp", on: "b-tiers" }, { ref: "praise", on: "b-toolkit" }, { ref: "rewards", on: "b-freedom" }, { ref: "ncaep", on: "b-wiring" }, { ref: "dep", on: "b-wiring" }, { ref: "mask", on: "b-wiring" }, { ref: "pyramid", on: "b-toolkit" }
     ] },
 
   { id: "parents", name: "Parent Communication", icon: "📨", time: "20 minutes",
@@ -206,13 +206,13 @@ export const STEPS = [
     ],
     quiz: "parentcomms",
     dig: [
-      { id: "d-powerful", t: "book", title: "Powerful Partnerships: A Teacher's Guide to Engaging Families for Student Success", by: "Karen Mapp, Ilene Carver & Jessica Lander (Scholastic, 2017)", note: "Written for teachers, walking through a whole school year." },
-      { id: "d-scholastic47", t: "podcast", title: "Getting Families Engaged in the Classroom", by: "Scholastic Reads, episode 47, with Karen Mapp", url: "https://scholasticreads.fireside.fm/47", note: "33 minutes." },
-      { id: "d-backpack", t: "podcast", title: "Partnering with Your Child's Teacher", by: "Notes from the Backpack (National PTA), with Karen Mapp", url: "https://www.pta.org/the-center-for-family-engagement/podcast/notes-from-the-backpack/partnering-with-your-child-s-teacher", note: "The parents' side of the partnership." },
-      { id: "d-mappascd", t: "article", title: "Unlocking Families' Potential: A Conversation with Karen L. Mapp", by: "ASCD Educational Leadership", url: "https://www.ascd.org/el/articles/unlocking-families-potential-a-conversation-with-karen-l.-mapp", note: "Beyond “random acts of parent involvement.”" },
-      { id: "d-bostonfed", t: "article", title: "The Underutilized Potential of Teacher-Parent Communication", by: "Matthew Kraft, Federal Reserve Bank of Boston, 2016", url: "https://www.bostonfed.org/publications/communities-and-banking/2016/spring/the-underutilized-potential-of-teacher-parent-communication.aspx", note: "A readable summary of the research." },
-      { id: "d-kraftrogers", t: "study", title: "The underutilized potential of teacher-to-parent communication: evidence from a field experiment", by: "Kraft & Rogers, 2015, Economics of Education Review", url: "https://www.hks.harvard.edu/publications/underutilized-potential-teacher-parent-communication-evidence-field-experiment-0", note: "Weekly one-sentence messages cut the share failing to earn credit from 15.8% to 9.3%. Messages about what to improve worked best." },
-      { id: "d-bergman", t: "study", title: "Leveraging Parents through Low-Cost Technology", by: "Bergman & Chan, 2021, Journal of Human Resources (J-PAL summary)", url: "https://www.povertyactionlab.org/node/2353", note: "Automated texts about missed work and absences improved outcomes." }
+      { id: "d-powerful", on: "p-voice", t: "book", title: "Powerful Partnerships: A Teacher's Guide to Engaging Families for Student Success", by: "Karen Mapp, Ilene Carver & Jessica Lander (Scholastic, 2017)", note: "Written for teachers, walking through a whole school year." },
+      { id: "d-scholastic47", on: "p-voice", t: "podcast", title: "Getting Families Engaged in the Classroom", by: "Scholastic Reads, episode 47, with Karen Mapp", url: "https://scholasticreads.fireside.fm/47", note: "33 minutes." },
+      { id: "d-backpack", on: "p-voice", t: "podcast", title: "Partnering with Your Child's Teacher", by: "Notes from the Backpack (National PTA), with Karen Mapp", url: "https://www.pta.org/the-center-for-family-engagement/podcast/notes-from-the-backpack/partnering-with-your-child-s-teacher", note: "The parents' side of the partnership." },
+      { id: "d-mappascd", on: "p-voice", t: "article", title: "Unlocking Families' Potential: A Conversation with Karen L. Mapp", by: "ASCD Educational Leadership", url: "https://www.ascd.org/el/articles/unlocking-families-potential-a-conversation-with-karen-l.-mapp", note: "Beyond “random acts of parent involvement.”" },
+      { id: "d-bostonfed", on: "p-clear", t: "article", title: "The Underutilized Potential of Teacher-Parent Communication", by: "Matthew Kraft, Federal Reserve Bank of Boston, 2016", url: "https://www.bostonfed.org/publications/communities-and-banking/2016/spring/the-underutilized-potential-of-teacher-parent-communication.aspx", note: "A readable summary of the research." },
+      { id: "d-kraftrogers", on: "p-clear", t: "study", title: "The underutilized potential of teacher-to-parent communication: evidence from a field experiment", by: "Kraft & Rogers, 2015, Economics of Education Review", url: "https://www.hks.harvard.edu/publications/underutilized-potential-teacher-parent-communication-evidence-field-experiment-0", note: "Weekly one-sentence messages cut the share failing to earn credit from 15.8% to 9.3%. Messages about what to improve worked best." },
+      { id: "d-bergman", on: "p-clear", t: "study", title: "Leveraging Parents through Low-Cost Technology", by: "Bergman & Chan, 2021, Journal of Human Resources (J-PAL summary)", url: "https://www.povertyactionlab.org/node/2353", note: "Automated texts about missed work and absences improved outcomes." }
     ] },
 
   { id: "policies", name: "Our policies", icon: "📜", time: "1 to 2 hours",
@@ -230,10 +230,10 @@ export const STEPS = [
       { id: "policy-role-clarity", key: "policy-role-clarity", label: "Role Clarity and Updates policy", name: "Role Clarity check" }
     ],
     dig: [
-      { id: "d-dcfs", t: "article", title: "Report child abuse or neglect", by: "Utah Division of Child and Family Services", url: "https://dcfs.utah.gov/services/child-protective-services/", note: "Hotline 1-855-323-3237, 24/7, or the online form for non-urgent reports. In Utah everyone is a mandated reporter." },
-      { id: "d-poster", t: "article", title: "Utah abuse and neglect reporting law (poster)", by: "State of Utah, Utah Code §80-2-609", url: "https://dlbc.utah.gov/wp-content/uploads/Abuse-and-Neglect-Poster-_-February-2026.pdf", note: "The law on one page." },
-      { id: "d-d2l", t: "article", title: "Stewards of Children", by: "Darkness to Light", url: "https://www.d2l.org/education/stewards-of-children/", note: "A two-and-a-half-hour training on preventing, recognizing and responding to child sexual abuse. Available online." },
-      { ref: "cstag" }
+      { id: "d-dcfs", on: "x-handbook", t: "article", title: "Report child abuse or neglect", by: "Utah Division of Child and Family Services", url: "https://dcfs.utah.gov/services/child-protective-services/", note: "Hotline 1-855-323-3237, 24/7, or the online form for non-urgent reports. In Utah everyone is a mandated reporter." },
+      { id: "d-poster", on: "x-handbook", t: "article", title: "Utah abuse and neglect reporting law (poster)", by: "State of Utah, Utah Code §80-2-609", url: "https://dlbc.utah.gov/wp-content/uploads/Abuse-and-Neglect-Poster-_-February-2026.pdf", note: "The law on one page." },
+      { id: "d-d2l", on: "x-handbook", t: "article", title: "Stewards of Children", by: "Darkness to Light", url: "https://www.d2l.org/education/stewards-of-children/", note: "A two-and-a-half-hour training on preventing, recognizing and responding to child sexual abuse. Available online." },
+      { ref: "cstag", on: "x-handbook" }
     ] }
 ];
 
