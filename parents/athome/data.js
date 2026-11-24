@@ -182,7 +182,7 @@ export const MATH = {
 
 /* ---------- explore with your child ---------- */
 export const EXPLORE = [
-  { name: "Life Skills Challenges", href: "/challenges/", img: "🧗", what: "The map of “I can” challenges across Wilderland's eight Life Skills. Turn on the “Can do at home” filter to find ones your family can work on together.",
+  { name: "Life Skills Challenges", href: "/parents/challenges/", img: "🧗", what: "The map of “I can” challenges across Wilderland's eight Life Skills. Turn on the “Can do at home” filter to find ones your family can work on together.",
     how: ["Let your child choose the challenge. That's the autonomy.", "Coach before the attempt: practice plan, gear, encouragement. That's the support.", "Judge the attempt word for word against the “I can” sentence. No hints, no “close enough.” That's the standard."],
     more: ["Home pass-off guide for parents", "/parents/passoff/"], note: "In K–1, challenges are run by guides at school, so this is mostly for grades 2–8." },
   { name: "Atlas of Sparks", href: "/projects/", img: "✨", what: "A giant map of real projects people have made, including standout projects by kids, to spark ideas for your child's own passion project.",

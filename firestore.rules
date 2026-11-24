@@ -29,11 +29,12 @@ service cloud.firestore {
     // The Suggestion Box.
     match /suggestions/{id} {
       // Signed-in school accounts can read open and accepted ideas; only admins can read archived ones.
-      allow read: if isAdmin() || (school() && resource.data.status in ['open', 'accepted']);
+      allow read: if staffSchool() || (school() && resource.data.status in ['open', 'accepted']);
       // Students post in their own name, open, with exactly these fields.
       allow create: if school()
-        && request.resource.data.keys().hasOnly(['text', 'by', 'name', 'email', 'status', 'votes', 'flags', 'created'])
+        && request.resource.data.keys().hasOnly(['text', 'by', 'name', 'email', 'status', 'votes', 'vnames', 'flags', 'created'])
         && request.resource.data.by == request.auth.uid
+        && (!('vnames' in request.resource.data) || request.resource.data.vnames.keys().hasOnly([request.auth.uid]))
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.text is string
         && request.resource.data.text.size() >= 12 && request.resource.data.text.size() <= 280
@@ -42,16 +43,18 @@ service cloud.firestore {
         && request.resource.data.votes == [request.auth.uid]
         && request.resource.data.flags == []
         && request.resource.data.created == request.time;
-      // Students may only add or remove their own uid in votes and flags; nothing else changes.
-      allow update: if school() && !isAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'flags'])
+      // Anyone at school may only add or remove their own uid in votes and flags, and their own name in vnames
+      // (uid → name, so the wall shows who voted); nothing else changes.
+      allow update: if school()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'flags', 'vnames'])
+        && request.resource.data.get('vnames', {}).diff(resource.data.get('vnames', {})).affectedKeys().hasOnly([request.auth.uid])
         && request.resource.data.votes.toSet().difference(resource.data.votes.toSet()).hasOnly([request.auth.uid])
         && resource.data.votes.toSet().difference(request.resource.data.votes.toSet()).hasOnly([request.auth.uid])
         && request.resource.data.flags.toSet().difference(resource.data.flags.toSet()).hasOnly([request.auth.uid])
         && resource.data.flags.toSet().difference(request.resource.data.flags.toSet()).hasOnly([request.auth.uid]);
-      // Admins can accept, archive, restore, reply, clear flags.
-      allow update: if isAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'note', 'flags'])
+      // Guides can accept (with their name on it), archive, restore, reply, clear flags.
+      allow update: if staffSchool()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'note', 'noteName', 'flags', 'acceptedBy', 'acceptedName', 'acceptedAt'])
         && request.resource.data.status in ['open', 'accepted', 'archived']
         && (!('note' in request.resource.data) || (request.resource.data.note is string && request.resource.data.note.size() <= 300));
       // A student can delete their own open idea; admins can delete any.
@@ -110,7 +113,7 @@ service cloud.firestore {
         && request.resource.data.status == 'new'
         && request.resource.data.created == request.time;
       allow update: if staffSchool()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'meeting', 'agendaId', 'note', 'outcome', 'reviewedBy', 'reviewedAt'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'meeting', 'agendaId', 'note', 'outcome', 'reviewedBy', 'reviewedName', 'reviewedAt'])
         && request.resource.data.status in ['new', 'agenda', 'discussed', 'declined'];
       allow delete: if isAdmin() || (school() && resource.data.by == request.auth.uid && resource.data.status == 'new');
     }
@@ -155,7 +158,8 @@ service cloud.firestore {
     match /storeRewards/{id} {
       allow read: if staffSchool() || (school() && (resource.data.open == true || me() in resource.data.to));
       allow create, update: if staffSchool()
-        && request.resource.data.keys().hasOnly(['n', 'why', 'b', 'e', 'open', 'bands', 'to', 'active', 'by', 'byName', 'created', 'updated'])
+        && request.resource.data.keys().hasOnly(['n', 'why', 'b', 'e', 'img', 'open', 'bands', 'to', 'active', 'by', 'byName', 'created', 'updated'])
+        && (!('img' in request.resource.data) || (request.resource.data.img is string && request.resource.data.img.size() <= 600))
         && request.resource.data.n is string && request.resource.data.n.size() > 0 && request.resource.data.n.size() <= 80
         && request.resource.data.why is string && request.resource.data.why.size() <= 300
         && request.resource.data.b is int && request.resource.data.b >= 1 && request.resource.data.b <= 5000
@@ -186,6 +190,22 @@ service cloud.firestore {
           && request.resource.data.date is string;
         allow delete: if staffSchool() || testStudent(sid);
       }
+    }
+    // Notifications (/notify.js): one document per recipient. You read, mark read and delete only your own (testers:
+    // the test accounts'). Anyone at school sends in their own name; parents don't send.
+    match /wlNotes/{id} {
+      function mine() { return verified() && (resource.data.to == me() || (tester() && resource.data.test == true)); }
+      allow read, delete: if mine();
+      allow update: if mine() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) && request.resource.data.read is bool;
+      allow create: if (school() || tester()) && request.resource.data.from == me()
+        && request.resource.data.keys().hasOnly(['to', 'from', 'fromName', 'kind', 'text', 'link', 'at', 'read', 'test'])
+        && request.resource.data.to is string && request.resource.data.to.size() <= 120
+        && request.resource.data.fromName is string && request.resource.data.fromName.size() <= 60
+        && request.resource.data.kind is string && request.resource.data.kind.size() <= 20
+        && request.resource.data.text is string && request.resource.data.text.size() <= 300
+        && request.resource.data.link is string && request.resource.data.link.size() <= 300
+        && request.resource.data.at is int && request.resource.data.read == false
+        && (!('test' in request.resource.data) || tester());
     }
     // What a student keeps on the student sites (books, challenges, goals, project ideas), copied by /auth.js every
     // time it saves, so their guides and their linked parents can see it on the student's profile. Other students can't.

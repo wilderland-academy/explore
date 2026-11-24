@@ -376,7 +376,7 @@
     var home = 'vlot'.indexOf(c.p) >= 0;
     return '<div class="home-box' + (c.p === 's' ? ' gate' : home ? '' : ' school') + '"><h3>' + icon(m[0]) + esc(m[1]) + '</h3><p>' + esc(m[2]) + '</p>' +
       '<div class="row">' + (home ? '<button class="btn btn-sm" type="button" data-copy-email="' + c.id + '">' + icon('copy') + 'Copy email for the Field Guide</button>' : '') +
-      '<a class="btn btn-sm ghost" href="/parents/passoff/#' + m[3] + '">' + esc(m[4]) + '</a></div></div>';
+      (STUDENT ? '' : '<a class="btn btn-sm ghost" href="/parents/passoff/#' + m[3] + '">' + esc(m[4]) + '</a>') + '</div></div>';
   }
   function emailFor(c) {
     var L = ['Subject: Home pass-off: [child’s first name and last initial], ' + c.id, '',

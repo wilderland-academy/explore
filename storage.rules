@@ -17,6 +17,12 @@ service firebase.storage {
       allow read: if staff();
       allow write: if isAdmin() && request.resource.size < 40 * 1024 * 1024 && request.resource.contentType == 'application/pdf';
     }
+    // Pictures for Camp Store rewards (store/{rewardId}/{file}): everyone at school sees them; staff upload.
+    match /store/{rewardId}/{file} {
+      allow read: if school();
+      allow create, update: if staff() && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+      allow delete: if staff();
+    }
     match /labs/{labId}/{file} {
       allow read: if staff() || linkedParent();
       allow create, update: if staff() && request.resource.size < 20 * 1024 * 1024;

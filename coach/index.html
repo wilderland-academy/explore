@@ -186,6 +186,15 @@ async function pilot(r) {
 }
 // Mr. Fox, open in the dock. Redrawn when sign-in settles, unless a conversation is already going.
 const dock = document.getElementById("foxdock");
+// Keep the dock inside the window: it starts below the top bar (and the test banner), so it's the window's height
+// minus whatever is still above it. Once the page scrolls past the bars it fills the window. Wide screens only.
+function fitDock() {
+  if (matchMedia("(max-width:860px)").matches) { dock.style.height = ""; return; }
+  const top = Math.max(0, dock.parentElement.getBoundingClientRect().top);
+  dock.style.height = Math.max(320, innerHeight - top) + "px";
+}
+fitDock(); addEventListener("scroll", fitDock, { passive: true }); addEventListener("resize", fitDock);
+new ResizeObserver(fitDock).observe(document.body);
 function fox() { if (window.WLCoach && (!window.WLCoach.kind() || window.WLCoach.kind() === "home")) window.WLCoach.home({ dock }); }
 fox();
 document.addEventListener("wl-auth", fox);

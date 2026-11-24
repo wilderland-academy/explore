@@ -46,7 +46,7 @@
       { id: "projects", label: "Projects", href: "/projects/" },
       { id: "coach", label: "Mr. Fox", href: "/coach/" },
       { id: "store", label: "Store", href: "/store/" },
-      { id: "suggest", label: "Ideas", href: "/suggest/" },
+      { id: "suggest", label: "Suggestion Wall", href: "/suggest/" },
       BASECAMP] },
     guides: { name: "Guides", home: "/guides/", label: "Guides", tabs: [
       // The one-way onboarding journey through everything below (/guides/onboarding/).
@@ -61,6 +61,9 @@
       // photo permissions, birthdays: staff-only data in Firestore) on one page, /guides/roster/ (#info for Student Info).
       { id: "roster", label: "Students", href: "/guides/roster/" },
       { id: "parentcomms", label: "Parent Comms", href: "/guides/parents/" },
+      // The Camp Store (with Rewards from guides) and the Suggestion Wall, in the Guides site (/_includes/store.html, suggest.html).
+      { id: "store", label: "Camp Store", href: "/guides/store/" },
+      { id: "suggest", label: "Suggestion Wall", href: "/guides/suggest/" },
       // The Staff Handbook and every other staff policy and form (/guides/policies/, /guides/handbook/).
       { id: "policies", label: "Policies", href: "/guides/policies/" },
       BASECAMP] },
@@ -234,6 +237,8 @@
       // Test view lives in the account menu. Only pages with no account menu (the Parents pages, the front door) show
       // it on its own.
       (tester && !hasPill() ? '<div class="wlbar-test"><button type="button" class="wlbar-testbtn' + (view ? " on" : "") + '" aria-haspopup="true" aria-expanded="false" title="See the site as a test guide, student or parent"><span aria-hidden="true">🧪</span><span class="wlbar-test-t">' + (view ? "Test " + view.as : "Test view") + "</span></button>" + '<div class="wlbar-menu wlbar-testmenu" hidden>' + testMenu() + "</div></div>" : "") +
+      // Notifications (🔔, /notify.js) for signed-in students and guides.
+      (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-bell"></span>') +
       (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-auth" data-wl-auth></span>') +
       // Phones: the site's sections are in this menu instead of a row that scrolls sideways.
       (tabs ? '<button type="button" class="wlbar-burger" aria-haspopup="true" aria-expanded="false" aria-controls="wlbar-drawer" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>' : "") +
@@ -242,6 +247,7 @@
     var slot = bar.querySelector(".wlbar-auth");
     if (auth && slot) slot.parentNode.replaceChild(auth, slot);
     fit();
+    document.dispatchEvent(new CustomEvent("wl-bar-drawn"));
   }
   // ---------- Tabs that don't fit go in "More" ----------
   // On laptop widths a site can have more tabs than room (the Guides site, with search, Trail Partner and the account
@@ -477,5 +483,59 @@
     a.appendChild(b); a.title = alerts.open + " open Mr. Fox alert" + (alerts.open === 1 ? "" : "s") + (alerts.urgent ? ", " + alerts.urgent + " urgent" : "");
   }
   document.addEventListener("wl-alerts", function (e) { alerts = e.detail; paintAlerts(); });
+
+  // ---------- Keep people in the site they're in ----------
+  // A link to a page that has a copy in this site (the Challenges map, the Life Skills tracker, the Camp Store, the
+  // Suggestion Wall) is pointed at this site's copy. A link that has to leave for another site (a parent opening the
+  // Books site, say) asks first, so the top bar changing isn't a surprise. The site switcher and the front door are left alone.
+  var OWNER = [[/^\/(guides|fieldguide|behavior)\//, "guides"], [/^\/parents\//, "parents"], [/^\/(students|books|challenges|goals|projects|coach|store|suggest|lifeskills)\//, "students"]];
+  var SAME = [{ students: "/challenges/", guides: "/guides/challenges/", parents: "/parents/challenges/" },
+    { students: "/lifeskills/", guides: "/guides/lifeskills/", parents: "/parents/lifeskills/" },
+    { students: "/store/", guides: "/guides/store/" }, { students: "/suggest/", guides: "/guides/suggest/" }];
+  function ownerOf(path) { for (var i = 0; i < OWNER.length; i++) if (OWNER[i][0].test(path)) return OWNER[i][1]; return null; }
+  function portalLink(a) {
+    if (!SITES[key] || key === "home" || !a.href || a.closest(".wlbar-switch, .wlbar-menu, .wl-portal-ok, [data-wl-portal-ok]")) return null;
+    var u; try { u = new URL(a.href, location.href); } catch (e) { return null; }
+    if (u.origin !== location.origin) return null;
+    var to = ownerOf(u.pathname); if (!to || to === key) return null;
+    for (var i = 0; i < SAME.length; i++) {
+      var row = SAME[i];
+      if (row[to] && (u.pathname === row[to] || u.pathname === row[to] + "index.html") && row[key]) return { same: row[key] + u.search + u.hash };
+    }
+    return { away: to, url: u.href };
+  }
+  function keepLinks(root) {
+    (root.querySelectorAll ? root.querySelectorAll("a[href]") : []).forEach(function (a) { var p = portalLink(a); if (p && p.same) a.setAttribute("href", p.same); });
+  }
+  var keepQ = false;
+  function keepSoon() { if (keepQ) return; keepQ = true; requestAnimationFrame(function () { keepQ = false; keepLinks(document); }); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", keepSoon); else keepSoon();
+  new MutationObserver(keepSoon).observe(document.documentElement, { childList: true, subtree: true });
+  var leaving = null;
+  document.addEventListener("click", function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest && e.target.closest("a[href]"); if (!a) return;
+    var p = portalLink(a); if (!p) return;
+    e.preventDefault();
+    if (p.same) { location.href = p.same; return; }
+    if (!leaving) {
+      leaving = document.createElement("dialog"); leaving.className = "wl-leave";
+      var st = document.createElement("style");
+      st.textContent = ".wl-leave{max-width:min(440px,92vw);border:0;border-radius:16px;padding:22px 22px 18px;font:400 15px/1.5 Inter,system-ui,sans-serif;color:#121213;box-shadow:0 20px 50px rgba(0,0,0,.35)}" +
+        ".wl-leave::backdrop{background:rgba(0,0,0,.45)}.wl-leave h2{font:700 20px/1.25 'Uncut Sans',Inter,sans-serif;margin:0 0 6px;color:#01412f}.wl-leave p{margin:0 0 16px;color:#454545}" +
+        ".wl-leave .r{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.wl-leave button{font:600 14px/1 Inter,system-ui,sans-serif;border-radius:10px;padding:11px 14px;cursor:pointer;border:1px solid #d6d6d0;background:#fff;color:#121213}" +
+        ".wl-leave button.go{background:#01412f;border-color:#01412f;color:#fff}";
+      document.head.appendChild(st); document.body.appendChild(leaving);
+    }
+    var to = SITES[p.away].label;
+    leaving.innerHTML = "<h2>This opens the " + esc(to) + " site</h2><p>You're leaving the " + esc(site.label || site.name) + " site. The menu at the top will change to the " + esc(to) +
+      " site's. To come back, use your browser's back button.</p><div class=\"r\"><button type=\"button\" data-stay>Stay here</button><button type=\"button\" class=\"go\" data-go>Go to " + esc(to) + "</button></div>";
+    leaving.querySelector("[data-stay]").onclick = function () { leaving.close(); };
+    leaving.querySelector("[data-go]").onclick = function () { leaving.close(); if (a.target === "_blank") window.open(p.url, "_blank", "noopener"); else location.href = p.url; };
+    leaving.showModal();
+  }, true);
+
+  // Notifications (the 🔔 next to the account chip): /notify.js.
+  (function () { if (document.querySelector('script[src="/notify.js"]')) return; var s = document.createElement("script"); s.src = "/notify.js"; s.async = true; document.head.appendChild(s); })();
   if (window.wlRole !== undefined) apply(window.wlRole);
 })();
