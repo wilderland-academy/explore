@@ -180,12 +180,13 @@ async function bookTitles() {
 // ---------- views ----------
 function tabs(cur) {
   const open = S.alerts.filter(a => a.status === "open").length;
-  return `<nav class="tabs" aria-label="Student Roster">
+  return `<nav class="tabs" aria-label="Students">
     <a href="#roster"${cur === "roster" ? ' aria-current="page"' : ""}>Students and parents</a>
+    <a href="#info"${cur === "info" ? ' aria-current="page"' : ""}>Pickup, allergies &amp; photos</a>
     <a href="#alerts"${cur === "alerts" ? ' aria-current="page"' : ""}>Alerts <span class="count${open ? "" : " zero"}">${open}</span></a>
     <a href="#chats"${cur === "chats" ? ' aria-current="page"' : ""}>All AI conversations</a></nav>`;
 }
-const head = (t, sub) => `<header style="display:flex;flex-direction:column;gap:8px"><p class="eyebrow">Guides · Student Roster</p><h1>${t}</h1>${sub ? `<p class="muted">${sub}</p>` : ""}</header>`;
+const head = (t, sub) => `<header style="display:flex;flex-direction:column;gap:8px"><p class="eyebrow">Guides · Students</p><h1>${t}</h1>${sub ? `<p class="muted">${sub}</p>` : ""}</header>`;
 const sevTag = s => `<span class="sev ${esc(s)}">${esc(s)}</span>`;
 const who = a => { const p = S.people[key(a.email)] || {}; return `<a href="#s=${encodeURIComponent(key(a.email))}">${esc(p.name || a.name || a.email)}</a>${(p.band || a.band) ? ` <span class="muted">· grades ${esc(p.band || a.band)}</span>` : ""}`; };
 
@@ -221,7 +222,7 @@ function vRoster() {
     .sort((a, b) => (BANDS.indexOf(a.band) + 1 || 9) - (BANDS.indexOf(b.band) + 1 || 9) || (a.name || a.email).localeCompare(b.name || b.email));
   const nParents = new Set(S.ls.flatMap(x => (x.parents || []).map(key))).size;
   const guideNames = g => emails(g).map(x => x.split("@")[0].replace(/^./, c => c.toUpperCase())).join(", ");
-  return head("Student Roster", `${S.ls.length} students and ${nParents} linked parent${nParents === 1 ? "" : "s"}. Open a student for their parents, Mr. Fox conversations, alerts and saved sparks and books. Their Life Skills record and saved challenges are in <a href="/guides/lifeskills/">Life Skills</a>.`) + tabs("roster") +
+  return head("Students", `${S.ls.length} students and ${nParents} linked parent${nParents === 1 ? "" : "s"}. Open a student for their parents, Mr. Fox conversations, alerts and saved sparks and books. Their Life Skills record and saved challenges are in <a href="/guides/lifeskills/">Life Skills</a>.`) + tabs("roster") +
     (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") +
     `<div class="row">${["All", ...BANDS].map(b => `<button class="chip" type="button" data-band="${b}" aria-pressed="${S.band === b}">${b === "All" ? "All bands" : "Grades " + b}</button>`).join("")}<input class="in" type="search" id="q" placeholder="Find a student, parent or guide" value="${esc(S.q)}"><a class="btn" href="#add" style="margin-left:auto">Add a student</a></div>` +
     (show.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>Grades</th><th>Parents</th><th>Field Guide</th><th class="num">AI chats</th><th class="num">Open alerts</th><th>Last AI use</th><th></th></tr></thead><tbody>${show.map(p => {
@@ -403,10 +404,22 @@ async function vChat(id) {
     }).join("") || '<p class="empty">No messages.</p>'}</div>`;
 }
 
+// Student Info (/guides/roster/info.js) draws itself into this element. It's moved into the page for #info and taken
+// out for every other view, so it keeps its place (search, selected student) while you look at the roster.
+const INFO = document.getElementById("info");
 async function route() {
   const app = $("#app");
-  if (!S.loaded) return;
   const [v, arg] = location.hash.slice(1).split("=");
+  const info = v === "info";
+  document.body.classList.toggle("si-view", info);
+  if (info) {
+    // Doesn't wait for the roster's data: safety information opens even if Mr. Fox's records can't be read.
+    app.innerHTML = head("Pickup, allergies &amp; photos", "From the office's directory, allergy, photo and birthday lists. Staff only.") + tabs("info");
+    if (INFO) { INFO.hidden = false; app.appendChild(INFO); }
+    return;
+  }
+  if (INFO) INFO.hidden = true;
+  if (!S.loaded) return;
   try {
     if (v === "s") app.innerHTML = await vStudent(decodeURIComponent(arg || ""));
     else if (v === "c") app.innerHTML = await vChat(arg || "");
@@ -421,14 +434,15 @@ async function route() {
 }
 async function start(r) {
   const app = $("#app"), u = window.wlFirebase && window.wlFirebase.auth.currentUser;
-  if (!u) { app.innerHTML = head("Student Roster") + `<p class="empty">Sign in with your Wilderland staff account. <button class="btn" type="button" data-wl-signin>Sign in</button></p>`; return; }
-  if (!r || r.role !== "staff" || !String(r.email || u.email).toLowerCase().endsWith("@wilderland.academy")) { app.innerHTML = head("Student Roster") + `<p class="empty">This page is for Wilderland staff.</p>`; return; }
+  if (!u) { app.innerHTML = head("Students") + `<p class="empty">Sign in with your Wilderland staff account. <button class="btn" type="button" data-wl-signin>Sign in</button></p>`; return; }
+  if (!r || r.role !== "staff" || !String(r.email || u.email).toLowerCase().endsWith("@wilderland.academy")) { app.innerHTML = head("Students") + `<p class="empty">This page is for Wilderland staff.</p>`; return; }
   // In a test view this page is the test guide's (r.email is the test guide's address).
   S.test = r.test || null; S.me = key(S.test ? r.email : u.email); S.admin = !S.test && ADMINS.includes(S.me);
   // Start on this guide's own band (All for admins without one).
   if (!S.bandSet && window.wlBand) { S.band = window.wlBand({ all: true }); S.bandSet = true; }
+  if (/^#info\b/.test(location.hash)) route();
   try { await loadAll(); }
-  catch (e) { app.innerHTML = head("Student Roster") + `<p class="empty">${e.status === 403 ? "The database rules for Mr. Fox aren't published yet, or your account isn't on the staff list. Tell Alex." : "Couldn't load. Check your connection and reload."}</p>`; return; }
+  catch (e) { if (/^#info\b/.test(location.hash)) return; app.innerHTML = head("Students") + `<p class="empty">${e.status === 403 ? "The database rules for Mr. Fox aren't published yet, or your account isn't on the staff list. Tell Alex." : "Couldn't load. Check your connection and reload."}</p>`; return; }
   route();
 }
 

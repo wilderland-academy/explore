@@ -7,13 +7,14 @@
 // Behavior Guide), saved.{resourceId}.
 import { getFirestore, collection, getDocs, limit, query } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 import { ready, loadProgress, saveProgress, trainingRec, mountQuiz, mountPolicyCheck, deal, fromRows, fetchDoc } from "/guides/training/quiz.js";
-import { MENTOR, LIFESKILLS, PARENTS } from "/guides/training/banks.js";
+import { MENTOR, LIFESKILLS, PARENTS, STUDENTS, PARTNER } from "/guides/training/banks.js";
+import { ART } from "./art.js";
 import * as BD from "/behavior/data.js";
 import * as FG from "/fieldguide/data.js";
 import { STEPS, OPEN_LINK } from "./data.js";
 
 const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@wilderland.academy", "april@wilderland.academy", "scott@wilderland.academy"];
-const QUIZZES = { mentor: MENTOR, lifeskills: LIFESKILLS, parentcomms: PARENTS };
+const QUIZZES = { mentor: MENTOR, lifeskills: LIFESKILLS, parentcomms: PARENTS, students: STUDENTS, partner: PARTNER };
 const $ = s => document.querySelector(s);
 function h(tag, attrs, kids) {
   const e = document.createElement(tag);
@@ -71,7 +72,7 @@ function nav(cur) {
   n.appendChild(h("a", { class: "st lib" + (cur === "library" ? " on" : ""), href: "#library" }, [h("i", { text: "📚" }), h("span", null, [h("b", { text: "Dig deeper" }), h("small", { text: nSaved ? nSaved + " saved" : "Books, podcasts, studies" })])]));
   if (isAdmin()) n.appendChild(h("a", { class: "st" + (cur === "team" ? " on" : ""), href: "#team" }, [h("i", { text: "👥" }), h("span", null, [h("b", { text: "Team progress" }), h("small", { text: "Admins" })])]));
   const all = open >= STEPS.length;
-  $("#meter").innerHTML = ""; $("#meter").append(h("b", { text: all ? "All six steps done" : `Step ${open + 1} of ${STEPS.length}` }), h("span", { class: "bar" }, [h("i", { style: `width:${Math.round(STEPS.filter(stepDone).length / STEPS.length * 100)}%` })]));
+  $("#meter").innerHTML = ""; $("#meter").append(h("b", { text: all ? `All ${STEPS.length} steps done` : `Step ${open + 1} of ${STEPS.length}` }), h("span", { class: "bar" }, [h("i", { style: `width:${Math.round(STEPS.filter(stepDone).length / STEPS.length * 100)}%` })]));
 }
 
 // ---------------- screen kinds ----------------
@@ -148,7 +149,10 @@ function screenView(sec, s, i, n) {
   const x = s.screens[n];
   head(sec, s, i, `${n + 1} of ${s.screens.length}`); sec.append(stepper(s, n));
   if (n === 0) sec.append(h("p", { class: "lede", text: s.intro }));
-  sec.append(h("h1", { text: x.title }), ...RENDER[x.kind](x));
+  sec.append(h("h1", { text: x.title }));
+  // An illustration for the screen, in the site's textured-landscape style (/guides/onboarding/art.js).
+  if (x.art && ART[x.art]) sec.append(h("figure", { class: "art", html: ART[x.art] }));
+  sec.append(...RENDER[x.kind](x));
   const last = n === s.screens.length - 1, hasCheck = !!(s.quiz || s.checks);
   bottom(sec, n > 0 ? `#${s.id}/${n}` : null, last ? (hasCheck ? "On to the checkpoint →" : "Finish this step →") : "Next →", async e => {
     e.currentTarget.disabled = true;
@@ -168,7 +172,8 @@ function checkView(sec, s, i) {
       mountQuiz(box, { id: next.id, name: next.name, pass: next.pass, store: "badges", sets: behaviorSets(next), passText: "Badge earned.", onDone: async (r, passed) => { if (!passed) return; P = await loadProgress(); await saveProgress({ certified: BD.MODULES.every(m => badge(m.id)) }); continueBtn(box, BD.MODULES.every(m => badge(m.id)) ? "Continue →" : "Next badge →", () => BD.MODULES.every(m => badge(m.id)) ? after() : route()); } });
     } else after();
   } else if (s.quiz) {
-    const box = card([], "quiz"); sec.append(h("h1", { text: "Checkpoint" }), h("p", { class: "lede", text: "Eight questions on what you just read. Pass with six." }), box);
+    const Q = QUIZZES[s.quiz], NUM = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+    const box = card([], "quiz"); sec.append(h("h1", { text: "Checkpoint" }), h("p", { class: "lede", text: `${(NUM[Q.sets[0].length] || Q.sets[0].length).toString().replace(/^./, c => c.toUpperCase())} questions on what you just read. Pass with ${NUM[Q.pass] || Q.pass}.` }), box);
     mountQuiz(box, { ...QUIZZES[s.quiz], onDone: (r, passed) => { if (passed) continueBtn(box, "Continue →", after); } });
   } else {
     sec.append(h("h1", { text: "Knowledge checks" }), h("p", { class: "lede", text: "One check per policy in effect, six questions each, written fresh from the policy every time. Pass with five." }));

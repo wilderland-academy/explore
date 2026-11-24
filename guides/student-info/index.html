@@ -2,59 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Student Info · Wilderland Guides</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#01412f">
-<link rel="icon" href="/books/f/icon.png">
-<link rel="stylesheet" href="/wl.css">
-<style>
-@font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
-:root{color-scheme:light;--paper:#f5f1ea;--sheet:#fffdf9;--line:#ddd3c4;--ink:#231b24;--dim:#625a63;--g:#01412f;--ok:#0b6b3a;--red:#b3261e;--amber:#8a5a00;
-  --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
-*{box-sizing:border-box}
-[hidden]{display:none !important}
-body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.5 var(--body)}
-main{max-width:1180px;margin:0 auto;padding:30px 18px 80px;display:flex;flex-direction:column;gap:16px}
-h1,h2{font-family:var(--display);font-weight:700;letter-spacing:-.01em;line-height:1.15;margin:0}
-h1{font-size:clamp(30px,4.6vw,44px)}h2{font-size:24px}h3{margin:0;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
-p{margin:0}.dim{color:var(--dim)}.small{font-size:14px}
-.conf{font-size:14px;color:var(--dim);display:flex;gap:8px;align-items:center}
-.search{display:flex;gap:10px;flex-wrap:wrap;align-items:center;position:sticky;top:58px;z-index:5;background:var(--paper);padding:8px 0}
-.search input{flex:1;min-width:220px;font:17px var(--body);padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
-.search input:focus{outline:2px solid var(--g);outline-offset:1px}
-.chips{display:flex;gap:6px;flex-wrap:wrap}
-.chips button{font:600 13.5px var(--body);border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:7px 12px;cursor:pointer}
-.chips button[aria-pressed=true]{background:var(--g);border-color:var(--g);color:#fff}
-.wrap{display:grid;grid-template-columns:minmax(260px,380px) minmax(0,1fr);gap:18px;align-items:start}
-.list{display:flex;flex-direction:column;gap:6px}
-.row{display:flex;flex-direction:column;gap:4px;text-align:left;font:inherit;color:inherit;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
-.row[aria-current=true]{border-color:var(--g);box-shadow:0 0 0 2px var(--g) inset}
-.row b{font-size:16px}.row .meta{font-size:13px;color:var(--dim)}
-.flags{display:flex;gap:5px;flex-wrap:wrap}
-.f{font:700 11px var(--body);letter-spacing:.04em;text-transform:uppercase;border-radius:99px;padding:3px 8px;background:#ece5d8;color:var(--ink)}
-.f.red{background:#fbe3e1;color:var(--red)}.f.amber{background:#fdf0d5;color:var(--amber)}.f.ok{background:#e4f2e8;color:var(--ok)}.f.blue{background:#e3ecf7;color:#1d4e89}
-.card{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
-.detail{position:sticky;top:130px;max-height:calc(100vh - 150px);overflow:auto}
-.sec{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:12px}
-.sec ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:3px}
-.alert{border-left:4px solid var(--red);background:#fdf1f0;padding:10px 12px;border-radius:8px}
-.warn{border-left:4px solid #c99a1e;background:#fff8e6;padding:10px 12px;border-radius:8px}
-.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 12px;font-size:15px}.kv dt{color:var(--dim)}.kv dd{margin:0}
-.notices{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
-a{color:var(--g)}
-.btn{font:600 14px var(--body);border:0;border-radius:999px;padding:9px 16px;background:var(--g);color:#fff;cursor:pointer}
-.btn.ghost{background:transparent;color:var(--g);border:1.5px solid var(--g)}
-.count{font-size:14px;color:var(--dim)}
-@media (max-width:860px){.wrap{grid-template-columns:1fr}.detail{position:static;max-height:none;order:-1;scroll-margin-top:120px}.detail.empty{display:none}.search{top:52px}.kv{grid-template-columns:1fr}.kv dt{margin-top:6px}}
-@media print{.wlbar,.search,.list,.admin,.notices{display:none !important}.wrap{display:block}.detail{position:static;max-height:none;overflow:visible}}
-</style>
+<title>Students · Wilderland Guides</title>
+<script>
+// Student Info is now the "Pickup, allergies & photos" tab of the Students page. Old links (#s=<id>) keep working.
+(function () { var m = /#s=([\w-]+)/.exec(location.hash); location.replace("/guides/roster/#info" + (m ? "=" + m[1] : "")); })();
+</script>
 </head>
-<body>
-<div class="wlbar" data-wlnav="guides" data-current="studentinfo"></div><script src="/wlnav.js"></script>
-<main id="app"><p class="dim">Loading…</p></main>
-<script type="module" src="/auth.js" data-site="studentinfo"></script>
-<script type="module" src="app.js"></script>
-</body>
+<body><p><a href="/guides/roster/#info">Student Info is now on the Students page.</a></p></body>
 </html>

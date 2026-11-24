@@ -70,3 +70,38 @@ a.wl-ch{color:var(--green)}
 @media (max-width:640px){.in{min-width:0;width:100%}}
 .form label.chk{flex-direction:row;align-items:flex-start;gap:10px;font-weight:600}
 .form label.chk input{width:18px;height:18px;margin-top:2px;flex:none}
+/* Student Info: the "Pickup, allergies & photos" tab (#info, drawn by info.js). Its classes carry an "si-" prefix so
+   they never meet the roster's own .row, .card, .list or .count. */
+#info{--g:#01412f;--ok:#0b6b3a;--red:#b3261e;--amber:#8a5a00;display:flex;flex-direction:column;gap:16px}
+#info[hidden],#info [hidden]{display:none !important}
+#info h2{font-size:24px}#info h3{margin:0;font:700 15px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+#info .si-dim{color:var(--dim)}#info .si-small{font-size:14px}
+#info .si-conf{font-size:14px;color:var(--dim);display:flex;gap:8px;align-items:center}
+#info .si-search{display:flex;gap:10px;flex-wrap:wrap;align-items:center;position:sticky;top:58px;z-index:5;background:var(--paper);padding:8px 0}
+#info .si-search input{flex:1;min-width:220px;font:17px var(--body);padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
+#info .si-search input:focus{outline:2px solid var(--g);outline-offset:1px}
+#info .si-chips{display:flex;gap:6px;flex-wrap:wrap}
+#info .si-chips button{font:600 13.5px var(--body);border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:7px 12px;cursor:pointer}
+#info .si-chips button[aria-pressed=true]{background:var(--g);border-color:var(--g);color:#fff}
+#info .si-wrap{display:grid;grid-template-columns:minmax(260px,380px) minmax(0,1fr);gap:18px;align-items:start}
+#info .si-list{display:flex;flex-direction:column;gap:6px}
+#info .si-row{display:flex;flex-direction:column;gap:4px;text-align:left;font:inherit;color:inherit;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
+#info .si-row[aria-current=true]{border-color:var(--g);box-shadow:0 0 0 2px var(--g) inset}
+#info .si-row b{font-size:16px}#info .si-row .si-meta{font-size:13px;color:var(--dim)}
+#info .si-flags{display:flex;gap:5px;flex-wrap:wrap}
+#info .si-f{font:700 11px var(--body);letter-spacing:.04em;text-transform:uppercase;border-radius:99px;padding:3px 8px;background:#ece5d8;color:var(--ink)}
+#info .si-f.si-red{background:#fbe3e1;color:var(--red)}#info .si-f.si-amber{background:#fdf0d5;color:var(--amber)}#info .si-f.si-ok{background:#e4f2e8;color:var(--ok)}#info .si-f.si-blue{background:#e3ecf7;color:#1d4e89}
+#info .si-card{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+#info .si-detail{position:sticky;top:130px;max-height:calc(100vh - 150px);overflow:auto}
+#info .si-sec{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:12px}
+#info .si-sec ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:3px}
+#info .si-alert{border-left:4px solid var(--red);background:#fdf1f0;padding:10px 12px;border-radius:8px}
+#info .si-warn{border-left:4px solid #c99a1e;background:#fff8e6;padding:10px 12px;border-radius:8px}
+#info .si-kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 12px;font-size:15px}#info .si-kv dt{color:var(--dim)}#info .si-kv dd{margin:0}
+#info .si-notices{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+#info a{color:var(--g)}
+#info .si-btn{font:600 14px var(--body);border:0;border-radius:999px;padding:9px 16px;background:var(--g);color:#fff;cursor:pointer}
+#info .si-btn.si-ghost{background:transparent;color:var(--g);border:1.5px solid var(--g)}
+#info .si-count{font-size:14px;color:var(--dim)}
+@media (max-width:860px){#info .si-wrap{grid-template-columns:1fr}#info .si-detail{position:static;max-height:none;order:-1;scroll-margin-top:120px}#info .si-detail.si-empty{display:none}#info .si-search{top:52px}#info .si-kv{grid-template-columns:1fr}#info .si-kv dt{margin-top:6px}}
+@media print{body.si-view .wlbar,body.si-view .tabs,body.si-view main>header,#info .si-search,#info .si-list,#info .si-admin,#info .si-notices,#info .si-count{display:none !important}#info .si-wrap{display:block}#info .si-detail{position:static;max-height:none;overflow:visible}}
