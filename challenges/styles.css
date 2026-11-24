@@ -83,6 +83,16 @@ button{font:inherit;color:inherit}
 .band{min-width:84px;min-height:48px;padding:6px 18px;border-radius:8px;border:2px solid transparent;background:var(--chip);color:#121213;font-weight:700;font-size:20px;letter-spacing:-.01em;cursor:pointer}
 .band:hover{border-color:var(--green)}
 .band[aria-pressed="true"]{background:var(--green);color:var(--on-dark)}
+/* Grades 5–8 split: 5–6 and 7–8 each have their own colour, used on the picker and on every challenge's tag */
+.grsplit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.gr{min-height:44px;padding:6px 14px;border-radius:8px;border:2px solid transparent;background:var(--chip);color:#121213;font-weight:700;font-size:16px;cursor:pointer}
+.gr:hover{border-color:var(--green)}
+.gr[aria-pressed="true"]{background:var(--green);color:var(--on-dark)}
+.gr56[aria-pressed="true"]{background:#1F4E7A;color:#fff}
+.gr78[aria-pressed="true"]{background:#5A2D6B;color:#fff}
+.grsplit-note{flex:1 1 100%;margin:2px 0 0;font-size:14px;color:var(--ink)}
+.tag.tag-g56{background:#DCE8F5;color:#1F4E7A}
+.tag.tag-g78{background:#EBDDF0;color:#5A2D6B}
 .hero-photo{position:relative;margin:0;border-radius:24px;overflow:hidden;aspect-ratio:1.15;background:#E9E4D6;max-width:100%}
 .hero-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 40%}
 .place{position:absolute;left:16px;bottom:16px;display:inline-flex;align-items:center;gap:6px;max-width:calc(100% - 32px);padding:6px 12px 6px 10px;border-radius:999px;background:rgba(255,255,255,.92);color:var(--green);font-weight:700;font-size:15px;line-height:1.3}
@@ -284,6 +294,7 @@ main{max-width:1180px;margin:0 auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
   .search{flex:1 1 100%}
   .band{min-width:0;flex:1 1 0;font-size:18px}
   .bands-label{flex:1 1 100%}
+  .gr{flex:1 1 0;padding:6px 8px;font-size:15px}
   .how{padding-block:48px 56px}
   .sheet{width:100vw;max-width:100vw;max-height:100vh;height:100vh;border-radius:0;margin:0}
   .home-box{margin:0 16px}

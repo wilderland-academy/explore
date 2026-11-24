@@ -216,7 +216,7 @@ const FS = `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/dat
 let roleSeq = 0;
 function sendRole(r) {
   window.wlRole = r;
-  try { if (r) origSet.call(localStorage, "wl-role", JSON.stringify({ e: r.email, r: r.role, b: r.band || null, s: r.sid || null, bs: r.bands || null, t: r.test || null, x: r.real || null })); else origRemove.call(localStorage, "wl-role"); } catch (e) { }
+  try { if (r) origSet.call(localStorage, "wl-role", JSON.stringify({ e: r.email, r: r.role, b: r.band || null, s: r.sid || null, g: r.grade || null, bs: r.bands || null, t: r.test || null, x: r.real || null })); else origRemove.call(localStorage, "wl-role"); } catch (e) { }
   document.dispatchEvent(new CustomEvent("wl-role", { detail: r }));
 }
 // Firestore REST values, for the few writes made here.
@@ -261,7 +261,7 @@ async function findRole(u, em) {
   if (st.ok) return { role: "staff", band: STAFF_BANDS[em] || null, sid: null };
   if (st.status !== 404) throw new Error("staff " + st.status);
   // A student: their band comes from their Life Skills tracker record (lsStudents, matched by school email).
-  let band = null, sid = null;
+  let band = null, sid = null, grade = null;
   try {
     const q = await fetch(`${FS}:runQuery`, { method: "POST", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "lsStudents" }], where: { fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: em } } }, limit: 5 } }) });
     if (q.ok) {
@@ -270,9 +270,11 @@ async function findRole(u, em) {
       if (bands.length === 1) band = bands[0];
       // Their tracker record, so Challenges can show their own progress.
       if (docs.length === 1) sid = docs[0].name.split("/").pop();
+      // Their grade (as typed on the Student Roster), so Challenges can start a 7th or 8th grader on grades 7–8.
+      if (docs.length === 1) grade = ((docs[0].fields || {}).grade || {}).stringValue || null;
     }
   } catch (e) { /* no band: the student sees every band until a guide adds them to the tracker */ }
-  return { role: "student", band, sid };
+  return grade ? { role: "student", band, sid, grade } : { role: "student", band, sid };
 }
 // Staff on the Guides site: how many Mr. Fox alerts are open, for the badge on the "Students" tab.
 async function countAlerts(u) {
@@ -308,7 +310,7 @@ async function decideRole(u) {
   if (!u) { sendRole(null); return; }
   const em = (u.email || "").toLowerCase();
   // Same account (and same test view) as last time on this device: show the remembered role now, then check it.
-  try { const c = JSON.parse(localStorage.getItem("wl-role") || "null"); if (c && (c.x || c.e) === em && (c.t || null) === (view ? view.as : null)) sendRole({ email: c.e, role: c.r, band: c.b || null, sid: c.s || null, ...(c.bs ? { bands: c.bs } : {}), ...(c.t ? { test: c.t, real: c.x } : {}) }); } catch (e) { }
+  try { const c = JSON.parse(localStorage.getItem("wl-role") || "null"); if (c && (c.x || c.e) === em && (c.t || null) === (view ? view.as : null)) sendRole({ email: c.e, role: c.r, band: c.b || null, sid: c.s || null, ...(c.g ? { grade: c.g } : {}), ...(c.bs ? { bands: c.bs } : {}), ...(c.t ? { test: c.t, real: c.x } : {}) }); } catch (e) { }
   try {
     const r = await findRole(u, em);
     if (my !== roleSeq) return;

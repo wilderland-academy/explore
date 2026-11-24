@@ -20,8 +20,14 @@
 
   // Every visit starts on the visitor's own band (a guide's band, a parent's child's, a student's own; admins 5–8),
   // from /wlnav.js. A band picked on this page holds until they leave it.
-  var state = { band: window.wlBand ? window.wlBand() : '5–8', skill: null, sub: null, q: '', f: { home: false, epic: false, lab: false, any: false } };
+  var state = { band: window.wlBand ? window.wlBand() : '5–8', gr: 'all', skill: null, sub: null, q: '', f: { home: false, epic: false, lab: false, any: false } };
   var bandPicked = false;
+  // Grades 5–8 splits into 5–6 and 7–8 (c.gr; "5–8" means the challenge fits all four grades). state.gr narrows the
+  // 5–8 band: 'all', '5–6' or '7–8'. A signed-in 7th or 8th grader starts on 7–8 (grade from the Life Skills tracker,
+  // via /auth.js) and can switch; everyone else starts on all of 5–8.
+  var grPicked = false;
+  // Recommended Labs are for guides planning Labs; students and parents don't see that tag or filter.
+  var GUIDES = SITE === 'guides';
   if (['K–1', '2–4', '5–8'].indexOf(state.band) < 0) state.band = '5–8';
   var picks = load('wl-picks', []).filter(function (id) { return BYID[id]; });
   // A signed-in student (band from their Life Skills tracker record, via /auth.js) always starts in their own grade band
@@ -56,8 +62,12 @@
   function anyHobby(c) { return !!(c.hob && c.hob.indexOf('*') >= 0); }
   function filtersOn() { var f = state.f; return f.home || f.epic || f.lab || f.any; }
   // A challenge passes when it is in the chosen band and matches every filter that is switched on.
+  function splitOn() { return state.band === '5–8' && state.gr !== 'all'; }
+  function inGrades(c) { return !splitOn() || c.gr === '5–8' || c.gr === state.gr; }
+  function gradesLabel() { return splitOn() ? state.gr : state.band; }
   function passes(c) {
     if (c.b !== state.band) return false;
+    if (!inGrades(c)) return false;
     var f = state.f;
     if (f.home && !c.h) return false;
     if (f.epic && c.z !== 'Epic') return false;
@@ -154,12 +164,17 @@
       }).join('') : '<p class="empty-col">' + (filtersOn() ? 'No challenges here match your filters. Switch a filter off to see more.' : 'No challenges in this life skill for your grades yet.') + '</p>');
   }
 
+  // Every 5–8 challenge meant for only part of the band says which part, in that part's colour.
+  function gradeTag(c) {
+    if (c.b !== '5–8' || (c.gr !== '5–6' && c.gr !== '7–8')) return '';
+    return '<span class="tag ' + (c.gr === '5–6' ? 'tag-g56' : 'tag-g78') + '">Grades ' + esc(c.gr) + '</span>';
+  }
   function chRow(c, idea) {
     var on = picks.indexOf(c.id) >= 0;
-    var tags = '';
+    var tags = gradeTag(c);
     if (c.z === 'Epic') tags += '<span class="tag">' + icon('flag') + 'Epic, 2 credits</span>';
     if (c.ta) tags += '<span class="tag">' + icon('refresh-ccw') + 'Turnaround Epic</span>';
-    if (c.lab) tags += '<span class="tag">' + icon('users') + 'Recommended Lab</span>';
+    if (c.lab && GUIDES) tags += '<span class="tag">' + icon('users') + 'Recommended Lab</span>';
     if (c.h) tags += '<span class="tag">' + icon('house') + 'Can do at home</span>';
     if (anyHobby(c)) tags += '<span class="tag tag-hob">' + icon('sparkles') + 'Bring your hobby</span>';
     if (c.b === 'K–1') tags += '<span class="tag">' + icon('users') + 'Guide-led</span>';
@@ -299,11 +314,11 @@
     if (hits.length) {
       var groups = [], by = {};
       hits.forEach(function (c) { if (!by[c.c]) { by[c.c] = []; groups.push(c.c); } by[c.c].push(c); });
-      html += '<p class="col-title">' + hits.length + ' match' + (hits.length === 1 ? '' : 'es') + ' in grades ' + esc(state.band) + '</p>' +
+      html += '<p class="col-title">' + hits.length + ' match' + (hits.length === 1 ? '' : 'es') + ' in grades ' + esc(gradesLabel()) + '</p>' +
         groups.map(function (cid) { return compBlock(cid, by[cid]); }).join('');
     } else {
-      html += '<p class="empty-col">No grades ' + esc(state.band) + ' challenges name “' + esc(state.q) + '”' +
-        (filtersOn() ? ' with these filters on' : '') + '.' + (extra.length ? ' But you can bring it to the challenges below.' : ' Try a shorter word, or clear the search to explore by life skill.') + '</p>';
+      html += '<p class="empty-col">No grades ' + esc(gradesLabel()) + ' challenges name “' + esc(state.q) + '”' +
+        (filtersOn() ? ' with these filters on' : '') + '.' + (splitOn() ? ' Choose “All of 5–8” above to search the whole band.' : '') + (extra.length ? ' But you can bring it to the challenges below.' : ' Try a shorter word, or clear the search to explore by life skill.') + '</p>';
     }
     if (extra.length) {
       var names = hobs.map(function (k) { return D.hob[k].n.toLowerCase(); }).join(' or ');
@@ -403,7 +418,7 @@
       (imgFor(c.c) ? '<img class="d-img" src="/challenges/img/' + c.c + '.jpg" alt="">' : '<div class="d-img comp-band" style="' + skillVars(s) + '" aria-hidden="true">' + icon(comp.i) + '</div>') +
       '<h2 id="d-title" class="d-title" data-cid="' + c.id + '">' + esc(c.t) + '</h2>' +
       '<div class="facts">' +
-      '<div class="fact"><b>Grades</b>' + esc(c.gr) + '</div>' +
+      '<div class="fact"><b>Grades</b>' + (gradeTag(c) || esc(c.gr)) + '</div>' +
       '<div class="fact"><b>Time</b>' + esc(c.b === 'K–1' && c.z === 'Week' ? 'Guide-led: a day or longer, as it needs' : c.tm) + '</div>' +
       '<div class="fact"><b>Credits</b>' + c.cr + '</div>' +
       '<div class="fact"><b>How you show it</b>' + esc(c.w) + '</div>' +
@@ -488,7 +503,7 @@
     document.getElementById('picks-actions').hidden = !list.length;
     document.getElementById('picks-list').innerHTML = list.map(function (c) {
       var s = SK[D.comps[c.c].k];
-      return '<li style="--c:' + s.col + '"><button class="open" data-open="' + c.id + '"><span class="sk">' + esc(s.n) + (c.z === 'Epic' ? ', Epic' : '') + ', grades ' + esc(c.b) + '</span>' + esc(c.t) + '</button>' +
+      return '<li style="--c:' + s.col + '"><button class="open" data-open="' + c.id + '"><span class="sk">' + esc(s.n) + (c.z === 'Epic' ? ', Epic' : '') + ', grades ' + esc(c.gr || c.b) + '</span>' + esc(c.t) + '</button>' +
         '<button class="icon-btn" data-unpick="' + c.id + '" aria-label="Remove from my plan">' + icon('x') + '</button></li>';
     }).join('');
   }
@@ -520,6 +535,7 @@
       b.setAttribute('aria-pressed', String(b.dataset.band === state.band));
       b.hidden = !bandOpen(b.dataset.band);
     });
+    syncGrades();
     document.getElementById('k1-note').hidden = !guideMode();
     document.getElementById('year').hidden = guideMode() || !STUDENT;
     Array.prototype.forEach.call(document.querySelectorAll('.nav [data-open-picks]'), function (b) { b.hidden = guideMode(); });
@@ -531,6 +547,34 @@
     });
     syncFilters(); fixSelection();
     renderYear(); renderTree(); renderSearch(); refreshPicks();
+  }
+  var GR_NOTE = {
+    all: 'Every 5–8 challenge. The ones for only part of the band are tagged Grades 5–6 or Grades 7–8.',
+    '5–6': 'Challenges for grades 5–6, plus the ones for all of 5–8.',
+    '7–8': 'Challenges for grades 7–8, plus the ones for all of 5–8.'
+  };
+  function syncGrades() {
+    var box = document.getElementById('grsplit');
+    if (!box) return;
+    box.hidden = state.band !== '5–8';
+    Array.prototype.forEach.call(box.querySelectorAll('[data-gr]'), function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.gr === state.gr));
+    });
+    var note = document.getElementById('grsplit-note');
+    if (note) note.textContent = GR_NOTE[state.gr] || '';
+  }
+  // A 7th or 8th grader starts on 7–8 until they choose otherwise on this page.
+  function gradeDefault(grade) {
+    if (grPicked) return false;
+    var n = parseInt(String(grade == null ? '' : grade).replace(/[^0-9]/g, ''), 10);
+    var want = n >= 7 && n <= 8 ? '7–8' : 'all';
+    if (want === state.gr) return false;
+    state.gr = want; return true;
+  }
+  // Recommended Labs: guides only
+  if (!GUIDES) {
+    var labChip = document.querySelector('[data-filter="lab"]');
+    if (labChip) labChip.remove();
   }
   function syncFilters() {
     Array.prototype.forEach.call(document.querySelectorAll('[data-filter]'), function (b) {
@@ -558,6 +602,11 @@
     if (t.id === 'clear-filters') {
       Object.keys(state.f).forEach(function (k) { state.f[k] = false; });
       syncFilters(); fixSelection(); renderTree(); renderSearch();
+      return;
+    }
+    if (t.dataset.gr) {
+      state.gr = t.dataset.gr; grPicked = true;
+      syncGrades(); fixSelection(); renderTree(); renderSearch();
       return;
     }
     if (t.dataset.band) {
@@ -658,7 +707,7 @@
   }
   function lockFrom(r) { return r && r.role === 'student' ? r.band : null; }
   // The role remembered on this device draws the right band at once; the signed-in account confirms it.
-  try { var rc = JSON.parse(localStorage.getItem('wl-role') || 'null'); if (rc && rc.r === 'student') setLock(rc.b); } catch (e) {}
+  try { var rc = JSON.parse(localStorage.getItem('wl-role') || 'null'); if (rc && rc.r === 'student') { setLock(rc.b); gradeDefault(rc.g); } } catch (e) {}
   document.addEventListener('wl-role', function (e) {
     // Guides and parents: once the account confirms its band, start there (unless they've already picked one).
     if (!lockFrom(e.detail) && !locked && !bandPicked && window.wlBand && window.wlBand() !== state.band) {
@@ -666,7 +715,8 @@
       if (state.skill && !window.matchMedia('(max-width:820px)').matches) state.sub = (structure()[state.skill].subs[0] || null);
       renderAll(); return;
     }
-    if (!setLock(lockFrom(e.detail))) return;
+    var grMoved = gradeDefault(e.detail && e.detail.role === 'student' ? e.detail.grade : null);
+    if (!setLock(lockFrom(e.detail))) { if (grMoved) { fixSelection(); renderAll(); } return; }
     // Keep an open challenge open (a link straight to it, say) if it's still in the student's bands: refresh it in
     // place rather than closing and reopening it.
     var was = detail.open && detail.querySelector('[data-cid]') ? detail.querySelector('[data-cid]').getAttribute('data-cid') : null;
