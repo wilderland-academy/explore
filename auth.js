@@ -45,7 +45,7 @@ const ALLKEYS = { books: ["lantern-stacks"], challenges: ["wl-picks", "wl-band"]
 const VIEW0 = storedView();
 const KEYS = VIEW0 && VIEW0.as !== "student" ? [] : ALLKEYS[SITE] || [];
 // Clear every site's saved things from this Chromebook (on sign-out, here or on another site).
-function forgetDevice() { applying = true; origRemove.call(localStorage, "wl-role"); Object.entries(ALLKEYS).forEach(([s, ks]) => { ks.forEach(k => origRemove.call(localStorage, k)); origRemove.call(localStorage, "wl-linked-" + s); }); applying = false; }
+function forgetDevice() { applying = true; origRemove.call(localStorage, "wl-role"); origRemove.call(localStorage, "wl-unlocks"); Object.entries(ALLKEYS).forEach(([s, ks]) => { ks.forEach(k => origRemove.call(localStorage, k)); origRemove.call(localStorage, "wl-linked-" + s); }); applying = false; }
 let view = null;
 const DOC = uid => `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/databases/(default)/documents/${view ? "testStudents" : "students"}/${uid}/sites/${SITE}`;
 
@@ -282,6 +282,24 @@ async function countAlerts(u) {
     document.dispatchEvent(new CustomEvent("wl-alerts", { detail: { open: docs.length, urgent: docs.filter(x => (x.document.fields.severity || {}).stringValue === "urgent").length } }));
   } catch (e) { /* the badge is a convenience; the Students page always shows the alerts */ }
 }
+// ---------- which parts of the Guides site this guide has unlocked ----------
+// Guides open each part of the site by finishing its onboarding step (/guides/onboarding/ records journey.done in
+// behaviorProgress/{uid}). Admins and outside guests see everything. A tester viewing as the test guide sees the
+// locks, using their own progress. Sent as a "wl-unlocks" event for /wlnav.js, remembered as "wl-unlocks".
+function sendUnlocks(d) {
+  try { if (d) origSet.call(localStorage, "wl-unlocks", JSON.stringify(d)); else origRemove.call(localStorage, "wl-unlocks"); } catch (e) { }
+  document.dispatchEvent(new CustomEvent("wl-unlocks", { detail: d }));
+}
+async function findUnlocks(u, em) {
+  if (!view && (ADMINS.includes(em) || GUESTS.includes(em))) return sendUnlocks({ e: em, all: true, done: [] });
+  try {
+    const r = await fetch(`${FS}/behaviorProgress/${u.uid}`, { headers: { Authorization: "Bearer " + await u.getIdToken() } });
+    let done = [];
+    if (r.ok) { const f = (await r.json()).fields || {}; const m = (((((f.journey || {}).mapValue || {}).fields || {}).done || {}).mapValue || {}).fields || {}; done = Object.keys(m).filter(k => Number(m[k].integerValue || m[k].doubleValue || 0) > 0); }
+    else if (r.status !== 404) throw new Error("progress " + r.status);
+    sendUnlocks({ e: em, all: false, done });
+  } catch (e) { console.warn("Wilderland unlocks:", e); }
+}
 async function decideRole(u) {
   const my = ++roleSeq;
   if (!u) { sendRole(null); return; }
@@ -296,6 +314,7 @@ async function decideRole(u) {
     if (next && !next.bands) delete next.bands;
     if (JSON.stringify(was || null) !== JSON.stringify(next)) sendRole(next);
     if (next && next.role === "staff" && (em.endsWith("@" + DOMAIN) || view)) countAlerts(u);
+    if (next && next.role === "staff") findUnlocks(u, em); else sendUnlocks(null);
   } catch (e) { console.warn("Wilderland role:", e); }
 }
 onAuthStateChanged(auth, async u => {

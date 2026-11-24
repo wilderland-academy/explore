@@ -1285,6 +1285,18 @@ function tellRole() {
   window.wlRole = d;
   try { if (d) localStorage.setItem("wl-role", JSON.stringify({ e: d.email, r: d.role, b: d.band, s: d.sid || null, bs: d.bands || null, t: d.test || null, x: d.real || null })); else localStorage.removeItem("wl-role"); } catch (e) { }
   document.dispatchEvent(new CustomEvent("wl-role", { detail: d }));
+  tellUnlocks(d);
+}
+// Which parts of the Guides site this guide has unlocked through onboarding (same as /auth.js, which these pages
+// don't load): admins and guests see everything; a test view shows the tester's own locks.
+let unlockFor = null;
+async function tellUnlocks(d) {
+  const send = x => { try { if (x) localStorage.setItem("wl-unlocks", JSON.stringify(x)); else localStorage.removeItem("wl-unlocks"); } catch (e) { } document.dispatchEvent(new CustomEvent("wl-unlocks", { detail: x })); };
+  if (!d || d.role !== "staff" || !S.user) { unlockFor = null; return send(null); }
+  const em = (S.real || S.email || "").toLowerCase(); if (unlockFor === em + (S.test || "")) return; unlockFor = em + (S.test || "");
+  if (!S.test && (S.admin || TEAM.includes(em))) return send({ e: em, all: true, done: [] });
+  try { const s = await getDoc(doc(db, "behaviorProgress", S.user.uid)); const m = s.exists() && s.data().journey && s.data().journey.done || {}; send({ e: em, all: false, done: Object.keys(m).filter(k => m[k] > 0) }); }
+  catch (e) { console.warn("Life Skills unlocks:", e); }
 }
 
 let seq = 0;

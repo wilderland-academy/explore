@@ -62,7 +62,9 @@ export async function saveProgress(patch) {
   try { await setDoc(doc(db(), "behaviorProgress", u.uid), { ...patch, name: u.displayName || u.email || "", email: (u.email || "").toLowerCase(), updated: Date.now() }, { merge: true }); return true; }
   catch (e) { return false; }
 }
-export const trainingRec = (p, id) => (p && p.training && p.training[id]) || {};
+export const trainingRec = (p, id, store) => (p && p[store || "training"] && p[store || "training"][id]) || {};
+// cfg.store: where a quiz's record lives. "training" (default), or "badges" for the Behavior badges taken in onboarding,
+// so they count the same as in the Behavior Guide (same record, same attempts, so the sets keep taking turns).
 
 // ---------------- the quiz view ----------------
 const CSS = `
@@ -102,12 +104,12 @@ export async function mountQuiz(el, cfg) {
   css(); el.classList.add("wlq"); el.innerHTML = "";
   el.appendChild(h("p", { class: "wlq-dim", text: "Loading…" }));
   const p = await loadProgress();
-  const rec = () => trainingRec(cache || p, cfg.id);
+  const rec = () => trainingRec(cache || p, cfg.id, cfg.store);
   const start = async () => {
     el.querySelectorAll("button").forEach(b => { b.disabled = true; });
     const r = rec(), n = r.attempts || 0, set = n % cfg.sets.length;
-    await saveProgress({ training: { [cfg.id]: { attempts: n + 1, set, at: Date.now() } } });
-    run(el, shuffle(cfg.sets[set]).map(q => { const order = shuffle(q.o.map((t, i) => i)); return { ...q, o: order.map(i => q.o[i]), a: order.indexOf(q.a) }; }), cfg, intro, start);
+    await saveProgress({ [cfg.store || "training"]: { [cfg.id]: { ...rec(), attempts: n + 1, set, at: Date.now() } } });
+    run(el, shuffle(cfg.sets[set]).map(q => { if (q.keep) return q; const order = shuffle(q.o.map((t, i) => i)); return { ...q, o: order.map(i => q.o[i]), a: order.indexOf(q.a) }; }), cfg, intro, start);
   };
   const intro = () => {
     const r = rec(); el.innerHTML = "";
@@ -125,14 +127,14 @@ function run(el, qs, cfg, back, again) {
   const show = async () => {
     el.innerHTML = "";
     if (i >= qs.length) {
-      const passed = score >= cfg.pass, prev = trainingRec(cache, cfg.id);
+      const passed = score >= cfg.pass, prev = trainingRec(cache, cfg.id, cfg.store);
       const r = { best: Math.max(prev.best || 0, score), total: qs.length, passed: !!(prev.passed || passed), at: Date.now(), last: score };
-      const saved = await saveProgress({ training: { [cfg.id]: r } });
+      const saved = await saveProgress({ [cfg.store || "training"]: { [cfg.id]: { ...prev, ...r } } });
       put(el, h("p", { class: "wlq-k", text: passed ? "Passed" : "Not yet" }), h("p", { class: "wlq-big", text: `${score} / ${qs.length}` }),
         h("p", { class: "wlq-dim", text: passed ? (cfg.passText || "Nice work. Your result is saved to your account.") : `You need ${cfg.pass}. Read back over what you missed, then try again. The next try uses different questions.` }),
         saved ? null : h("p", { class: "wlq-dim", text: "Saved on this device only (your account couldn't be reached)." }),
         h("div", { class: "wlq-row" }, [h("button", { class: "wlq-btn" + (passed ? " ghost" : ""), text: passed ? "Back" : "Try again with new questions", onclick: passed || !again ? back : again })]));
-      if (cfg.onDone) cfg.onDone(trainingRec(cache, cfg.id), passed);
+      if (cfg.onDone) cfg.onDone(trainingRec(cache, cfg.id, cfg.store), passed);
       return;
     }
     const q = qs[i], opts = h("div", { class: "wlq-opts" }), after = h("div", { class: "wlq-row" });
@@ -207,8 +209,13 @@ Write 8 multiple-choice questions about what the excerpt actually requires or sa
 Return ONLY a JSON object, no markdown, in exactly this shape:
 {"questions":[{"q":"question","options":["a","b","c","d"],"answer":0,"why":"one sentence on why that answer is right","quote":"one exact sentence copied character for character from the excerpt that proves the answer"}]}`;
 // Build one policy check: returns { qs, part } or throws.
-async function policyQuestions(key, label, attempt, want) {
+// A private policy's text (staff only, through the relay).
+export async function fetchDoc(key) {
   if (!docText[key]) { const j = await callRelay({ mode: "doc", key }); docText[key] = j.text || ""; }
+  return docText[key];
+}
+async function policyQuestions(key, label, attempt, want) {
+  await fetchDoc(key);
   const parts = policyParts(docText[key]); if (!parts.length) throw new Error("That policy is empty.");
   for (let k = 0; k < 2; k++) {
     const part = parts[(attempt + k * Math.max(1, Math.floor(parts.length / 2))) % parts.length];
