@@ -411,3 +411,14 @@ the `PAGES` list at the top of `/search.js`.
 
 - AI-08.4 (Teaching myself anything, grades 7–8) now counts a tool built with an AI as well as one coded by hand. Students who use AI bring their prompts and one mistake the AI made that they caught and fixed, and use a tool their family allows (most AI tools have a minimum age).
 - The students' Life Skills page no longer turns its links into an "On this site" menu on phones (`data-wl-collapse="off"` on its nav). Everything is on one page, so students just scroll. The guides' and parents' versions keep their menus.
+
+## Student Goals (`/goals/`), added Nov 24, 2026
+
+- Students set goals for this week, this month and the school year: Life Skills (progress from tracker passes),
+  academics (apps by grade from the 2026–27 family packet, in `goals/apps.js`), Camp Store, projects, habits or behavior.
+  A current Life Skills goal and a current academic goal are expected; the page flags a missing one.
+- Saved in localStorage `wl-goals`, synced by `/auth.js` (site `goals`), and copied on every change to `lsGoals/{sid}`.
+- Guides and parents see them in a Goals panel on the student's Life Skills record (`/guides/lifeskills/#s=<sid>`,
+  `/parents/lifeskills/`). Guides read the student's synced copy (the existing `sites` rule); parents read `lsGoals`.
+- `firestore.rules` adds `lsGoals`; paste the file into the Firebase console to publish it. Until then parents see
+  "hasn't set any goals yet" and the student's copy to `lsGoals` fails quietly (their own goals still save).

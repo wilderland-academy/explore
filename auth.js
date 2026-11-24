@@ -34,13 +34,13 @@ function viewFor(u) {
   return { as: v.as, band: ["K–1", "2–4", "5–8"].includes(v.band) ? v.band : "2–4", by: em };
 }
 const ANY_ACCOUNT_PATH = /^\/(parents\/|challenges\/parents\.html|$)/.test(location.pathname);
-const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["My progress", "/challenges/#progress"], ["Projects", "/projects/"]];
+const SITES = [["Books", "/books/"], ["Challenges", "/challenges/"], ["My progress", "/challenges/#progress"], ["My goals", "/goals/"], ["Projects", "/projects/"]];
 
 const me = document.querySelector('script[src$="auth.js"]');
 const SITE = (me && me.dataset.site) || "";
 const ANY_ACCOUNT = ANY_ACCOUNT_PATH || SITE === "parents" || SITE === "home" || GUEST_SITES.includes(SITE);
 // What each site keeps in the browser. Add a line here when a new site joins.
-const ALLKEYS = { books: ["lantern-stacks"], challenges: ["wl-picks", "wl-band"], projects: ["atlas-sparks", "atlas-me"], store: ["wl-store"] };
+const ALLKEYS = { books: ["lantern-stacks"], challenges: ["wl-picks", "wl-band"], goals: ["wl-goals"], projects: ["atlas-sparks", "atlas-me"], store: ["wl-store"] };
 // In a test view only the test student's things are kept (in their own place, testStudents/{uid}/sites/{site}).
 const VIEW0 = storedView();
 const KEYS = VIEW0 && VIEW0.as !== "student" ? [] : ALLKEYS[SITE] || [];

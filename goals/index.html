@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Goals · Wilderland Explore</title>
+<meta name="description" content="Set your own goals for this week, this month and the school year: Life Skills challenges, your academic apps, Camp Store rewards, projects and habits.">
+<meta name="theme-color" content="#015640">
+<link rel="icon" href="/books/f/icon.png">
+<link rel="stylesheet" href="/wl.css">
+<style>
+@font-face{font-family:"Uncut Sans";src:url(/books/f/us-700.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
+*{box-sizing:border-box}
+:root{--ink:#08140f;--shelf:#0f231c;--shelf2:#16302a;--line:#28493d;--paper:#f6f8ea;--dim:#a9bbb0;--lamp:#d5f367;--neon:#c7f1ee;--warn:#f0c080;--bad:#ff8a80}
+body{margin:0;background:var(--ink);color:var(--paper);font:400 16px/1.5 Inter,system-ui,sans-serif}
+h1,h2{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacing:-.025em;margin:0}
+.in{max-width:820px;margin:0 auto;padding:0 20px 60px}
+.hero{padding:34px 0 6px}
+.hero h1{font-size:clamp(30px,4.5vw,48px);line-height:1.05}
+.hero h1 span{color:var(--lamp)}
+.hero p{color:#c9d6cc;font-size:17px;max-width:58ch;margin:10px 0 0}
+.top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0 0}
+.top label{font-size:14px;color:var(--dim);display:flex;gap:8px;align-items:center}
+select,input[type=text],input[type=number],input[type=date]{font:inherit;font-size:15px;color:var(--paper);background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%;color-scheme:dark}
+.top select{width:auto}
+select:focus,input:focus{outline:2px solid var(--lamp);outline-offset:1px;border-color:transparent}
+.box{background:var(--shelf);border:1px solid var(--line);border-radius:18px;padding:16px 20px;margin:18px 0}
+.need{border-color:rgba(240,192,128,.55)}
+.need.met{border-color:rgba(213,243,103,.45)}
+.need p{margin:0 0 10px}
+.needs{display:flex;gap:10px;flex-wrap:wrap}
+.needs .ok{font-weight:600;color:var(--lamp);padding:10px 4px}
+.btn{font:600 14.5px/1 Inter,sans-serif;color:#0b2b20;background:var(--lamp);border:0;border-radius:10px;padding:12px 16px;cursor:pointer}
+.ghost{font:600 13px/1 Inter,sans-serif;color:var(--paper);background:transparent;border:1px solid var(--line);border-radius:9px;padding:8px 11px;cursor:pointer}
+.ghost:hover{border-color:var(--dim)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:22px 0 4px}
+.filters button{font:600 13.5px/1 Inter,sans-serif;color:var(--dim);background:var(--shelf);border:1px solid var(--line);border-radius:999px;padding:9px 13px;cursor:pointer}
+.filters button span{opacity:.7;margin-left:3px}
+.filters button.on{color:#0b2b20;background:var(--lamp);border-color:var(--lamp)}
+.span{margin-top:22px}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sh h2{font-size:21px}
+.glist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.goal{background:var(--shelf);border:1px solid var(--line);border-left:4px solid var(--neon);border-radius:14px;padding:13px 16px}
+.goal[data-area=life]{border-left-color:var(--lamp)}
+.goal[data-area=acad]{border-left-color:#7cc6f0}
+.goal[data-area=store]{border-left-color:#ffb454}
+.goal[data-area=habit]{border-left-color:#7ed37e}
+.goal.done{opacity:.75}
+.goal.past{opacity:.6}
+.gh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--dim)}
+.tag{font:600 11px/1.6 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.gt{margin:6px 0 4px;font-size:17px;font-weight:600;line-height:1.35}
+.why{margin:0 0 6px;font-size:14px;color:#c9d6cc}
+.bar{height:8px;background:var(--shelf2);border-radius:99px;overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:var(--lamp);border-radius:99px}
+.at{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.at input{width:90px;padding:6px 8px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.acts .x{margin-left:auto;color:var(--dim)}
+.small{font-size:13.5px;margin:4px 0 0}
+.dim{color:var(--dim)}
+.empty{color:var(--dim);margin:0;padding:14px 16px;border:1px dashed var(--line);border-radius:14px;font-size:14.5px}
+details{margin-top:28px}
+summary{cursor:pointer;color:var(--dim);font-weight:600;margin-bottom:10px}
+#form{border-color:var(--lamp);display:grid;gap:12px}
+#form[hidden]{display:none}
+.fh{display:flex;justify-content:space-between;align-items:center}
+.fh h2{font-size:21px}
+#form label{display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:var(--dim)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.areas{display:flex;gap:6px;flex-wrap:wrap}
+.areas button{font:600 14px/1.2 Inter,sans-serif;color:var(--paper);background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left}
+.areas button small{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);margin-top:2px}
+.areas button.on{color:#0b2b20;background:var(--lamp);border-color:var(--lamp)}
+.areas button.on small{color:#0b2b20}
+.warn{color:var(--warn);margin:0}
+.err{color:var(--bad);margin:0;min-height:1em;font-size:14px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(92vw,460px);background:var(--shelf);color:var(--paper);border:1px solid var(--lamp);border-radius:12px;padding:12px 14px;font-size:14px;z-index:60}
+.fine{color:#7f978b;font-size:13px;max-width:70ch;margin-top:30px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wlbar" data-wlnav="students" data-current="goals"></div><script src="/wlnav.js"></script>
+<main class="in">
+  <div class="hero">
+    <h1>My <span>goals</span></h1>
+    <p>Pick where you want to be this week, this month and by the end of the school year. Small weekly goals add up to big year goals. Your guide looks at these with you at your 1:1, and your parents can see them too.</p>
+  </div>
+  <div class="top">
+    <label for="grade">Your grade</label><select id="grade"></select>
+    <button class="btn" type="button" id="add">+ Add a goal</button>
+  </div>
+  <div class="box need" id="need"></div>
+  <div class="box" id="form" hidden></div>
+  <div class="filters" id="filters" role="group" aria-label="Show goals for"></div>
+  <div id="goals"></div>
+  <div id="history"></div>
+  <p class="fine">Your goals are saved to your school account when you're signed in, so they follow you to any Chromebook. Your guides and your parents can see them; other students can't. Life Skills goals fill in by themselves when your guide records a pass. For app goals, type in how far you are, using the numbers in each app or on Basecamp.</p>
+</main>
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="/challenges/data.js"></script>
+<script src="/store/products.js"></script>
+<script src="apps.js"></script>
+<script src="app.js"></script>
+<script type="module" src="/auth.js" data-site="goals"></script>
+</body>
+</html>

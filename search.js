@@ -26,6 +26,7 @@ const PAGES = [
   ["Challenges", "/challenges/", "s", "life skills map"],
   ["My progress", "/challenges/#progress", "s", "credits rank trail passes feats not yet"],
   ["Crew board", "/challenges/#progress", "s", "crew working on passed"],
+  ["My goals", "/goals/", "s", "goal setting weekly monthly year academics apps math reading blazes habits"],
   ["Projects", "/projects/", "s", "atlas ideas sparks"],
   ["Mr. Fox", "/coach/", "s", "help chat conflict"],
   ["Store", "/store/", "s", "shop buy"],

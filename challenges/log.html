@@ -12,8 +12,10 @@
 .sheet-page{max-width:900px;margin:0 auto;padding:32px var(--gutter-r) 48px var(--gutter-l);display:flex;flex-direction:column;gap:16px}
 .sheet-page h1{font-size:clamp(30px,4vw,40px)}
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
-.field{border-bottom:1.5px solid var(--ink);padding:18px 0 4px;font-size:14px;color:var(--muted)}
-.field.wide{grid-column:1/-1;padding-top:30px}
+/* Write on the line; the label sits under it. */
+.field{border-top:1.5px solid var(--ink);margin-top:34px;padding-top:5px;font-size:13px;color:var(--muted)}
+.field.wide{grid-column:1/-1;margin-top:40px}
+.sheet-logo{display:block;width:240px;height:auto}
 .logt-wrap{overflow-x:auto}
 .logt{width:100%;min-width:560px;border-collapse:collapse;font-size:14px}
 .logt th{background:var(--green);color:#fff;text-align:left;padding:8px 10px;font-weight:600}
@@ -27,7 +29,9 @@
   .sheet-page{padding:0;gap:10px}
   body{font-size:12px}
   .logt td{height:26px}
-  .logt th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .logt th,.sheet-logo{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sheet-logo{width:200px}
+  .field{margin-top:26px}.field.wide{margin-top:30px}
 }
 </style>
 <link rel="stylesheet" href="/wl.css">
@@ -48,6 +52,7 @@
     <button class="btn" type="button" id="print"><svg class="ic" aria-hidden="true"><use href="icons.svg#i-printer"/></svg>Print this sheet</button>
     <a href="parents.html#logs">Read the log rules first</a>
   </div>
+  <img class="sheet-logo" src="img/wilderland-logo-ink.png" width="384" height="48" alt="Wilderland Academy">
   <h1>Home pass-off log</h1>
   <p>Write each entry the same day. Count only what you saw. No rounding up. For longer challenges, print more than one sheet.</p>
   <div class="fields">

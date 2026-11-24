@@ -41,6 +41,8 @@
     students: { name: "Students", home: "/students/", label: "Students", tabs: [
       { id: "books", label: "Books", href: "/books/" },
       { id: "challenges", label: "Challenges", href: "/challenges/" },
+      // Weekly, monthly and school-year goals: Life Skills, academics, Camp Store, projects, habits (/goals/).
+      { id: "goals", label: "Goals", href: "/goals/" },
       { id: "projects", label: "Projects", href: "/projects/" },
       { id: "coach", label: "Mr. Fox", href: "/coach/" },
       { id: "store", label: "Store", href: "/store/" },
@@ -172,7 +174,7 @@
     var m = /[?&]next=([^&#]*)/.exec(location.search), n = "";
     try { n = m ? decodeURIComponent(m[1]) : ""; } catch (e) { n = ""; }
     if (!/^\/(?![\/\\])/.test(n) || /^\/(\?|#|$)/.test(n)) n = "";
-    var STU = /^\/(students|books|challenges|projects|coach|store|suggest|lifeskills)\//, PAR = /^\/(parents\/|challenges\/parents\.html)/;
+    var STU = /^\/(students|books|challenges|goals|projects|coach|store|suggest|lifeskills)\//, PAR = /^\/(parents\/|challenges\/parents\.html)/;
     if (r.role === "student") return n && STU.test(n) && !PAR.test(n) ? n : "/students/";
     if (r.role === "parent") return n && (PAR.test(n) || STU.test(n)) ? n : "/parents/";
     return n || "/guides/";
