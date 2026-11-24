@@ -124,6 +124,13 @@ service cloud.firestore {
       allow read: if isAdmin() || (school() && request.auth.uid == uid);
       allow write: if staffSchool() && request.auth.uid == uid;
     }
+    // Student Info (/guides/student-info/): the family directory with emergency profiles, allergy lists, photo and
+    // video permissions and birthdays, one document per enrolled student plus "meta". Confidential: guides and admins
+    // read it; only admins import it. It is never in the public repo, and students, parents and guests can't read it.
+    match /studentInfo/{id} {
+      allow read: if staffSchool();
+      allow write: if isAdmin();
+    }
     // Proposals to change the guide.
     match /behaviorProposals/{id} {
       allow read: if staffSchool();

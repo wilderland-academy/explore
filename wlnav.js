@@ -56,6 +56,9 @@
       // Challenges, the Labs schedule and the Lab builder live inside Life Skills (its sub-menu: /lifeskills/subnav.js).
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
       { id: "roster", label: "Student Roster", href: "/guides/roster/" },
+      // Directory, emergency profiles, allergies, photo permissions and birthdays (staff-only data in Firestore).
+      // Never locked by onboarding: safety information has to be there from day one.
+      { id: "studentinfo", label: "Student Info", href: "/guides/student-info/" },
       { id: "parentcomms", label: "Parent Comms", href: "/guides/parents/" },
       // The Staff Handbook and every other staff policy and form (/guides/policies/, /guides/handbook/).
       { id: "policies", label: "Policies", href: "/guides/policies/" },
