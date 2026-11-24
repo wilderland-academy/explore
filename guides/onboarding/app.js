@@ -184,8 +184,11 @@ function checkView(sec, s, i) {
 function doneView(sec, s, i) {
   const nx = STEPS[i + 1];
   sec.append(h("p", { class: "eyebrow", text: `Step ${i + 1} of ${STEPS.length}: ${s.name}` }), h("h1", { text: "✓ " + s.name + ": done" }));
-  if (s.unlocks) sec.appendChild(card([h("b", { text: "🔓 Now on your Guides site: " + s.unlocks.name }), h("p", { class: "dim", text: s.unlocks.what }), h("a", { class: "small", href: OPEN_LINK[s.id], text: "Take a look →" })], "ok"));
-  sec.appendChild(h("div", { class: "next" }, [h("span"), nx ? h("a", { class: "btn big", href: "#" + nx.id, text: `Next: ${nx.name} →` }) : h("a", { class: "btn big", href: "#finish", text: "Finish →" })]));
+  // Two ways on: open the part of the site this step just unlocked, or go straight to the next training.
+  const go = nx ? h("a", { class: "choice next-step", href: "#" + nx.id }, [h("span", { class: "k", text: "Next training" }), h("b", { text: `${nx.icon} ${nx.name} →` }), h("span", { class: "d", text: nx.intro }), h("span", { class: "d", text: nx.time })])
+    : h("a", { class: "choice next-step", href: "#finish" }, [h("span", { class: "k", text: "All done" }), h("b", { text: "Finish onboarding →" }), h("span", { class: "d", text: "Every step stays open for review." })]);
+  const view = s.unlocks && OPEN_LINK[s.id] ? h("a", { class: "choice open-page", href: OPEN_LINK[s.id] }, [h("span", { class: "k", text: "🔓 Just unlocked" }), h("b", { text: `Open ${s.unlocks.name} →` }), h("span", { class: "d", text: s.unlocks.what }), h("span", { class: "d", text: "Come back to onboarding any time from the Onboarding tab." })]) : null;
+  sec.appendChild(h("div", { class: "choices" + (view ? "" : " one") }, view ? [view, go] : [go]));
   if (s.dig && s.dig.length) sec.append(h("h2", { text: "Dig deeper (optional)" }), h("p", { class: "dim", text: "For whenever you want more. Save anything to come back to it during the year." }), digList(s.dig));
 }
 
