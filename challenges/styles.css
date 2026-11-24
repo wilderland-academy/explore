@@ -117,6 +117,9 @@ main{max-width:1180px;margin:0 auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
 .dot.on{background:var(--c)}
 /* Saved to the plan, not passed yet: lined, so only a pass looks filled. */
 .dot.saved{background:repeating-linear-gradient(135deg,var(--c) 0 2px,transparent 2px 5px)}
+/* Students' Life Skills page: its links only jump within this one page, so phones get no "On this site" menu (the
+   shared section dropdown is turned off with data-wl-collapse="off"); students just scroll. */
+@media (max-width:760px){.nav-links[data-wl-collapse="off"]{display:none}}
 /* Saved beyond the goal of 2: gray lined, one per extra save. */
 .dot.saved.extra{border-color:#9aa39c;background:repeating-linear-gradient(135deg,#9aa39c 0 2px,transparent 2px 5px)}
 .ys-count{font-size:12.5px;line-height:1.2;color:var(--muted,#5b6660)}

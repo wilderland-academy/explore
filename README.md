@@ -406,3 +406,8 @@ the `PAGES` list at the top of `/search.js`.
   `challenges/app.js`).
 - The year tracker says what the dots mean: "2 passed · 3 saved" under each life skill (Epics noted, since they fill 2 dots),
   and every save beyond the goal of 2 adds a gray lined dot, so no save is hidden.
+
+## Challenges: AI-built family solutions, and no phone dropdown for students (Nov 24, 2026)
+
+- AI-08.4 (Teaching myself anything, grades 7–8) now counts a tool built with an AI as well as one coded by hand. Students who use AI bring their prompts and one mistake the AI made that they caught and fixed, and use a tool their family allows (most AI tools have a minimum age).
+- The students' Life Skills page no longer turns its links into an "On this site" menu on phones (`data-wl-collapse="off"` on its nav). Everything is on one page, so students just scroll. The guides' and parents' versions keep their menus.
