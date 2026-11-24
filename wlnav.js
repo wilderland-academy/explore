@@ -55,10 +55,9 @@
       { id: "behavior", label: "Behavior", href: "/behavior/" },
       // Challenges, the Labs schedule and the Lab builder live inside Life Skills (its sub-menu: /lifeskills/subnav.js).
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
-      { id: "roster", label: "Student Roster", href: "/guides/roster/" },
-      // Directory, emergency profiles, allergies, photo permissions and birthdays (staff-only data in Firestore).
-      // Never locked by onboarding: safety information has to be there from day one.
-      { id: "studentinfo", label: "Student Info", href: "/guides/student-info/" },
+      // Students: the roster (students, parents, Mr. Fox alerts and conversations) and Student Info (pickup, allergies,
+      // photo permissions, birthdays: staff-only data in Firestore) on one page, /guides/roster/ (#info for Student Info).
+      { id: "roster", label: "Students", href: "/guides/roster/" },
       { id: "parentcomms", label: "Parent Comms", href: "/guides/parents/" },
       // The Staff Handbook and every other staff policy and form (/guides/policies/, /guides/handbook/).
       { id: "policies", label: "Policies", href: "/guides/policies/" },
@@ -108,13 +107,15 @@
   // A guide only sees the parts of the site they've trained for. Each section stays hidden (no tab, no card, no search
   // result) until they finish its step in onboarding (/guides/onboarding/). A locked page visited directly goes straight
   // to onboarding. Until we know what a guide has finished, their sections stay hidden too, so nothing flashes into
-  // view and back out. Admins and outside guests see everything. Never hidden: the Guides home, Onboarding, Student Info
-  // (safety information has to be there from day one), Trail Partner and Basecamp.
+  // view and back out. Admins and outside guests see everything. Never hidden: the Guides home, Onboarding and Basecamp.
+  // Trail Partner has no tab of its own: its 🐲 button, its page and every "Ask Trail Partner" stay hidden until its step.
   // Who has unlocked what comes from /auth.js (or the Life Skills tracker) as a "wl-unlocks" event:
   // { e: email, all: true|false, done: [step ids] }, remembered on this device as "wl-unlocks".
   // Keep the step ids in step with /guides/onboarding/data.js.
   var LOCKS = [
-    { step: "lifeskills", tabs: ["lifeskills", "roster"], path: /^\/guides\/(lifeskills|roster|challenges|students)\// },
+    { step: "lifeskills", tabs: ["lifeskills"], path: /^\/guides\/(lifeskills|challenges)\// },
+    { step: "students", tabs: ["roster"], path: /^\/guides\/(roster|student-info|students)\// },
+    { step: "partner", tabs: [], path: /^\/guides\/(partner|history)\// },
     { step: "mentor", tabs: ["mentor", "sessions"], path: /^\/fieldguide\// },
     { step: "behavior", tabs: ["behavior"], path: /^\/behavior\// },
     { step: "parents", tabs: ["parentcomms"], path: /^\/guides\/parents\// },
@@ -130,6 +131,7 @@
   function stepLocked(step) { return isStaff() && !!unlocks && !unlocks.all && (unlocks.done || []).indexOf(step) < 0; }
   function stepHidden(step) { return isStaff() && (!unlocks || stepLocked(step)); }
   function tabHidden(id) { for (var i = 0; i < LOCKS.length; i++) if (LOCKS[i].tabs.indexOf(id) >= 0 && stepHidden(LOCKS[i].step)) return true; return false; }
+  window.wlStepHidden = stepHidden;
   // For search (/search.js) and anything else that lists links: is this address in a section the visitor can't see yet?
   window.wlHiddenPath = function (url) {
     var path = String(url || "").replace(/^https?:\/\/[^\/]+/, "").split(/[?#]/)[0];
@@ -226,7 +228,7 @@
       // Search (⌘K / Ctrl+K, or "/"), for everyone: /search.js, loaded on first use.
       '<button type="button" class="wlbar-search" data-wl-search aria-label="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')" title="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="wlbar-search-t">Search</span><kbd>' + (MAC ? "⌘K" : "Ctrl K") + "</kbd></button>" +
       // Trail Partner (🐲) is one click away on every staff page.
-      (key === "guides" ? '<button type="button" class="wlbar-mentor" data-wl-mentor aria-label="Open Trail Partner" title="Trail Partner: ask anything about your work"><span aria-hidden="true">🐲</span><span class="wlbar-mentor-t">Trail Partner</span></button>' : "") +
+      (key === "guides" && !stepHidden("partner") ? '<button type="button" class="wlbar-mentor" data-wl-mentor aria-label="Open Trail Partner" title="Trail Partner: ask anything about your work"><span aria-hidden="true">🐲</span><span class="wlbar-mentor-t">Trail Partner</span></button>' : "") +
       // Test view lives in the account menu. Only pages with no account menu (the Parents pages, the front door) show
       // it on its own.
       (tester && !hasPill() ? '<div class="wlbar-test"><button type="button" class="wlbar-testbtn' + (view ? " on" : "") + '" aria-haspopup="true" aria-expanded="false" title="See the site as a test guide, student or parent"><span aria-hidden="true">🧪</span><span class="wlbar-test-t">' + (view ? "Test " + view.as : "Test view") + "</span></button>" + '<div class="wlbar-menu wlbar-testmenu" hidden>' + testMenu() + "</div></div>" : "") +
@@ -402,7 +404,10 @@
   });
 
   // Trail Partner lives in /guides/mentor/mentor.js, loaded on first use.
-  window.wlOpenMentor = function (opts) { return import("/guides/mentor/mentor.js").then(function (m) { return opts ? m.open(opts) : m.toggle(); }); };
+  window.wlOpenMentor = function (opts) {
+    // Not yet trained on Trail Partner: onboarding instead (its buttons are hidden, but other pages call this too).
+    if (stepHidden("partner")) { location.href = ONBOARD; return Promise.resolve(); }
+    return import("/guides/mentor/mentor.js").then(function (m) { return opts ? m.open(opts) : m.toggle(); }); };
   document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-wl-mentor]")) { e.preventDefault(); window.wlOpenMentor(); } });
   bar.addEventListener("click", function (e) {
     var b = e.target.closest(".wlbar-switch > button"); if (!b) return;

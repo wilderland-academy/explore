@@ -13,7 +13,7 @@ export const STEPS = [
     unlocks: null,
     screens: [
       { id: "w-how", kind: "text", title: "How this works", text: [
-        "Six short steps, in order: Welcome, Life Skills, the Mentor Mindset, Behavior, Parent Communication, and our policies. Everything you need is right here. Read a screen, press Next.",
+        "Eight short steps, in order: Welcome, Life Skills, Students, Trail Partner, the Mentor Mindset, Behavior, Parent Communication, and our policies. Everything you need is right here. Read a screen, press Next.",
         ["Each step ends with a short checkpoint. Pass it and that part of the Guides site appears for you. Until then it stays out of sight, so you only see what you've trained for.", "Checkpoints have three different sets of questions that take turns. If you don't pass, the next try asks different questions.", "Your place is saved. Close the tab any time and pick up where you left off.", "Each step ends with Dig deeper: books, articles, podcasts and studies, if you want more. Save any of them for later."]
       ] },
       { id: "w-why", kind: "text", title: "Why we train this way", text: [
@@ -26,43 +26,43 @@ export const STEPS = [
 
   { id: "lifeskills", name: "Life Skills", icon: "🏔️", time: "45 minutes",
     intro: "Start here: the vision for the Life Skills afternoon, and its four parts in the order a student climbs them. Skill Labs, Challenges, weekly 1:1 coaching, and Passion Projects for the students who are ready for them.",
-    unlocks: { name: "Life Skills and the Student Roster", what: "The Life Skills tracker (validate passes and not yets), the Labs schedule, Lab ideas, How Labs run, the AI Lab builder, and the Student Roster." },
+    unlocks: { name: "Life Skills", what: "The Life Skills tracker (validate passes and not yets), the Labs schedule, Lab ideas, How Labs run, and the AI Lab builder." },
     screens: [
-      { id: "l-vision", kind: "text", title: "The Life Skills afternoon", text: [
-        "Mornings build academic foundations. Afternoons are where students become capable people. They learn the eight Life Skills by doing real things, mostly outdoors, often in front of real people.",
+      { id: "l-vision", kind: "text", art: "climb", title: "The Life Skills afternoon", text: [
+        "Mornings build academic foundations. Afternoons are where students become capable people. They learn the eight Life Skills by doing real things, mostly in the real world, often in front of real people.",
         "The goal is children who break their own ceilings: who can do things that would impress an adult, and know it because they proved it. Status comes from doing hard things. It never comes from prizes or from pleasing a grown-up.",
         "The afternoon has four parts. Each one hands the student more of the wheel:",
-        ["Skill Labs: you lead and the whole crew learns. The core curriculum every student takes part in.", "Challenges: the student chooses and you verify. One student proves one ability, whenever they're ready.", "1:1 Coaching: every student, every week. Where students own their goals and choose what's next.", "Passion Projects: the student leads and you advise. Only for students who have found a real passion and can run their own learning."],
+        ["Skill Labs: you lead and the whole crew learns. The core curriculum every student takes part in.", "Challenges: the student chooses and you verify. One student proves one ability, whenever they're ready.", "1:1 Coaching: every student, every week. Where students own their goals and choose what's next.", "Passion Projects: the student leads and you advise. Mostly for 7th and 8th graders who have found something they're excited about, and open to younger students who meet the criteria."],
         "That order is on purpose. Researchers call it the gradual release of responsibility (Pearson & Gallagher, 1983): show it, practice it together, then let the learner carry it. A review of decades of studies found that beginners learn less when left to figure things out alone, and that guidance should ease off only as skill grows (Kirschner, Sweller & Clark, 2006). So Labs come first, and Passion Projects wait until a student is ready.",
         ["High standards: the bar never moves, for any child.", "High support: Labs, coaching, and retries that aren't rationed.", "High autonomy: it grows as a student shows they can carry it."]
       ] },
-      { id: "l-skills", kind: "text", title: "The eight Life Skills", text: [
+      { id: "l-skills", kind: "text", art: "skills", title: "The eight Life Skills", text: [
         "Wilderland teaches eight Life Skills: Energy, Self-Governance, Character & Grit, Adaptability & Ingenuity, Value Creation, Storytelling & Speaking, Fellowship, and Nature & Living Systems. Each has sub-skills and specific abilities, mapped on the Skill Map. Content is the vehicle; the skill is the point.",
         ["The yearly goal: in grades 2–8, at least 2 passes in every Life Skill. In K–1, at least 3 per Life Skill for each child, from guide-run challenges (plan on at least 2 a week).", "Passes come from Lab tests and from Challenges. Both count toward the goal.", "Progress lives in two places: the printed wall chart, where students see each other getting hard things done, and the Life Skills tracker, which families can see from home."]
       ] },
-      { id: "l-labs2", kind: "text", title: "1. Skill Labs", text: [
+      { id: "l-labs2", kind: "text", art: "labs", title: "1. Skill Labs", text: [
         "Skill Labs are the core curriculum. Every student takes part, and you plan them ahead, on purpose. In a Lab you lead a crew through learning and practicing a skill together. Right after, run a quick testing session: each student takes their own Test to Pass. Not every student passes every Lab, but every pass counts toward their yearly goal.",
         "The strongest Labs pass four tests: anyone can see the pass (a time, a count, a weight, or a yes from someone outside school); the whole crew can do it in one Lab week (one day in K–1); kids can practice it here; and it leaves something to show.",
         ["Design backward from the Test to Pass. Name its quality bar: Score it, Make something happen, or Satisfy the expert.", "Make it thrilling by changing the arena (race an adult, a real audience, a real event), never the bar.", "Epic Skill Labs run for weeks and end in a real, public feat. Every band can do them, K–1 included.", "A Lab built from an existing Challenge keeps that Challenge's Test to Pass exactly.", "Score every plan on the Workshop Scorecard: 9 indicators, 1 to 3 each. Aim for 3 on every one, and score honestly.", "Safety gates come before the activity (fire card, knife card, tool card and so on). Field days need at least two approved adults with every group, permission slips and a transport plan.", "First names only in anything public, and no photos without a release on file. Students can't use Claude (Anthropic requires users to be 18 or older)."]
       ] },
-      { id: "l-challenges2", kind: "text", title: "2. Challenges", text: [
+      { id: "l-challenges2", kind: "text", art: "challenges", title: "2. Challenges", text: [
         "Challenges are where choice comes in. Students pick their own from the Challenge map and work on them on their own, usually 3 to 8 hours a week. You verify the pass.",
         "A Challenge is one “I can…” statement with a Test to Pass: observable, scored or event-based, and hard to pass without the skill. Sizes: a Week (about 3 to 8 hours of work), a Practice skill tested whenever the student is ready (like a timed mile), or an Epic (about 2 to 3 weeks, 2 credits, with start, halfway and finish checkpoints).",
         ["Pass or not yet. No partial credit and no lowered bar.", "A not yet always says exactly what was missing and how to practice. It never goes on the wall, and retries aren't rationed.", "Knowledge checks (“say the 3 fire rules”) are Steps that unlock a challenge, never the pass itself.", "Record passes and not yets in the tracker the day you see them. Every 4 credits is a milestone, celebrated at Honor Court.", "Some challenges can be passed off at home. Parents hold the same bar: video in one continuous take from the last 7 days, a parent log, a witness note, or a turnaround check. A video can't replace a guide on Safety Gates.", "K–1 has no independent Challenges: the guide runs them and each child shows the skill alone. In 2–4, a challenge from the 5–8 band counts as a Stretch.", "No prizes for passing. Status comes from doing hard things and from specific spoken recognition. No public leaderboards."]
       ] },
-      { id: "l-coaching", kind: "text", title: "3. 1:1 Coaching Sessions", text: [
+      { id: "l-coaching", kind: "text", art: "coaching", title: "3. 1:1 Coaching Sessions", text: [
         "Every student meets one-on-one with their guide every week. It isn't optional, and it isn't only for students who are struggling. If a week gets away from you, make it up before the next week ends. Most take 10 to 20 minutes; K–1 is shorter and more concrete.",
         "The 1:1 is where a student steers their own afternoon. They look at where they stand across the eight Life Skills, choose their next Challenge, and plan how to get it done. You hold the bar; they own the goal.",
         ["Read last week first: last week's notes, what they said they'd do, and your one thing.", "Start with them. Ask how the week went and listen. Follow what they say with a real question.", "Check the commitment. Name exactly what went well. If it didn't happen, get curious: “What got in the way?” No lecture.", "They pick this week's goal. The student proposes it; you hold the bar.", "Make an if-then plan: “If ___ happens, then I will ___.” They say it back; you write it down.", "Close with the next date. Name the day of next week's 1:1, then save your notes."],
         "Watch for readiness. The 1:1 is where you'll notice a student who has found a real passion, and where you'll see whether they can plan and follow through on their own. That's the doorway to a Passion Project.",
         "Recording a 1:1 (it becomes text; audio is never saved) needs a parent's written consent on the student's page and the student's okay that day. Otherwise, take notes. The Mentor Mindset step, next, teaches how to coach in these sessions and opens the Session Room."
       ] },
-      { id: "l-projects2", kind: "text", title: "4. Passion Projects", text: [
+      { id: "l-projects2", kind: "text", art: "projects", title: "4. Passion Projects", text: [
         "A Passion Project is about 25 hours of student-driven building, with milestones at the start, halfway and finish, shown to real people at the end. A finished project isn't automatically a passing one: the work has to meet the bar.",
-        "Passion Projects only happen for a student who has found a real passion and is equipped to run it. Equipped means two things:",
+        "Passion Projects are mostly encouraged for 7th and 8th graders, once they've found something they're excited about. Younger students can take one on too, when they meet the same criteria: a real passion, and the skills to run it. Those skills are two things:",
         ["Executive functioning: they plan the work, start without being prompted, manage their time, and push through setbacks.", "Self-teaching: they can learn something new from books, videos and experts, without being taught step by step."],
         "They aren't a default assignment. Before saying yes, ask both questions: does this student truly care about this, and can they carry it on their own? Look at what they've already done. An Epic Challenge finished with every checkpoint met is strong evidence. If either answer is not yet, keep the door open and route them through the Challenges and Labs that build those skills first. That's a path, not a no.",
-        ["K–1: no Projects.", "2–4: only by exception, when the student asks and the guide and a parent agree.", "5–8: the full range, with real audiences and real responsibility."]
+        ["Grades 7–8: encouraged, once a student has found something they're excited about. Real audiences and real responsibility.", "Grades 2–6: open to a student who meets the criteria. In 2–4, a parent agrees too.", "K–1: no Projects."]
       ] }
     ],
     quiz: "lifeskills",
@@ -83,11 +83,46 @@ export const STEPS = [
       { id: "d-dubois", t: "study", title: "Effectiveness of mentoring programs for youth: a meta-analytic review", by: "DuBois, Holloway, Valentine & Cooper, 2002", url: "https://doi.org/10.1023/A:1014628810714", note: "Why weekly, steady 1:1 contact matters." }
     ] },
 
+  { id: "students", name: "Students", icon: "🧒", time: "10 minutes",
+    intro: "The Students page: every student, their parents, and the safety information you need before you take a child anywhere.",
+    unlocks: { name: "Students", what: "Every student and their parents, pickup, allergies and photo permissions, Mr. Fox alerts, and every student conversation with Mr. Fox." },
+    screens: [
+      { id: "s-page", kind: "text", title: "One page for every student", text: [
+        "The Students page has four tabs:",
+        ["Students and parents: every student, their parents and their guide. Any guide can add a student or link a parent. A parent sees their child's record only after you add their email and they confirm it.", "Pickup, allergies & photos: what the office keeps on each child. Family contacts, authorized pickup and do-not-release, emergency and health notes, allergies, photo permission and birthday.", "Alerts: when a student's message to Mr. Fox is worrying or breaks the rules. Every staff member sees every alert.", "All AI conversations: every student conversation with Mr. Fox."]
+      ] },
+      { id: "s-safety", kind: "text", title: "Check before you go", text: [
+        "Red and amber tags on a student mean look closer. Read the notices at the top of your band first.",
+        ["Pickup: check authorized pickup and do-not-release before you hand a child to anyone you don't know. A “Do not release” tag means never to that person.", "Allergies: check your band's allergy tags before any food, cooking or event. “No allergy form” means unknown, not clear: check with the family before food is shared.", "Photos: check before you take or share a photo. “No photos” means do not photograph. “Community only” has limits: read the note on the student's card.", "Only admins change this information, by importing the office's lists. If something looks wrong, tell an admin."]
+      ] },
+      { id: "s-care", kind: "text", title: "Handle it with care", text: [
+        ["It's confidential: family contacts, health, custody and safety. Look it up when you need it. Don't copy it into messages, documents or AI tools, Trail Partner included.", "Urgent alerts come with what to do now. If a student may be harmed, Utah law requires your own report to DCFS (1-855-323-3237, any time) or the police, right away. Telling an admin doesn't replace it.", "Read an alert, do what it says, then mark it reviewed with a note on what you did."]
+      ] }
+    ],
+    quiz: "students",
+    dig: [] },
+
+  { id: "partner", name: "Trail Partner", icon: "🐲", time: "5 minutes",
+    intro: "Trail Partner is an AI fellow guide for thinking things through. Here's what it knows, where your conversations go, and how to use it well.",
+    unlocks: { name: "Trail Partner", what: "The 🐲 button on every staff page, and the Trail Partner page with all your conversations." },
+    screens: [
+      { id: "t-what", kind: "text", title: "A fellow guide, any time", text: [
+        "Trail Partner knows the Staff Handbook, the Behavior Policy and how Wilderland works: the Mentor Mindset, Our Approach, At Home, the Parent Comms rules and the Lab builder rules. Ask it the way you'd ask an experienced guide.",
+        ["“A student keeps disrupting the Lab. What does our policy say to do?”", "“Help me plan what to say to a parent who is upset.”", "“What's our procedure if a child gets hurt outside?”"],
+        "Open it with the 🐲 button at the top of any staff page. The Trail Partner page shows every conversation."
+      ] },
+      { id: "t-use", kind: "text", title: "Use it well", text: [
+        ["It can be wrong. Check anything about safety or the law with an admin.", "Your conversations are private: only you can see them. Every conversation with Trail Partner and the other coaches (Mentor Mindset, Behavior, Parent Communication) and every Lab builder draft is saved there. Reopen or delete any of them.", "Describe the situation, not the child's file. Leave out last names and anything from Pickup, allergies & photos."]
+      ] }
+    ],
+    quiz: "partner",
+    dig: [] },
+
   { id: "mentor", name: "Mentor Mindset", icon: "🌱", time: "45 minutes",
     intro: "How we coach every student: keep the real standard, show belief and give real help, and leave the thinking and choices with the student.",
     unlocks: { name: "Mentor Mindset and the Session Room", what: "The full Field Guide, the AI practice range and coach, and the Session Room for recording and reviewing weekly 1:1s." },
     screens: [
-      { id: "m-quad", kind: "quad", title: "Four mindsets" },
+      { id: "m-quad", kind: "quad", art: "mountain", title: "Four mindsets" },
       { id: "m-why", kind: "text", title: "Why young people react the way they do", text: [
         "From about age 10, young people become intensely tuned to status and respect. They read between the lines of everything we say, hunting for one answer: does this adult think I'm capable?",
         "A threat says “I don't respect you.” A rescue says “I don't think you can.” Either one shuts motivation down.",
@@ -123,7 +158,7 @@ export const STEPS = [
     intro: "The valley floor under the Mentor Mindset: how we keep every child safe, in school and getting along. The standards every guide holds the same way, and the tools you choose with judgment.",
     unlocks: { name: "the Behavior Guide", what: "The Behavior Guide, the AI behavior coach, the weekly Freedom Level tracker and the Town Hall agenda." },
     screens: [
-      { id: "b-standards", kind: "standards", title: "The Standard: what every guide does the same way" },
+      { id: "b-standards", kind: "standards", art: "valley", title: "The Standard: what every guide does the same way" },
       { id: "b-tiers", kind: "tiers", title: "Tiers 0 to 3, sorted by impact" },
       { id: "b-freedom", kind: "freedom", title: "Freedom Levels" },
       { id: "b-knots", kind: "knots", title: "Real situations", ids: ["treefort", "late", "girlgroup"] },
@@ -200,5 +235,5 @@ export const STEPS = [
 ];
 
 // What each step opens on the site. Keep in step with LOCKS in /wlnav.js.
-export const SECTION_OF = { mentor: "mentor", behavior: "behavior", lifeskills: "lifeskills", parents: "parents", policies: "policies" };
-export const OPEN_LINK = { mentor: "/fieldguide/", behavior: "/behavior/", lifeskills: "/guides/lifeskills/", parents: "/guides/parents/", policies: "/guides/policies/" };
+export const SECTION_OF = { lifeskills: "lifeskills", students: "students", partner: "partner", mentor: "mentor", behavior: "behavior", parents: "parents", policies: "policies" };
+export const OPEN_LINK = { students: "/guides/roster/", partner: "/guides/partner/", mentor: "/fieldguide/", behavior: "/behavior/", lifeskills: "/guides/lifeskills/", parents: "/guides/parents/", policies: "/guides/policies/" };

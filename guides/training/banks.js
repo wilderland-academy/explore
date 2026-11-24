@@ -1,4 +1,4 @@
-// Question banks for the staff training quizzes. Three separate sets per quiz: each attempt takes the next set
+// Question banks for the staff training quizzes. Two or three separate sets per quiz: each attempt takes the next set
 // (see quiz.js), so a retake never repeats the questions just seen. Every question: [prompt, [options], correctIndex, why].
 // Sources: Mentor Mindset from /fieldguide/data.js and the Weekly 1:1s stop; Life Skills from the Lab builder rules
 // (/guides/lifeskills/builder/rules.txt), the Life Skills tracker and the home pass-off guide (/challenges/parents.html);
@@ -55,7 +55,7 @@ export const LIFESKILLS = { id: "lifeskills", name: "Life Skills checkpoint", ic
   ["Recording a 1:1 session is allowed when…", ["The guide wants better notes", "A parent's written consent is on the student's page and the student says it's okay that day", "The student is in 5–8", "Always; audio is never saved"], 1, "Audio is never saved, but consent still comes first. No consent: take notes instead."]
 ]), fromRows([
   ["A Passion Project is about how much student-driven building, shown to real people at the end?", ["5 hours", "25 hours", "100 hours", "A whole year"], 1, "About 25 hours, with milestones at the start, halfway and finish."],
-  ["In grades 2–4, Passion Projects are…", ["Required", "Only by exception: the student asks, and the guide and a parent agree", "Never allowed", "Assigned by the guide"], 1, "Otherwise 2–4 students build skills through Challenges and Labs."],
+  ["Passion Projects are mostly encouraged for…", ["Every student, every term", "7th and 8th graders who have found something they're excited about; younger students who meet the criteria can too", "K–1", "Students with the most credits"], 1, "Younger students need a real passion and the skills to run it. In 2–4, a parent agrees too."],
   ["Besides a real passion, what does a student need before starting a Passion Project?", ["The most credits in their band", "Executive functioning and self-teaching: they can plan, start without prompting, manage time, push through and learn on their own", "A parent who will do the hard parts", "Nothing else"], 1, "An Epic Challenge finished with every checkpoint met is strong evidence they're ready."],
   ["An eighth grader is excited about a project but doesn't have the skills it needs yet. You…", ["Let them start anyway and hope", "Keep the door open and route them through the Challenges and Labs that build those skills first", "Tell them projects aren't for them", "Do the hard parts for them"], 1, "Projects are for students who are passionate and equipped. The bar stays; the route there runs through skills."],
   ["How does a weekly 1:1 end?", ["With a lecture on what to fix", "With an if-then plan in the student's words and the date of next week's 1:1", "With a grade", "Whenever time runs out"], 1, "If ___ happens, then I will ___. They say it back; you write it down."],
@@ -91,4 +91,32 @@ export const PARENTS = { id: "parentcomms", name: "Parent Communication checkpoi
   ["Families of neurodivergent children often hear only bad news. With each behavior notice, you…", ["Add a diagnosis suggestion", "Pair it with one specific thing their child did well that week", "Copy the whole class", "Keep it to one line"], 1, "From the Behavior Guide's When families hear from us."],
   ["In K–1, any Tier 2 means…", ["A note at the end of the week", "Tell the family the same day", "No contact unless it repeats", "An email to all K–1 families"], 1, "With what happened, how the child repaired it, and one thing that went well."],
   ["Where do the details of an event go?", ["Spread across a few threads", "In one message through the usual parent channel", "On social media", "In separate texts to each family"], 1, "Never split across threads."]
+])] };
+
+// The Students page (roster and Student Info). Two sets of five; pass with four.
+export const STUDENTS = { id: "students", name: "Students checkpoint", icon: "🧒", pass: 4, sets: [fromRows([
+  ["A student's card says “Do not release” for an adult who arrives at pickup. You…", ["Release the child if a parent texts that it's fine", "Never release the child to that person", "Release them if they know the child well", "Ask the child what they want"], 1, "Check authorized pickup and do-not-release before you hand a child to anyone you don't know."],
+  ["You're planning a cooking Lab. Before any food is shared, you…", ["Ask the students if anyone has allergies", "Check your band's allergy tags and notices on the Students page", "Leave it to parents", "Post the allergy list on the wall"], 1, "And “No allergy form” means unknown, not clear: check with the family first."],
+  ["A student's photo permission says “No photos.” You…", ["Take photos but don't post them", "Don't photograph them", "Blur their face later", "Ask the student"], 1, "Check before you take or share any photo."],
+  ["Can you paste a student's health notes into Trail Partner to get advice?", ["Yes, it's staff-only", "No. Don't copy Student Info into messages, documents or AI tools", "Yes, without the last name", "Only for urgent questions"], 1, "Describe the situation, not the child's file."],
+  ["An urgent alert says a student may be harmed by someone. Utah law says…", ["Telling an admin is enough", "Report it yourself right away to DCFS (1-855-323-3237) or the police; telling an admin doesn't replace it", "Wait until you're sure", "Tell the parents first"], 1, "Urgent alerts come with what to do now."]
+]), fromRows([
+  ["Someone you don't know arrives to pick up a child. First you…", ["Release the child if they seem friendly", "Check authorized pickup and do-not-release on the Students page", "Let the child decide", "Call the parent later"], 1, "A “Do not release” tag means never to that person."],
+  ["A student's allergy says “No allergy form.” That means…", ["No allergies", "Unknown, not clear: check with the family before food is shared", "A mild allergy", "The family declined"], 1, "Red and amber tags mean look closer."],
+  ["Who can change a student's allergy or pickup information?", ["Any guide, on the page", "Only admins, by importing the office's lists", "Parents, on the Parents site", "The student"], 1, "If something looks wrong, tell an admin."],
+  ["Who sees Mr. Fox alerts?", ["Only admins", "Every staff member", "Only the student's guide", "Parents"], 1, "Read an alert, do what it says, then mark it reviewed with a note."],
+  ["You want to send a parent a student's pickup list by email. You…", ["Copy it in; the parent is family", "Don't copy Student Info into messages or documents; look it up when you need it", "Send a screenshot", "Paste it into Trail Partner first"], 1, "It's confidential: family contacts, health, custody and safety."]
+])] };
+
+// Trail Partner. Two sets of four; pass with three.
+export const PARTNER = { id: "partner", name: "Trail Partner checkpoint", icon: "🐲", pass: 3, sets: [fromRows([
+  ["Trail Partner tells you what to do after a child hits their head. You…", ["Do exactly that; it knows the handbook", "Check anything about safety or the law with an admin", "Ignore it", "Ask a student"], 1, "It can be wrong."],
+  ["Who can see your Trail Partner conversations?", ["Every guide", "Only you", "Parents", "Students"], 1, "You can reopen or delete any of them."],
+  ["What should you leave out when you ask about a student?", ["Nothing; more detail is better", "Last names and anything from Pickup, allergies & photos", "The student's grade band", "What you've already tried"], 1, "Describe the situation, not the child's file."],
+  ["Where do your Lab builder drafts and coach conversations go?", ["Nowhere; they disappear", "Your private conversations on the Trail Partner page", "The Staff Handbook", "A shared team folder"], 1, "Trail Partner, the coaches and the Lab builder all save there."]
+]), fromRows([
+  ["What does Trail Partner know?", ["Only general teaching advice", "The Staff Handbook, the Behavior Policy and how Wilderland works", "Each student's records", "Parents' emails"], 1, "Ask it the way you'd ask an experienced guide."],
+  ["Can you delete a conversation?", ["No, they're kept forever", "Yes, on the Trail Partner page", "Only an admin can", "Only on your phone"], 1, "Your conversations are private and yours to manage."],
+  ["Trail Partner quotes a law you've never heard of. You…", ["Act on it", "Check it with an admin before acting", "Share it with parents", "Add it to the handbook"], 1, "Anything about safety or the law gets checked with an admin."],
+  ["You want advice about a student with a custody issue. You…", ["Paste the custody notes from the Students page", "Describe the situation without names or file details", "Don't ask anyone", "Ask the student's classmates"], 1, "Custody and health details stay on the Students page."]
 ])] };

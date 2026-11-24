@@ -31,7 +31,7 @@ const PAGES = [
   ["Store", "/store/", "s", "shop buy"],
   ["Ideas and Town Hall", "/suggest/", "s", "suggestion box vote town hall"],
   ["Guides home", "/guides/", "g", "staff"],
-  ["Student Info", "/guides/student-info/", "g", "directory contacts parents pickup emergency allergies allergy photo permission birthdays medical"],
+  ["Student Info (pickup, allergies, photos)", "/guides/roster/#info", "g", "directory contacts parents pickup emergency allergies allergy photo permission birthdays medical"],
   ["Mentor Mindset Field Guide", "/fieldguide/", "g", "mentor mindset coaching required training"],
   ["Field Guide: coach's tent", "/fieldguide/#coach", "g", "ask coach situation"],
   ["Field Guide: weekly 1:1s", "/fieldguide/#oneonone", "g", "one on one coaching weekly session 1:1 notes"],
@@ -55,7 +55,7 @@ const PAGES = [
   ["Validate a challenge", "/guides/lifeskills/#validate", "g", "log pass not yet validate"],
   ["Validate a group (end of a Lab)", "/guides/lifeskills/#validate=group", "g", "log pass many students lab"],
   ["Crew board (guides)", "/guides/lifeskills/#board", "g", "crew working"],
-  ["Student Roster", "/guides/roster/", "g", "students parents roster"],
+  ["Students (roster and parents)", "/guides/roster/", "g", "students parents roster student roster"],
   ["Add students", "/guides/roster/#add", "g", "new student import csv"],
   ["Mr. Fox alerts", "/guides/roster/#alerts", "g", "alerts flags"],
   ["All Mr. Fox conversations", "/guides/roster/#chats", "g", "chats conversations"],
@@ -110,7 +110,7 @@ function build() {
   const k = kind(), r = role() || {}, sites = SITES_FOR[k] || SITES_FOR.anon, test = !!r.test;
   IX.pages = PAGES.filter(p => sites.includes(p[2])).map(([t, u, s, w]) => ({ t, u, sub: { s: "Students", g: "Guides", p: "Parents", h: "Explore" }[s], w }));
   // Staff: Trail Partner, as an action.
-  if (k === "staff") IX.pages.push({ t: "Ask Trail Partner 🐲", act: q => window.wlOpenMentor && window.wlOpenMentor(q ? { prefill: q } : undefined), sub: "Guides", w: "mentor ai help question policy" });
+  if (k === "staff") IX.pages.push({ step: "partner", t: "Ask Trail Partner 🐲", act: q => window.wlOpenMentor && window.wlOpenMentor(q ? { prefill: q } : undefined), sub: "Guides", w: "mentor ai help question policy" });
   // Challenges (students see their own band and older, as on the map).
   job(async () => {
     if (!window.WL) await loadScript("/challenges/data.js");
@@ -162,7 +162,7 @@ function build() {
         if (!r.ok) return;
         const v = x => x && x.stringValue || "";
         add("info", ((await r.json()).documents || []).map(d => ({ id: d.name.split("/").pop(), f: d.fields || {} })).filter(d => d.id !== "meta")
-          .map(({ id, f }) => ({ t: v(f.first) + (v(f.nick) ? " (" + v(f.nick) + ")" : "") + " " + v(f.last), u: "/guides/student-info/#s=" + id, sub: `Student Info · ${v(f.grade) === "K" ? "K" : "grade " + v(f.grade)} · family, pickup, allergies, photo permission, birthday`, w: v(f.nick) + " student info allergy pickup" })));
+          .map(({ id, f }) => ({ t: v(f.first) + (v(f.nick) ? " (" + v(f.nick) + ")" : "") + " " + v(f.last), u: "/guides/roster/#info=" + id, sub: `Student Info · ${v(f.grade) === "K" ? "K" : "grade " + v(f.grade)} · family, pickup, allergies, photo permission, birthday`, w: v(f.nick) + " student info allergy pickup" })));
       })().catch(() => { });
       await Promise.all([labsP, studentsP, infoP]);
     });
@@ -218,7 +218,7 @@ function snippet(body, words) {
   return (a ? "…" : "") + body.slice(a, a + 150).trim() + "…";
 }
 // Parts of the Guides site a guide hasn't trained for yet stay out of search too (/wlnav.js decides, from onboarding).
-const shown = it => !it.u || !window.wlHiddenPath || !window.wlHiddenPath(it.u);
+const shown = it => !(it.step && window.wlStepHidden && window.wlStepHidden(it.step)) && (!it.u || !window.wlHiddenPath || !window.wlHiddenPath(it.u));
 function results(q) {
   const nq = norm(q).trim(), words = nq.split(/\s+/).filter(Boolean);
   if (!words.length) return [["pages", IX.pages.filter(shown).slice(0, 8)]];
@@ -266,7 +266,7 @@ function draw() {
       html += `<a class="wls-i" role="option" id="wls-o${i}" data-i="${i}" ${it.u ? `href="${esc(it.u)}"` : 'href="#"'} aria-selected="${i === sel}"><i${it.col ? ` style="background:${esc(it.col)}"` : ""}></i><span><b>${mark(it.t, words)}</b>${sub ? `<small>${mark(sub, words)}</small>` : ""}</span></a>`;
     });
   });
-  if (words.length && (kind() === "staff") && window.wlOpenMentor) {
+  if (words.length && (kind() === "staff") && window.wlOpenMentor && !(window.wlStepHidden && window.wlStepHidden("partner"))) {
     const i = flat.length; flat.push({ t: "Ask Trail Partner", act: () => window.wlOpenMentor({ prefill: q }) });
     html += `<p class="wls-h">Not finding it?</p><a class="wls-i" role="option" id="wls-o${i}" data-i="${i}" href="#" aria-selected="${i === sel}"><i></i><span><b>Ask Trail Partner 🐲: “${esc(q)}”</b><small>Answers from the Staff Handbook, the Behavior Policy and our approach.</small></span></a>`;
   }

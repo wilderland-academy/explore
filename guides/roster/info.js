@@ -1,4 +1,7 @@
-// Student Info (staff only): everything the office keeps about each enrolled student, searchable by name: the family
+// Student Info, the "Pickup, allergies & photos" tab of the Students page (/guides/roster/#info; it was its own page,
+// /guides/student-info/, which now redirects here). Mounted in #info, which the roster's app.js shows for #info and
+// #info=<student id>. Its classes are drawn with an "si-" prefix and its styles are in roster.css, so they never
+// collide with the roster's. Staff only: everything the office keeps about each enrolled student, searchable by name: the family
 // directory with emergency profiles (parents, emergency contact, authorized pickup, do-not-release, physician,
 // insurance, hospital, parent-reported health notes), allergies, photo and video permissions, and birthdays.
 // The data is NOT in this public repo. It lives in Firestore at studentInfo/{studentId} plus studentInfo/meta, which
@@ -10,11 +13,11 @@ const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@w
 const $ = s => document.querySelector(s);
 function h(tag, attrs, kids) {
   const e = document.createElement(tag);
-  if (attrs) for (const k in attrs) { if (k === "class") e.className = attrs[k]; else if (k === "text") e.textContent = attrs[k]; else if (k.startsWith("on")) e[k] = attrs[k]; else if (attrs[k] != null && attrs[k] !== false) e.setAttribute(k, attrs[k]); }
+  if (attrs) for (const k in attrs) { if (k === "class") e.className = String(attrs[k]).split(/\s+/).filter(Boolean).map(c => "si-" + c).join(" "); else if (k === "text") e.textContent = attrs[k]; else if (k.startsWith("on")) e[k] = attrs[k]; else if (attrs[k] != null && attrs[k] !== false) e.setAttribute(k, attrs[k]); }
   (kids || []).forEach(c => { if (c != null && c !== false) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
   return e;
 }
-const app = $("#app");
+const app = $("#info");
 let db, user, meta = null, S = [], q = "", band = "All", only = "", sel = null;
 
 // ---------------- reading a record ----------------
@@ -63,18 +66,17 @@ function shown() {
 // ---------------- the page ----------------
 function frame() {
   app.innerHTML = "";
-  const input = h("input", { type: "search", id: "q", placeholder: "Search a student (or a parent or pickup name)", "aria-label": "Search students", autocomplete: "off", value: q });
+  const input = h("input", { type: "search", id: "si-q", placeholder: "Search a student (or a parent or pickup name)", "aria-label": "Search students", autocomplete: "off", value: q });
   input.oninput = () => { q = input.value; drawList(); };
   input.onkeydown = e => { if (e.key === "Enter") { const f = shown()[0]; if (f) pick(f.s.id); } };
   const bands = h("div", { class: "chips", role: "group", "aria-label": "Band" }, ["All", "K–1", "2–4", "5–8"].map(b => h("button", { type: "button", "aria-pressed": String(band === b), text: b === "All" ? "All bands" : b, onclick: () => { band = b; frame(); } })));
   const onlys = h("div", { class: "chips", role: "group", "aria-label": "Show only" }, Object.entries(ONLY).map(([k, [label]]) => h("button", { type: "button", "aria-pressed": String(only === k), text: label, onclick: () => { only = only === k ? "" : k; frame(); } })));
   app.append(
-    h("h1", { text: "Student Info" }),
     h("p", { class: "conf" }, ["🔒 Confidential: family contacts, health, custody and safety information. Look it up when you need it; don't copy it into messages, docs or AI tools." + (meta ? " From the office's " + (meta.year || "") + " lists, compiled " + (meta.compiled || "") + "." : "")]),
     h("div", { class: "search" }, [input, bands, onlys]),
-    notices(),
-    h("div", { class: "wrap" }, [h("div", null, [h("p", { class: "count", id: "count" }), h("div", { class: "list", id: "list" })]), h("div", { class: "card detail", id: "detail" })]),
-    adminBox()
+    notices() || "",
+    h("div", { class: "wrap" }, [h("div", null, [h("p", { class: "count", id: "si-count" }), h("div", { class: "list", id: "si-list" })]), h("div", { class: "card detail", id: "si-detail" })]),
+    adminBox() || ""
   );
   drawList(); drawDetail();
   if (!matchMedia("(max-width:860px)").matches) input.focus();
@@ -88,22 +90,22 @@ function notices() {
     meta.notPlaced ? h("p", { class: "small dim", text: "Not yet placed in a band: " + meta.notPlaced }) : null]);
 }
 function drawList() {
-  const L = $("#list"); if (!L) return; L.innerHTML = "";
+  const L = $("#si-list"); if (!L) return; L.innerHTML = "";
   const rows = shown();
-  $("#count").textContent = rows.length + " of " + S.length + " students" + (q ? " matching “" + q + "”" : "");
+  $("#si-count").textContent = rows.length + " of " + S.length + " students" + (q ? " matching “" + q + "”" : "");
   rows.forEach(({ s, m }) => L.appendChild(h("button", { type: "button", class: "row", "aria-current": String(sel === s.id), onclick: () => pick(s.id) }, [
     h("b", { text: display(s) }), h("span", { class: "meta", text: (s.grade === "K" ? "Kindergarten" : "Grade " + s.grade) + " · " + s.band + (m.via ? " · matched " + m.via : "") }),
     h("span", { class: "flags" }, flags(s).map(([c, t]) => h("span", { class: "f " + c, text: t })))
   ])));
   if (!rows.length) L.appendChild(h("p", { class: "dim", text: "No student matches. Try part of a first or last name." }));
 }
-function pick(id) { sel = id; history.replaceState(null, "", "#s=" + id); drawList(); drawDetail(); if (matchMedia("(max-width:860px)").matches) $("#detail").scrollIntoView({ behavior: "smooth", block: "start" }); }
+function pick(id) { sel = id; history.replaceState(null, "", "#info=" + id); drawList(); drawDetail(); if (matchMedia("(max-width:860px)").matches) $("#si-detail").scrollIntoView({ behavior: "smooth", block: "start" }); }
 const tel = t => { const frag = document.createDocumentFragment(); String(t).split(" · ").forEach((p, i) => { if (i) frag.append(" · "); const ph = /^\(?\d{3}\)?[\s.-]?\d{3}-\d{4}$/.test(p.trim()), em = /^\S+@\S+\.\S+$/.test(p.trim()); frag.append(ph ? h("a", { href: "tel:" + p.replace(/\D/g, ""), text: p }) : em ? h("a", { href: "mailto:" + p.trim(), text: p }) : p); }); return frag; };
 const people = (arr, empty) => arr && arr.length ? h("ul", null, arr.map(x => h("li", null, [tel(x)]))) : h("p", { class: "dim", text: empty });
 const val = (t, empty) => t ? h("dd", null, [tel(t)]) : h("dd", { class: "dim", text: empty || "Not listed" });
 function drawDetail() {
-  const box = $("#detail"); if (!box) return; box.innerHTML = "";
-  const s = S.find(x => x.id === sel); box.classList.toggle("empty", !s);
+  const box = $("#si-detail"); if (!box) return; box.innerHTML = "";
+  const s = S.find(x => x.id === sel); box.classList.toggle("si-empty", !s);
   if (!s) { box.append(h("h2", { text: "Pick a student" }), h("p", { class: "dim", text: "Search by first or last name, or a nickname. Each card brings together the directory, emergency profile, allergies, photo permission and birthday." })); return; }
   const d = s.dir || {}, a = s.allergy || {}, p = s.photo || {}, b = s.birthday;
   const alerts = [];
@@ -163,19 +165,19 @@ async function load() {
     S = []; meta = null;
     snap.forEach(d => { if (d.id === "meta") meta = d.data(); else S.push({ verify: [], dir: {}, ...d.data(), id: d.id }); });
   } catch (e) {
-    app.innerHTML = ""; app.append(h("h1", { text: "Student Info" }), h("div", { class: "card" }, [h("p", { text: "Student Info isn't available to this account yet." }), h("p", { class: "small dim", text: "It's for Wilderland guides and admins. If that's you and this keeps showing, the database rules for Student Info may not be published yet." })]), adminBox() || "");
+    app.innerHTML = ""; app.append(h("div", { class: "card" }, [h("p", { text: "Student Info isn't available to this account yet." }), h("p", { class: "small dim", text: "It's for Wilderland guides and admins. If that's you and this keeps showing, the database rules for Student Info may not be published yet." })]), adminBox() || "");
     return;
   }
-  const m = /#s=([\w-]+)/.exec(location.hash); if (m && S.some(s => s.id === m[1])) sel = m[1];
-  if (!S.length) { app.innerHTML = ""; app.append(h("h1", { text: "Student Info" }), h("div", { class: "card" }, [h("p", { text: "Nothing here yet. An admin imports the Student Info file below." })]), adminBox() || ""); return; }
+  const m = /#info=([\w-]+)/.exec(location.hash); if (m && S.some(s => s.id === m[1])) sel = m[1];
+  if (!S.length) { app.innerHTML = ""; app.append(h("div", { class: "card" }, [h("p", { text: "Nothing here yet. An admin imports the Student Info file below." })]), adminBox() || ""); return; }
   frame();
 }
-addEventListener("hashchange", () => { const m = /#s=([\w-]+)/.exec(location.hash); if (m && S.some(s => s.id === m[1]) && m[1] !== sel) { sel = m[1]; drawList(); drawDetail(); } });
+addEventListener("hashchange", () => { const m = /#info=([\w-]+)/.exec(location.hash); if (m && S.some(s => s.id === m[1]) && m[1] !== sel) { sel = m[1]; drawList(); drawDetail(); } });
 (async () => {
   while (!window.wlFirebase) await new Promise(r => setTimeout(r, 50));
   const fb = window.wlFirebase; db = getFirestore(fb.app);
   if (fb.auth.authStateReady) await fb.auth.authStateReady();
-  const start = u => { user = u; if (!u) { app.innerHTML = ""; app.append(h("h1", { text: "Student Info" }), h("p", { class: "dim", text: "Log in with your Wilderland account." })); return; } load(); };
+  const start = u => { user = u; if (!u) { app.innerHTML = ""; app.append(h("p", { class: "dim", text: "Log in with your Wilderland account." })); return; } load(); };
   document.addEventListener("wl-auth", e => { if ((e.detail && e.detail.uid) !== (user && user.uid)) start(e.detail); });
   start(fb.auth.currentUser);
 })();
