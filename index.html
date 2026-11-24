@@ -28,9 +28,17 @@ h1 span{color:#d5f367}
 .go:disabled{opacity:.6;cursor:default}
 .go svg{width:20px;height:20px}
 .ghost{background:transparent;color:#f6f8ea;border:1px solid #28493d}
-.who{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;font-size:14.5px;color:#c9d6cc}
-.who li{display:flex;gap:10px}.who li i{font-style:normal;color:#d5f367;font-weight:700;min-width:64px}
-.who a{color:#d5f367}
+.note{font-size:14px;color:#a9bbb0}
+.more{background:none;border:0;padding:0;color:#d5f367;font:600 15px Inter,sans-serif;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:3px}
+form.em{display:flex;flex-direction:column;gap:12px;border-top:1px solid #28493d;padding-top:16px}
+.tabs{display:flex;gap:6px}
+.tabs button{flex:1;background:transparent;border:1px solid #28493d;color:#c9d6cc;border-radius:999px;padding:8px 10px;font:600 14px Inter,sans-serif;cursor:pointer}
+.tabs button[aria-selected=true]{background:#28493d;color:#f6f8ea}
+label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:#c9d6cc}
+label input{font:16px Inter,sans-serif;padding:11px 12px;border-radius:10px;border:1px solid #28493d;background:#08140f;color:#f6f8ea}
+label input:focus{outline:2px solid #d5f367;outline-offset:1px}
+.linkbtn{background:none;border:0;padding:0;color:#d5f367;font:500 14px Inter,sans-serif;cursor:pointer;text-decoration:underline;align-self:flex-start}
+.ok{border-left:3px solid #00b451;padding:4px 0 4px 12px;color:#f6f8ea !important}
 .msg{border-left:3px solid #e9a23b;padding:4px 0 4px 12px;color:#f6f8ea !important}
 footer{color:#7f978b;font-size:13px;padding:24px 0 40px}
 @media (max-width:860px){.door{grid-template-columns:1fr;gap:24px;min-height:0;padding-top:28px}}
@@ -43,40 +51,110 @@ footer{color:#7f978b;font-size:13px;padding:24px 0 40px}
 <div class="door">
   <div>
     <h1>Welcome to <span>Wilderland Explore.</span></h1>
-    <p class="lede">One sign-in for students, guides and families. Sign in and we'll take you to your own site.</p>
+    <p class="lede">One login for students, guides and families. Log in and we'll take you to your own site.</p>
   </div>
   <div class="box" id="signin" aria-live="polite">
-    <h2>Sign in</h2>
+    <h2>Log in</h2>
     <p id="state">Checking whether you're already signed in…</p>
-    <button class="go" type="button" id="google" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.8 3.6-4.9 6.7-4.9z"/></svg>Sign in with Google</button>
+    <button class="go" type="button" id="google" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.8 3.6-4.9 6.7-4.9z"/></svg>Log in with your Google account</button>
+    <p class="note" id="pnote" hidden>Parents, make sure to use the email address you registered with us.</p>
+    <button class="more" type="button" id="more" aria-expanded="false" aria-controls="emform" hidden>Don't have Google? Sign up or log in with email</button>
+    <form class="em" id="emform" hidden novalidate>
+      <div class="tabs" role="tablist" aria-label="Email sign-in">
+        <button type="button" role="tab" data-tab="in" aria-selected="true">Log in</button>
+        <button type="button" role="tab" data-tab="new" aria-selected="false">Sign up</button>
+      </div>
+      <label>Email<input type="email" id="em" autocomplete="email" required></label>
+      <label id="pwl">Password<input type="password" id="pw" autocomplete="current-password" minlength="8" required></label>
+      <button class="go" type="submit" id="emgo">Log in</button>
+      <button class="linkbtn" type="button" id="forgot">Forgot your password?</button>
+      <p class="note" id="emnote" aria-live="polite"></p>
+    </form>
+    <button class="go" type="button" id="recheck" hidden>I've confirmed my email</button>
     <button class="go ghost" type="button" id="out" hidden>Sign out</button>
-    <ul class="who">
-      <li><i>Students</i><span>Use your <b>@wilderland.academy</b> school account.</span></li>
-      <li><i>Guides</i><span>Use your <b>@wilderland.academy</b> school account.</span></li>
-      <li><i>Families</i><span>Use the Google account you gave the school. Signed up with an email and password instead? <a href="/parents/lifeskills/">Sign in here</a>.</span></li>
-    </ul>
   </div>
 </div>
 </main>
 <script type="module">
-// The sign-in page's own states. Moving signed-in people to their site happens in /wlnav.js when /auth.js says who they are.
+// The sign-in page's own states. Moving signed-in people to their site happens in /wlnav.js when /auth.js says who
+// they are. Email and password accounts are for families without Google (the same Firebase accounts the Life Skills
+// tracker has always offered); a new account confirms its email before anything opens.
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
 const $ = s => document.getElementById(s);
-const show = (text, signIn, signOut, warn) => { $("state").textContent = text; $("state").className = warn ? "msg" : ""; $("google").hidden = !signIn; $("out").hidden = !signOut; };
+const HOME = location.origin + "/";
 while (!window.wlFirebase) await new Promise(r => setTimeout(r, 50));
 const auth = window.wlFirebase.auth;
 if (auth.authStateReady) await auth.authStateReady();
 const next = /[?&]next=/.test(location.search);
+const show = (text, mode, warn) => {
+  $("state").textContent = text; $("state").className = warn ? "msg" : "";
+  const out = mode === "out";
+  ["google", "pnote", "more"].forEach(id => { $(id).hidden = !out; });
+  if (!out) $("emform").hidden = true;
+  $("recheck").hidden = mode !== "verify"; $("out").hidden = mode !== "verify" && mode !== "stuck";
+};
+let waitTimer = null;
 const settle = () => {
   const u = auth.currentUser;
-  if (!u) return show(next ? "Sign in to open that page." : "Sign in to continue.", true, false);
-  if (window.wlRole && window.wlRole.role) return show("Signed in. Taking you to your site…", false, false);
-  if (!u.emailVerified) return show("Your account's email isn't confirmed yet. Open the confirmation email we sent, then come back here.", false, true, true);
-  show("Checking your account…", false, false);
-  setTimeout(() => { if (auth.currentUser && !(window.wlRole && window.wlRole.role)) show("This account (" + (auth.currentUser.email || "") + ") isn't set up for Explore yet. Try another account, or ask your guide or the school office.", true, true, true); }, 8000);
+  if (!u) return show(next ? "Log in to open that page." : "Log in to continue.", "out");
+  if (window.wlRole && window.wlRole.role) return show("Signed in. Taking you to your site…", "busy");
+  if (!u.emailVerified) return show("We sent a confirmation link to " + (u.email || "your email") + ". Open it, then come back here. Check your spam folder too.", "verify", true);
+  show("Checking your account…", "busy");
+  clearTimeout(waitTimer);
+  waitTimer = setTimeout(() => { if (auth.currentUser && !(window.wlRole && window.wlRole.role)) show("This account (" + (auth.currentUser.email || "") + ") isn't set up for Explore yet. Try another account, or ask your guide or the school office.", "stuck", true); }, 8000);
 };
 document.addEventListener("wl-role", settle); document.addEventListener("wl-auth", settle); settle();
 $("google").onclick = () => window.wlSignIn && window.wlSignIn();
-$("out").onclick = async () => { const { signOut } = await import("https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js"); await signOut(auth); try { localStorage.removeItem("wl-role"); } catch (e) { } location.reload(); };
+$("out").onclick = async () => { await signOut(auth); try { localStorage.removeItem("wl-role"); } catch (e) { } location.reload(); };
+$("recheck").onclick = async () => {
+  const u = auth.currentUser; if (!u) return location.reload();
+  await u.reload();
+  if (auth.currentUser.emailVerified) { await auth.currentUser.getIdToken(true); location.reload(); }
+  else show("Not confirmed yet. Open the link in the email we sent to " + (u.email || "you") + ", then try again.", "verify", true);
+};
+
+// ---------- email and password ----------
+let tab = "in";
+const say = (t, cls) => { $("emnote").textContent = t; $("emnote").className = "note" + (cls ? " " + cls : ""); };
+const setTab = k => {
+  tab = k; document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === k)));
+  $("pwl").hidden = k === "reset"; $("forgot").hidden = k !== "in";
+  $("pw").autocomplete = k === "new" ? "new-password" : "current-password";
+  $("pwl").firstChild.textContent = k === "new" ? "Password (at least 8 characters)" : "Password";
+  $("emgo").textContent = { in: "Log in", new: "Create account", reset: "Email me a reset link" }[k]; say("");
+};
+$("more").onclick = () => { const open = $("emform").hidden; $("emform").hidden = !open; $("more").setAttribute("aria-expanded", String(open)); if (open) $("em").focus(); };
+document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+$("forgot").onclick = () => setTab("reset");
+const errText = e => {
+  const c = (e && e.code) || "";
+  if (c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found")) return "That email and password don't match. Try again, or reset your password.";
+  if (c.includes("email-already-in-use")) return "There's already an account with that email. Log in instead, or reset your password.";
+  if (c.includes("weak-password")) return "Use a password of at least 8 characters.";
+  if (c.includes("invalid-email")) return "That email address doesn't look right.";
+  if (c.includes("too-many-requests")) return "Too many tries. Wait a few minutes, then try again.";
+  if (c.includes("operation-not-allowed")) return "Email sign-in isn't turned on yet. Please tell the school office.";
+  return "That didn't work. Check your connection and try again.";
+};
+$("emform").onsubmit = async e => {
+  e.preventDefault();
+  const v = $("em").value.trim().toLowerCase(), pw = $("pw").value;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return say("Type your full email address.", "msg");
+  if (v.endsWith("@wilderland.academy")) return say("School accounts log in with the Google button above.", "msg");
+  $("emgo").disabled = true;
+  try {
+    if (tab === "reset") {
+      try { await sendPasswordResetEmail(auth, v, { url: HOME }); } catch (x) { if (!String(x.code).includes("user-not-found")) throw x; }
+      say("If there's an account for that email, a reset link is on its way. Check your spam folder too.", "ok");
+    } else {
+      if (pw.length < 8) { say("Use a password of at least 8 characters.", "msg"); return; }
+      if (tab === "new") { const c = await createUserWithEmailAndPassword(auth, v, pw); await sendEmailVerification(c.user, { url: HOME }); }
+      else await signInWithEmailAndPassword(auth, v, pw);
+      settle();
+    }
+  } catch (x) { say(errText(x), "msg"); }
+  finally { $("emgo").disabled = false; }
+};
 </script>
 <footer class="in">Wilderland Academy · Eden, Utah · <a href="https://my.wilderland.academy/" style="color:inherit">Basecamp, the academic portal ↗</a></footer>
 </body>
