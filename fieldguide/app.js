@@ -242,7 +242,7 @@ VIEWS.oneonone = async sec => {
   head(sec, "Weekly <span>1:1s</span>", "Every student gets a one-on-one coaching session with their guide every week. Here's how to make it count.");
   const tally = h("div");
   sec.appendChild(card("M-edge", [h("h2", { text: "The standard: every student, every week" }),
-    h("p", { text: "A 1:1 is not optional and not only for students who are struggling. If a week gets away from you, make it up before the next week ends. Most take 10 to 20 minutes; K–1 is shorter and more concrete." }),
+    h("p", { text: "A 1:1 is not optional and not only for students who are struggling. Every week, no exceptions. Most take 10 to 20 minutes; K–1 is shorter and more concrete." }),
     h("p", { class: "dim", text: "Why weekly: in the biggest reviews of youth mentoring, programs did better when they set clear expectations for how often mentor and child meet and when the relationship was strong; relationships that fade or end early can leave a child worse off than none. Alpha School puts one-on-one meetings into every school day." }),
     tally, h("div", { class: "row" }, [h("a", { class: "btn", href: "#sessions", text: "Open the session room" })])]));
   (async () => { try { if (sess.students === null) await loadSess(); const k = shownKids(), done = k.filter(x => doneThisWeek(x.id)).length; tally.appendChild(h("p", { class: "say", text: k.length ? `This week: ${done} of ${k.length} ${k.length === 1 ? "student" : "students"} done.` + (done < k.length ? " The session room lists who's due." : " Everyone's had theirs.") : "Your students will appear in the session room." })); } catch (e) { } })();
