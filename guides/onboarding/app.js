@@ -217,7 +217,7 @@ function digList(items, onlySaved) {
       const on = !isSaved(r.id); btn.disabled = true; await saveProgress({ saved: { [r.id]: on ? Date.now() : 0 } }); P = await loadProgress();
       btn.disabled = false; btn.classList.toggle("on", on); btn.setAttribute("aria-pressed", String(on)); btn.textContent = on ? "★ Saved" : "☆ Save"; nav(location.hash.slice(1).split("/")[0]);
     } });
-    box.appendChild(h("div", { class: "res" }, [h("div", null, [h("small", { class: "k", text: KIND[r.t] || r.t }), r.url ? h("a", { href: r.url, target: "_blank", rel: "noopener", class: "rt", text: r.title + " ↗" }) : h("b", { class: "rt", text: r.title }), r.by ? h("small", { class: "by", text: r.by }) : null, r.note ? h("p", { class: "dim small", text: r.note }) : null]), btn]));
+    box.appendChild(h("div", { class: "res" }, [h("div", null, [h("small", { class: "k", text: KIND[r.t] || r.t }), r.url ? h("a", { href: r.url, target: "_blank", rel: "noopener", class: "rt", text: r.title + " ↗" }) : h("b", { class: "rt", text: r.title }), r.by ? h("small", { class: "by", text: r.by }) : null, r.note ? h("p", { class: "dim small", text: r.note }) : null, r.read ? h("p", { class: "small", text: "Read: " + r.read }) : null, r.rel ? h("p", { class: "small rel", text: r.rel }) : null]), btn]));
   });
   if (!box.children.length) box.appendChild(h("p", { class: "dim", text: "Nothing saved yet. Tap ☆ Save on any Dig deeper pick at the bottom of an onboarding screen to keep it here." }));
   return box;
