@@ -68,11 +68,14 @@
       { id: "policies", label: "Policies", href: "/guides/policies/" },
       BASECAMP] },
     parents: { name: "Parents", home: "/parents/", label: "Parents", tabs: [
+      // Each child's profile (Life Skills passes, goals, books, project ideas, how to help at home): the Life Skills
+      // tracker's family view, /parents/lifeskills/ (#c=<id> per child). "My children" once a family has more than one.
+      { id: "children", label: "My child", href: "/parents/lifeskills/" },
       { id: "athome", label: "At Home", href: "/parents/athome/" },
       { id: "approach", label: "Our Approach", href: "/parents/approach/" },
       { id: "fieldnotes", label: "Field Notes", href: "/parents/series/" },
-      // Challenges and the Labs schedule are inside Life Skills.
-      { id: "lifeskills", label: "Life Skills", href: "/parents/lifeskills/" },
+      // Challenges, the Labs schedule and passing off at home are inside Life Skills (/lifeskills/subnav.js).
+      { id: "lifeskills", label: "Life Skills", href: "/parents/challenges/" },
       BASECAMP] }
   };
   // "wlbar-logo", not the old "wlbar-mark": an old cached wl.css hid .wlbar-mark on desktop.
@@ -183,15 +186,22 @@
     return n || "/guides/";
   }
   // The current tab. The Session Room is a view of the Field Guide (/fieldguide/#sessions), so it follows the address.
+  // On the Parents site the tracker page is both a child's profile (My child) and the Labs schedule (Life Skills).
   function curTab() {
     var c = bar.getAttribute("data-current") || "";
+    if (key === "parents" && /^\/parents\/lifeskills\/$/.test(location.pathname)) return /^#schedule\b/.test(location.hash) ? "lifeskills" : "children";
     return c === "mentor" && /^#sessions\b/.test(location.hash) ? "sessions" : c;
   }
+  // "My child", or "My children" once the tracker or the Challenges page has seen more than one ("wl-kids").
+  function kidsLabel() { var n = 0; try { n = Number(localStorage.getItem("wl-kids")) || 0; } catch (e) { } return n > 1 ? "My children" : "My child"; }
+  if (key === "parents") document.addEventListener("wl-kids", function () {
+    bar.querySelectorAll('[data-wl-tab="children"]').forEach(function (a) { a.textContent = kidsLabel(); });
+  });
   var cur = curTab();
   // A tab for a section this guide hasn't trained for yet isn't drawn at all.
   function tabLink(t, cls) {
     if (tabHidden(t.id)) return "";
-    return '<a href="' + t.href + '"' + (cls ? ' class="' + cls.trim() + '"' : "") + ' data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.label) + "</a>";
+    return '<a href="' + t.href + '"' + (cls ? ' class="' + cls.trim() + '"' : "") + ' data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.id === "children" ? kidsLabel() : t.label) + "</a>";
   }
   var tabsHtml = function () { return site.tabs.map(function (t) {
     if (t.out) return '<a class="wlbar-ext" href="' + t.href + '" target="_blank" rel="noopener" aria-label="' + esc(t.label) + ' (opens in a new tab)">' + esc(t.label) + ARROW + "</a>";

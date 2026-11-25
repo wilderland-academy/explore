@@ -1,5 +1,6 @@
 // Wilderland at Home: part of the Parents site. Static, no sign-in, noindex, never linked from student pages.
-// Everything a family picks (grade band, schedule, checklists, chosen practices) stays in this browser only.
+// Everything a family picks (grade band, schedule, checklists, chosen practices) is kept as "wl-family-…" and copied
+// to their account by /auth.js (ACCT), so it follows them to any device.
 import * as D from "./data.js";
 
 const $ = s => document.querySelector(s);
@@ -12,7 +13,7 @@ const head = (sec, title, lede) => { sec.appendChild(h("h1", { html: title })); 
 const GUIDE_URL = "https://drive.google.com/file/d/1RxYs-YZDKj2JM5Z63qJOIj_CCak6ZpSF/view?usp=drive_link";
 const ext = (text, href) => h("a", { href, target: "_blank", rel: "noopener", text });
 
-/* ---------- saved in this browser only ---------- */
+/* ---------- saved to the family's account (via /auth.js) ---------- */
 const store = { get(k, d) { try { const v = localStorage.getItem("wl-family-" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem("wl-family-" + k, JSON.stringify(v)); } catch (e) { } } };
 let prof = store.get("prof", { band: "", sched: "" });
 // Every visit starts on the family's own child's band (from the parent's account via /wlnav.js; the youngest child if
@@ -32,7 +33,7 @@ function picker(compact) {
     wrap.append(h("span", { text: "Showing" }), h("b", { text: D.BANDS[prof.band] + (prof.sched ? ", " + D.SCHED[prof.sched].toLowerCase() : "") }), h("a", { href: "#home", text: "change" }));
     return wrap;
   }
-  wrap.append(h("h2", { text: "Who are you supporting?" }), h("p", { class: "dim", text: "Pick once and every page shows what applies to your child. Siblings in different grades? Switch any time." }), h("b", { text: "Grades" }), group("band", D.BANDS), h("b", { text: "Schedule" }), group("sched", D.SCHED), h("p", { class: "small", text: "Saved on this device only." }));
+  wrap.append(h("h2", { text: "Who are you supporting?" }), h("p", { class: "dim", text: "Pick once and every page shows what applies to your child. Siblings in different grades? Switch any time." }), h("b", { text: "Grades" }), group("band", D.BANDS), h("b", { text: "Schedule" }), group("sched", D.SCHED), h("p", { class: "small", text: "Saved to your account." }));
   return wrap;
 }
 
@@ -81,7 +82,7 @@ VIEWS.week = sec => {
   head(sec, "Your <span>part</span> at home", "Short, daily, predictable practice beats long, occasional sessions. Pick your child's grades and schedule to see what home covers, what school covers, and a week that works.");
   const pick = h("div", { class: "prof" });
   const grp = (key, opts) => h("div", { class: "chips", role: "group" }, Object.entries(opts).map(([k, v]) => h("button", { class: "chip", "aria-pressed": String(prof[key] === k), text: v, onclick: () => { prof[key] = prof[key] === k ? "" : k; bandPicked = true; store.set("prof", prof); route(); } })));
-  pick.append(h("b", { text: "Grades" }), grp("band", D.BANDS), h("b", { text: "Schedule" }), grp("sched", D.SCHED), h("p", { class: "small", text: "Saved on this device only." }));
+  pick.append(h("b", { text: "Grades" }), grp("band", D.BANDS), h("b", { text: "Schedule" }), grp("sched", D.SCHED), h("p", { class: "small", text: "Saved to your account." }));
   sec.appendChild(pick);
   if (!prof.band || !prof.sched) { sec.appendChild(card("", [h("p", { text: !prof.band && !prof.sched ? "Choose your child's grades and whether they attend full time or part time. The routine is different for each." : !prof.band ? "Now choose your child's grades." : "Now choose full time or part time. Home looks different for each." })])); return; }
   const up = isUp(), W = up ? D.WEEK.up : D.WEEK.k1, pt = prof.sched === "pt", S = pt ? "PT" : "FT";
@@ -190,7 +191,7 @@ VIEWS.practices = sec => {
   sec.appendChild(h("p", { class: "lede" }, ["From our ", ext("Parent Partnership Guide", GUIDE_URL), ": twelve research-backed habits that help children learn and thrive. They're optional. Pick two or three that fit your family right now; new routines usually stop meeting resistance within two to four weeks."]));
   let mine = store.get("prac", []);
   const note = h("p", { class: "small" }), g = h("div", { class: "stops" });
-  const draw = () => { g.innerHTML = ""; D.PRACTICES.forEach(p => g.appendChild(h("button", { class: "prac", "aria-pressed": String(mine.includes(p[0])), onclick: () => { mine = mine.includes(p[0]) ? mine.filter(x => x !== p[0]) : mine.concat(p[0]); store.set("prac", mine); draw(); } }, [h("i", { text: p[0] + (mine.includes(p[0]) ? " · OUR FOCUS" : "") }), h("b", { text: p[1] }), h("span", { text: p[2] })]))); note.textContent = mine.length ? (mine.length > 3 ? "That's " + mine.length + ". Two or three at a time tends to stick better." : "Your focus: " + D.PRACTICES.filter(p => mine.includes(p[0])).map(p => p[1]).join(", ") + ".") : "Tap the ones you want to focus on. Saved on this device only."; };
+  const draw = () => { g.innerHTML = ""; D.PRACTICES.forEach(p => g.appendChild(h("button", { class: "prac", "aria-pressed": String(mine.includes(p[0])), onclick: () => { mine = mine.includes(p[0]) ? mine.filter(x => x !== p[0]) : mine.concat(p[0]); store.set("prac", mine); draw(); } }, [h("i", { text: p[0] + (mine.includes(p[0]) ? " · OUR FOCUS" : "") }), h("b", { text: p[1] }), h("span", { text: p[2] })]))); note.textContent = mine.length ? (mine.length > 3 ? "That's " + mine.length + ". Two or three at a time tends to stick better." : "Your focus: " + D.PRACTICES.filter(p => mine.includes(p[0])).map(p => p[1]).join(", ") + ".") : "Tap the ones you want to focus on. Saved to your account."; };
   draw(); sec.append(note, g);
   sec.appendChild(card("", [h("h3", { text: "Stretched thin?" }), h("p", { text: "That's okay. Start with what matters most, probably sleep and food, and trust that the rest can come later. These are a resource, not a report card on your parenting." })]));
   next(sec, "practices");

@@ -1,6 +1,6 @@
 // Our Approach: one long page with a sticky section menu (anchor links + scroll spy).
 // Static, no sign-in, unlisted (noindex, not linked from student pages). The grade band a family picks is shared with
-// At Home (localStorage "wl-family-prof") and stays in this browser only.
+// At Home (localStorage "wl-family-prof") and saved to the family's account by /auth.js.
 import * as D from "./data.js";
 
 const $ = s => document.querySelector(s);

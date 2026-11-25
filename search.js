@@ -75,7 +75,7 @@ const PAGES = [
   ["Wilderland at Home", "/parents/athome/", "p", "home routine schedule part time"],
   ["Our Approach", "/parents/approach/", "p", "approach how it works"],
   ["Field Notes", "/parents/series/", "p", "series articles"],
-  ["Life Skills (parents)", "/parents/lifeskills/", "p", "my child progress tracker"],
+  ["My child (parents)", "/parents/lifeskills/", "p", "my children profile progress life skills tracker goals books"],
   ["Labs schedule (parents)", "/parents/lifeskills/#schedule", "p", "labs calendar"],
   ["Challenges (parents)", "/parents/challenges/", "p", "challenge map"],
   ["Passing off at home", "/parents/passoff/", "p", "pass off home log sheet"],

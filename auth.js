@@ -44,8 +44,17 @@ const ALLKEYS = { books: ["lantern-stacks"], challenges: ["wl-picks", "wl-band"]
 // In a test view only the test student's things are kept (in their own place, testStudents/{uid}/sites/{site}).
 const VIEW0 = storedView();
 const KEYS = VIEW0 && VIEW0.as !== "student" ? [] : ALLKEYS[SITE] || [];
+// Families and guides keep a few things too, copied to accounts/{uid}/sites/{site} (any verified account, its own record
+// only: firestore.rules) so they follow the person to any device: on the Parents site, At Home and Our Approach choices
+// ("wl-family-…") and the Challenges plan; in the Field Guide, reps, if-then plan, self-check and streak ("fg-…").
+const ACCT = { parents: k => k.startsWith("wl-family-") || k === "wl-picks", fieldguide: k => k.startsWith("fg-") };
+const acctKey = ACCT[SITE] || null;
+let acctUser = null, acctTimer = null;
 // Clear every site's saved things from this Chromebook (on sign-out, here or on another site).
-function forgetDevice() { applying = true; origRemove.call(localStorage, "wl-role"); origRemove.call(localStorage, "wl-unlocks"); Object.entries(ALLKEYS).forEach(([s, ks]) => { ks.forEach(k => origRemove.call(localStorage, k)); origRemove.call(localStorage, "wl-linked-" + s); }); applying = false; }
+function forgetDevice() { applying = true; origRemove.call(localStorage, "wl-role"); origRemove.call(localStorage, "wl-unlocks"); Object.entries(ALLKEYS).forEach(([s, ks]) => { ks.forEach(k => origRemove.call(localStorage, k)); origRemove.call(localStorage, "wl-linked-" + s); });
+  // Families' and guides' account copies (ACCT) too: they come back from the account at the next sign-in.
+  const fams = Object.values(ACCT); Object.keys(localStorage).forEach(k => { if (k.startsWith("wl-linked-acct-") || fams.some(f => f(k))) origRemove.call(localStorage, k); });
+  origRemove.call(localStorage, "wl-kids"); acctUser = null; applying = false; }
 let view = null;
 const DOC = uid => `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/databases/(default)/documents/${view ? "testStudents" : "students"}/${uid}/sites/${SITE}`;
 
@@ -152,9 +161,57 @@ const schedulePush = () => { if (!user) return; setState("saving"); clearTimeout
 
 // Notice every write the page makes to one of its keys, without changing the page's own code.
 const origSet = Storage.prototype.setItem, origRemove = Storage.prototype.removeItem;
-Storage.prototype.setItem = function (k, v) { origSet.call(this, k, v); if (this === localStorage && KEYS.includes(k) && !applying) schedulePush(); };
-Storage.prototype.removeItem = function (k) { origRemove.call(this, k); if (this === localStorage && KEYS.includes(k) && !applying) schedulePush(); };
-addEventListener("pagehide", () => { if (pushTimer) { clearTimeout(pushTimer); push(); } });
+const noticed = (st, k) => { if (st !== localStorage || applying) return; if (KEYS.includes(k)) schedulePush(); else if (acctKey && acctKey(k)) acctSchedule(); };
+Storage.prototype.setItem = function (k, v) { origSet.call(this, k, v); noticed(this, k); };
+Storage.prototype.removeItem = function (k) { origRemove.call(this, k); noticed(this, k); };
+addEventListener("pagehide", () => { if (pushTimer) { clearTimeout(pushTimer); push(); } if (acctTimer) { clearTimeout(acctTimer); acctPush(); } });
+
+// ---------- Account copies for families and guides (ACCT above) ----------
+// Same idea as the students' copy: the first sign-in on a device combines what's here with the account; after that the
+// account copy is the true one. The page read localStorage when it loaded, so it reloads once if anything changed.
+const acctDoc = uid => `https://firestore.googleapis.com/v1/projects/${CONFIG.projectId}/databases/(default)/documents/accounts/${uid}/sites/${SITE}`;
+function acctLocal() { const o = {}; if (!acctKey) return o; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (acctKey(k)) o[k] = localStorage.getItem(k); } return o; }
+async function acctPush() {
+  acctTimer = null; const u = acctUser; if (!u || !acctKey) return;
+  try {
+    const body = { fields: { data: { stringValue: JSON.stringify(acctLocal()) }, updated: { timestampValue: new Date().toISOString() } } };
+    const r = await fetch(acctDoc(u.uid), { method: "PATCH", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error("save " + r.status);
+  } catch (e) { console.warn("Wilderland account copy:", e); }
+}
+function acctSchedule() { if (!acctUser) return; clearTimeout(acctTimer); acctTimer = setTimeout(acctPush, 1200); }
+async function acctSync(u) {
+  if (!acctKey) return;
+  if (!u || !u.emailVerified) { acctUser = null; return; }
+  if (acctUser && acctUser.uid === u.uid) return;
+  acctUser = u;
+  try {
+    const r = await fetch(acctDoc(u.uid), { headers: { Authorization: "Bearer " + await u.getIdToken() } });
+    if (!r.ok && r.status !== 404) throw new Error("read " + r.status);
+    let remote = null;
+    if (r.ok) { try { remote = JSON.parse((((await r.json()).fields || {}).data || {}).stringValue || "null"); } catch (e) { remote = null; } }
+    const local = acctLocal(), LK = "wl-linked-acct-" + SITE, firstHere = localStorage.getItem(LK) !== u.uid;
+    if (!remote) { origSet.call(localStorage, LK, u.uid); if (Object.keys(local).length) await acctPush(); return; }
+    const next = {};
+    if (firstHere) new Set([...Object.keys(remote), ...Object.keys(local)]).forEach(k => {
+      // Values are JSON, except the odd plain string; a plain string stays as it was (the account's copy wins).
+      let a, b, raw = false; try { a = remote[k] != null ? JSON.parse(remote[k]) : undefined; } catch (e) { raw = true; }
+      try { b = local[k] != null ? JSON.parse(local[k]) : undefined; } catch (e) { raw = true; }
+      if (raw) { next[k] = remote[k] != null ? remote[k] : local[k]; return; }
+      const m = merge(a, b); if (m !== undefined) next[k] = JSON.stringify(m);
+    });
+    else Object.assign(next, remote);
+    const keys = [...new Set([...Object.keys(next), ...Object.keys(local)])];
+    const changed = keys.some(k => (next[k] ?? null) !== (local[k] ?? null));
+    applying = true;
+    keys.forEach(k => { if (next[k] == null) origRemove.call(localStorage, k); else origSet.call(localStorage, k, next[k]); });
+    origSet.call(localStorage, LK, u.uid);
+    applying = false;
+    if (keys.some(k => (next[k] ?? null) !== (remote[k] ?? null))) await acctPush();
+    const RK = "wl-acct-reloaded-" + SITE, last = Number(sessionStorage.getItem(RK) || 0);
+    if (changed && Date.now() - last > 60000) { sessionStorage.setItem(RK, String(Date.now())); location.reload(); }
+  } catch (e) { applying = false; console.warn("Wilderland account copy:", e); }
+}
 
 // First sign-in on a Chromebook: combine what is already here with the account, so nothing saved before
 // accounts existed is lost. After that, the account copy is the true one (so a book removed on one
@@ -222,7 +279,7 @@ function render() {
   const links = SITES.map(([n, p]) => `<a href="${p}" class="${here.startsWith(p) ? "here" : ""}">${n}</a>`).join("");
   if (!user && family) {
     host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${view ? "🧪" : esc((family.email || "?")[0].toUpperCase())}</span><span>${view ? "Test parent" : "Parent"}</span></button>
-    ${open ? `<div class="menu"><p>${view ? `Test parent (you're ${esc(family.email)}).` : `Signed in as ${esc(family.email)}, a family account.`}</p><a href="/parents/lifeskills/">Life Skills tracker</a><a href="/parents/passoff/">Passing off at home</a><a href="/parents/">Parents home</a>${testSec()}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
+    ${open ? `<div class="menu"><p>${view ? `Test parent (you're ${esc(family.email)}).` : `Signed in as ${esc(family.email)}, a family account.`}</p><a href="/parents/lifeskills/">My child</a><a href="/parents/passoff/">Passing off at home</a><a href="/parents/">Parents home</a>${testSec()}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
     return;
   }
   if (!user) {
@@ -394,6 +451,8 @@ onAuthStateChanged(auth, async u => {
   const em = ((u && u.email) || "").toLowerCase();
   family = null;
   view = viewFor(u);
+  // Families' and guides' account copies, for any verified account on the pages that keep them.
+  if (u && u.emailVerified) acctSync(u); else acctUser = null;
   // Someone else signed in on this device: a test view left behind by a tester ends.
   if (u && !view && storedView()) origRemove.call(localStorage, "wl-viewas");
   decideRole(u);
@@ -412,7 +471,7 @@ onAuthStateChanged(auth, async u => {
     await signOut(auth); msg("Please sign in with your @" + DOMAIN + " school account."); user = null; render(); gate(null); announce(null); return;
   }
   // Signed out (maybe on another site): don't leave the last student's things for the next person.
-  if (!u && Object.keys(ALLKEYS).some(k => localStorage.getItem("wl-linked-" + k))) { forgetDevice(); location.reload(); return; }
+  if (!u && (Object.keys(ALLKEYS).some(k => localStorage.getItem("wl-linked-" + k)) || Object.keys(localStorage).some(k => k.startsWith("wl-linked-acct-")))) { forgetDevice(); location.reload(); return; }
   const was = user; user = u; render();
   gate(u); announce(u);
   if (u && !was) syncOnSignIn();
