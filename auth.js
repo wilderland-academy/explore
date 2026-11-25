@@ -3,11 +3,12 @@
 // The page keeps using localStorage exactly as before. This file copies the listed keys to the student's
 // own record in Firestore (students/{uid}/sites/{site}) and brings them back on any Chromebook they sign in on.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
 
 const CONFIG = {
   apiKey: "AIzaSyB_JSjvnUlSCnx4BIwRTLicHllmCgF2iOM",
-  authDomain: "wilderland-df15e.firebaseapp.com",
+  // In the installed app, this site (its self-hosted /__/auth/ helper), so the same-page sign-in works: see /wlnav.js.
+  authDomain: window.WLAuthDomain ? window.WLAuthDomain() : "wilderland-df15e.firebaseapp.com",
   projectId: "wilderland-df15e",
   storageBucket: "wilderland-df15e.firebasestorage.app",
   messagingSenderId: "310046559783",
@@ -60,6 +61,8 @@ const DOC = uid => `https://firestore.googleapis.com/v1/projects/${CONFIG.projec
 
 const app = initializeApp(CONFIG);
 const auth = getAuth(app);
+// Back from a same-page sign-in in the installed app: say so if it didn't work (a success arrives as a normal sign-in).
+if (window.wlSamePageSignIn && window.wlSamePageSignIn()) getRedirectResult(auth).catch(e => { console.warn("Wilderland sign-in:", e); setTimeout(() => msg("Sign-in didn't finish (" + (e && e.code || "error") + "). Try again, or open the site in Safari or Chrome."), 0); });
 // Other scripts on the page (the Suggestion Box) reuse this app and sign-in instead of starting their own.
 window.wlFirebase = { app, auth, config: CONFIG };
 const announce = u => document.dispatchEvent(new CustomEvent("wl-auth", { detail: u }));
@@ -307,6 +310,8 @@ async function wlSignIn() {
   // Parents (and outside guests) use their own Google accounts, so the Parents pages, the front door and the pages guests
   // may open offer any Google account. Student and staff pages point Google at the school's accounts.
   const p = new GoogleAuthProvider(); p.setCustomParameters(ANY_ACCOUNT ? { prompt: "select_account" } : { hd: DOMAIN, prompt: "select_account" });
+  // In the installed app the pop-up can't report back, so sign in on this page instead (it comes back here signed in).
+  if (window.wlSamePageSignIn && window.wlSamePageSignIn()) { try { await signInWithRedirect(auth, p); } catch (err) { msg("Sign-in didn't work. Close the app and open it again, or open the site in Safari or Chrome."); } return; }
   try { await signInWithPopup(auth, p); }
   catch (err) { if (err && err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") msg("Sign-in didn't work. Make sure pop-ups are allowed" + (ANY_ACCOUNT ? "." : ", and use your @" + DOMAIN + " account.")); }
 }

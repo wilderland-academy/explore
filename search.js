@@ -65,6 +65,7 @@ const PAGES = [
   ["Parent Comms", "/guides/parents/", "g", "parent communication email draft"],
   ["Staff Handbook", "/guides/handbook/", "g", "handbook policies"],
   ["Policies & Resources", "/guides/policies/", "g", "policy policies forms resources"],
+  ["Wilderland Guides on your phone (app)", "/guides/app/", "g", "app iphone android phone mobile home screen install"],
   ["Elective Time Off form", "/guides/policies/", "g", "pto time off day off vacation leave coverage form"],
   ["Role Clarity and Updates", "/guides/policies/#role-clarity", "g", "roles who owns what responsibilities coverage spending amazon"],
   ["Guide Standards & Expectations", "/guides/policies/#guide-standards", "g", "standards daily rhythm schedule pilot expectations"],

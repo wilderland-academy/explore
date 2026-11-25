@@ -75,7 +75,13 @@ textarea:focus{outline:2px solid var(--lamp);outline-offset:1px;border-color:tra
 @media (max-width:640px){.thf{grid-template-columns:1fr}}
 @media (max-width:640px){.sg{gap:10px;padding:12px}.vote{min-width:48px;font-size:16px}}
 </style>
-</head>
+{% if include.site == "guides" %}<!-- Installable as the "Wilderland Guides" app (Add to Home Screen): /guides/app/ -->
+<link rel="manifest" href="/guides/app/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/guides/app/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Guides">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+{% endif %}</head>
 <body data-gated class="wl-pending">
 <div class="wlbar" data-wlnav="{{ include.site }}" data-current="suggest"></div><script src="/wlnav.js"></script>
 <header class="site"><a class="wl-title" href="{% if include.site == "guides" %}/guides/suggest/{% else %}/suggest/{% endif %}">Suggestion Wall</a></header>

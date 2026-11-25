@@ -1,0 +1,17 @@
+{
+  "id": "/guides/",
+  "name": "Wilderland Guides",
+  "short_name": "Guides",
+  "description": "Wilderland Academy's guide tools: Life Skills, students, Mentor Mindset, Behavior, Trail Partner and policies.",
+  "start_url": "/guides/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f1ea",
+  "theme_color": "#015640",
+  "icons": [
+    { "src": "/guides/app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/guides/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/guides/app/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
