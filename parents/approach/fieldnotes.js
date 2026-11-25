@@ -1,27 +1,29 @@
-// Field Notes: the parent education series. Three featured books, then books, podcasts and talks (each opening to a full
-// entry at #<id> with big ideas, where you'll see it at school, where we part ways, questions and one thing to try),
-// then lighter reading (READS) on the microschool movement, Alpha, and research we keep coming back to.
-// Static, no sign-in, unlisted. Filters live in memory only.
-import * as D from "./data.js";
+// Field Notes: the parent education series, the last section of Our Approach (#fieldnotes; it was its own page,
+// /parents/series/, until Nov 2026). Three featured books, then books, podcasts and talks, each opening to a full entry
+// at #<id> (big ideas, where you'll see it at school, where we part ways, questions and one thing to try) that takes the
+// place of the whole page until "← All Field Notes"; then lighter reading (READS). Filters live in memory only.
+import * as D from "./fieldnotes-data.js";
 
 const $ = s => document.querySelector(s);
 function h(tag, attrs, kids) { const e = document.createElement(tag); if (attrs) for (const k in attrs) { if (k === "class") e.className = attrs[k]; else if (k === "text") e.textContent = attrs[k]; else if (k === "html") e.innerHTML = attrs[k]; else if (k.startsWith("on")) e[k] = attrs[k]; else if (attrs[k] !== false && attrs[k] != null) e.setAttribute(k, attrs[k]); } (kids || []).forEach(c => { if (c) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); }); return e; }
 const card = (cls, kids) => h("div", { class: "card " + (cls || "") }, kids);
 const ext = (text, href) => h("a", { href, target: "_blank", rel: "noopener", text });
-const app = $("#app");
+const page = $("#app"), trail = $(".ap-trail"), app = $("#fn"), one = $("#fn-entry");
 const byId = Object.fromEntries(D.ITEMS.map((x, i) => [x.id, Object.assign(x, { n: i + 1 })]));
 let kind = "all", method = "all";
 const byline = x => x.by + (x.yr ? " · " + x.yr : "");
 
+// An entry (#<id>) replaces the whole page; any other hash shows Our Approach again, scrolled back to where the reader
+// was in Field Notes (or to the section the hash names).
 function route() {
-  const id = decodeURIComponent(location.hash.slice(1));
-  const y = route.last === id ? window.scrollY : 0; route.last = id;
-  app.innerHTML = "";
-  if (byId[id]) entry(byId[id]); else grid();
-  window.scrollTo(0, byId[id] ? 0 : (route.gridY || y));
-  document.title = (byId[id] ? byId[id].t + " · " : "") + "Field Notes · Wilderland families";
+  const id = decodeURIComponent(location.hash.slice(1)), x = byId[id];
+  page.hidden = !!x; if (trail) trail.hidden = !!x; one.hidden = !x;
+  one.innerHTML = "";
+  if (x) { entry(x); window.scrollTo(0, 0); document.title = x.t + " · Field Notes · Wilderland families"; return; }
+  document.title = "Our Approach · Wilderland families";
+  if (route.from) { route.from = false; const el = id && id !== "fieldnotes" ? document.getElementById(id) : null; if (el) el.scrollIntoView(); else window.scrollTo(0, route.gridY || document.getElementById("fieldnotes").getBoundingClientRect().top + window.scrollY - 90); }
 }
-addEventListener("hashchange", () => { if (!byId[decodeURIComponent(location.hash.slice(1))]) route.gridY = route.gridY || 0; route(); });
+addEventListener("hashchange", () => { if (!one.hidden) route.from = true; route(); });
 
 const mtags = x => h("div", { class: "fn-tags" }, x.here.map(([k]) => h("span", { class: "fn-m", text: D.METHODS[k].n })));
 
@@ -34,23 +36,22 @@ function tile(x, big) {
 }
 
 function grid() {
-  const v = h("section", { class: "view" });
-  v.appendChild(h("h1", { html: "Field <span>Notes</span>" }));
+  const v = h("div", { class: "fn-grid-view" });
   v.appendChild(h("p", { class: "lede", text: "The books, podcasts and talks behind Wilderland. Each one has the big ideas, where you'll see them at school, questions to talk about at home, and one thing to try this week." }));
   v.appendChild(h("p", { class: "dim", text: "New here? Start with these three: one to read, one to listen to, one to watch. Most podcasts and talks run under 45 minutes." }));
   // start here
-  v.appendChild(h("h2", { text: "Start here" }));
+  v.appendChild(h("h3", { class: "fn-h", text: "Start here" }));
   v.appendChild(h("div", { class: "fn-grid fn-start" }, D.START.map(id => tile(byId[id], true))));
   // the questions families ask most
-  v.appendChild(h("h2", { id: "questions", text: "The questions families ask us most" }));
+  v.appendChild(h("h3", { class: "fn-h", id: "questions", text: "The questions families ask us most" }));
   v.appendChild(h("p", { class: "dim", text: "Some of what we do is unusual, and families ask about it. For each, here's what we read, including at least one piece that pushes back." }));
   Object.entries(D.ASK_GROUPS).forEach(([gk, [title, lede]]) => {
-    v.appendChild(h("h3", { id: "ask-" + gk, class: "fn-askh", text: title }));
+    v.appendChild(h("h4", { id: "ask-" + gk, class: "fn-askh", text: title }));
     v.appendChild(h("p", { class: "dim", text: lede }));
     v.appendChild(h("div", { class: "fn-reads" }, D.ASKS.filter(r => r.g === gk).map(readCard)));
   });
   // filters
-  v.appendChild(h("h2", { text: "Read, listen, watch" }));
+  v.appendChild(h("h3", { class: "fn-h", text: "Read, listen, watch" }));
   v.appendChild(h("p", { class: "dim", text: "A short shelf of other books we love, plus podcasts and talks our team keeps sharing." }));
   const f1 = h("div", { class: "chips", role: "group", "aria-label": "Type" });
   const f2 = h("div", { class: "fn-filter" });
@@ -73,11 +74,11 @@ function grid() {
   v.append(f1, f2, note, g);
   // lighter reading
   Object.entries(D.READ_GROUPS).forEach(([gk, [title, lede]]) => {
-    v.appendChild(h("h2", { id: "read-" + gk, text: title }));
+    v.appendChild(h("h3", { class: "fn-h", id: "read-" + gk, text: title }));
     v.appendChild(h("p", { class: "dim", text: lede }));
     v.appendChild(h("div", { class: "fn-reads" }, D.READS.filter(r => r.g === gk).map(readCard)));
   });
-  v.appendChild(card("", [h("p", { html: `More books we love are on our <a href="${D.INSPIRATION}" target="_blank" rel="noopener">Inspiration list</a>; look for them at the Weber County Library or on Libby. For how it all fits together at school, see <a href="/parents/approach/">Our Approach</a>.` })]));
+  v.appendChild(card("", [h("p", { html: `More books we love are on our <a href="${D.INSPIRATION}" target="_blank" rel="noopener">Inspiration list</a>; look for them at the Weber County Library or on Libby.` })]));
   app.appendChild(v);
 }
 
@@ -97,7 +98,7 @@ function mix(list) {
 
 function entry(x) {
   const v = h("article", { class: "view fn-entry" });
-  v.appendChild(h("a", { class: "small", href: "#", text: "← All Field Notes" }));
+  v.appendChild(h("a", { class: "small", href: "#fieldnotes", text: "← All Field Notes" }));
   v.appendChild(h("div", { class: "fn-top" }, [h("span", { class: "fn-no", text: "No. " + String(x.n).padStart(2, "0") }), h("span", { class: "tag", text: x.kind }), x.len && x.kind !== "Book" ? h("span", { class: "fn-len", text: x.len }) : null, h("span", { class: "tag", text: D.THEMES[x.theme] })]));
   v.appendChild(h("h1", { text: x.t }));
   v.appendChild(h("p", { class: "dim fn-sub", text: x.sub }));
@@ -120,7 +121,8 @@ function entry(x) {
   // prev / next
   const i = D.ITEMS.indexOf(x), prev = D.ITEMS[i - 1], nxt = D.ITEMS[i + 1];
   v.appendChild(h("div", { class: "fn-pn" }, [prev ? h("a", { class: "btn ghost", style: "text-decoration:none", href: "#" + prev.id, text: "← " + prev.t }) : h("span"), nxt ? h("a", { class: "btn", style: "text-decoration:none", href: "#" + nxt.id, text: nxt.t + " →" }) : h("a", { class: "btn", style: "text-decoration:none", href: "#", text: "Back to all →" })]));
-  app.appendChild(v);
+  one.appendChild(v);
 }
 
+grid();
 route();

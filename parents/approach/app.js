@@ -27,14 +27,14 @@ function bandChips() {
 // a block that re-renders itself when the band changes
 function live(render) { const box = h("div", { class: "ap-live" }); const f = () => { box.innerHTML = ""; render(box); }; redraws.push(f); f(); return box; }
 
-const SECTIONS = [["pillars", "Three pillars"], ["help", "How guides help"], ["mornings", "Mornings"], ["skills", "Life Skills"], ["evidence", "Evidence"], ["words", "Words we use"], ["refresher", "Refresher"]];
+const SECTIONS = [["pillars", "Three pillars"], ["help", "How guides help"], ["mornings", "Mornings"], ["skills", "Life Skills"], ["evidence", "Evidence"], ["words", "Words we use"], ["refresher", "Refresher"], ["fieldnotes", "Field Notes"]];
 const sec = (id, title, lede) => { const s = h("section", { class: "ap-sec", id }); s.appendChild(h("h2", { class: "ap-h", html: title })); if (lede) s.appendChild(h("p", { class: "lede", text: lede })); return s; };
 
 function intro() {
   const s = h("section", { class: "ap-sec ap-intro", id: "top" });
   s.appendChild(h("h1", { html: "Our <span>approach</span>" }));
   s.appendChild(h("p", { class: "lede", text: "You heard the overview at Parent Education Night. This page goes a layer deeper: how our three pillars work together, what guides do and deliberately don't do, what Life Skills challenges really look like, and the research behind it, including where it runs out." }));
-  s.appendChild(h("p", { class: "dim", html: "Need the overview again? Skip to the <a href=\"#refresher\">one-minute refresher</a>. Want to go further? The <a href=\"/parents/series/\">Field Notes</a> series walks through the books, podcasts and talks that shaped Wilderland." }));
+  s.appendChild(h("p", { class: "dim", html: "Need the overview again? Skip to the <a href=\"#refresher\">one-minute refresher</a>. Want to go further? <a href=\"#fieldnotes\">Field Notes</a>, at the end, walks through the books, podcasts and talks that shaped Wilderland." }));
   return s;
 }
 
@@ -131,7 +131,6 @@ function words() {
 function refresher() {
   const s = sec("refresher", "The one-minute <span>refresher</span>", "The Parent Education Night overview, condensed.");
   s.appendChild(pairs(D.REFRESHER));
-  s.appendChild(card("", [h("p", { html: "Next: <a href=\"/parents/series/\">Field Notes</a>, the books, podcasts and talks behind Wilderland, with big ideas, questions to talk about, and where you'll see each one at school." })]));
   return s;
 }
 
@@ -140,7 +139,9 @@ const nav = $("#nav");
 SECTIONS.forEach(([id, label]) => nav.appendChild(h("a", { href: "#" + id, text: label })));
 const app = $("#app"); app.innerHTML = "";
 const main = h("div", { class: "view ap-page" });
-[intro(), pillars(), help(), mornings(), skills(), evidence(), words(), refresher()].forEach(x => main.appendChild(x));
+// Field Notes (the books, podcasts and talks behind Wilderland) is the last section; ./fieldnotes.js fills #fn.
+const fieldnotes = sec("fieldnotes", "Field <span>Notes</span>"); fieldnotes.appendChild(h("div", { id: "fn" }));
+[intro(), pillars(), help(), mornings(), skills(), evidence(), words(), refresher(), fieldnotes].forEach(x => main.appendChild(x));
 app.appendChild(main);
 // This page is one long scroll, so Previous / Next between its own sections only moved a few pixels (the next section
 // starts right below). The section menu does that job. Only the last section gets a Next, to the next page.
@@ -157,4 +158,4 @@ const spy = () => {
   links.forEach(a => { if (a.getAttribute("href") === "#" + cur) { if (!a.hasAttribute("aria-current")) { a.setAttribute("aria-current", "location"); const n = a.parentElement; if (n.scrollWidth > n.clientWidth) n.scrollTo({ left: a.offsetLeft - n.clientWidth / 2 + a.offsetWidth / 2, behavior: "smooth" }); } } else a.removeAttribute("aria-current"); });
 };
 addEventListener("scroll", spy, { passive: true }); spy();
-if (location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }
+if (location.hash) { const el = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (el) el.scrollIntoView(); }

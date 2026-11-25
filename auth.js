@@ -282,7 +282,7 @@ function render() {
   const links = SITES.map(([n, p]) => `<a href="${p}" class="${here.startsWith(p) ? "here" : ""}">${n}</a>`).join("");
   if (!user && family) {
     host.innerHTML = `<button type="button" data-wla="menu" aria-expanded="${open}"><span class="av">${view ? "🧪" : esc((family.email || "?")[0].toUpperCase())}</span><span>${view ? "Test parent" : "Parent"}</span></button>
-    ${open ? `<div class="menu"><p>${view ? `Test parent (you're ${esc(family.email)}).` : `Signed in as ${esc(family.email)}, a family account.`}</p><a href="/parents/lifeskills/">My child</a><a href="/parents/passoff/">Passing off at home</a><a href="/parents/">Parents home</a>${testSec()}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
+    ${open ? `<div class="menu"><p>${view ? `Test parent (you're ${esc(family.email)}).` : `Signed in as ${esc(family.email)}, a family account.`}</p><a href="/parents/lifeskills/">${window.wlKidsLabel ? window.wlKidsLabel() : "My Child"}</a><a href="/parents/passoff/">Passing off at home</a><a href="/parents/">Parents home</a>${testSec()}<hr><button type="button" data-wla="out">Sign out</button></div>` : ""}`;
     return;
   }
   if (!user) {
@@ -382,7 +382,10 @@ async function findRole(u, em) {
   if (!em.endsWith("@" + DOMAIN)) {
     // A parent: their children's bands (lsParents, kept by the Student Roster). The youngest child's band comes first.
     let bands = [];
-    try { const p = await fetch(`${FS}/lsParents/${encodeURIComponent(em)}`, { headers: H }); if (p.ok) { const f = (await p.json()).fields || {}; bands = ((f.bands || {}).arrayValue || {}).values ? f.bands.arrayValue.values.map(x => x.stringValue) : []; } } catch (e) { }
+    try { const p = await fetch(`${FS}/lsParents/${encodeURIComponent(em)}`, { headers: H }); if (p.ok) { const f = (await p.json()).fields || {}; bands = ((f.bands || {}).arrayValue || {}).values ? f.bands.arrayValue.values.map(x => x.stringValue) : [];
+      // How many children, so the Parents bar says "My Child" or "My Children" on every page (/wlnav.js).
+      const kids = (((f.children || {}).arrayValue || {}).values || []).length;
+      if (kids) { try { origSet.call(localStorage, "wl-kids", String(kids)); document.dispatchEvent(new CustomEvent("wl-kids", { detail: kids })); } catch (e) { } } } } catch (e) { }
     bands = ["K–1", "2–4", "5–8"].filter(b => bands.includes(b));
     return { role: "parent", band: bands[0] || null, bands, sid: null };
   }

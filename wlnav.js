@@ -18,7 +18,44 @@
   var STAFF_BANDS = { "chelse@wilderland.academy": "K–1", "jessica@wilderland.academy": "K–1", "shanan@wilderland.academy": "2–4",
     "april@wilderland.academy": "2–4", "scott@wilderland.academy": "5–8", "sarah@wilderland.academy": "5–8" };
   var TEST = { sid: "test-student", name: "Test Student", student: "test.student@wilderland.academy", guide: "test.guide@wilderland.academy", parent: "test.parent@example.com" };
-  window.WLPeople = { TESTERS: TESTERS, STAFF_BANDS: STAFF_BANDS, TEST: TEST, BANDS: ["K–1", "2–4", "5–8"] };
+  //   FIELD_GUIDES: the guides who run weekly 1:1 coaching sessions. They get a Coaching tab on each student's page in
+  //     Students (/guides/roster/), which opens their private session notebook for that student. Testers see it too.
+  var FIELD_GUIDES = ["april@wilderland.academy", "scott@wilderland.academy", "chelse@wilderland.academy"];
+  window.WLPeople = { TESTERS: TESTERS, STAFF_BANDS: STAFF_BANDS, TEST: TEST, FIELD_GUIDES: FIELD_GUIDES, BANDS: ["K–1", "2–4", "5–8"] };
+  window.wlCoaches = function (email) { email = String(email || "").toLowerCase(); return FIELD_GUIDES.indexOf(email) >= 0 || TESTERS.indexOf(email) >= 0; };
+  // Embedded: a page shown inside another one (?embed=1 in an iframe), like a student's Life Skills record and Coaching
+  // notebook inside their page in Students. No top bar or page menus (html.wl-embed; each page hides its own), links to
+  // other pages open in the whole window, and the page tells its host how tall it is so the frame fits it.
+  var EMBED = false; try { EMBED = window.top !== window.self && /[?&]embed=1\b/.test(location.search); } catch (e) { EMBED = false; }
+  window.wlEmbed = EMBED;
+  if (EMBED) {
+    document.documentElement.classList.add("wl-embed");
+    var es = document.createElement("style");
+    es.textContent = "html.wl-embed .wlbar,html.wl-embed .wlside,html.wl-embed .wl-noembed{display:none!important}html.wl-embed body{padding-top:0!important;min-height:0!important}html.wl-embed .wlside-wrap{grid-template-columns:minmax(0,1fr)!important}";
+    document.head.appendChild(es);
+    // The content's height (the bottom of the lowest element), not the document's, which is never less than the frame.
+    var tell = function () {
+      try {
+        var b = 0, kids = document.body ? document.body.children : [];
+        for (var i = 0; i < kids.length; i++) { var el = kids[i], cs = getComputedStyle(el); if (cs.display === "none" || cs.position === "fixed") continue; var r = el.getBoundingClientRect(); b = Math.max(b, r.bottom + window.scrollY + (parseFloat(cs.marginBottom) || 0)); }
+        window.parent.postMessage({ wlEmbed: true, h: Math.ceil(b) + 8 }, location.origin);
+      } catch (e) { }
+    };
+    window.addEventListener("load", tell);
+    document.addEventListener("DOMContentLoaded", function () {
+      tell();
+      // Content changes (views drawn, sections opened) and size changes both re-measure, at most once a frame.
+      var queued = false, soon = function () { if (queued) return; queued = true; requestAnimationFrame(function () { queued = false; tell(); }); };
+      try { new ResizeObserver(soon).observe(document.body); } catch (e) { }
+      try { new MutationObserver(soon).observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true }); } catch (e) { setInterval(tell, 800); }
+      document.addEventListener("click", function (e) {
+        var a = e.target.closest && e.target.closest("a[href]"); if (!a || e.defaultPrevented || a.target === "_blank" || e.metaKey || e.ctrlKey) return;
+        var u; try { u = new URL(a.getAttribute("href"), location.href); } catch (x) { return; }
+        if (u.origin === location.origin && u.pathname === location.pathname) return;
+        e.preventDefault(); window.top.location.href = u.href;
+      });
+    });
+  }
   // The visitor's role as last told by /auth.js or the tracker (or remembered on this device).
   function curRole() {
     if (window.wlRole) return { role: window.wlRole.role, band: window.wlRole.band || null, test: window.wlRole.test || null };
@@ -64,8 +101,7 @@
       // The one-way onboarding journey through everything below (/guides/onboarding/).
       { id: "onboarding", label: "Onboarding", href: "/guides/onboarding/" },
       { id: "mentor", label: "Mentor Mindset", href: "/fieldguide/" },
-      // Recording and reviewing 1:1 coaching sessions: a stop inside the Field Guide, with its own tab so it's one click away.
-      { id: "sessions", label: "Session Room", href: "/fieldguide/#sessions" },
+      // 1:1 coaching sessions are on each student's page in Students (the Coaching tab, Field Guides only), not here.
       { id: "behavior", label: "Behavior", href: "/behavior/" },
       // Challenges, the Labs schedule and the Lab builder live inside Life Skills (its sub-menu: /lifeskills/subnav.js).
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
@@ -80,14 +116,14 @@
       { id: "policies", label: "Policies", href: "/guides/policies/" },
       BASECAMP] },
     parents: { name: "Parents", home: "/parents/", label: "Parents", tabs: [
-      // Each child's profile (Life Skills passes, goals, books, project ideas, how to help at home): the Life Skills
-      // tracker's family view, /parents/lifeskills/ (#c=<id> per child). "My children" once a family has more than one.
-      { id: "children", label: "My child", href: "/parents/lifeskills/" },
       { id: "athome", label: "At Home", href: "/parents/athome/" },
-      { id: "approach", label: "Our Approach", href: "/parents/approach/" },
-      { id: "fieldnotes", label: "Field Notes", href: "/parents/series/" },
       // Challenges, the Labs schedule and passing off at home are inside Life Skills (/lifeskills/subnav.js).
       { id: "lifeskills", label: "Life Skills", href: "/parents/challenges/" },
+      // Each child's profile (Life Skills passes, goals, books, project ideas, how to help at home): the Life Skills
+      // tracker's family view, /parents/lifeskills/ (#c=<id> per child). "My Child", or "My Children" with more than one.
+      { id: "children", label: "My Child", href: "/parents/lifeskills/" },
+      // Our Approach, with Field Notes (the books, podcasts and talks behind Wilderland) as its last section, #fieldnotes.
+      { id: "approach", label: "Our Approach", href: "/parents/approach/" },
       BASECAMP] }
   };
   // "wlbar-logo", not the old "wlbar-mark": an old cached wl.css hid .wlbar-mark on desktop.
@@ -136,7 +172,7 @@
     { step: "lifeskills", tabs: ["lifeskills"], path: /^\/guides\/(lifeskills|challenges)\// },
     { step: "students", tabs: ["roster"], path: /^\/guides\/(roster|student-info|students)\// },
     { step: "partner", tabs: [], path: /^\/guides\/(partner|history)\// },
-    { step: "mentor", tabs: ["mentor", "sessions"], path: /^\/fieldguide\// },
+    { step: "mentor", tabs: ["mentor"], path: /^\/fieldguide\// },
     { step: "behavior", tabs: ["behavior"], path: /^\/behavior\// },
     { step: "parents", tabs: ["parentcomms"], path: /^\/guides\/parents\// },
     { step: "policies", tabs: ["policies"], path: /^\/guides\/(policies|handbook)\// }
@@ -197,18 +233,19 @@
     if (r.role === "parent") return n && (PAR.test(n) || STU.test(n)) ? n : "/parents/";
     return n || "/guides/";
   }
-  // The current tab. The Session Room is a view of the Field Guide (/fieldguide/#sessions), so it follows the address.
-  // On the Parents site the tracker page is both a child's profile (My child) and the Labs schedule (Life Skills).
+  // The current tab. On the Parents site the tracker page is both a child's profile (My Child) and the Labs schedule
+  // (Life Skills).
   function curTab() {
     var c = bar.getAttribute("data-current") || "";
     if (key === "parents" && /^\/parents\/lifeskills\/$/.test(location.pathname)) return /^#schedule\b/.test(location.hash) ? "lifeskills" : "children";
-    return c === "mentor" && /^#sessions\b/.test(location.hash) ? "sessions" : c;
+    return c;
   }
-  // "My child", or "My children" once the tracker or the Challenges page has seen more than one ("wl-kids").
-  function kidsLabel() { var n = 0; try { n = Number(localStorage.getItem("wl-kids")) || 0; } catch (e) { } return n > 1 ? "My children" : "My child"; }
-  if (key === "parents") document.addEventListener("wl-kids", function () {
-    bar.querySelectorAll('[data-wl-tab="children"]').forEach(function (a) { a.textContent = kidsLabel(); });
-  });
+  // "My Child", or "My Children" once the tracker or the Challenges page has seen more than one ("wl-kids"). Also any
+  // [data-wl-kids-label] on the page (the Parents home card).
+  function kidsLabel() { var n = 0; try { n = Number(localStorage.getItem("wl-kids")) || 0; } catch (e) { } return n > 1 ? "My Children" : "My Child"; }
+  window.wlKidsLabel = kidsLabel;
+  function relabel() { document.querySelectorAll('[data-wl-tab="children"],[data-wl-kids-label]').forEach(function (a) { a.textContent = kidsLabel(); }); }
+  if (key === "parents") { document.addEventListener("wl-kids", relabel); if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", relabel); else relabel(); }
   var cur = curTab();
   // A tab for a section this guide hasn't trained for yet isn't drawn at all.
   function tabLink(t, cls) {

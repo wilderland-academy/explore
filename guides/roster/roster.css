@@ -105,3 +105,8 @@ a.wl-ch{color:var(--green)}
 #info .si-count{font-size:14px;color:var(--dim)}
 @media (max-width:860px){#info .si-wrap{grid-template-columns:1fr}#info .si-detail{position:static;max-height:none;order:-1;scroll-margin-top:120px}#info .si-detail.si-empty{display:none}#info .si-search{top:52px}#info .si-kv{grid-template-columns:1fr}#info .si-kv dt{margin-top:6px}}
 @media print{body.si-view .wlbar,body.si-view .tabs,body.si-view main>header,#info .si-search,#info .si-list,#info .si-admin,#info .si-notices,#info .si-count{display:none !important}#info .si-wrap{display:block}#info .si-detail{position:static;max-height:none;overflow:visible}}
+
+/* A student's Life Skills and Coaching tabs: those pages, framed (?embed=1), sized to their content by /wlnav.js. */
+.stabs{border-bottom:0;padding-bottom:0}
+iframe.embed{display:block;width:100%;min-height:420px;height:70vh;border:1px solid var(--line);border-radius:16px;background:#fff}
+iframe.embed.dark{background:#08140f;border-color:#28493d}

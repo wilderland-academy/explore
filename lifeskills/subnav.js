@@ -13,7 +13,7 @@
       ["validate", "Validate", "/guides/lifeskills/#validate"],
       ["board", "Crew board", "/guides/lifeskills/#board"]
     ],
-    // Parents: each child's profile ("My child") is its own tab in the top bar now, not part of Life Skills.
+    // Parents: each child's profile ("My Child") is its own tab in the top bar now, not part of Life Skills.
     parents: [
       ["challenges", "Challenges", "/parents/challenges/"],
       ["schedule", "Labs schedule", "/parents/lifeskills/#schedule"],

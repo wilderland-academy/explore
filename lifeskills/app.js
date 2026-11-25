@@ -378,7 +378,7 @@ function signedOut() {
   // On the Parents site the family sign-in comes first: any Google account (most families have one; we don't give
   // parents school accounts), or an email link or password. Staff sign in with the school account below it.
   if (PATH === HOMES.parent) return main([
-    head("My child", "Your child's profile: the Life Skills challenges they've passed and are working on, their goals, books and project ideas, the Labs coming up, and how to support it all at home."),
+    head("My Child", "Your child's profile: the Life Skills challenges they've passed and are working on, their goals, books and project ideas, the Labs coming up, and how to support it all at home."),
     h("section", { class: "band" }, h("div", { class: "wrap signin" }, [
       h("div", { class: "panel stack" }, [
         h("h2", { class: "h", text: "Parents and families" }),
@@ -1386,11 +1386,11 @@ function parentRoute(v, arg, preview) {
   }
   if (!S.mine.length) { $("#links").innerHTML = ""; return main([head("Your account is ready", "We haven't linked it to your child yet. Ask your child's Field Guide to add this email to your child's record: " + S.email + ". Then reload this page."), h("div", { class: "wrap" }, h("a", { class: "btn go", href: "/parents/passoff/", text: "How passing off at home works" }))]); }
   // Two sections share this page. The Labs schedule is part of Life Skills (its sub-menu: Challenges, Labs schedule,
-  // Passing off at home). Everything else is a child's profile, "My child" in the top bar, whose sub-menu is one tab
+  // Passing off at home). Everything else is a child's profile, "My Child" in the top bar, whose sub-menu is one tab
   // per child (none for a family with one child, or in a staff preview, which has its own picker).
   const lifeskills = v === "schedule";
   const kids = S.mine.length > 1 && !preview ? S.mine.map(id => ["c=" + id, firstName(S.students[id].name)]) : [];
-  const label = lifeskills ? "Life Skills" : S.mine.length > 1 && !preview ? "My children" : "My child";
+  const label = lifeskills ? "Life Skills" : S.mine.length > 1 && !preview ? "My Children" : "My Child";
   const brand = document.querySelector(".nav .brand span"); if (brand) brand.textContent = label;
   const sub = document.querySelector(".nav .brand"); if (sub) sub.setAttribute("href", lifeskills ? "/parents/challenges/" : "/parents/lifeskills/");
   $("#links").setAttribute("aria-label", label);
