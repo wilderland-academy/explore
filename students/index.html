@@ -28,13 +28,31 @@ h2{font:700 13px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase
 .card .pic::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(15,35,28,.85))}
 .card .tag{position:absolute;left:12px;top:12px;z-index:1;font:600 11px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#0b2b20;background:#d5f367;padding:6px 9px;border-radius:999px}
 .card .tag.out{color:#fff;background:rgba(1,86,64,.9)}
+/* Treebeard Library and the Camp Store: drawn as a little version of each app's screen, since a photo can't say
+   "search the shelves" or "spend your blazes". */
+.ui{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:9px;padding:46px 22px 24px;font:600 12px/1.2 Inter,system-ui,sans-serif;color:#e9f2e6;transition:transform .4s}
+.card:hover .ui{transform:scale(1.03)}
+.ui-lib{background:radial-gradient(120% 90% at 80% 0%,#24503f 0%,#16302a 60%)}
+.ui-search{display:flex;align-items:center;gap:8px;background:#fbfcf6;color:#5c6b62;border-radius:999px;padding:8px 12px;font-weight:500}
+.ui-search svg{flex:none}
+.ui-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:7px 10px}
+.ui-cover{width:18px;height:26px;border-radius:3px;flex:none;box-shadow:inset -3px 0 0 rgba(0,0,0,.18)}
+.ui-lines{flex:1;display:flex;flex-direction:column;gap:5px}
+.ui-lines i{display:block;height:6px;border-radius:9px;background:rgba(255,255,255,.55)}
+.ui-lines i+i{width:55%;background:rgba(255,255,255,.25)}
+.ui-st{flex:none;border-radius:999px;padding:4px 8px;font-size:10.5px;letter-spacing:.02em}
+.ui-st.in{background:#d5f367;color:#0b2b20}.ui-st.due{background:#ffd98a;color:#4a3300}
+.ui-store{background:radial-gradient(120% 90% at 20% 0%,#2a4b2e 0%,#16302a 60%);padding:40px 18px 24px}
+.ui-shelf{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ui-item{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:8px 6px 7px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.ui-item b{font-size:24px;line-height:1}
+.ui-item span{display:inline-flex;align-items:center;gap:3px;background:#d5f367;color:#0b2b20;border-radius:999px;padding:3px 7px;font-size:10.5px}
 .card .body{padding:14px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
 .card b{font:700 22px/1.1 "Uncut Sans",Inter,sans-serif;letter-spacing:-.02em}
 .card p{margin:0;color:#a9bbb0;font-size:14.5px}
 .card i{font-style:normal;margin-top:auto;padding-top:8px;color:#d5f367;font-weight:600;font-size:14px}
 footer{color:#7f978b;font-size:13px;padding:40px 0}
-@media (max-width:640px){h1{margin-top:30px}.cards{grid-template-columns:1fr 1fr;gap:10px}.card b{font-size:17px}.card p{display:none}.card .body{padding:10px 12px 12px}.card i{font-size:13px;padding-top:4px}.card .tag{font-size:10px;left:8px;top:8px}}
-.card .lock{display:block;margin-top:6px;font-size:12.5px;color:#a9bbb0;font-style:normal}
+@media (max-width:640px){h1{margin-top:30px}.cards{grid-template-columns:1fr 1fr;gap:10px}.card b{font-size:17px}.card p{display:none}.card .body{padding:10px 12px 12px}.card i{font-size:13px;padding-top:4px}.card .tag{font-size:10px;left:8px;top:8px}.ui{padding:38px 10px 10px;gap:6px;font-size:10px}.ui-search{padding:6px 9px}.ui-row{padding:5px 7px;gap:7px}.ui-row+.ui-row{display:none}.ui-st{font-size:9px;padding:3px 6px}.ui-store{padding:38px 10px 10px}.ui-shelf{grid-template-columns:1fr 1fr;gap:6px}.ui-item:nth-child(n+3){display:none}.ui-item b{font-size:18px}.ui-item span{font-size:9px;padding:2px 6px}}
 </style>
 </head>
 <body>
@@ -52,10 +70,10 @@ footer{color:#7f978b;font-size:13px;padding:40px 0}
 
 <h2>Your school</h2>
 <div class="cards">
-<a class="card" href="https://library.wilderland.academy/"><div class="pic"><img src="/img/library.jpg" alt=""><span class="tag out">Borrow</span></div><div class="body"><b>Treebeard Library</b><p>Search the shelves, check books out, and see what's due.</p><i>Open the library →</i></div></a>
+<a class="card" href="https://library.wilderland.academy/"><div class="pic"><div class="ui ui-lib" aria-hidden="true"><div class="ui-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Search the shelves…</div><div class="ui-row"><span class="ui-cover" style="background:#e0763b"></span><span class="ui-lines"><i></i><i></i></span><span class="ui-st in">On shelf</span></div><div class="ui-row"><span class="ui-cover" style="background:#5aa0d8"></span><span class="ui-lines"><i></i><i></i></span><span class="ui-st due">Due Fri</span></div></div><span class="tag out">Borrow</span></div><div class="body"><b>Treebeard Library</b><p>Search the shelves, check books out, and see what's due.</p><i>Open the library →</i></div></a>
 <a class="card" href="https://my.wilderland.academy/"><div class="pic"><img src="/img/basecamp.jpg" alt=""><span class="tag out">Track</span></div><div class="body"><b>Basecamp</b><p>Your dashboard: app progress, blazes earned, and your week in one place.</p><i>Open Basecamp →</i></div></a>
-<a class="card" href="/store/"><div class="pic"><img src="/img/store.jpg" alt=""><span class="tag">Earn</span></div><div class="body"><b>Camp Store</b><p>Almost 200 things worth saving your blazes for, from basketballs to owl pellets. Nothing that breaks by Tuesday.</p><i>See the store →</i><small class="lock">🔒 Sign in with your school account</small></div></a>
-<a class="card" href="/suggest/"><div class="pic"><img src="/img/suggest.jpg" alt=""><span class="tag">Speak up</span></div><div class="body"><b>Suggestion Wall</b><p>What would make Wilderland better? Post it on the wall for the whole school, vote on others, and see which guide says yes.</p><i>Add an idea →</i><small class="lock">🔒 Sign in with your school account</small></div></a>
+<a class="card" href="/store/"><div class="pic"><div class="ui ui-store" aria-hidden="true"><div class="ui-shelf"><div class="ui-item"><b>🏀</b><span>70 blazes</span></div><div class="ui-item"><b>🛹</b><span>90 blazes</span></div><div class="ui-item"><b>🧱</b><span>40 blazes</span></div><div class="ui-item"><b>🦉</b><span>20 blazes</span></div><div class="ui-item"><b>🎨</b><span>30 blazes</span></div><div class="ui-item"><b>🔬</b><span>60 blazes</span></div></div></div><span class="tag">Earn</span></div><div class="body"><b>Camp Store</b><p>Almost 200 things worth saving your blazes for, from basketballs to owl pellets. Nothing that breaks by Tuesday.</p><i>See the store →</i></div></a>
+<a class="card" href="/suggest/"><div class="pic"><img src="/img/suggest.jpg" alt=""><span class="tag">Speak up</span></div><div class="body"><b>Suggestion Wall</b><p>What would make Wilderland better? Post it on the wall for the whole school, vote on others, and see which guide says yes.</p><i>Add an idea →</i></div></a>
 </div>
 </main>
 <footer class="in">Wilderland Academy · Eden, Utah</footer>

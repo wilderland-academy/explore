@@ -61,6 +61,8 @@ const VIEWS = {};
 // session room below in a frame: /fieldguide/?embed=1&sid=<lsStudents id>#sessions, opened on that student. Outside
 // that frame, old #sessions links go to Students.
 const EMBED_SID = window.wlEmbed ? (new URLSearchParams(location.search).get("sid") || "") : "";
+// sid=all: the Coaching tab at the top of Students, which shows the whole session room (every student) in the frame.
+const EMBED_ALL = EMBED_SID === "all";
 function route() {
   if (!startedFor) return;
   if (EMBED_SID) { if (location.hash !== "#sessions") history.replaceState(null, "", "#sessions"); }
@@ -331,7 +333,7 @@ async function analyze(s, k) {
 VIEWS.sessions = async sec => {
   if (sess.students === null) { head(sec, "The <span>session</span> room"); const p = h("p", { class: "dim", text: "Opening your notebook…" }); sec.appendChild(p); try { await loadSess(); } catch (e) { p.textContent = "Your session notebook isn't available yet. The database rules need updating first (see Admin)."; return; } sec.innerHTML = ""; }
   // Inside a student's Coaching tab: always that student (the list of everyone isn't shown there).
-  if (EMBED_SID && sess.screen === "list") {
+  if (EMBED_SID && !EMBED_ALL && sess.screen === "list") {
     const k = sess.students.find(x => x.sid === EMBED_SID);
     if (!k) { sec.appendChild(h("p", { class: "dim", text: "This student isn't in your session notebook yet. Students come from the Student Roster." })); return; }
     sess.student = k; sess.screen = "student";
@@ -342,7 +344,7 @@ function sessList(sec) {
   head(sec, "The <span>session</span> room", "Your weekly one-on-ones: record or take notes, get feedback, and walk into the next one knowing where you left off.");
   const b = sess.band || myBandKey(), kids = shownKids(), due = kids.filter(k => !doneThisWeek(k.id));
   sec.appendChild(card("M-edge", [h("p", { text: kids.length ? `This week: ${kids.length - due.length} of ${kids.length} done.` + (due.length ? ` Due: ${due.map(k => k.name.split(" ")[0]).slice(0, 12).join(", ")}${due.length > 12 ? "…" : ""}.` : " Everyone's had their 1:1.") : "No students here yet." }),
-    h("p", { class: "small", text: "Every student, every week. " }, [h("a", { href: "#oneonone", text: "How to run a great 1:1" })])]));
+    h("p", { class: "small", text: "Every student, every week. " }, [h("a", EMBED_SID ? { href: "/fieldguide/#oneonone", target: "_top", text: "How to run a great 1:1" } : { href: "#oneonone", text: "How to run a great 1:1" })])]));
   sec.appendChild(h("div", { class: "chips", role: "group", "aria-label": "Band" }, ["All", "K–1", "2–4", "5–8"].map(x => h("button", { class: "chip", "aria-pressed": String(b === x), text: x === "All" ? "All bands" : x, onclick: () => { sess.band = x; route(); } }))));
   const g = h("div", { class: "grid g3" });
   kids.forEach(k => { const n = sess.sessions.filter(s => s.studentId === k.id), done = doneThisWeek(k.id); g.appendChild(h("button", { class: "kid", onclick: () => go("student", { student: k }) }, [h("b", { text: k.name }), h("span", { class: "small", text: [k.band, k.test ? "test account" : ""].filter(Boolean).join(" · ") }), h("span", { class: "small" }, [h("span", { class: "dot" + (done ? " ok" : "") }), done ? "Done this week" : "Due this week"]), h("span", { class: "small", text: (k.consent ? "Recording consent on file" : "Notes only (no recording consent)") }), h("span", { class: "small", text: n.length ? n.length + (n.length === 1 ? " session" : " sessions") + " · last " + fmtDate(n[0].at) : "No sessions yet" })])); });
@@ -354,7 +356,7 @@ function sessList(sec) {
 }
 function sessStudent(sec) {
   const k = sess.student, mine = sess.sessions.filter(s => s.studentId === k.id);
-  if (!EMBED_SID) { sec.appendChild(h("button", { class: "chip", text: "← All students", onclick: () => go("list") })); head(sec, esc(k.name), k.band); }
+  if (!EMBED_SID || EMBED_ALL) { sec.appendChild(h("button", { class: "chip", text: "← All students", onclick: () => go("list") })); head(sec, esc(k.name), k.band); }
   else head(sec, "Coaching <span>sessions</span>", "Your private 1:1 notebook for " + k.name.split(" ")[0] + ". Only you can see it.");
   const last = mine[0];
   sec.appendChild(h("div", { class: "row" }, [h("button", { class: "btn", text: doneThisWeek(k.id) ? "Start another session" : "Start this week's session", onclick: () => go("live") }), h("span", { class: "small", text: doneThisWeek(k.id) ? "This week's 1:1 is done." : last ? "Last 1:1 was " + Math.round((Date.now() - last.at) / 864e5) + " days ago." : "No 1:1s yet." })]));

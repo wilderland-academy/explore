@@ -184,7 +184,9 @@ function tabs(cur) {
     <a href="#roster"${cur === "roster" ? ' aria-current="page"' : ""}>Students and parents</a>
     <a href="#info"${cur === "info" ? ' aria-current="page"' : ""}>Pickup, allergies &amp; photos</a>
     <a href="#alerts"${cur === "alerts" ? ' aria-current="page"' : ""}>Alerts <span class="count${open ? "" : " zero"}">${open}</span></a>
-    <a href="#chats"${cur === "chats" ? ' aria-current="page"' : ""}>All AI conversations</a></nav>`;
+    <a href="#chats"${cur === "chats" ? ' aria-current="page"' : ""}>All AI conversations</a>
+    <a href="#lifeskills"${cur === "lifeskills" ? ' aria-current="page"' : ""}>Life Skills</a>${S.coach ? `
+    <a href="#coaching"${cur === "coaching" ? ' aria-current="page"' : ""}>Coaching</a>` : ""}</nav>`;
 }
 const head = (t, sub) => `<header style="display:flex;flex-direction:column;gap:8px"><p class="eyebrow">Guides · Students</p><h1>${t}</h1>${sub ? `<p class="muted">${sub}</p>` : ""}</header>`;
 const sevTag = s => `<span class="sev ${esc(s)}">${esc(s)}</span>`;
@@ -407,7 +409,7 @@ async function vStudent(k, tab = "s") {
     (allowed ? `<div class="grid2">
       <section class="card"><h3>Challenges saved (${p.picks.length})</h3>${p.picks.length ? `<ul class="items">${p.picks.map(id => `<li>${chLink(id)} <span class="meta">· ${esc(CH[id].b)}</span></li>`).join("")}</ul>` : `<p class="muted small">None saved.</p>`}<p class="small muted">Compared with their year goals on the <a href="/guides/lifeskills/#overview">Life Skills overview</a> (Show: Saved to plan).</p></section>
       ${sec(`Project sparks saved (${p.sparks.length})`, p.sparks.map(x => `<li>${esc(x.t)}</li>`), "None saved.")}
-      ${sec(`Books on their shelf (${p.saved.length})`, p.saved.map(id => `<li>${esc(books[id] || id)}</li>`), "None saved.")}
+      ${sec(`Books they loved (${p.saved.length})`, p.saved.map(id => `<li>${esc(books[id] || id)}</li>`), "None saved.")}
       ${sec(`Books they want to read (${p.want.length})`, p.want.map(id => `<li>${esc(books[id] || id)}</li>`), "None yet.")}
       ${sec(`Read it, not for me (${(p.nope || []).length})`, (p.nope || []).map(id => `<li>${esc(books[id] || id)}${(p.nwhy[id] || []).length ? ` <span class="meta">· ${esc(p.nwhy[id].map(k => NWHY[k] || k).join(", "))}</span>` : ""}</li>`), "None marked.")}
     </div>` : `<p class="empty">This student is outside your grade band, so their saved things aren't shown. Their AI conversations are below.</p>`) +
@@ -450,6 +452,10 @@ async function route() {
     else if (v === "add") app.innerHTML = vEdit("", arg ? decodeURIComponent(arg) : "");
     else if (v === "alerts") app.innerHTML = vAlerts();
     else if (v === "chats") app.innerHTML = vChats();
+    // Everyone's Life Skills and (Field Guides) everyone's 1:1 coaching, one tab away. Each student's page still has
+    // its own Life Skills and Coaching tabs; these are the whole-class views of the same pages.
+    else if (v === "lifeskills") app.innerHTML = head("Life Skills", "Every student's Life Skills record. Open a name to see their milestones.") + tabs("lifeskills") + embedFrame("/guides/lifeskills/?embed=1", "Life Skills");
+    else if (v === "coaching" && S.coach) app.innerHTML = head("Coaching", "Your weekly 1:1s with every student: who's done this week, and each student's session notes.") + tabs("coaching") + embedFrame("/fieldguide/?embed=1&sid=all#sessions", "Coaching sessions", { dark: true, mic: true });
     // The old "Students and what they saved" tab is now the roster.
     else app.innerHTML = vRoster();
   } catch (e) { app.innerHTML = `<p class="empty">Couldn't load this: ${esc(e.message)}</p>`; }

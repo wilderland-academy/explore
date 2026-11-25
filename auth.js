@@ -97,7 +97,7 @@ async function push() {
 }
 // ---------- Telling a student's guides what they did (/notify.js) ----------
 // Compared with what this device last saw (set after each sign-in sync, so things merged in from another Chromebook
-// aren't announced twice): new saved challenges, goals set or finished, books finished or wanted, project ideas, and
+// aren't announced twice): new saved challenges, goals set or finished, books loved, not for them or wanted, project ideas, and
 // Camp Store list additions. A few at a time, so a busy minute doesn't flood a guide.
 const actKey = () => "wl-act-" + (user ? user.uid : "") + (view ? "#test" : "") + "-" + SITE;
 function setBaseline() { try { origSet.call(localStorage, actKey(), JSON.stringify(readLocal())); } catch (e) { } }
@@ -120,8 +120,8 @@ function tellGuides() {
   }
   if (SITE === "books") {
     const a = j(prev, "lantern-stacks") || {}, b = j(now, "lantern-stacks") || {};
-    added(a.saved, b.saved).forEach(id => out.push(["book", `${n} finished and loved “${book(id)}”`]));
-    added(a.nope, b.nope).forEach(id => out.push(["book", `${n} read “${book(id)}” and it wasn't for them`]));
+    added(a.saved, b.saved).forEach(id => out.push(["book", `${n} said they loved “${book(id)}”`]));
+    added(a.nope, b.nope).forEach(id => out.push(["book", `${n} said “${book(id)}” wasn't for them`]));
     added(a.want, b.want).forEach(id => out.push(["book", `${n} wants to read “${book(id)}”`]));
   }
   if (SITE === "projects") added((j(prev, "atlas-sparks") || []).map(x => x && x.t), (j(now, "atlas-sparks") || []).map(x => x && x.t)).filter(Boolean).forEach(t => out.push(["project", `${n} saved a project idea: “${t}”`]));
