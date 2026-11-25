@@ -474,3 +474,7 @@ the `PAGES` list at the top of `/search.js`.
   - Training results that couldn't reach the account go up on the next load.
   - Every "saved on this device only" / "in this browser only" line on the three sites now says it's saved to your account.
   - **Publish `firestore.rules`** (the new `accounts` match) or these copies fail quietly and stay on the device.
+
+## Our Approach: pillars read as switches, no in-page Next (Nov 24, 2026)
+- **The three pillars look tappable now.** Each card has an on/off switch, says "On"/"Off", and says what a tap does ("Tap to switch off"). It lifts on hover and presses in on click. The intro says "Tap a pillar…". Each button's label states the pillar and whether it's on.
+- **No Previous/Next between sections.** Our Approach is one long scroll, so Next only moved about 8px to the section directly below, on desktop and phone alike. The section menu covers moving around. The last section keeps its link to the next page (Wilderland at Home). At Home, the Field Guide and Behavior show one section at a time, so they keep their pagers.

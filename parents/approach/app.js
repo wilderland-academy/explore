@@ -39,13 +39,15 @@ function intro() {
 }
 
 function pillars() {
-  const s = sec("pillars", "Three <span>pillars</span>, one mechanism", "High standards, high support and high autonomy only work together. Each one keeps the others from going wrong. Switch one off and see what happens.");
+  const s = sec("pillars", "Three <span>pillars</span>, one mechanism", "High standards, high support and high autonomy only work together. Each one keeps the others from going wrong. Tap a pillar to switch it off and see what happens.");
   const on = { S: true, U: true, A: true };
   const toggles = h("div", { class: "ap-toggles", role: "group", "aria-label": "Pillars" });
   const out = h("div", { class: "card", "aria-live": "polite" });
   const draw = () => {
     toggles.innerHTML = "";
-    ["S", "U", "A"].forEach(k => toggles.appendChild(h("button", { class: "ap-pillar", "aria-pressed": String(on[k]), onclick: () => { on[k] = !on[k]; draw(); } }, [h("b", { text: D.PILLARS[k].short }), h("span", { text: on[k] ? "On" : "Off" })])));
+    // Each pillar is a switch: a real on/off toggle in the card, and the card says what tapping it does.
+    ["S", "U", "A"].forEach(k => toggles.appendChild(h("button", { type: "button", class: "ap-pillar", "aria-pressed": String(on[k]), "aria-label": D.PILLARS[k].short + ": " + (on[k] ? "on" : "off"), onclick: () => { on[k] = !on[k]; draw(); toggles.querySelectorAll(".ap-pillar")[["S", "U", "A"].indexOf(k)].focus(); } },
+      [h("i", { class: "ap-switch", "aria-hidden": "true" }), h("b", { text: D.PILLARS[k].short }), h("span", { class: "ap-state", text: on[k] ? "On" : "Off" }), h("small", { class: "ap-hint", "aria-hidden": "true", text: on[k] ? "Tap to switch off" : "Tap to switch on" })])));
     const key = ["S", "U", "A"].filter(k => on[k]).join(""), c = D.COMBOS[key];
     out.className = "card " + ({ M: "M-edge", E: "E-edge", P: "P-edge" }[c.tone] || "");
     out.innerHTML = "";
@@ -140,13 +142,12 @@ const app = $("#app"); app.innerHTML = "";
 const main = h("div", { class: "view ap-page" });
 [intro(), pillars(), help(), mornings(), skills(), evidence(), words(), refresher()].forEach(x => main.appendChild(x));
 app.appendChild(main);
-// Previous / next at the end of each section (this page scrolls; the links jump within it).
-SECTIONS.forEach(([id], i) => {
-  const el = document.getElementById(id); if (!el) return;
-  const p = SECTIONS[i - 1], n = SECTIONS[i + 1];
-  const a = (s, dir) => h("a", { class: "pg " + dir, href: "#" + s[0] }, [h("small", { text: dir === "prev" ? "← Previous" : "Next →" }), h("b", { text: s[1] })]);
-  el.appendChild(h("nav", { class: "pager noprint", "aria-label": "More sections" }, [p ? a(p, "prev") : h("span"), n ? a(n, "next") : h("a", { class: "pg next", href: "/parents/athome/" }, [h("small", { text: "Next →" }), h("b", { text: "Wilderland at Home" })])]));
-});
+// This page is one long scroll, so Previous / Next between its own sections only moved a few pixels (the next section
+// starts right below). The section menu does that job. Only the last section gets a Next, to the next page.
+{
+  const last = document.getElementById(SECTIONS[SECTIONS.length - 1][0]);
+  if (last) last.appendChild(h("nav", { class: "pager noprint", "aria-label": "Next page" }, [h("span"), h("a", { class: "pg next", href: "/parents/athome/" }, [h("small", { text: "Next →" }), h("b", { text: "Wilderland at Home" })])]));
+}
 
 // scroll spy: highlight the section nearest the top of the screen
 const links = [...nav.querySelectorAll("a")];

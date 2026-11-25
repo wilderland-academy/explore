@@ -157,10 +157,20 @@ details summary{cursor:pointer;font-weight:700}
 .ap-promise{position:relative;padding-left:64px}
 .ap-num{position:absolute;left:18px;top:18px;width:32px;height:32px;border-radius:50%;background:var(--lamp);display:grid;place-items:center;font:700 16px var(--display);color:#0b2b20}
 .ap-toggles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.ap-pillar{all:unset;box-sizing:border-box;cursor:pointer;border-radius:14px;padding:16px 12px 14px;min-height:110px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:center;border:2px dashed var(--line);background:var(--shelf);color:var(--dim)}
-.ap-pillar b{font:700 17px var(--display)}.ap-pillar span{font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase}
-.ap-pillar[aria-pressed=true]{border:2px solid var(--acc);background:var(--acc);color:#fff;min-height:150px}
+/* Each pillar is a switch. The card carries a real on/off toggle (track and knob) at the top, the state, and a line saying
+   what a tap does; it lifts on hover and presses in on click, so it reads as something to tap, not a banner. */
+.ap-pillar{all:unset;box-sizing:border-box;cursor:pointer;border-radius:14px;padding:16px 12px 14px;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;text-align:center;border:2px dashed var(--line);background:var(--shelf);color:var(--dim);position:relative;transition:transform .15s ease,box-shadow .15s ease,background .2s,min-height .2s;box-shadow:0 1px 2px rgba(19,41,31,.06)}
+.ap-pillar b{font:700 17px var(--display)}.ap-pillar .ap-state{font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase}
+.ap-pillar .ap-hint{font:500 12px/1.3 var(--body);opacity:.8;margin-top:2px}
+.ap-pillar[aria-pressed=true]{border:2px solid var(--acc);background:var(--acc);color:#fff;min-height:150px;box-shadow:0 2px 6px rgba(1,86,64,.25)}
+@media (hover:hover){.ap-pillar:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(19,41,31,.16)}}
+.ap-pillar:active{transform:translateY(0) scale(.98);box-shadow:0 1px 2px rgba(19,41,31,.12)}
 .ap-pillar:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.ap-switch{position:absolute;top:14px;right:14px;width:40px;height:22px;border-radius:999px;background:#c9d1bf;transition:background .2s}
+.ap-switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .2s}
+.ap-pillar[aria-pressed=true] .ap-switch{background:var(--lamp,#d5f367)}
+.ap-pillar[aria-pressed=true] .ap-switch::after{transform:translateX(18px)}
+@media (prefers-reduced-motion:reduce){.ap-pillar,.ap-switch,.ap-switch::after{transition:none}.ap-pillar:hover{transform:none}}
 .ap-toggles{align-items:end}
 .ap-day{display:flex;gap:6px;align-items:stretch;min-height:96px}
 .ap-end{flex:none;width:86px;display:flex;align-items:center;justify-content:center;text-align:center;font:600 12.5px/1.3 var(--body);color:var(--dim);border:1px dashed var(--line);border-radius:12px;padding:6px}
@@ -193,7 +203,8 @@ details summary{cursor:pointer;font-weight:700}
   .ap-skills{grid-template-columns:repeat(2,1fr)}
   .ap-day{flex-direction:column}.ap-end{width:auto}.ap-blk{flex:none!important;min-height:58px}
   .ap-ladder{grid-template-columns:1fr}.ap-rung{min-height:0}
-  .ap-toggles .ap-pillar{min-height:90px}.ap-toggles .ap-pillar[aria-pressed=true]{min-height:120px}
+  .ap-toggles .ap-pillar{min-height:104px;padding:12px 6px 10px}.ap-toggles .ap-pillar[aria-pressed=true]{min-height:128px}
+  .ap-switch{top:10px;right:50%;transform:translateX(50%)}.ap-pillar b{font-size:15px}.ap-pillar .ap-hint{font-size:11px}
   .ap-words{grid-template-columns:1fr}.ap-words dt{border-bottom:0;padding-bottom:2px}
   .ap-promise{padding-left:18px;padding-top:58px}
 }
