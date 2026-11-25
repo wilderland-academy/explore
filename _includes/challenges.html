@@ -25,7 +25,7 @@
       <a href="#progress">My progress</a>
       <a href="#crew">Crew</a>
     </nav>
-{% else %}    <a class="brand wl-title" href="/{{ include.site }}/lifeskills/">Life Skills</a>
+{% else %}    <a class="brand wl-title" href="{% if include.site == "parents" %}/parents/challenges/{% else %}/{{ include.site }}/lifeskills/{% endif %}">Life Skills</a>
     <nav class="nav-links" aria-label="Life Skills" data-ls-subnav="{{ include.site }}" data-current="challenges"></nav><script src="/lifeskills/subnav.js"></script>
 {% endif %}
 {% if include.site == "students" %}    <button class="btn-lime" type="button" data-open-picks><span class="lbl">My plan</span> <span class="count picks-count">0</span></button>
@@ -74,7 +74,7 @@
       <button class="link-btn" data-open-picks type="button">See my plan <span class="count picks-count">0</span></button>
     </div>
     <ol class="year-skills" id="year-skills"></ol>
-    <p class="save-note"><svg class="ic" aria-hidden="true"><use href="/challenges/icons.svg#i-info"/></svg>Signed in with your school account, your plan follows you to any Chromebook. Signed out, it stays in this browser only. <button class="link-btn" data-copy-link type="button">Copy plan link</button> and paste it somewhere safe to open your plan anywhere.</p>
+    <p class="save-note"><svg class="ic" aria-hidden="true"><use href="/challenges/icons.svg#i-info"/></svg>Your plan is saved to your account, so it follows you to any device. <button class="link-btn" data-copy-link type="button">Copy plan link</button> to share it with someone.</p>
   </section>
 
   <section class="explore" aria-labelledby="explore-title">
@@ -235,7 +235,7 @@
       <button class="btn ghost" id="copy-picks" type="button"><svg class="ic" aria-hidden="true"><use href="/challenges/icons.svg#i-copy"/></svg>Copy as a list</button>
       <button class="btn ghost" id="clear-picks" type="button"><svg class="ic" aria-hidden="true"><use href="/challenges/icons.svg#i-trash-2"/></svg>Clear all</button>
     </div>
-    <p class="fine pad">Your plan is saved in this browser only. The plan link opens it on any device, and you can paste the list into a message to your Field Guide.</p>
+    <p class="fine pad">Your plan is saved to your account. The plan link shows it to anyone you send it to, and you can paste the list into a message to your Field Guide.</p>
   </div>
 </dialog>
 

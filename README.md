@@ -456,3 +456,21 @@ the `PAGES` list at the top of `/search.js`.
   - **Snowball fight** and **water balloon fight**: your crew vs. the guides, and both sides throw.
   - **Twin day with a guide**: you and a guide you pick dress alike.
 - "Pick what a guide wears" and "Give a guide a nickname" stay, since the guide opts in and can veto. The reasoning and sources are in the comment above `EXPERIENCES`. There are now 29 experiences.
+
+## Parents: "My child" in the top bar, home challenges at the right level, nothing "on this device only" (Nov 24, 2026)
+- **My child.** A child's profile (Life Skills, goals, books, project ideas, help at home) has outgrown Life Skills. It is now
+  the first tab on the Parents site ("My child", or "My children" when the tracker has seen more than one child: `wl-kids`).
+  It points to `/parents/lifeskills/`, and the bar marks it current there unless the view is `#schedule`, which belongs to
+  Life Skills.
+  - The Life Skills tab now opens `/parents/challenges/`. Its sub-menu is Challenges, Labs schedule and Passing off at home.
+  - On a profile, the tracker's sub-bar says "My child" and lists one tab per child (none for one child).
+- **Challenges to try at home** (on a child's profile) only lists challenges at the child's level: their band, and in 5–8,
+  their half of it (5–6 or 7–8 from their grade; "5–8" challenges fit both), as the Challenges page does. Saved ones from
+  another level are left out. If a band has no home challenges, it says so instead of "met the year goal".
+- **Saved to your account, everywhere.** Families' At Home and Our Approach choices and their Challenges plan
+  (`wl-family-…`, `wl-picks` on the Parents site), and guides' Field Guide reps, if-then plan, self-check and streak
+  (`fg-…`), now copy to `accounts/{uid}/sites/{parents|fieldguide}` through `/auth.js` (`ACCT`). The first sign-in on a
+  device merges; after that the account wins. Sign-out clears them from the device.
+  - Training results that couldn't reach the account go up on the next load.
+  - Every "saved on this device only" / "in this browser only" line on the three sites now says it's saved to your account.
+  - **Publish `firestore.rules`** (the new `accounts` match) or these copies fail quietly and stay on the device.

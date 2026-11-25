@@ -322,7 +322,7 @@ function navLinks(items) {
   // (It keeps that link's own view: Labs is #schedule, not #labs, which no view answers to.)
   items = items.map(([id, label, href]) => [id, label, href && href.startsWith(PATH + "#") ? href.slice(PATH.length) : href]);
   // Views that sit under another menu item: Labs holds the schedule; Validate was Log.
-  const ALIAS = { schedule: "labs", log: "validate" }, raw = location.hash.slice(1).split("=")[0] || items[0][0];
+  const ALIAS = { schedule: "labs", log: "validate" }, raw = location.hash.slice(1).split("=")[0] || (items[0] || [""])[0];
   const cur = items.some(x => x[0] === raw) ? raw : ALIAS[raw] || raw;
   const nav = $("#links"); nav.innerHTML = "";
   items.forEach(([id, label, href]) => nav.append(h("a", { href: href || "#" + id, text: label, "aria-current": (!href || href.startsWith("#")) && cur === id ? "page" : null })));
@@ -373,7 +373,7 @@ function signedOut() {
   // On the Parents site the family sign-in comes first: any Google account (most families have one; we don't give
   // parents school accounts), or an email link or password. Staff sign in with the school account below it.
   if (PATH === HOMES.parent) return main([
-    head("Life Skills", "Every challenge your child has passed, what they're working on, the Labs coming up, and how to support it all at home."),
+    head("My child", "Your child's profile: the Life Skills challenges they've passed and are working on, their goals, books and project ideas, the Labs coming up, and how to support it all at home."),
     h("section", { class: "band" }, h("div", { class: "wrap signin" }, [
       h("div", { class: "panel stack" }, [
         h("h2", { class: "h", text: "Parents and families" }),
@@ -636,10 +636,16 @@ function tellPass(sid, cid, result, o) {
 function homeSupport(sid) {
   const s = S.students[sid], sum = summary(sid), goal = goalFor(s.band), now = today();
   const labs = (S.labs || []).filter(l => (l.bands || []).includes(s.band) && labEnd(l) >= now).slice(0, 3);
+  // Only challenges at the child's own level: their band, and in grades 5–8 their half of it (5–6 or 7–8, from their
+  // grade; "5–8" challenges fit both), the same split the Challenges page uses.
+  const gn = parseInt(String(s.grade == null ? "" : s.grade).replace(/[^0-9]/g, ""), 10);
+  const half = s.band === "5–8" ? (gn >= 7 && gn <= 8 ? "7–8" : gn >= 5 && gn <= 6 ? "5–6" : "") : "";
+  const atLevel = x => x && x.b === s.band && (!half || !x.gr || x.gr === "5–8" || x.gr === half);
   const passed = new Set(sum.passes.map(p => p.cid)), working = ((S.boards[sid] || {}).working || []).filter(c => BYID[c] && !passed.has(c));
   const need = W.skills.slice().sort((a, b) => (sum.per[a.k] || 0) - (sum.per[b.k] || 0)).filter(k => (sum.per[k.k] || 0) < goal);
-  const home = working.filter(c => BYID[c].h);
-  need.forEach(k => { if (home.length >= 6) return; const c = W.ch.find(x => x.b === s.band && x.h && !passed.has(x.id) && !home.includes(x.id) && (skillOf(x.id) || {}).k === k.k); if (c) home.push(c.id); });
+  const home = working.filter(c => BYID[c].h && atLevel(BYID[c]));
+  need.forEach(k => { if (home.length >= 6) return; const c = W.ch.find(x => atLevel(x) && x.h && !passed.has(x.id) && !home.includes(x.id) && (skillOf(x.id) || {}).k === k.k); if (c) home.push(c.id); });
+  const anyHome = W.ch.some(x => atLevel(x) && x.h);
   const name = firstName(s.name);
   return h("section", { class: "band tint" }, h("div", { class: "wrap stack" }, [
     h("h2", { class: "h", text: "Supporting " + name + " at home" }),
@@ -651,8 +657,8 @@ function homeSupport(sid) {
             (l.files || []).length + (l.links || []).length ? h("div", { class: "small muted", text: "Has files or links for home" }) : null]), h("span")]))) : h("p", { class: "empty", text: "No Labs scheduled yet for grades " + s.band + "." }),
         h("div", {}, h("a", { class: "btn", href: "#schedule", text: "All Labs" }))]),
       h("div", { class: "panel stack" }, [h("h3", { class: "h", text: "Challenges to try at home" }),
-        h("p", { class: "small muted", text: home.length ? `These can be passed off at home with you. ${working.some(c => BYID[c].h) ? "The first are what " + name + " is working on; the rest" : "They"} are in the life skills where ${name} has the fewest passes this year.` : "" }),
-        home.length ? savedList(home) : h("p", { class: "empty", text: name + " has met the year goal everywhere a home challenge fits. Nice work." }),
+        h("p", { class: "small muted", text: home.length ? `These can be passed off at home with you, all at ${name}'s level (grades ${half || s.band}). ${working.some(c => home.includes(c)) ? "The first are what " + name + " is working on; the rest" : "They"} are in the life skills where ${name} has the fewest passes this year.` : "" }),
+        home.length ? savedList(home) : h("p", { class: "empty", text: anyHome ? name + " has met the year goal everywhere a home challenge fits. Nice work." : `None of the grades ${half || s.band} challenges are set up to pass off at home yet. The Labs coming up are the best things to practice together.` }),
         h("div", { class: "row" }, [h("a", { class: "btn", href: "/parents/challenges/", text: "Browse all challenges" }), h("a", { class: "btn plain", href: "/parents/passoff/", text: "How passing off at home works" })])])
     ])
   ]));
@@ -1374,8 +1380,18 @@ function parentRoute(v, arg, preview) {
     S.mine = [previewSid];
   }
   if (!S.mine.length) { $("#links").innerHTML = ""; return main([head("Your account is ready", "We haven't linked it to your child yet. Ask your child's Field Guide to add this email to your child's record: " + S.email + ". Then reload this page."), h("div", { class: "wrap" }, h("a", { class: "btn go", href: "/parents/passoff/", text: "How passing off at home works" }))]); }
-  navLinks(S.mine.map(id => ["c=" + id, firstName(S.students[id].name)]).concat(SUBNAV.parents));
-  if (v === "schedule") { document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#schedule" ? "page" : "false")); return main(scheduleView(arg, false)); }
+  // Two sections share this page. The Labs schedule is part of Life Skills (its sub-menu: Challenges, Labs schedule,
+  // Passing off at home). Everything else is a child's profile, "My child" in the top bar, whose sub-menu is one tab
+  // per child (none for a family with one child, or in a staff preview, which has its own picker).
+  const lifeskills = v === "schedule";
+  const kids = S.mine.length > 1 && !preview ? S.mine.map(id => ["c=" + id, firstName(S.students[id].name)]) : [];
+  const label = lifeskills ? "Life Skills" : S.mine.length > 1 && !preview ? "My children" : "My child";
+  const brand = document.querySelector(".nav .brand span"); if (brand) brand.textContent = label;
+  const sub = document.querySelector(".nav .brand"); if (sub) sub.setAttribute("href", lifeskills ? "/parents/challenges/" : "/parents/lifeskills/");
+  $("#links").setAttribute("aria-label", label);
+  document.title = label + " · Wilderland parents";
+  navLinks(lifeskills ? SUBNAV.parents : kids);
+  if (lifeskills) { document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#schedule" ? "page" : "false")); return main(scheduleView(arg, false)); }
   const sid = v === "c" && S.mine.includes(arg) ? arg : S.mine[0];
   document.querySelectorAll("#links a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#c=" + sid ? "page" : "false"));
   return main([preview ? previewBar(sid) : null, record(sid, { parent: true })]);

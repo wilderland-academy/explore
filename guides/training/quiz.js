@@ -10,7 +10,7 @@
 // Progress lives in Firestore at behaviorProgress/{uid} (the same staff-only document as the Behavior badges, which
 // existing rules already allow: owners write, admins read). Fields written here, always with merge so nothing else
 // in the document is touched: training.{quizId} = { attempts, best, total, passed, at, set }, journey.read.{lessonId}.
-// Guests and offline moments fall back to this device's localStorage.
+// A result that can't reach the account (offline) is kept until it can, then sent up on the next load.
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore-lite.js";
 
 export const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -52,7 +52,20 @@ export async function loadProgress(force) {
   const u = await ready();
   if (cache && !force && cacheFor === (u && u.uid)) return cache;
   let p = local.get();
-  if (u) { try { const s = await getDoc(doc(db(), "behaviorProgress", u.uid)); if (s.exists()) p = deepMerge(p, s.data()); } catch (e) { /* offline or a guest: this device's copy */ } }
+  if (u) {
+    try {
+      const s = await getDoc(doc(db(), "behaviorProgress", u.uid)), remote = s.exists() ? s.data() : {};
+      // A result that couldn't reach the account when it was taken (offline) goes up now.
+      const up = {};
+      ["training", "badges"].forEach(st => Object.entries(p[st] || {}).forEach(([id, rec]) => {
+        const r = (remote[st] || {})[id];
+        if (rec && rec.at && (!r || !r.at || rec.at > r.at)) (up[st] = up[st] || {})[id] = rec;
+      }));
+      if (Object.keys(up).length) { try { await setDoc(doc(db(), "behaviorProgress", u.uid), { ...up, updated: Date.now() }, { merge: true }); } catch (e) { } }
+      p = deepMerge(p, remote);
+      Object.keys(up).forEach(st => { p[st] = deepMerge(p[st] || {}, up[st]); });
+    } catch (e) { /* offline: the copy kept until the account can be reached */ }
+  }
   cache = p; cacheFor = u && u.uid; return p;
 }
 export async function saveProgress(patch) {
@@ -132,7 +145,7 @@ function run(el, qs, cfg, back, again) {
       const saved = await saveProgress({ [cfg.store || "training"]: { [cfg.id]: { ...prev, ...r } } });
       put(el, h("p", { class: "wlq-k", text: passed ? "Passed" : "Not yet" }), h("p", { class: "wlq-big", text: `${score} / ${qs.length}` }),
         h("p", { class: "wlq-dim", text: passed ? (cfg.passText || "Nice work. Your result is saved to your account.") : `You need ${cfg.pass}. Read back over what you missed, then try again. The next try uses different questions.` }),
-        saved ? null : h("p", { class: "wlq-dim", text: "Saved on this device only (your account couldn't be reached)." }),
+        saved ? null : h("p", { class: "wlq-dim", text: "Your account couldn't be reached just now. This result goes to your account the next time you open training with a connection." }),
         h("div", { class: "wlq-row" }, [h("button", { class: "wlq-btn" + (passed ? " ghost" : ""), text: passed ? "Back" : "Try again with new questions", onclick: passed || !again ? back : again })]));
       if (cfg.onDone) cfg.onDone(trainingRec(cache, cfg.id, cfg.store), passed);
       return;
