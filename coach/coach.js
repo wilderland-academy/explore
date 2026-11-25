@@ -17,7 +17,7 @@
 const FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
 const INTRO_KEY = "wl-coach-intro";
 // Bump when the first-time intro changes, so every student sees the new version once.
-const INTRO_VERSION = "3";
+const INTRO_VERSION = "4";
 const KINDS = ["challenge", "project", "find-challenge", "find-project", "conflict", "academic", "lesson"];
 const TOPIC_NAMES = { lesson: "How to use your coach", academic: "Help with academics", "find-challenge": "Find a challenge", "find-project": "Find a project idea", conflict: "Work out a conflict" };
 // The coach's face: a fox. (Guides have their own mentor, a dragon.)
@@ -146,12 +146,10 @@ function mount() {
   el.form.addEventListener("submit", e => { e.preventDefault(); sendMsg(el.input.value); });
   el.chips.addEventListener("click", e => {
     const hm = e.target.closest("[data-home]");
-    if (hm) { const k = hm.getAttribute("data-home"); open({ kind: k, topicId: k, topicTitle: TOPIC_NAMES[k] }); return; }
+    if (hm) { const k = hm.getAttribute("data-home"); if (k === "tour") { intro(); return; } open({ kind: k, topicId: k, topicTitle: TOPIC_NAMES[k] }); return; }
+    const t = e.target.closest("[data-tour]"); if (t) { bubble("me", t.textContent); chips([]); tour(t.getAttribute("data-tour")); return; }
+    const ac = e.target.closest("[data-acad]"); if (ac) { academics(ac.getAttribute("data-acad"), ac.textContent); return; }
     const b = e.target.closest("[data-say]"); if (b) sendMsg(b.getAttribute("data-say"));
-  });
-  el.log.addEventListener("click", e => {
-    const b = e.target.closest("[data-intro-ok]");
-    if (b) { try { localStorage.setItem(INTRO_KEY, INTRO_VERSION); } catch (x) { } b.closest(".wlc-intro").remove(); greet(); }
   });
 }
 
@@ -204,7 +202,7 @@ function linkify(el, text) {
   const re = /\[\[([a-z0-9-]{1,40})\]\]|\[([A-Z]{2}-\d{2}\.\d{1,2})\]/g;
   let last = 0, m;
   while ((m = re.exec(text))) {
-    el.append(text.slice(last, m.index));
+    acts(el, text.slice(last, m.index));
     let a = null;
     if (m[2]) {
       const t = window.WLChallenge ? window.WLChallenge.title(m[2]) : m[2];
@@ -216,7 +214,14 @@ function linkify(el, text) {
     el.append(a || (m[2] ? m[2] : m[1].replace(/-/g, " ")));
     last = re.lastIndex;
   }
-  el.append(text.slice(last));
+  acts(el, text.slice(last));
+}
+// Mr. Fox's stage directions (*Sigh.*) show in italics instead of with raw asterisks.
+function acts(el, text) {
+  String(text).split(/\*([^*\n]{1,60})\*/).forEach((t, i) => {
+    if (!t) return;
+    if (i % 2) { const e = document.createElement("em"); e.className = "wlc-act"; e.textContent = t; el.append(e); } else el.append(t);
+  });
 }
 function note(text) { return bubble("note", text); }
 function chips(list) {
@@ -229,39 +234,106 @@ function busy(on) {
   if (!on && t) t.remove();
 }
 
-// Why ask the coach instead of (or before) a guide. Shown in the first-time intro and on /coach/.
-const WHY = `<div class="why"><b>Why ask Mr. Fox, an AI coach?</b>
-  <ul><li><b>It's always there.</b>Your guides help a whole crew. The coach can help you right now, even when every guide is busy, or at home.</li>
-  <li><b>It knows a little about almost everything.</b>Knots, budgets, birds, speeches, fractions: you can ask about any challenge, Lab or project.</li>
-  <li><b>Your guide is still the one who passes you.</b>Show your guide when you're ready, and ask them about anything big, risky or personal.</li></ul></div>`;
-function intro() {
-  // First time on this device: why use it, what it helps with, and four things to know. Short, with a big button.
-  const d = document.createElement("div"); d.className = "wlc-intro";
-  d.innerHTML = `<h3>Meet Mr. Fox</h3>${WHY}
-    <h4>What it helps with</h4>
-    <ul><li><b>Challenges, Life Skill Labs and projects:</b> plans, practice, next steps, getting unstuck.</li>
-    <li><b>Working out a conflict:</b> calming down, seeing the other side, and planning what to say, the Wilderland way.</li>
-    <li><b>Not academics (yet):</b> it doesn't help with schoolwork. We're trying that with a few students first.</li></ul>
-    <h4>Four things to remember</h4><ol>
-    <li><b>I'm a computer program, not a person.</b>I guess what words come next. I can be wrong, so check big things with your guide.</li>
-    <li><b>You do the thinking.</b>I won't do your work for you. I'll ask questions and give hints so you get better.</li>
-    <li><b>Keep private things private.</b>Never type your full name, address, phone, school or passwords.</li>
-    <li><b>Your guides can read our chats.</b>If something is wrong or you feel unsafe, tell a real adult. That's what they're there for.</li></ol>
-    <button class="wlc-btn" type="button" data-intro-ok>Got it, let's go</button>`;
-  el.log.appendChild(d);
-  chips([]);
-  setTimeout(() => { d.querySelector("button").focus({ preventScroll: true }); el.log.scrollTop = 0; }, 50);
+// ---- Mr. Fox's personality ----
+// A lovable, dramatic grouch who lives inside the computer: he pretends to be annoyed by cheerful things, sighs before
+// answering, and secretly loves helping. Never insults or discourages a student. (The relay's system prompt says the same.)
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+// ---- The first-time tour, in the conversation ----
+// Mr. Fox introduces himself and checks four things with quick tap-to-answer questions: he's a computer and can be
+// wrong; the student does the thinking; keep private things private; guides read every chat. Plus how to ask a good
+// question and why ask him. Scripted (no AI), so it's the same for everyone and costs nothing.
+const TOUR = {
+  start: { say: ["*Sigh.* Oh. Someone's here.", "I'm Mr. Fox. I live inside this computer, where it's nice and quiet and nobody shows me pictures of puppies.", "You look like you have Big Plans. Ugh. Fine. Want the quick tour? It's short. I made sure."],
+    opts: [["Okay, show me", "what"], ["What even are you?", "what"], ["Skip the tour", "skip"]] },
+  what: { say: ["I'm an AI: a computer program that guesses which words come next. Not a person, not a real fox, and not your friend. I have a grumpy reputation to protect.", "And sometimes I guess wrong. *Dramatic gasp.* Quick question: if I tell you something important, like a safety rule, what do you do?"],
+    opts: [["Believe it. You're a computer!", "what-no"], ["Check it with my guide", "what-yes"]] },
+  "what-no": { say: ["Nope. *Sighs into a tiny pillow.* Computers make mistakes too. Check big things with your guide."], next: "help" },
+  "what-yes": { say: ["Correct. Annoyingly correct. Check big things with your guide."], next: "help" },
+  help: { say: ["What I help with: Life Skills challenges, Life Skill Labs, projects, and working out a conflict with someone. Not schoolwork like math or reading. Not yet, anyway.", "And I won't do your work for you. Which one sounds like something I'd say?"],
+    opts: [["“Here's your whole speech, done!”", "help-no"], ["“What's the first line you'd say?”", "help-yes"]] },
+  "help-no": { say: ["Ha! Never. *Grumbles.* You do the thinking. I ask questions and give hints, so you actually get better."], next: "private" },
+  "help-yes": { say: ["Yes. I ask questions and give hints. You do the thinking, and you get better. Hmph. Good."], next: "private" },
+  private: { say: ["Rule time. Never type your full name, address, phone number, school or passwords to me, or to any AI.", "Pop quiz, grumble grumble: which one is okay to tell me?"],
+    opts: [["My home address", "private-no"], ["That I'm into knots", "private-yes"], ["My password", "private-no"]] },
+  "private-no": { say: ["NO. *Clutches tail.* Keep that private. Tell me what you're working on, not who or where you are."], next: "guides" },
+  "private-yes": { say: ["Exactly. Tell me what you're working on and what you like. Keep the private stuff private."], next: "guides" },
+  guides: { say: ["Also: your guides can read our chats. I don't keep secrets.", "If something is wrong or you feel unsafe, tell a real adult. You can also use SafeUT, or call or text 988."], opts: [["Got it", "ask"]] },
+  ask: { say: ["Last one, and then I'm going back to my nap. Which question gets you a better answer?"],
+    opts: [["“help”", "ask-no"], ["“My bowline keeps slipping. Can I have a hint?”", "ask-yes"]] },
+  "ask-no": { say: ["“help”? *Long, dramatic sigh.* Help with WHAT? Tell me what you're working on, what you tried, and what kind of help you want. Like the other one."], next: "why" },
+  "ask-yes": { say: ["Now THAT is a question. What you're working on, what you tried, and what help you want. I can work with that."], next: "why" },
+  why: { say: ["Why ask me and not just your guide? I'm here any time, even when every guide is busy, and I know a little about almost everything. Knots, budgets, birds. Even (ugh) fun facts.", "But only your guide (or a parent, for some challenges) can pass you. Show them when you're ready."],
+    opts: [["Sounds good", "done"]] },
+  skip: { say: ["Skipping? Fine by me. *Relieved sigh.*", "The short version: I'm a computer and I can be wrong. You do the thinking. Keep private stuff private. Your guides can read our chats."], next: "done" },
+  done: { say: ["Tour over. Phew. *Flops back into the screen.*"], end: true }
+};
+const wait = ms => new Promise(r => setTimeout(r, ms));
+let touring = 0;
+async function tour(id) {
+  const step = TOUR[id] || TOUR.done, my = ++touring;
+  el.input.disabled = true; el.send.disabled = true; el.input.placeholder = "Tap an answer";
+  for (const line of step.say) {
+    const t = document.createElement("div"); t.className = "wlc-typing"; t.innerHTML = "<i></i><i></i><i></i>"; el.log.appendChild(t); el.log.scrollTop = el.log.scrollHeight;
+    await wait(Math.min(1400, 350 + line.length * 9)); t.remove();
+    if (my !== touring) return;
+    bubble("coach", line);
+  }
+  if (step.opts) { el.chips.innerHTML = step.opts.map(([label, to]) => `<button class="wlc-chip" type="button" data-tour="${esc(to)}">${esc(label)}</button>`).join(""); return; }
+  if (step.next) { await wait(400); if (my === touring) tour(step.next); return; }
+  try { localStorage.setItem(INTRO_KEY, INTRO_VERSION); } catch (x) { }
+  await wait(300); if (my !== touring) return;
+  if (st.kind !== "home") typing(true);
+  greet(true);
 }
-function greet() {
+function intro() { el.log.innerHTML = ""; chips([]); tour("start"); }
+
+// ---- Academics, from the home screen: pilot students pick a subject; everyone else can ask to join the pilot ----
+const SUBJECTS = ["Math", "Reading", "Writing", "Science", "Social studies", "A language", "Something else"];
+let pilotOn = null;
+async function isPilot() {
+  if (pilotOn !== null) return pilotOn;
+  const u = user(), r = window.wlRole;
+  if (!u || !r || r.role !== "student") return (pilotOn = false);
+  try {
+    const rows = await query("lsStudents", r.test ? [["email", r.email]] : [["email", String(u.email || "").toLowerCase()]]);
+    const mine = rows.filter(x => !!x.test === !!r.test);
+    pilotOn = mine.length === 1 && mine[0].coachAcademic === true;
+  } catch (e) { pilotOn = false; }
+  return pilotOn;
+}
+async function academics(step, label) {
+  bubble("me", label); chips([]);
+  if (step === "start") {
+    if (await isPilot()) {
+      bubble("coach", "Academics. *Sigh.* You're in the pilot, so fine, I'll help you learn it. Hints and questions only, never answers, and your guides read every academics chat. Which subject?");
+      el.chips.innerHTML = SUBJECTS.map(x => `<button class="wlc-chip" type="button" data-acad="s:${esc(x)}">${esc(x)}</button>`).join("");
+    } else {
+      bubble("coach", "Schoolwork? I don't do that. Yet. *Grumbles.* We're trying it with a few students first: hints and questions only, never answers. Want me to tell your guides you'd like to try it?");
+      el.chips.innerHTML = `<button class="wlc-chip" type="button" data-acad="yes">Yes, I'd like to try it</button><button class="wlc-chip" type="button" data-acad="home">No thanks</button>`;
+    }
+    return;
+  }
+  if (step === "yes") {
+    busy(true);
+    try { const r = await call({ mode: "interest" }); busy(false); bubble("coach", r.ok ? "Done. I told your guides. *Sigh.* Now I have to wait to find out, which is the worst. They'll let you know." : (r.data.error || "That didn't go through. Tell your guide instead.")); }
+    catch (e) { busy(false); bubble("coach", "That didn't go through. Tell your guide instead."); }
+    await wait(600); homeChoices(true); return;
+  }
+  if (step === "home") { await wait(200); homeChoices(true); return; }
+  if (step.startsWith("s:")) { const subj = step.slice(2); open({ kind: "academic", topicId: "academic", topicTitle: subj === "Something else" ? "Academics" : subj }); }
+}
+function greet(afterTour) {
   const k = st.kind;
-  if (k === "home") return homeChoices();
-  const hello = k === "lesson" ? "Hi! I'm Mr. Fox. Want a 3-minute lesson on how to get the most out of me? Tap a button below or type a question."
-    : k === "project" ? "Hi! Let's work on your project. Tap a button below to start, or tell me what you're thinking."
-    : k === "academic" ? "Hi! Tell me the subject and what you're stuck on. I'll help you figure it out with hints and questions. I won't give you the answer, and your guides look at every academics chat."
-    : k === "find-challenge" ? "Hi! Let's find a challenge you'll actually want to do. What are you into lately? A hobby, something you want to try, or something you want to get better at?"
-    : k === "find-project" ? "Hi! Let's find a project idea that's yours. What are you into lately, or what's something you wish existed?"
+  if (k === "home") return homeChoices(afterTour);
+  const hello = k === "lesson" ? "*Sigh.* A lesson about me. My favorite subject, if I had favorites. Ask me anything about how to use an AI coach."
+    : k === "project" ? (afterTour ? "Now, your project. " : "A project? *Grumbles.* ") + "Okay, okay, I'm listening. Tap a button below, or tell me what you're thinking."
+    : k === "academic" ? "Academics. *Sigh.* Tell me what you're stuck on. I'll help you figure it out with hints and questions, not answers. Your guides look at every academics chat."
+    : k === "find-challenge" ? "You want a challenge? Ugh. Fine. I happen to know a lot of them. What are you into lately? A hobby, something you want to try, or something you want to get better at?"
+    : k === "find-project" ? "Project ideas. *Sigh.* My favorite thing to pretend not to like. What are you into lately, or what's something you wish existed?"
+    // Conflicts are serious: the grouch act stays off.
     : k === "conflict" ? "Hi. Conflicts are hard, and it's smart to think one through. Are you feeling calm enough to talk about it, or do you want to take a beat first? When you're ready, tell me a little about what happened."
-    : "Hi! Let's work on this challenge. Tap a button below to start, or ask me anything about it.";
+    : (afterTour ? "Now, this challenge. " : pick(["*Sigh.* A challenge. How very... challenging. ", "Oh, good. Work. *Dramatic sigh.* "])) + "Tap a button below to start, or ask me anything about it.";
   bubble("coach", hello);
   // Opened from a starter button on the page: send that message straight away.
   if (st.first) { const f = st.first; st.first = ""; sendMsg(f); return; }
@@ -308,7 +380,7 @@ async function open(opts) {
   if (role && role.role === "parent") { alert("Mr. Fox is for students, signed in with their school account."); return; }
   const wasOpen = !el.box.hidden;
   st = { kind: KINDS.includes(opts.kind) ? opts.kind : "challenge", chatId: opts.chatId || "", topicId: opts.topicId || "", topicTitle: opts.topicTitle || "", context: opts.context || "", starters: opts.starters || null, first: opts.first || "", busy: false, retry: "", lastFocus: wasOpen && st ? st.lastFocus : document.activeElement };
-  el.log.innerHTML = ""; chips([]); typing(true); xState();
+  touring++; el.log.innerHTML = ""; chips([]); typing(true); xState();
   el.box.hidden = false;
   document.documentElement.classList.add("wlc-docked");
   sheetsBeside();
@@ -330,7 +402,7 @@ async function open(opts) {
     let seen = false; try { seen = localStorage.getItem(INTRO_KEY) === INTRO_VERSION; } catch (e) { }
     if (seen) greet(); else intro();
   }
-  setTimeout(() => { if (!el.log.querySelector("[data-intro-ok]")) el.input.focus(); }, 80);
+  setTimeout(() => { if (!el.input.disabled) el.input.focus(); }, 80);
 }
 // ---- The /coach/ page: Mr. Fox open beside the instructions, starting on a home screen ----
 // On /coach/ the × goes back to the home screen (and isn't needed on it).
@@ -342,13 +414,14 @@ function typing(on) {
   el.input.disabled = !on; el.send.disabled = !on;
   el.input.placeholder = on ? "Ask your coach…" : "Pick a topic to start";
 }
-function homeChoices() {
-  bubble("coach", "Hi! I'm Mr. Fox. What do you want to work on today?");
+function homeChoices(again) {
+  bubble("coach", again ? "So. *Sigh.* What are we working on?" : pick(["*Sigh.* You again. Fine. What are we working on today?", "Oh. It's you. *Pretends to be busy.* Okay, what are we working on?", "Ugh, it's so sunny out there. Anyway. What are we working on today?"]));
   el.chips.innerHTML = `<div class="wlc-home">
-    <button type="button" data-home="lesson">Learn how to use me<small>A 3-minute chat about what AI is, what it gets wrong, and how to ask good questions.</small></button>
-    <a href="/challenges/?coach=find">Find a challenge<small>Tell me what you're into and I'll suggest challenges that fit.</small></a>
+    <a href="/challenges/?coach=find">Find a challenge<small>Tell me what you're into. I'll grumble, then find ones that fit.</small></a>
     <a href="/projects/?coach=find">Find a project idea<small>Tell me what you love or wish existed.</small></a>
-    <button type="button" data-home="conflict">Work out a conflict<small>Calm down, see their side, and plan what to say.</small></button></div>`;
+    <button type="button" data-home="conflict">Work out a conflict<small>Calm down, see their side, and plan what to say.</small></button>
+    <button type="button" data-acad="start">Help with academics<small>Only for students in the pilot, for now.</small></button>
+    <button type="button" data-home="tour">Show me the tour again<small>Two minutes. I'll try not to sigh. (I will sigh.)</small></button></div>`;
   typing(false);
 }
 function home(opts) {
@@ -357,7 +430,7 @@ function home(opts) {
   pinned = true;
   el.box.classList.add("pinned");
   st = { kind: "home", chatId: "", topicId: "", topicTitle: "", context: "", starters: null, first: "", busy: false, retry: "", lastFocus: null };
-  el.log.innerHTML = ""; el.chips.innerHTML = "";
+  touring++; el.log.innerHTML = ""; el.chips.innerHTML = "";
   el.topic.textContent = "Your AI coach"; xState();
   el.box.hidden = false; el.box.classList.add("on");
   document.documentElement.classList.add("wlc-docked");
@@ -366,7 +439,7 @@ function home(opts) {
   if (role && role.role === "parent") { note("Mr. Fox is for students, signed in with their school account."); typing(false); return; }
   if (role && role.role === "student" && role.band === "K–1") { note("Mr. Fox is for grades 2 to 8. Your guide will help you with challenges."); typing(false); return; }
   let seen = false; try { seen = localStorage.getItem(INTRO_KEY) === INTRO_VERSION; } catch (e) { }
-  if (seen) greet(); else { intro(); typing(false); }
+  if (seen) greet(); else intro();
 }
 // The topic under the coach's name. A challenge's title is a link that opens the challenge beside the coach.
 function topicLine() {
@@ -401,5 +474,5 @@ async function call(body) {
   const r = await fetch(await relayUrl(), { method: "POST", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify(asTest(body)) });
   return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
 }
-window.WLCoach = { open, close, home, kind: () => st && st.kind, canUse, docked, WHY, call, FOX };
+window.WLCoach = { open, close, home, kind: () => st && st.kind, canUse, docked, call, FOX };
 document.dispatchEvent(new CustomEvent("wl-coach-ready"));
