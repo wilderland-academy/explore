@@ -217,16 +217,22 @@ const PRODUCTS = [
 //   Chein et al. 2011). So most of these are done with friends, are a little bit outrageous, or put a kid ahead of the line.
 // Prices are what kids will save for: the cost to us (2 blazes a dollar plus guide time) is a floor, and the most wanted
 // and scarcest ones cost more. Guides can add their own rewards for one child on this page, and those come first.
+// Mischief is played WITH guides, never bought against one (Nov 24, 2026). One kid paying to tape, soak or pelt a guide
+// who has to stand there turns the guide into a target money can buy, and lets a kid with a grudge hit an adult with
+// permission. Research on humor points the same way: humor aimed at a person goes with more stress and a worse class
+// climate, shared humor with better well-being, and a teacher laughing at themselves can make them more approachable
+// (but too much and they lose standing). Teacher-student relationships matter more for engagement in middle school than
+// in elementary (Roorda et al. 2011 meta-analysis). So every stunt here is two-sided (both teams throw), shared (a kid and
+// a guide together) or earned by the whole crew with a guide who chose to take part.
 // g = grade bands it suits (k1 24 58), lim = how often, sup = a rule that comes with it.
 const EXPERIENCES = [
-  // Mess with a guide (guides opt in)
-  {id:"x-pie", n:"Pie a guide in the face", e:"🥧", b:60, g:"24 58", lim:"Two a month, school-wide", why:"Whipped cream, a paper plate and a guide who agreed to it. Your friends get to watch.", sup:"Only guides who sign up for it. Outside, with a towel ready."},
-  {id:"x-ducttape", n:"Duct-tape a guide to the wall", e:"🦆", b:40, g:"24 58", lim:"Once a month", why:"Buy a strip. Every student who buys one adds a strip. Does the guide stay up?", sup:"Guides who sign up only. Feet stay on the floor; tape goes over clothes, never skin or hair."},
-  {id:"x-snowballs", n:"Ten free snowball shots at a guide", e:"☃️", b:25, g:"24 58", lim:"Winter, any week", why:"The guide stands still. You get ten throws. Bring friends who are good aims.", sup:"Soft snow only, below the shoulders, at a guide who agreed."},
-  {id:"x-waterballoon", n:"Water balloon ambush on a guide", e:"🎈", b:40, g:"24 58", lim:"Warm months, two a month", why:"Twenty balloons, one guide and a head start for you.", sup:"Guides who sign up only."},
+  // Play with the guides (guides opt in; both sides play, or the whole crew earns it)
+  {id:"x-pie", n:"Crew pie: your crew earns a pie for a guide", e:"🥧", b:200, g:"24 58", lim:"Once a month per crew", why:"Pool blazes with your crew. When you get there, a guide who volunteered takes a whipped-cream pie, the crew picks who throws it, and then the guide gets to pie one volunteer back.", sup:"Only guides who volunteer. Outside, with towels ready."},
+  {id:"x-snowfight", n:"Snowball fight: your crew vs. the guides", e:"☃️", b:80, g:"k1 24 58", lim:"Winter, once a week", why:"Forts on both sides, guides who throw back, and you pick the moment it starts.", sup:"Soft snow, below the shoulders. Anyone can call time out."},
+  {id:"x-waterfight", n:"Water balloon fight: your crew vs. the guides", e:"🎈", b:120, g:"24 58", lim:"Warm months, twice a month", why:"A few hundred balloons split between two teams. Guides get soaked too.", sup:"Below the shoulders; bring dry clothes; everyone helps pick up the scraps."},
+  {id:"x-twinday", n:"Twin day with a guide", e:"👯", b:30, g:"k1 24 58", lim:"Once a week per guide", why:"You and a guide you pick dress exactly alike for a day. Plan the outfit together and see who notices.", sup:"The guide says yes first."},
   {id:"x-outfit", n:"Pick what a guide wears tomorrow", e:"🤡", b:50, g:"k1 24 58", lim:"Once a month per guide", why:"A banana suit, your favorite team's jersey, a tutu, a cape. They wear it all day.", sup:"Guides who sign up only; it has to be school-appropriate."},
   {id:"x-nickname", n:"Give a guide a nickname for a day", e:"🏷️", b:20, g:"24 58", lim:"Once a week", why:"Everyone, guides included, has to call them by it until pickup.", sup:"Kind names only; the guide can veto one."},
-  {id:"x-hairspray", n:"Spray a guide's hair a crazy color", e:"🌈", b:45, g:"24 58", lim:"Once a month", why:"Washable color spray, your choice of color. They keep it till tomorrow.", sup:"Guides who sign up only."},
   // Friends and food
   {id:"x-restaurantlunch", n:"Order lunch in for you and a friend", e:"🍔", b:70, g:"24 58", lim:"One a week", why:"Pick from a few local spots and a guide brings it in. You and your friend eat it somewhere better than the usual table.", sup:"Up to about $25 for the two of you; families okay any allergies."},
   {id:"x-movielunch", n:"Movie lunch with three friends", e:"🍿", b:60, g:"24 58", lim:"Two a month", why:"Pizza, popcorn and the first part of a movie you pick from the approved list, in a room just for you four.", sup:"Guide-approved movies; a guide nearby."},
@@ -282,7 +288,7 @@ const APPEAL = {
 // "Picked for your grades": the top of the store for each band, in order, after any rewards guides made for that student.
 // From grade 2 up, experiences are mixed in near the top; around 4th grade they start to beat toys.
 const FEATURED = {
-  "K–1": ["squish","magnatiles","kite","x-outfit","bugviewer","catan-jr","x-dog","seamonkeys","crystalmine","x-fort","plusplus","hotwheels","dogman","jellycat"],
-  "2–4": ["x-pie","lego-classic","x-nerf","gravitrax","x-snowballs","perplexus","kendama","x-fort","snap-jr","fossils","x-crewparty","mcisland","minihoop","rushhour"],
-  "5–8": ["x-pie","x-lounge","x-restaurantlunch","spikeball","x-nerf","hydroflask","x-movielunch","kanken","x-headphones","leatherman","x-crewparty","instax","x-lockin","codenames","catan","x-ducttape"]
+  "K–1": ["squish","magnatiles","kite","x-twinday","bugviewer","catan-jr","x-dog","seamonkeys","crystalmine","x-fort","plusplus","hotwheels","dogman","jellycat"],
+  "2–4": ["x-pie","lego-classic","x-nerf","gravitrax","x-snowfight","perplexus","kendama","x-fort","snap-jr","fossils","x-crewparty","mcisland","minihoop","rushhour"],
+  "5–8": ["x-pie","x-lounge","x-restaurantlunch","spikeball","x-nerf","hydroflask","x-movielunch","kanken","x-headphones","leatherman","x-crewparty","instax","x-lockin","codenames","catan","x-snowfight"]
 };
