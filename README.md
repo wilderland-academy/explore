@@ -478,3 +478,15 @@ the `PAGES` list at the top of `/search.js`.
 ## Our Approach: pillars read as switches, no in-page Next (Nov 24, 2026)
 - **The three pillars look tappable now.** Each card has an on/off switch, says "On"/"Off", and says what a tap does ("Tap to switch off"). It lifts on hover and presses in on click. The intro says "Tap a pillar…". Each button's label states the pillar and whether it's on.
 - **No Previous/Next between sections.** Our Approach is one long scroll, so Next only moved about 8px to the section directly below, on desktop and phone alike. The section menu covers moving around. The last section keeps its link to the next page (Wilderland at Home). At Home, the Field Guide and Behavior show one section at a time, so they keep their pagers.
+
+## Wilderland Guides as a phone app (Nov 24, 2026)
+- **Installable.** Every Guides-site page links `/guides/app/manifest.webmanifest`. That includes the Guides copies of the shared Challenges, Camp Store and Suggestion Wall includes, but not the student or parent copies.
+  - The app is named "Wilderland Guides" ("Guides" under the icon). It starts at `/guides/`, opens standalone, and covers the whole site (scope `/`).
+  - Icons are in `/guides/app/`: a 180 px Apple touch icon, 192 and 512 px icons, and a maskable 512 px icon.
+  - Chrome reports no installability errors. There's no service worker yet, because none is needed to install.
+- **How guides install it:** `/guides/app/` has iPhone (Safari: Share → Add to Home Screen, Open as Web App on) and Android (Chrome: ⋮ → Add to home screen / Install) steps. It's linked from the Guides home (hidden inside the app) and from search.
+- **Sign-in inside the app.** On iPhone, Google's sign-in pop-up has a long history of not reporting back to a Home Screen app. The code for same-page sign-in (`signInWithRedirect`) is in `auth.js` and `lifeskills/app.js`, behind one switch: `SAME_PAGE_SIGNIN` in `/wlnav.js` (`window.wlSamePageSignIn()`, `window.WLAuthDomain()`). It is **off**, so the app uses the pop-up like any browser.
+  - Before turning it on:
+    1. Serve Firebase's helper pages from this site at `/__/auth/` (handler, iframe, links and their .js, plus `/__/firebase/init.json`). This is Firebase's "self-host the helper code" option, re-synced now and then.
+    2. Add `https://explore.wilderland.academy/__/auth/handler` to the web OAuth client's authorized redirect URIs in Google Cloud.
+    3. Add `include: ["__"]` to a `_config.yml`, because Jekyll skips folders that start with "_".

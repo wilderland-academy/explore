@@ -51,6 +51,12 @@ p{margin:0}
 .onb b{font:700 20px var(--display)}.onb span{color:#c9d6cc;font-size:15px}
 .onb i{font-style:normal;font-weight:700;color:#d5f367}
 </style>
+<!-- Installable as the "Wilderland Guides" app (Add to Home Screen): /guides/app/ -->
+<link rel="manifest" href="/guides/app/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/guides/app/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Guides">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
 <svg class="wlfx" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><defs>
@@ -103,6 +109,8 @@ p{margin:0}
   <a class="g hist" href="/guides/partner/" data-wl-unlock="partner"><svg class="art ico" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M6 10h24a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H16l-8 6v-6H6a4 4 0 0 1-4-4V14a4 4 0 0 1 4-4z" fill="#d5f367" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M38 18h4a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4h-2v6l-8-6H22a4 4 0 0 1-4-4v-2" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg><span class="k">Only you can see these</span><h2>Your conversations</h2><p>Every conversation with Trail Partner, the Mentor Mindset, Behavior and Parent Communication coaches, and every Lab builder draft. Pick up a Trail Partner conversation where you left off.</p><span class="go">Open your conversations →</span></a>
   </div>
   <p class="note">All of these need your Wilderland school account and a spot on the staff list. If something won't open, ask Alex.</p>
+  <p class="note" id="getapp"><a href="/guides/app/">📱 Put Wilderland Guides on your phone</a>: it opens like an app, from your Home Screen.</p>
+  <script>if (window.wlAppMode && window.wlAppMode()) document.getElementById("getapp").hidden = true;</script>
 </main>
 <script>
 // Old links: /guides/?mentor opens Trail Partner's page (?mentor=<id> opens that conversation).

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wilderland Guides on your phone · Wilderland staff</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#01412f">
+<link rel="icon" href="/books/f/icon.png">
+<link rel="stylesheet" href="/wl.css">
+<!-- Installable as the "Wilderland Guides" app (Add to Home Screen): /guides/app/ -->
+<link rel="manifest" href="/guides/app/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/guides/app/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Guides">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+@font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{color-scheme:light;--bg:#fbfcf6;--line:#dfe5d4;--ink:#14231c;--dim:#5c6b62;--forest:#0f3d2e;--lime:#d5f367;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--body)}
+main{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.1;margin:8px 0 10px;letter-spacing:-.01em}
+.lede{color:var(--dim);font-size:17px;margin:0 0 22px}
+.hero{display:flex;gap:16px;align-items:center;margin-bottom:6px}
+.hero img{width:72px;height:72px;border-radius:16px;box-shadow:0 4px 14px rgba(1,65,47,.25)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:0 0 16px}
+.card h2{margin:0 0 10px;font-size:20px}
+ol{margin:0;padding-left:22px}ol li{margin:0 0 8px}
+.k{display:inline-block;font:600 13px/1 var(--body);background:#f1f4e9;border:1px solid var(--line);border-radius:7px;padding:4px 7px}
+.note{color:var(--dim);font-size:14.5px}
+.in-app{display:none;background:var(--lime);color:#0b2b20;border-radius:14px;padding:14px 16px;margin:0 0 16px;font-weight:600}
+html.wl-app .in-app{display:block}
+</style>
+</head>
+<body>
+<div class="wlbar" data-wlnav="guides"></div><script src="/wlnav.js"></script>
+<script>if (window.wlAppMode && window.wlAppMode()) document.documentElement.classList.add("wl-app");</script>
+<main>
+  <div class="hero"><img src="/guides/app/icon-192.png" alt="" width="72" height="72"><p class="note" style="margin:0">Wilderland Guides<br>for iPhone and Android</p></div>
+  <h1>Put Wilderland Guides on your phone</h1>
+  <p class="lede">Add the Guides site to your Home Screen and it opens like an app: full screen, its own icon, one tap from your students, Life Skills, Behavior, Trail Partner and the handbook. Nothing to download from an app store, and it updates itself whenever the site does.</p>
+  <p class="in-app">You're in the app. You're all set.</p>
+
+  <section class="card" aria-labelledby="ios">
+    <h2 id="ios">iPhone</h2>
+    <ol>
+      <li>Open <b>explore.wilderland.academy/guides</b> in <b>Safari</b>.</li>
+      <li>Tap the <span class="k">Share</span> button (a square with an arrow). On iOS 26, tap <span class="k">•••</span> next to the address bar first, then <span class="k">Share</span>.</li>
+      <li>Scroll down and tap <span class="k">Add to Home Screen</span>. If you don't see it, tap <span class="k">More</span>.</li>
+      <li>Leave <b>Open as Web App</b> on, then tap <span class="k">Add</span>.</li>
+      <li>Open <b>Guides</b> from your Home Screen and sign in with your Wilderland Google account. You only do this once: the app keeps its own sign-in, separate from Safari.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="android">
+    <h2 id="android">Android</h2>
+    <ol>
+      <li>Open <b>explore.wilderland.academy/guides</b> in <b>Chrome</b>.</li>
+      <li>Tap the <span class="k">⋮</span> menu, then <span class="k">Add to home screen</span> (or <span class="k">Install app</span>), then <span class="k">Install</span>.</li>
+      <li>Open <b>Guides</b> from your home screen or app list and sign in with your Wilderland Google account.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="tips">
+    <h2 id="tips">Good to know</h2>
+    <ul>
+      <li>Everything you can do on the site works in the app, with the same sign-in and the same data.</li>
+      <li>To remove it, press and hold the icon and choose Remove App (iPhone) or Uninstall (Android).</li>
+      <li>If signing in doesn't work in the app, use the site in Safari or Chrome for now and tell Alex.</li>
+    </ul>
+  </section>
+</main>
+<script type="module" src="/auth.js" data-site="guides"></script>
+</body>
+</html>

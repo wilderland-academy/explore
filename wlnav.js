@@ -31,6 +31,18 @@
     if (b && window.WLPeople.BANDS.indexOf(b) >= 0) return b;
     return opts && opts.all ? "All" : "5–8";
   };
+  // Installed as an app (Add to Home Screen, e.g. "Wilderland Guides": /guides/app/). Google's sign-in pop-up can't
+  // report back to a Home Screen app on iPhone, so there auth.js and the Life Skills tracker sign in on the same page
+  // (signInWithRedirect) through Firebase's helper pages hosted on this site (/__/auth/, Firebase's "self-host the
+  // helper code" option). In a normal browser nothing changes: the pop-up, through firebaseapp.com.
+  window.wlAppMode = function () {
+    try { return window.matchMedia("(display-mode: standalone)").matches || window.matchMedia("(display-mode: fullscreen)").matches || window.navigator.standalone === true; } catch (e) { return false; }
+  };
+  // Off until Firebase's helper pages are actually served from this site at /__/auth/ (otherwise same-page sign-in has
+  // nowhere to go). Until then the installed app uses the pop-up like a browser does. Turn on in one place: here.
+  var SAME_PAGE_SIGNIN = false;
+  window.wlSamePageSignIn = function () { return SAME_PAGE_SIGNIN && window.wlAppMode(); };
+  window.WLAuthDomain = function () { return window.wlSamePageSignIn() ? location.host : "wilderland-df15e.firebaseapp.com"; };
   // Test view: what a tester has switched to on this device ({ as: "guide" | "student" | "parent", band, by }).
   window.wlViewAs = function () { try { var v = JSON.parse(localStorage.getItem("wl-viewas") || "null"); return v && v.as && v.by ? v : null; } catch (e) { return null; } };
 })();
