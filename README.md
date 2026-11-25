@@ -349,7 +349,7 @@ the `PAGES` list at the top of `/search.js`.
   1000px and wider (`.trail.wlside`, wrapped by `/wlnav.js` in `.wlside-wrap`; styles in `/wl.css`). Narrower screens keep
   the row; phones keep "Section ▾". Add `wlside` to another page's `.trail` (followed by its `<main>`) to give it the same.
 - **Mr. Fox page.** `/coach/` is half instructions, half Mr. Fox (`WLCoach.home({ dock })` in `/coach/coach.js`). Mr. Fox
-  starts on a home screen (learn how to use me, find a challenge, find a project idea, work out a conflict); × in a
+  starts on a home screen (find a challenge, find a project idea, work out a conflict, help with academics, the tour again); the first time, Mr. Fox (a lovable grouch) gives a short interactive tour in the chat with tap-to-answer questions (coach/coach.js TOUR), and the page itself is just his conversations; × in a
   conversation goes back there. On phones the chat comes first.
 - **One Life Skills header.** The tracker, Challenges map, Lab builder, Ideas and How Labs run (Guides and Parents) share
   `<header class="nav wlsub">` in `/wl.css`: same height, title and links, so nothing shifts between them. The tracker's

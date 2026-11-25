@@ -75,53 +75,15 @@ p{margin:0}
 <div class="wlbar" data-wlnav="students" data-current="coach"></div><script src="/wlnav.js"></script>
 <div class="foxpage">
 <main>
+  <!-- Everything about Mr. Fox (who he is, what he helps with, the rules) is in his conversation, not on the page. -->
   <header>
     <h1><span class="fox" aria-hidden="true">🦊</span> Mr. Fox</h1>
-    <p class="lede">Your AI coach for challenges, Life Skill Labs, projects and working out a conflict. It asks questions and gives hints so you get better, and it never does the work for you.</p>
+    <p class="lede">Grumpy. Helpful. Waiting for you.</p>
   </header>
-
-  <section>
-    <h2 style="margin-bottom:12px">How to talk with Mr. Fox</h2>
-    <ol class="steps">
-      <li><b>Pick what you want to work on.</b>Mr. Fox is right here on this page. New to it? Start with "Learn how to use me."</li>
-      <li><b>Say what you're working on, what you tried, and what help you want.</b>"I'm on the knot challenge, my bowline keeps slipping, can you give me a hint?" gets a much better answer than "help."</li>
-      <li><b>Do the next step yourself.</b>Try what it suggests, then come back and tell it what happened.</li>
-      <li><b>Working on a challenge or a project?</b>Open it and tap Ask Mr. Fox, so you can see your work and the coach side by side.</li>
-    </ol>
-  </section>
-
-  <section class="acad" id="acad">
-    <h2>What about academics?</h2>
-    <div id="acad-body">
-      <p class="small" style="margin:6px 0 12px;max-width:66ch">Mr. Fox doesn't help with academic work. AI that hands out answers makes it easy to skip the thinking, and the thinking is the point. We're trying an academics coach with a few students first: it only gives hints and questions, never answers, and guides read every chat.</p>
-      <div class="row"><button class="btn" type="button" data-interest>I'm interested in trying it</button><span class="small" id="interest-msg" aria-live="polite"></span></div>
-    </div>
-  </section>
-
-  <section>
-    <h2 style="margin-bottom:12px">Why ask Mr. Fox (an AI coach), not just a guide?</h2>
-    <ul class="rules why">
-      <li><b>It's always there.</b>Your guides help a whole crew at once. The coach can help you right now: when every guide is busy, before school, or at home.</li>
-      <li><b>It knows something about almost everything.</b>Knots, budgets, birds, speeches, fractions. Whatever your challenge, Lab or project is about, you can ask.</li>
-      <li><b>Your guide still matters most.</b>Only a guide (or a parent, for some challenges) can pass you. Take anything big, risky or personal to a real adult.</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2 style="margin-bottom:12px">Four things to remember</h2>
-    <ul class="rules">
-      <li><b>It's a computer program.</b>Not a person or a friend. It can be wrong, so check big things with your guide.</li>
-      <li><b>You do the thinking.</b>It asks questions and gives hints. The work, and the pass, are yours.</li>
-      <li><b>Keep private things private.</b>Never type your full name, address, phone, school or passwords.</li>
-      <li><b>Guides can read every chat.</b>If something is wrong or you feel unsafe, tell a real adult. You can also use SafeUT or call or text 988.</li>
-    </ul>
-  </section>
-
   <section>
     <h2 style="margin-bottom:12px">Your conversations</h2>
     <div id="chats"><p class="msg">Loading…</p></div>
   </section>
-  <p class="small">For parents: <a href="/parents/ai/">how Mr. Fox keeps students safe</a>.</p>
 </main>
 <div class="foxdock" id="foxdock" aria-label="Mr. Fox"></div>
 </div>
@@ -150,40 +112,13 @@ async function load(r) {
       .filter(c => !!c.test === isTest).sort((a, b) => (b.updated || 0) - (a.updated || 0));
     const staffNote = r && r.role === "staff" ? '<p class="small" style="margin-bottom:10px">You are staff, so these are your own test chats. Every student conversation is on <a href="/guides/roster/">Guides › Student Roster</a>.</p>' : "";
     box.innerHTML = staffNote + (chats.length ? '<ul class="chats">' + chats.map(c => `<li><button type="button" data-chat="${c.id}"><span class="ic" aria-hidden="true">${{ project: "P", "find-project": "P", lesson: "?", academic: "A", conflict: "🤝", "find-challenge": "C" }[c.kind] || "C"}</span><span class="tx"><span class="tt">${esc(c.topicTitle || ({ lesson: "How to use your coach", academic: "Academics", conflict: "Working out a conflict", "find-challenge": "Finding a challenge", "find-project": "Finding a project" }[c.kind] || "Chat"))}</span><span class="ls">You: ${esc(c.last || "")}</span></span><span class="dt">${esc(when(c.updated || c.created || Date.now()))}</span></button></li>`).join("") + "</ul>"
-      : '<p class="empty">No chats yet. Pick something to work on with Mr. Fox, or open a challenge and tap Ask Mr. Fox.</p>');
+      : '<p class="empty">No chats yet. Mr. Fox is waiting (grumpily).</p>');
   } catch (e) { box.innerHTML = '<p class="msg">Couldn\'t load your chats. Reload the page to try again.</p>'; }
 }
 document.addEventListener("click", e => {
   const c = e.target.closest("[data-chat]");
   if (c && window.WLCoach) { window.WLCoach.open({ chatId: c.getAttribute("data-chat") }); return; }
-  if (e.target.closest("[data-conflict]") && window.WLCoach) { window.WLCoach.open({ kind: "conflict", topicId: "conflict", topicTitle: "Work out a conflict" }); return; }
-  const iv = e.target.closest("[data-interest]");
-  if (iv && window.WLCoach) {
-    const msg = document.getElementById("interest-msg"); iv.disabled = true; msg.textContent = "Sending…";
-    window.WLCoach.call({ mode: "interest" }).then(r => { msg.textContent = r.ok ? "Thanks! We told the guides. They'll let you know." : (r.data.error || "Couldn't send. Tell your guide instead."); if (!r.ok) iv.disabled = false; })
-      .catch(() => { msg.textContent = "Couldn't send. Tell your guide instead."; iv.disabled = false; });
-    return;
-  }
-  const a = e.target.closest("[data-acad]");
-  if (a && window.WLCoach) { window.WLCoach.open({ kind: "academic", topicId: "academic", topicTitle: a.getAttribute("data-acad") === "Something else" ? "Academics" : a.getAttribute("data-acad") }); return; }
-  if (e.target.closest("[data-lesson]") && window.WLCoach) window.WLCoach.open({ kind: "lesson", topicId: "lesson", topicTitle: "How to use your coach" });
 });
-// Pilot students (an admin turned on "Academics coach pilot" on the Student Roster) get the subject buttons instead.
-const SUBJECTS = ["Math", "Reading", "Writing", "Science", "Social studies", "A language", "Something else"];
-async function pilot(r) {
-  const u = window.wlFirebase && window.wlFirebase.auth.currentUser;
-  if (!u || !r || r.role !== "student") return;
-  try {
-    const q = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" },
-      body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "lsStudents" }], where: r.test
-        ? { compositeFilter: { op: "AND", filters: [{ fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: r.email } } }, { fieldFilter: { field: { fieldPath: "test" }, op: "EQUAL", value: { booleanValue: true } } }] } }
-        : { fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: String(u.email || "").toLowerCase() } } }, limit: 2 } }) });
-    const rows = (await q.json()).filter(x => x.document);
-    const on = rows.length === 1 && rows[0].document.fields.coachAcademic && rows[0].document.fields.coachAcademic.booleanValue === true;
-    if (!on) return;
-    document.getElementById("acad-body").innerHTML = `<p class="small" style="margin:6px 0 12px;max-width:66ch">You're in the academics pilot. The coach helps you learn it: a hint, a question that gets you thinking, the basics explained another way, or where to learn more. It won't give you the answer or help on a test, and your guides read every academics chat. Pick a subject:</p><div class="subj">${SUBJECTS.map(x => `<button class="chip" type="button" data-acad="${x}">${x}</button>`).join("")}</div>`;
-  } catch (e) { /* stays locked */ }
-}
 // Mr. Fox, open in the dock. Redrawn when sign-in settles, unless a conversation is already going.
 const dock = document.getElementById("foxdock");
 // Keep the dock inside the window: it starts below the top bar (and the test banner), so it's the window's height
@@ -198,9 +133,9 @@ new ResizeObserver(fitDock).observe(document.body);
 function fox() { if (window.WLCoach && (!window.WLCoach.kind() || window.WLCoach.kind() === "home")) window.WLCoach.home({ dock }); }
 fox();
 document.addEventListener("wl-auth", fox);
-document.addEventListener("wl-role", e => { load(e.detail); pilot(e.detail); fox(); });
+document.addEventListener("wl-role", e => { load(e.detail); fox(); });
 document.addEventListener("wl-coach-closed", () => load(window.wlRole));
-if (window.wlRole !== undefined) { load(window.wlRole); pilot(window.wlRole); }
+if (window.wlRole !== undefined) load(window.wlRole);
 setTimeout(() => { if (box.textContent.trim() === "Loading…" && !(window.wlFirebase && window.wlFirebase.auth.currentUser)) load(null); }, 4000);
 </script>
 <script type="module" src="/auth.js" data-site="coach"></script>
