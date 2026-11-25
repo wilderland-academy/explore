@@ -490,3 +490,18 @@ the `PAGES` list at the top of `/search.js`.
     1. Serve Firebase's helper pages from this site at `/__/auth/` (handler, iframe, links and their .js, plus `/__/firebase/init.json`). This is Firebase's "self-host the helper code" option, re-synced now and then.
     2. Add `https://explore.wilderland.academy/__/auth/handler` to the web OAuth client's authorized redirect URIs in Google Cloud.
     3. Add `include: ["__"]` to a `_config.yml`, because Jekyll skips folders that start with "_".
+
+## Parents nav, Field Notes inside Our Approach, student tabs and Coaching in Students (Nov 24, 2026)
+- **Parents top bar:** At Home, Life Skills, My Child (My Children with two or more children), Our Approach.
+  - The count comes from `lsParents.children` at sign-in (`auth.js`), plus the tracker and Challenges page (`wl-kids`).
+  - `wlKidsLabel()` labels the tab, any `[data-wl-kids-label]` (the Parents home card) and the account menu.
+- **Field Notes is the last section of Our Approach** (`#fieldnotes`, code in `parents/approach/fieldnotes.js` and `fieldnotes-data.js`).
+  - An entry (`#<id>`) takes over the page until "← All Field Notes", which returns to where the reader was.
+  - `/parents/series/` and its entry links redirect there.
+- **Students: tabs on every student page.** Profile (`#s=`), Life Skills (`#ls=`, the tracker's record) and Coaching (`#coach=`, Field Guides and testers only).
+  - Life Skills and Coaching are framed pages (`?embed=1`). `/wlnav.js` hides their top bar and menus, opens other-page links in the whole window, and reports their content height so the frame fits.
+  - Nothing navigates away from Students anymore.
+- **Coaching (1:1 sessions) moved out of Mentor Mindset.** The Session Room tab and stop are gone.
+  - `/fieldguide/?embed=1&sid=<sid>#sessions` shows one student's private notebook. Old `/fieldguide/#sessions` links go to Students.
+  - Field Guides are listed in `FIELD_GUIDES` in `/wlnav.js` (April, Scott, Chelse); `wlCoaches(email)` checks it.
+- **Second phone app: Wilderland Students** (`/guides/app/students.webmanifest`, linked only from `/guides/roster/`). Its icon says STUDENTS in lime. Install steps are on `/guides/app/`.

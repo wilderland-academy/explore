@@ -247,7 +247,9 @@ details summary{cursor:pointer;font-weight:700}
 .fn-ask{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16.5px}
 .fn-try{background:var(--lamp-bg)}
 .fn-len{font:600 12.5px var(--body);color:var(--dim)}
-.fn-askh{margin-top:6px;font-size:20px;color:var(--acc)}
+.fn-askh{margin:6px 0 0;font:700 20px/1.25 var(--display);color:var(--acc)}
+/* Field Notes inside Our Approach (#fieldnotes): its own headings sit one level under the section heading. */
+.fn-h{font:700 24px/1.2 var(--display);margin:26px 0 6px}.fn-grid-view{display:flex;flex-direction:column;gap:12px}
 .fn-reads{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
 .fn-read{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--paper);background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
 .fn-read:hover{border-color:var(--acc)}

@@ -222,7 +222,7 @@ function vRoster() {
     .sort((a, b) => (BANDS.indexOf(a.band) + 1 || 9) - (BANDS.indexOf(b.band) + 1 || 9) || (a.name || a.email).localeCompare(b.name || b.email));
   const nParents = new Set(S.ls.flatMap(x => (x.parents || []).map(key))).size;
   const guideNames = g => emails(g).map(x => x.split("@")[0].replace(/^./, c => c.toUpperCase())).join(", ");
-  return head("Students", `${S.ls.length} students and ${nParents} linked parent${nParents === 1 ? "" : "s"}. Open a student for their parents, Mr. Fox conversations, alerts and saved sparks and books. Their Life Skills record and saved challenges are in <a href="/guides/lifeskills/">Life Skills</a>.`) + tabs("roster") +
+  return head("Students", `${S.ls.length} students and ${nParents} linked parent${nParents === 1 ? "" : "s"}. Open a student for their parents, Mr. Fox conversations, alerts, saved sparks and books, and their Life Skills record${S.coach ? " and your coaching sessions" : ""}.`) + tabs("roster") +
     (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") +
     `<div class="row">${["All", ...BANDS].map(b => `<button class="chip" type="button" data-band="${b}" aria-pressed="${S.band === b}">${b === "All" ? "All bands" : "Grades " + b}</button>`).join("")}<input class="in" type="search" id="q" placeholder="Find a student, parent or guide" value="${esc(S.q)}"><a class="btn" href="#add" style="margin-left:auto">Add a student</a></div>` +
     (show.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>Grades</th><th>Parents</th><th>Field Guide</th><th class="num">AI chats</th><th class="num">Open alerts</th><th>Last AI use</th><th></th></tr></thead><tbody>${show.map(p => {
@@ -369,16 +369,39 @@ function vChats() {
     `<div class="row">${[["all", "All"], ["conflict", "Conflicts"], ["academic", "Academics"], ["review", "Not reviewed yet"]].map(([k, l]) => `<button class="chip" type="button" data-cf="${k}" aria-pressed="${S.cf === k}">${l}</button>`).join("")}</div>` +
     (rows.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>About</th><th class="num">Messages</th><th>Flag</th><th>Last</th><th></th></tr></thead><tbody>${rows.slice(0, 400).map(chatRow).join("")}</tbody></table></div>` : `<p class="empty">No conversations match.</p>`);
 }
-async function vStudent(k) {
+// A student's page has up to three tabs, all on this page: Profile (#s=), Life Skills (#ls=: their record from the
+// Life Skills tracker) and, for Field Guides (wlCoaches in /wlnav.js), Coaching (#coach=: their private 1:1 session
+// notebook from the Mentor Mindset Field Guide). The last two are those pages shown in a frame with ?embed=1.
+function studentTabs(p, k, cur) {
+  if (!p.sid) return "";
+  const t = [["s", "Profile"], ["ls", "Life Skills"]].concat(S.coach ? [["coach", "Coaching"]] : []);
+  return `<nav class="tabs stabs" aria-label="${esc(p.name || "Student")}">${t.map(([v, l]) => `<a href="#${v}=${encodeURIComponent(k)}"${v === cur ? ' aria-current="page"' : ""}>${l}</a>`).join("")}</nav>`;
+}
+function embedFrame(src, title, extra) {
+  return `<iframe class="embed${extra && extra.dark ? " dark" : ""}" src="${esc(src)}" title="${esc(title)}" loading="eager"${extra && extra.mic ? ' allow="microphone"' : ""}></iframe>`;
+}
+// Framed pages say how tall they are (/wlnav.js), so the frame grows to fit and the page scrolls as one.
+addEventListener("message", e => {
+  if (e.origin !== location.origin || !e.data || !e.data.wlEmbed) return;
+  document.querySelectorAll("iframe.embed").forEach(f => { if (f.contentWindow === e.source) f.style.height = Math.max(320, Number(e.data.h) || 0) + "px"; });
+});
+async function vStudent(k, tab = "s") {
   const p = S.people[key(k)] || S.people[k];
   if (!p) return `<p class="crumb"><a href="#roster">← Roster</a></p><p class="empty">No student with that email.</p>`;
+  if (tab === "coach" && !S.coach) tab = "s";
+  if ((tab === "ls" || tab === "coach") && p.sid) {
+    const top = `<p class="crumb"><a href="#roster">← Roster</a></p>` + head(esc(p.name || p.email), `${p.band ? "Grades " + esc(p.band) + (p.grade ? ", grade " + esc(p.grade) : "") : ""}`) + studentTabs(p, k, tab);
+    return top + (tab === "ls"
+      ? embedFrame(`/guides/lifeskills/?embed=1#s=${encodeURIComponent(p.sid)}`, "Life Skills record")
+      : embedFrame(`/fieldguide/?embed=1&sid=${encodeURIComponent(p.sid)}#sessions`, "Coaching sessions", { dark: true, mic: true }));
+  }
   const allowed = S.admin || S.myBands.includes(p.band);
   const books = allowed && (p.saved.length || p.want.length || (p.nope || []).length) ? await bookTitles() : {};
   const sec = (t, items, empty) => `<section class="card"><h3>${t}</h3>${items.length ? `<ul class="items">${items.join("")}</ul>` : `<p class="muted small">${empty}</p>`}</section>`;
-  const ls = p.sid ? `/guides/lifeskills/#s=${encodeURIComponent(p.sid)}` : "";
   return (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") + `<p class="crumb"><a href="#roster">← Roster</a></p>` +
     head(esc(p.name || p.email), `${p.band ? "Grades " + esc(p.band) + (p.grade ? ", grade " + esc(p.grade) : "") + " · " : ""}${esc(p.school || (p.sid ? "no student sign-in" : p.email))}${p.guide ? " · Guide: " + esc(p.guide) : ""}${p.coach ? ` · Mr. Fox: ${p.coach.count || 0} messages on ${esc(p.coach.day || "")}` : ""}`) +
-    `<div class="row">${p.sid ? `<a class="btn" href="#edit=${esc(p.sid)}">Edit student and parents</a><a class="btn ghost" href="${ls}">Life Skills record</a>` : `<a class="btn" href="#add=${encodeURIComponent(p.email)}">Add to the roster</a>`}</div>` +
+    studentTabs(p, k, "s") +
+    `<div class="row">${p.sid ? `<a class="btn" href="#edit=${esc(p.sid)}">Edit student and parents</a>` : `<a class="btn" href="#add=${encodeURIComponent(p.email)}">Add to the roster</a>`}</div>` +
     (p.sid ? `<section class="card"><h3>Parents (${(p.parents || []).length})</h3>${(p.parents || []).length ? `<ul class="items">${p.parents.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : `<p class="muted small">No parents linked yet. <a href="#edit=${esc(p.sid)}">Add their emails</a>.</p>`}</section>` : "") +
     (p.alerts.filter(a => a.status === "open").length ? `<div class="list">${p.alerts.filter(a => a.status === "open").map(alertCard).join("")}</div>` : "") +
     (allowed ? `<div class="grid2">
@@ -421,7 +444,7 @@ async function route() {
   if (INFO) INFO.hidden = true;
   if (!S.loaded) return;
   try {
-    if (v === "s") app.innerHTML = await vStudent(decodeURIComponent(arg || ""));
+    if (v === "s" || v === "ls" || v === "coach") app.innerHTML = await vStudent(decodeURIComponent(arg || ""), v);
     else if (v === "c") app.innerHTML = await vChat(arg || "");
     else if (v === "edit") app.innerHTML = vEdit(decodeURIComponent(arg || ""));
     else if (v === "add") app.innerHTML = vEdit("", arg ? decodeURIComponent(arg) : "");
@@ -438,6 +461,8 @@ async function start(r) {
   if (!r || r.role !== "staff" || !String(r.email || u.email).toLowerCase().endsWith("@wilderland.academy")) { app.innerHTML = head("Students") + `<p class="empty">This page is for Wilderland staff.</p>`; return; }
   // In a test view this page is the test guide's (r.email is the test guide's address).
   S.test = r.test || null; S.me = key(S.test ? r.email : u.email); S.admin = !S.test && ADMINS.includes(S.me);
+  // Field Guides (and testers, by their own account) get each student's Coaching tab.
+  S.coach = !!(window.wlCoaches && window.wlCoaches(u.email));
   // Start on this guide's own band (All for admins without one).
   if (!S.bandSet && window.wlBand) { S.band = window.wlBand({ all: true }); S.bandSet = true; }
   if (/^#info\b/.test(location.hash)) route();
