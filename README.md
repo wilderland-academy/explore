@@ -447,3 +447,12 @@ the `PAGES` list at the top of `/search.js`.
   Accepting an idea records the guide's name; votes keep voters' names (`vnames`).
 - **Lantern Stacks** shows grades instead of ages and presets a signed-in student's grade.
 - Publish both `firestore.rules` and `storage.rules` in the Firebase console.
+
+## Camp Store: play with guides, never against them (Nov 24, 2026)
+
+- **Pay-to-target rewards are gone.** One student paying to duct-tape, pelt (ten snowball shots), ambush (water balloons) or hair-spray a guide who has to stand there made the guide a target money could buy. Removed: `x-ducttape`, `x-snowballs`, `x-waterballoon`, `x-hairspray`.
+- **What replaced them.** Every stunt is now two-sided, shared, or earned by the whole crew with a guide who volunteered:
+  - `x-pie` is now a **crew pie** (200 blazes, pooled by the crew). A volunteer guide takes it, and then pies one volunteer back.
+  - **Snowball fight** and **water balloon fight**: your crew vs. the guides, and both sides throw.
+  - **Twin day with a guide**: you and a guide you pick dress alike.
+- "Pick what a guide wears" and "Give a guide a nickname" stay, since the guide opts in and can veto. The reasoning and sources are in the comment above `EXPERIENCES`. There are now 29 experiences.
