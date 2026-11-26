@@ -103,7 +103,7 @@
       var done = un.done || [], left = STEPS.filter(function (s) { return done.indexOf(s[0]) < 0; });
       out.push({ id: "onboard", title: left.length ? "Finish onboarding" : "Onboarding finished", detail: left.length ? (STEPS.length - left.length) + " of " + STEPS.length + " steps done. Next: " + left[0][1] + "." : "Every part of the Guides site is open to you.", link: "/guides/onboarding/", done: !left.length });
     }
-    if (!band) return out;
+    if (!band) { out.noBand = true; return out; }
     var bandName = band === "K–1" ? "K–1" : "grades " + band;
     var jobs = await Promise.all([
       query({ from: [{ collectionId: "lsStudents" }], where: eq("band", band), limit: 200 }).catch(soft([])),
@@ -172,7 +172,7 @@
     if (!tasks) return '<p class="wltk-empty">Working out your to-dos…</p>';
     var todo = tasks.filter(function (t) { return !t.done; }), done = tasks.filter(function (t) { return t.done; });
     return (tasks.partial ? '<p class="wltk-empty">Some to-dos couldn\'t be checked just now. Reload to try again.</p>' : "") +
-      (todo.length ? "<ul>" + todo.map(item).join("") + "</ul>" : tasks.partial ? "" : '<p class="wltk-empty">All done. Nice work.</p>') +
+      (todo.length ? "<ul>" + todo.map(item).join("") + "</ul>" : tasks.partial ? "" : tasks.noBand ? '<p class="wltk-empty">Most guide to-dos (Labs, goals, 1:1s) belong to a grade band, and you don\'t have one. To see a guide\'s list, use Test view as the test guide.</p>' : '<p class="wltk-empty">All done. Nice work.</p>') +
       (done.length ? '<p class="wltk-sub">Done</p><ul>' + done.map(item).join("") + "</ul>" : "");
   }
   function paint() {
