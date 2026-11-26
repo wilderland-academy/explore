@@ -18,6 +18,15 @@
   var $ = function (q) { return document.querySelector(q); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var byId = {}; T.TOOLS.forEach(function (t) { byId[t.id] = t; });
+  var BUILTIN = T.TOOLS.length;
+  // Items guides added (toolItems/{id}): same shape as the catalog's. Merged in, replacing an earlier copy.
+  function addCustom(d) {
+    if (!d || !d.n || !T.CATS[d.c]) return;
+    var t = { id: d.id, n: d.n, c: d.c, k: ["tool", "machine", "material"].indexOf(d.k) >= 0 ? d.k : "tool", have: 0, want: Number(d.want) || 0, a: T.ACCESS[d.a] ? d.a : "open", b: BANDS.indexOf(d.b) >= 0 ? d.b : "K–1", loan: T.LOAN[d.loan] ? d.loan : "day", e: d.e || "🧰", d: d.d || "", m: d.m || "", tip: d.tip || "", custom: true };
+    var i = T.TOOLS.findIndex(function (x) { return x.id === t.id; });
+    if (i >= 0) T.TOOLS[i] = t; else T.TOOLS.push(t);
+    byId[t.id] = t;
+  }
   var pad = function (n) { return String(n).padStart(2, "0"); };
   var iso = function (d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
   var today = function () { return iso(new Date()); };
@@ -98,7 +107,7 @@
   // ---------- loading ----------
   async function load() {
     if (!S.role || !user()) return;
-    var jobs = [list("toolInventory").catch(function () { return []; })];
+    var jobs = [list("toolInventory").catch(function () { return []; }), list("toolItems").catch(function () { return []; })];
     if (guide()) {
       jobs.push(list("toolLoans").catch(function () { return isTest() ? query("toolLoans", eq("test", true)).catch(function () { return []; }) : []; }));
       jobs.push(list("toolBadges").catch(function () { return []; }));
@@ -110,6 +119,7 @@
     }
     var got = await Promise.all(jobs);
     S.inv = {}; got[0].forEach(function (d) { S.inv[d.id] = d; });
+    got.splice(1, 1)[0].forEach(addCustom);
     S.loans = (got[1] || []).filter(function (l) { return !!l.test === isTest(); }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
     S.badges = {}; (got[2] || []).forEach(function (d) { S.badges[d.id] = d.items || []; });
     if (got[3]) S.kids = got[3].filter(function (s) { return !s.archived && !!s.test === isTest(); }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
@@ -130,7 +140,7 @@
     var mine = S.loans.filter(function (l) { return ["requested", "waiting", "out", "wish"].indexOf(l.status) >= 0; }).sort(function (a, b) { return rank(a) - rank(b); });
     var li = function (l) {
       var t = byId[l.item] || { e: "🧰", n: l.n }, late = l.status === "out" && l.due && l.due < today();
-      var st = l.status === "out" ? (late ? '<span class="pill p-late">Late</span>' : '<span class="pill p-out">You have it</span>') : l.status === "waiting" ? '<span class="pill p-wait">In line</span>' : l.status === "wish" ? '<span class="pill p-wait">Asked to buy</span>' : '<span class="pill p-wait">Asked</span>';
+      var st = l.status === "out" ? (late ? '<span class="pill p-late">Late</span>' : '<span class="pill p-out">You have it</span>') : l.status === "waiting" ? '<span class="pill p-wait">In line</span>' : l.status === "wish" ? '<span class="pill p-wait">Requested</span>' : '<span class="pill p-wait">Asked</span>';
       var sub = l.status === "out" ? (l.kind === "book" ? "Booked for " + fmt(l.due) : late ? "It was due " + fmt(l.due) + ". Bring it back today." : "Bring it back by " + (l.due === today() ? "the end of today" : fmt(l.due))) : l.kind === "book" && l.when ? "Asked for " + esc(whenTxt(l.when)) : l.kind === "badge" ? "Wants to learn it and get its badge" : l.status === "waiting" ? "You're in line for the next one" : l.status === "wish" ? "Guides see this on their shopping list" : "A guide will hand it to you";
       return '<li class="' + (late ? "late" : "") + '"><span class="em">' + t.e + '</span><span class="t"><b>' + esc(t.n || l.n) + "</b><small>" + sub + "</small></span>" + st + (["requested", "waiting", "wish"].indexOf(l.status) >= 0 ? ' <button class="ghost sm" data-cancel="' + l.id + '">Cancel</button>' : "") + "</li>";
     };
@@ -155,7 +165,8 @@
     var cats = '<div class="chips" role="group" aria-label="Kind of tool"><button type="button" data-cat="all" class="' + (S.cat === "all" ? "on" : "") + '">Everything</button>' + Object.keys(T.CATS).map(function (k) { return '<button type="button" data-cat="' + k + '" class="' + (S.cat === k ? "on" : "") + '">' + T.CATS[k][1] + " " + esc(T.CATS[k][0]) + "</button>"; }).join("") + "</div>";
     var tg = '<div class="tg" role="group" aria-label="Show">' + [["", "All"], ["shelf", "On the shelf now"]].concat(stu ? [["mine", "I can borrow"]] : [["need", "Need more"]]).map(function (x) { return '<button type="button" data-f="' + x[0] + '" class="' + (S.f === x[0] ? "on" : "") + '">' + x[1] + "</button>"; }).join("") + "</div>";
     return '<div class="ctrl"><div class="in"><input type="search" id="q" placeholder="Search tools and materials" value="' + esc(S.q) + '" autocomplete="off">' + tg + cats + "</div></div>" +
-      '<p class="count">' + xs.length + " of " + T.TOOLS.length + " tools and materials</p>" +
+      '<div class="newbar"><p class="count">' + xs.length + " of " + T.TOOLS.length + " tools and materials</p>" + (stu ? '<button type="button" class="ghost sm" data-newreq>Can\'t find it? Ask for it</button>' : '<button type="button" class="go sm" data-additem>Add a tool or material</button>') + "</div>" +
+      (!xs.length && stu ? '<section class="panel" style="margin-top:10px"><h2>Nothing matches' + (S.q ? " “" + esc(S.q) + "”" : "") + '</h2><p class="sub">If your project needs something we don\'t have, ask for it. Guides see every request and decide what to get.</p><button type="button" class="go" data-newreq>Ask for it</button></section>' : "") +
       '<div class="grid">' + xs.map(function (t) {
         var s = stock(t);
         return '<button type="button" class="tc' + (!s.have && t.k !== "material" ? " need" : "") + '" data-open="' + t.id + '"><span class="top"><span class="em" aria-hidden="true">' + t.e + '</span><span><h3>' + esc(t.n) + "</h3>" + (t.m && t.m !== t.n ? '<p class="m">' + esc(T.CATS[t.c][0]) + "</p>" : '<p class="m">' + esc(T.CATS[t.c][0]) + "</p>") + '</span></span><p class="d">' + esc(t.d) + '</p><span class="st">' + availHtml(t) + " " + accessPill(t) + (t.b !== "K–1" ? ' <span class="pill" style="background:var(--shelf2);color:var(--dim)">' + (t.b === "2–4" ? "2nd+" : "5th+") + "</span>" : "") + "</span></button>";
@@ -170,14 +181,15 @@
       var mineNow = active[0];
       if (mineNow) act = '<p class="note ok">' + (mineNow.status === "out" ? "You have this one. Bring it back by " + (mineNow.due === today() ? "the end of today" : fmt(mineNow.due)) + "." : mineNow.status === "wish" ? "You asked us to get this one." : "You asked for this. A guide will hand it to you.") + "</p>";
       else if (band && !bandOk(t, band)) act = '<p class="note">This one is for ' + gradesFrom(t) + ". Ask a guide what you could use instead.</p>";
-      else if (t.k === "material" ? (!s.have && !S.inv[t.id]) || s.stock === "out" : !s.have) act = '<p class="note">' + (t.k === "material" ? (s.stock === "out" ? "We're out of this right now." : "We don't stock this yet.") : "Not in the library yet.") + ' If your project needs it, tell us: it moves up the shopping list.</p><label>What would you use it for?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="wish" data-id="' + id + '">I need this for a project</button>';
+      else if (t.k === "material" ? (!s.have && !S.inv[t.id]) || s.stock === "out" : !s.have) act = '<p class="note">' + (t.k === "material" ? (s.stock === "out" ? "We're out of this right now." : "We don't stock this yet.") : "Not in the library yet.") + ' If your project needs it, tell us: it moves up the shopping list.</p><label>What would you use it for?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="wish" data-id="' + id + '">Request it</button>';
       else if (t.k === "material") act = '<label>How much do you need, and for what?<input id="ddamt" maxlength="120" placeholder="For example: 2 boards for my birdhouse"></label><button class="go" data-ask="material" data-id="' + id + '">Ask for it</button>';
       else if (t.a === "staff") act = '<p class="note">Guides run this one. Tell us your project and a guide will plan it with you.</p><label>Your project<input id="ddnote" maxlength="200"></label><button class="go" data-ask="borrow" data-id="' + id + '">Ask a guide</button>';
       else if (t.a === "badge" && myBadges().indexOf(id) < 0) act = '<p class="note">You need this tool\'s badge first: a guide shows you how and watches you use it safely.</p><button class="go" data-ask="badge" data-id="' + id + '">I want to learn it</button>';
       else if (t.loan === "place") act = '<div class="act"><label>When?<span style="display:flex;gap:8px"><input type="date" id="dddate" min="' + today() + '" value="' + today() + '"><select id="ddpart"><option>Morning</option><option>Afternoon</option></select></span></label><label>What are you making?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="book" data-id="' + id + '">Book it</button>' + (t.a === "guide" ? '<p class="note">A guide will be there the whole time.</p>' : "") + "</div>";
       else act = (s.free > 0 ? "" : '<p class="note">All of them are out right now. Get in line and you\'re next.</p>') + '<label>What\'s it for?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="' + (s.free > 0 ? "borrow" : "wait") + '" data-id="' + id + '">' + (s.free > 0 ? "Borrow it" : "Get in line") + "</button>" + (t.a === "guide" ? '<p class="note">A guide will be with you while you use it.</p>' : "");
     } else {
-      act = active.length ? '<p class="note"><b>Right now:</b> ' + active.map(function (l) { return esc(first(l.name)) + " (" + ({ out: "has it, due " + fmt(l.due), requested: "asked", waiting: "in line", wish: "asked us to buy it" })[l.status] + ")"; }).join(", ") + '</p>' : "";
+      act = active.length ? '<p class="note"><b>Right now:</b> ' + active.map(function (l) { return esc(first(l.name)) + " (" + ({ out: "has it, due " + fmt(l.due), requested: "asked", waiting: "in line", wish: "asked us to get it" })[l.status] + ")"; }).join(", ") + '</p>' : "";
+      act += stockForm(t, s);
       act += '<p class="note">Inventory: ' + s.have + " owned" + (s.broken ? ", " + s.broken + " out of service" : "") + (s.loc ? ", kept at " + esc(s.loc) : "") + (s.counted ? "" : " (not counted yet)") + '. <a href="#inventory">Update</a> · <a href="#desk">Check it out to a student</a></p>';
     }
     dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + t.e + "</span><h2>" + esc(t.n) + '</h2><button class="x" data-close aria-label="Close">✕</button></div><p>' + esc(t.d) + "</p>" +
@@ -185,6 +197,125 @@
       "<dl><dt>Status</dt><dd>" + availHtml(t) + "</dd><dt>Who</dt><dd>" + accessPill(t) + " " + esc(T.ACCESS[t.a][1]) + "</dd><dt>Grades</dt><dd>" + (t.b === "K–1" ? "Every grade" : t.b === "2–4" ? "2nd grade and up" : "5th grade and up") + "</dd><dt>Loan</dt><dd>" + esc(T.LOAN[t.loan]) + "</dd>" + (t.m ? "<dt>Model</dt><dd>" + esc(t.m) + "</dd>" : "") + (s.loc ? "<dt>Where</dt><dd>" + esc(s.loc) + "</dd>" : "") + "</dl>" +
       '<div class="act">' + act + '</div><p class="note" id="ddmsg" role="status"></p></div>';
     if (!dd.open) dd.showModal();
+  }
+  // Guides: set what we have of an item, which moves it from "Not in the library yet" to on the shelf / ready to book.
+  function stockForm(t, s) {
+    var mat = t.k === "material", label = mat ? "In stock" : t.k === "machine" ? "Ready to book" : "On the shelf";
+    var wants = S.loans.filter(function (l) { return l.item === t.id && l.status === "wish"; }).length;
+    return '<div class="stock"><h3>' + (s.have || (mat && S.inv[t.id] && s.stock !== "out") ? "Update stock" : "Stock it: mark it " + label.toLowerCase()) + "</h3>" +
+      (mat ? '<label>Stock<select id="stk-stock">' + [["ok", "In stock"], ["low", "Running low"], ["out", "Out"]].map(function (o) { return '<option value="' + o[0] + '"' + ((S.inv[t.id] || {}).stock === o[0] || (!S.inv[t.id] && o[0] === "ok") ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>"
+        : '<label>How many we have<input type="number" id="stk-have" min="0" max="999" value="' + (s.have || 1) + '"></label>') +
+      '<label>Where it lives<input id="stk-loc" maxlength="60" value="' + esc(s.loc) + '" placeholder="For example: Shed, shelf 2"></label>' +
+      '<button class="go" data-stock="' + t.id + '">' + (s.have ? "Save" : "Mark " + label.toLowerCase()) + "</button>" +
+      (wants ? '<p class="note">' + wants + " student" + (wants === 1 ? " asked" : "s asked") + " for this. They'll be told it's here.</p>" : "") +
+      (t.custom ? ' <button class="ghost sm" data-edititem="' + t.id + '">Edit details</button>' : "") + "</div>";
+  }
+  async function stockIt(id, btn) {
+    var t = byId[id], mat = t.k === "material", now = Date.now(), d = { updated: now, by: me(), counted: true, loc: (($("#stk-loc") || {}).value || "").trim().slice(0, 60) };
+    if (mat) { d.stock = $("#stk-stock").value; d.have = d.stock === "out" ? 0 : 1; }
+    else d.have = Math.max(0, Math.min(999, Math.round(Number($("#stk-have").value) || 0)));
+    var waiting = d.have > 0 ? S.loans.filter(function (l) { return l.item === id && l.status === "wish"; }) : [];
+    btn.disabled = true;
+    try {
+      await commit([{ path: "toolInventory/" + id, data: d, merge: true }].concat(waiting.map(function (l) { return { path: "toolLoans/" + l.id, data: { status: "done", closed: now, by: me(), byName: myName() }, merge: true }; })));
+      S.inv[id] = Object.assign(S.inv[id] || {}, d);
+      waiting.forEach(function (l) { l.status = "done"; });
+      var emails = waiting.map(function (l) { return l.email; }).filter(Boolean);
+      if (emails.length && window.wlNotify) window.wlNotify(emails, { kind: "tool", text: t.n + " is in the Tool Library now. You asked for it: go borrow it.", link: "/tools/" });
+      S.msg = t.n + (d.have ? " is " + (mat ? "in stock" : t.k === "machine" ? "ready to book" : "on the shelf") : " is marked not in the library") + (emails.length ? ". " + emails.length + " student" + (emails.length === 1 ? " who asked was" : "s who asked were") + " told." : ".");
+      draw(); openItem(id); var m = $("#ddmsg"); if (m) { m.className = "note ok"; m.textContent = S.msg; }
+    } catch (e) { btn.disabled = false; alert(e.message); }
+  }
+
+  // Guides: add a new tool or material to the catalog (or edit one they added). from: a student's request to turn into an item.
+  var EMOJI = { digital: "🖨️", wood: "🪚", carve: "🔪", clay: "🏺", fiber: "🧵", elec: "🔌", nature: "🔭", garden: "🌱", camp: "🏕️", kitchen: "🍳", art: "🎨", media: "📷", measure: "📏", bike: "🚲", safety: "🦺", mat: "📦" };
+  function itemForm(id, from) {
+    var t = id ? byId[id] : null, req = from ? S.loans.find(function (l) { return l.id === from; }) : null;
+    var v = t || { n: req ? req.n : "", c: "wood", k: req && req.amt === "material" ? "material" : "tool", a: "open", b: "K–1", loan: "day", e: "", d: "", m: "", tip: "", want: 1 };
+    var sel = function (idn, opts, cur) { return '<select id="' + idn + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === cur ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select>"; };
+    var dd = $("#dd");
+    dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + (v.e || "🧰") + "</span><h2>" + (t ? "Edit " + esc(t.n) : "Add a tool or material") + '</h2><button class="x" data-close aria-label="Close">✕</button></div>' +
+      (req ? '<p class="note">' + esc(first(req.name)) + " asked for this" + (req.note ? ": “" + esc(req.note) + "”" : "") + ". They'll be told when it's in the library.</p>" : "") +
+      '<div class="form">' +
+      '<label class="wide">Name<input id="it-n" maxlength="100" value="' + esc(v.n) + '" placeholder="For example: Hot glue gun"></label>' +
+      "<label>Kind" + sel("it-k", [["tool", "Tool (borrow it)"], ["machine", "Machine (book a time)"], ["material", "Material (used up)"]], v.k) + "</label>" +
+      "<label>Category" + sel("it-c", Object.keys(T.CATS).map(function (k) { return [k, T.CATS[k][1] + " " + T.CATS[k][0]]; }), v.c) + "</label>" +
+      "<label>Who can use it" + sel("it-a", Object.keys(T.ACCESS).map(function (k) { return [k, T.ACCESS[k][0]]; }), v.a) + "</label>" +
+      "<label>Grades" + sel("it-b", [["K–1", "Every grade"], ["2–4", "2nd grade and up"], ["5–8", "5th grade and up"]], v.b) + "</label>" +
+      "<label>Loan" + sel("it-loan", Object.keys(T.LOAN).map(function (k) { return [k, T.LOAN[k]]; }), v.loan) + "</label>" +
+      '<label>Icon (an emoji)<input id="it-e" maxlength="4" value="' + esc(v.e) + '" placeholder="' + (EMOJI[v.c] || "🧰") + '"></label>' +
+      (t ? "" : '<label>How many we have now<input type="number" id="it-have" min="0" max="999" value="' + (req ? 0 : 1) + '"></label>') +
+      '<label>How many we should have<input type="number" id="it-want" min="0" max="999" value="' + (v.want || 1) + '"></label>' +
+      '<label>Model or brand<input id="it-m" maxlength="80" value="' + esc(v.m) + '"></label>' +
+      '<label class="wide">What it\'s for<textarea id="it-d" maxlength="300" rows="2">' + esc(v.d) + "</textarea></label>" +
+      '<label class="wide">Safety note (optional)<input id="it-tip" maxlength="200" value="' + esc(v.tip) + '"></label>' +
+      '</div><div class="act"><button class="go" data-saveitem="' + (t ? t.id : "") + '" data-from="' + (from || "") + '">' + (t ? "Save" : "Add it to the library") + "</button>" +
+      (t && t.custom ? ' <button class="ghost" data-delitem="' + t.id + '">Remove from the catalog</button>' : "") + '</div><p class="note" id="ddmsg" role="status"></p></div>';
+    if (!dd.open) dd.showModal();
+    setTimeout(function () { var n = $("#it-n"); if (n) n.focus(); }, 50);
+  }
+  var slug = function (n) { return String(n).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24) || "item"; };
+  async function saveItem(id, from, btn) {
+    var val = function (x) { return (($("#" + x) || {}).value || "").trim(); }, msg = $("#ddmsg");
+    var n = val("it-n"); if (!n) { msg.className = "note bad"; msg.textContent = "Give it a name."; return; }
+    var dup = !id && T.TOOLS.find(function (t) { return t.n.toLowerCase() === n.toLowerCase(); });
+    if (dup) { msg.className = "note bad"; msg.innerHTML = "That's already in the catalog. <button class=\"ghost sm\" data-open=\"" + dup.id + "\">Open it</button>"; return; }
+    var c = val("it-c"), d = { n: n.slice(0, 100), c: c, k: val("it-k"), a: val("it-a"), b: val("it-b"), loan: val("it-loan"), e: val("it-e") || EMOJI[c] || "🧰", d: val("it-d").slice(0, 300), m: val("it-m").slice(0, 80), tip: val("it-tip").slice(0, 200), want: Math.max(0, Math.min(999, Math.round(Number(val("it-want")) || 0))), by: me(), at: Date.now() };
+    if (d.k === "material") d.loan = "take";
+    var nid = id || "x-" + slug(n) + "-" + newId().slice(0, 5), have = id ? null : Math.max(0, Math.min(999, Math.round(Number(val("it-have")) || 0)));
+    var req = from ? S.loans.find(function (l) { return l.id === from; }) : null, now = Date.now();
+    var W = [{ path: "toolItems/" + nid, data: d }];
+    if (have != null) W.push({ path: "toolInventory/" + nid, data: d.k === "material" ? { have: have ? 1 : 0, stock: have ? "ok" : "", counted: true, updated: now, by: me() } : { have: have, counted: true, updated: now, by: me() }, merge: true });
+    // The student's request now points at the real item: still "asked us to get it" until it's stocked, then they're told.
+    if (req) W.push({ path: "toolLoans/" + req.id, data: { item: nid, n: d.n, kind: "wish" }, merge: true });
+    btn.disabled = true;
+    try {
+      await commit(W);
+      addCustom(Object.assign({ id: nid }, d));
+      if (have != null) S.inv[nid] = Object.assign(S.inv[nid] || {}, W[1].data);
+      if (req) { req.item = nid; req.n = d.n; req.kind = "wish"; }
+      if (req && have && window.wlNotify && req.email) { await commit([{ path: "toolLoans/" + req.id, data: { status: "done", closed: now }, merge: true }]).catch(function () { }); req.status = "done"; window.wlNotify([req.email], { kind: "tool", text: d.n + " is in the Tool Library now. You asked for it: go borrow it.", link: "/tools/" }); }
+      S.msg = d.n + (id ? " saved." : " is in the catalog."); draw(); openItem(nid);
+    } catch (e) { btn.disabled = false; msg.className = "note bad"; msg.textContent = e.message; }
+  }
+  async function delItem(id, btn) {
+    var t = byId[id]; if (!t || !t.custom) return;
+    if (S.loans.some(function (l) { return l.item === id && l.status === "out"; })) { alert("Someone has this checked out. Check it in first."); return; }
+    if (!confirm("Remove " + t.n + " from the catalog? Past checkouts stay in the records.")) return;
+    btn.disabled = true;
+    try {
+      var r = await fetch(FS + "/toolItems/" + id, { method: "DELETE", headers: { Authorization: "Bearer " + await tok() } });
+      if (!r.ok) throw new Error(r.status === 403 ? "Not allowed: the Tool Library's database rules may not be published yet." : "Couldn't remove it (" + r.status + ")");
+      T.TOOLS.splice(T.TOOLS.indexOf(t), 1); delete byId[id]; $("#dd").close(); S.msg = t.n + " was removed."; draw();
+    } catch (e) { btn.disabled = false; alert(e.message); }
+  }
+
+  // Students: ask for something that isn't in the catalog at all.
+  function newReqForm() {
+    var dd = $("#dd");
+    dd.innerHTML = '<div class="b"><div class="h"><span class="em">💡</span><h2>Ask for something new</h2><button class="x" data-close aria-label="Close">✕</button></div>' +
+      '<p>Something your project needs that isn\'t in the library? Tell the guides. They see every request and decide what to get.</p><div class="act">' +
+      '<label>What is it?<input id="nr-n" maxlength="100" value="' + esc(S.q) + '" placeholder="For example: a hot glue gun, clay, a GoPro"></label>' +
+      '<label>Is it something you use up?<select id="nr-k"><option value="tool">No, it\'s a tool or machine</option><option value="material">Yes, it\'s a material (wood, glue, paper…)</option></select></label>' +
+      '<label>What\'s it for?<input id="nr-note" maxlength="200" placeholder="Your project"></label>' +
+      '<button class="go" data-sendnew>Send my request</button></div><p class="note" id="ddmsg" role="status"></p></div>';
+    if (!dd.open) dd.showModal();
+    setTimeout(function () { var n = $("#nr-n"); if (n) n.focus(); }, 50);
+  }
+  async function sendNew(btn) {
+    var n = $("#nr-n").value.trim(), note = $("#nr-note").value.trim(), k = $("#nr-k").value, msg = $("#ddmsg"), r = S.role;
+    if (!n) { msg.className = "note bad"; msg.textContent = "Say what it is."; return; }
+    btn.disabled = true; msg.textContent = "Sending…";
+    try {
+      var name = isTest() ? "Test Student" : String((user() && user().displayName) || String(r.email).split("@")[0]);
+      var data = { item: "new", n: n.slice(0, 100), kind: "new", email: String(r.email || "").toLowerCase(), sid: r.sid || "", name: name.slice(0, 60), band: r.band || "", status: "wish", at: Date.now(), when: "", amt: k, note: note.slice(0, 200) };
+      if (isTest()) data.test = true;
+      var lid = newId(); await commit([{ path: "toolLoans/" + lid, data: data, create: true }]);
+      S.loans.unshift(Object.assign({ id: lid }, data));
+      if (window.wlNotifyGuides) window.wlNotifyGuides({ kind: "tool", text: first(name) + " asked the Tool Library to get: " + data.n + (note ? " (" + note.slice(0, 80) + ")" : ""), link: "/guides/tools/#shop" });
+      msg.className = "note ok"; msg.textContent = "Sent. You'll see it under My tools, and you'll hear when it's in the library.";
+      btn.textContent = "Sent"; draw();
+    } catch (e) { btn.disabled = false; msg.className = "note bad"; msg.textContent = e.message; }
   }
   async function ask(kind, id, btn) {
     var t = byId[id], s = stock(t), msg = $("#ddmsg"), r = S.role;
@@ -199,8 +330,8 @@
       var lid = newId(); await commit([{ path: "toolLoans/" + lid, data: data, create: true }]);
       S.loans.unshift(Object.assign({ id: lid }, data));
       var what = kind === "wish" ? "asked us to get: " : kind === "badge" ? "wants to learn (badge): " : kind === "book" ? "wants to book " : kind === "material" ? "asked for " : kind === "wait" ? "is in line for " : "asked to borrow ";
-      if (window.wlNotifyGuides && kind !== "wish") window.wlNotifyGuides({ kind: "tool", text: first(name) + " " + what + t.n + (when ? " (" + whenTxt(when) + ")" : "") + (amt ? ": " + amt : ""), link: "/guides/tools/#desk" });
-      msg.className = "note ok"; msg.textContent = kind === "wish" ? "Thanks. It's on the guides' shopping list." : kind === "wait" ? "You're in line." : "Sent. A guide will hand it to you.";
+      if (window.wlNotifyGuides) window.wlNotifyGuides({ kind: "tool", text: first(name) + " " + what + t.n + (when ? " (" + whenTxt(when) + ")" : "") + (amt ? ": " + amt : ""), link: kind === "wish" ? "/guides/tools/#shop" : "/guides/tools/#desk" });
+      msg.className = "note ok"; msg.textContent = kind === "wish" ? "Sent. Guides see it on their shopping list, and you'll hear when it's in the library." : kind === "wait" ? "You're in line." : "Sent. A guide will hand it to you.";
       draw(); setTimeout(function () { openItem(id); }, 400);
       if (window.wlTasks) window.wlTasks.refresh();
     } catch (e) { btn.disabled = false; msg.className = "note bad"; msg.textContent = e.message; }
@@ -222,13 +353,13 @@
     var counted = T.TOOLS.filter(function (t) { return (S.inv[t.id] || {}).counted; }).length;
     return '<div class="panel"><h2>Today</h2><p class="sub">' + S.loans.filter(function (l) { return l.status === "requested"; }).length + " asked for · " + out.length + " out · " + (late.length ? '<b style="color:var(--bad)">' + late.length + " late</b>" : "none late") + "</p>" +
       '<p class="sub">Inventory: ' + counted + " of " + T.TOOLS.length + ' items counted</p><div class="bar"><i style="width:' + Math.round(100 * counted / T.TOOLS.length) + '%"></i></div>' +
-      '<p class="sub"><a href="#inventory">Count what we have</a> · <a href="#shop">What to buy</a></p></div>';
+      '<p class="sub"><a href="#inventory">Count what we have</a> · <a href="#shop">What to buy</a>' + (S.loans.some(function (l) { return l.status === "wish"; }) ? ' · <b><a href="#shop">' + S.loans.filter(function (l) { return l.status === "wish"; }).length + " student requests</a></b>" : "") + '</p><button type="button" class="ghost sm" data-additem>Add a tool or material</button></div>';
   }
   var dueFor = function (t, l) { return l && l.kind === "book" && l.when ? l.when.split(" ")[0] : t && t.loan === "week" ? plusDays(7) : today(); };
   function loanRow(l, actions) {
     var t = byId[l.item] || { e: "🧰", n: l.n }, late = l.status === "out" && l.due < today();
-    var kind = { borrow: "Borrow", book: "Booking", material: "Materials", badge: "Wants its badge", wish: "Asked us to buy" }[l.kind] || "";
-    return '<li class="' + (late ? "late" : "") + '"><span class="em">' + t.e + '</span><span class="t"><b>' + esc(l.name) + "</b> · " + esc(t.n || l.n) + "<small>" + esc(kind) + (l.when ? " · " + esc(whenTxt(l.when)) : "") + (l.amt ? " · " + esc(l.amt) : "") + (l.note ? " · “" + esc(l.note) + "”" : "") + (l.status === "out" ? " · " + (late ? "was due " : "due ") + esc(fmt(l.due)) : "") + "</small></span>" + actions + "</li>";
+    var kind = { borrow: "Borrow", book: "Booking", material: "Materials", badge: "Wants its badge", wish: "Asked us to get it", "new": "New request" + (l.amt === "material" ? " (material)" : "") }[l.kind] || "";
+    return '<li class="' + (late ? "late" : "") + '"><span class="em">' + t.e + '</span><span class="t"><b>' + esc(l.name) + "</b> · " + esc(t.n || l.n) + "<small>" + esc(kind) + (l.when ? " · " + esc(whenTxt(l.when)) : "") + (l.amt && l.kind !== "new" ? " · " + esc(l.amt) : "") + (l.note ? " · “" + esc(l.note) + "”" : "") + (l.status === "out" ? " · " + (late ? "was due " : "due ") + esc(fmt(l.due)) : "") + "</small></span>" + actions + "</li>";
   }
   function desk() {
     var req = S.loans.filter(function (l) { return l.status === "requested"; }), wait = S.loans.filter(function (l) { return l.status === "waiting"; });
@@ -274,11 +405,11 @@
     } catch (e) { btn.disabled = false; alert(e.message); }
   }
   async function closeLoan(lid, status, btn) {
-    var l = S.loans.find(function (x) { return x.id === lid; }); if (!l) return; btn.disabled = true;
+    var l = S.loans.find(function (x) { return x.id === lid; }); if (!l) return; btn.disabled = true; var was = l.status;
     try {
       await commit([{ path: "toolLoans/" + lid, data: { status: status, closed: Date.now(), by: me(), byName: myName() }, merge: true }]);
       l.status = status;
-      if (status === "declined" && window.wlNotify && l.email) window.wlNotify([l.email], { kind: "tool", text: myName() + " couldn't hand out " + l.n + " right now. Ask them about it.", link: "/tools/" });
+      if (status === "declined" && window.wlNotify && l.email) window.wlNotify([l.email], { kind: "tool", text: was === "wish" ? myName() + " says the library won't get " + l.n + " for now. Ask them about it." : myName() + " couldn't hand out " + l.n + " right now. Ask them about it.", link: "/tools/" });
       draw(); refreshTasks();
     } catch (e) { btn.disabled = false; alert(e.message); }
   }
@@ -313,7 +444,7 @@
           '<td>' + (t.k === "material" ? "" : s.out) + '</td><td><input data-f="loc" value="' + esc(s.loc) + '" placeholder="Where it lives" maxlength="60"></td><td><input type="checkbox" data-f="counted"' + (s.counted ? " checked" : "") + ' aria-label="Counted"></td><td><button class="ghost sm" data-save="' + t.id + '">Save</button></td></tr>';
       }).join("");
     }).join("");
-    return '<section class="panel" style="margin:12px 0"><h2>Count what we have</h2><p class="sub">Go shelf by shelf. Set how many we own and how many are out of service, where each lives, and tick Counted. ' + counted + " of " + T.TOOLS.length + ' counted so far.</p><div class="bar"><i style="width:' + Math.round(100 * counted / T.TOOLS.length) + '%"></i></div><div class="tg"><button data-f="" class="' + (S.f !== "uncounted" ? "on" : "") + '">Everything</button><button data-f="uncounted" class="' + (S.f === "uncounted" ? "on" : "") + '">Not counted yet</button></div></section>' +
+    return '<section class="panel" style="margin:12px 0"><div class="newbar"><h2>Count what we have</h2><button type="button" class="go sm" data-additem>Add a tool or material</button></div><p class="sub">Go shelf by shelf. Set how many we own and how many are out of service, where each lives, and tick Counted. ' + counted + " of " + T.TOOLS.length + ' counted so far.</p><div class="bar"><i style="width:' + Math.round(100 * counted / T.TOOLS.length) + '%"></i></div><div class="tg"><button data-f="" class="' + (S.f !== "uncounted" ? "on" : "") + '">Everything</button><button data-f="uncounted" class="' + (S.f === "uncounted" ? "on" : "") + '">Not counted yet</button></div></section>' +
       '<div class="tblw"><table class="tbl"><thead><tr><th>Item</th><th>Own</th><th>Out of service</th><th>Out now</th><th>Where</th><th>Counted</th><th></th></tr></thead><tbody>' + rows + "</tbody></table></div>";
   }
   async function saveRow(id, btn) {
@@ -356,8 +487,10 @@
     var wishes = {}; S.loans.filter(function (l) { return l.status === "wish"; }).forEach(function (l) { (wishes[l.item] = wishes[l.item] || []).push(l); });
     var rows = T.TOOLS.map(function (t) { var s = stock(t), buy = t.k === "material" ? (s.stock === "low" || s.stock === "out" || (!s.have && !S.inv[t.id]) ? 1 : 0) : Math.max(0, t.want - s.have); return { t: t, s: s, buy: buy, w: wishes[t.id] || [] }; }).filter(function (r) { return r.buy > 0 || r.w.length; })
       .sort(function (a, b) { return b.w.length - a.w.length || Object.keys(T.CATS).indexOf(a.t.c) - Object.keys(T.CATS).indexOf(b.t.c); });
-    var text = rows.map(function (r) { return (r.t.k === "material" ? "Restock: " : r.buy + " × ") + r.t.n + (r.w.length ? " (asked for by " + r.w.length + ")" : ""); }).join("\n");
+    var news = S.loans.filter(function (l) { return l.status === "wish" && l.item === "new"; });
+    var text = news.map(function (l) { return "New request: " + l.n + " (from " + first(l.name) + ")"; }).concat(rows.map(function (r) { return (r.t.k === "material" ? "Restock: " : r.buy + " × ") + r.t.n + (r.w.length ? " (asked for by " + r.w.length + ")" : ""); })).join("\n");
     return '<section class="panel" style="margin:12px 0"><h2>What to buy</h2><p class="sub">Everything below what a school our size should have, by what we\'ve counted. Items students asked for come first. Count first (Inventory), so we don\'t buy what we already own.</p><button class="ghost" data-copy>Copy the list</button> <span class="note" id="copied"></span><textarea id="shoptext" hidden>' + esc(text) + "</textarea></section>" +
+      '<section class="panel" style="margin:12px 0"><h2>New things students asked for (' + news.length + ')</h2>' + (news.length ? '<p class="sub">Not in the catalog yet. Add one to the catalog (with how many we have, if any) and the student is told when it\'s in.</p><ul class="loans">' + news.map(function (l) { return loanRow(l, '<button class="ghost sm" data-additem-from="' + l.id + '">Add to catalog</button><button class="ghost sm" data-decline="' + l.id + '">Not now</button>'); }).join("") + "</ul>" : '<p class="sub">None right now. Students ask from the Catalog with "Can\'t find it? Ask for it."</p>') + "</section>" +
       '<div class="tblw"><table class="tbl"><thead><tr><th>Item</th><th>Have</th><th>Aim for</th><th>Buy</th><th>Students asking</th></tr></thead><tbody>' + rows.map(function (r) {
         return "<tr><td>" + r.t.e + " " + esc(r.t.n) + "</td><td>" + (r.t.k === "material" ? esc({ ok: "In stock", low: "Low", out: "Out" }[r.s.stock] || "None") : r.s.have + (r.s.counted ? "" : " ?")) + "</td><td>" + (r.t.k === "material" ? "" : r.t.want) + "</td><td><b>" + (r.t.k === "material" ? "Restock" : r.buy) + "</b></td><td>" + (r.w.length ? r.w.map(function (l) { return esc(first(l.name)) + (l.note ? ": " + esc(l.note) : ""); }).join("; ") : "") + "</td></tr>";
       }).join("") + "</tbody></table></div><p class=\"note\">? means not counted yet.</p>";
@@ -390,6 +523,14 @@
     if (d.checkout !== undefined) { checkout(b); return; }
     if (d.save) { saveRow(d.save, b); return; }
     if (d.saveBadges !== undefined) { var items = [].map.call(document.querySelectorAll("[data-bdg]:checked"), function (x) { return x.dataset.bdg; }); saveBadges(S.kid, items, b); return; }
+    if (d.newreq !== undefined) { newReqForm(); return; }
+    if (d.sendnew !== undefined) { sendNew(b); return; }
+    if (d.additem !== undefined) { itemForm(null); return; }
+    if (d.additemFrom) { itemForm(null, d.additemFrom); return; }
+    if (d.edititem) { itemForm(d.edititem); return; }
+    if (d.saveitem !== undefined) { saveItem(d.saveitem, d.from, b); return; }
+    if (d.delitem) { delItem(d.delitem, b); return; }
+    if (d.stock) { stockIt(d.stock, b); return; }
     if (d.copy !== undefined) { var tx = $("#shoptext").value; (navigator.clipboard ? navigator.clipboard.writeText(tx) : Promise.reject()).then(function () { $("#copied").textContent = "Copied."; }).catch(function () { $("#shoptext").hidden = false; $("#shoptext").select(); }); return; }
     if (b.getAttribute("href") && /^#/.test(b.getAttribute("href")) && $("#dd").open) $("#dd").close();
   });

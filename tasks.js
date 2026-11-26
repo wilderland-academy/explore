@@ -113,10 +113,12 @@
       out.push({ id: "onboard", title: left.length ? "Finish onboarding" : "Onboarding finished", detail: left.length ? (STEPS.length - left.length) + " of " + STEPS.length + " steps done. Next: " + left[0][1] + "." : "Every part of the Guides site is open to you.", link: "/guides/onboarding/", done: !left.length });
     }
     // Tool Library desk: every guide can hand out and check in tools.
-    var loans = await query({ from: [{ collectionId: "toolLoans" }], where: (function () { var st = { fieldFilter: { field: { fieldPath: "status" }, op: "IN", value: { arrayValue: { values: [{ stringValue: "requested" }, { stringValue: "out" }] } } } }; return isTest() ? { compositeFilter: { op: "AND", filters: [st, eq("test", true)] } } : st; })(), limit: 300 }).catch(soft([]));
+    var loans = await query({ from: [{ collectionId: "toolLoans" }], where: (function () { var st = { fieldFilter: { field: { fieldPath: "status" }, op: "IN", value: { arrayValue: { values: [{ stringValue: "requested" }, { stringValue: "out" }, { stringValue: "wish" }] } } } }; return isTest() ? { compositeFilter: { op: "AND", filters: [st, eq("test", true)] } } : st; })(), limit: 300 }).catch(soft([]));
     loans = loans.filter(function (l) { return !!l.test === isTest(); });
     var asked = loans.filter(function (l) { return l.status === "requested"; }), late = loans.filter(function (l) { return l.status === "out" && l.due && l.due < today(); });
     if (asked.length) out.push({ id: "tools-asked", title: asked.length + " Tool Library request" + (asked.length === 1 ? "" : "s"), detail: "From " + asked.slice(0, 4).map(function (l) { return first(l.name); }).join(", ") + (asked.length > 4 ? "…" : "") + ". Hand it out or say not now.", link: "/guides/tools/#desk", done: false });
+    var wish = loans.filter(function (l) { return l.status === "wish"; });
+    if (wish.length) out.push({ id: "tools-wish", optional: true, title: "Students asked the Tool Library for " + wish.length + " thing" + (wish.length === 1 ? "" : "s"), detail: wish.slice(0, 3).map(function (l) { return l.n; }).join(", ") + (wish.length > 3 ? "…" : "") + ". Add them, stock them, or say not now.", link: "/guides/tools/#shop", done: false });
     if (late.length) out.push({ id: "tools-late", title: late.length + " tool" + (late.length === 1 ? " is" : "s are") + " late", detail: late.slice(0, 4).map(function (l) { return first(l.name) + " (" + l.n + ")"; }).join(", ") + (late.length > 4 ? "…" : "") + ".", link: "/guides/tools/#desk", done: false });
     if (!band) { out.noBand = true; return out; }
     var bandName = band === "K–1" ? "K–1" : "grades " + band;
