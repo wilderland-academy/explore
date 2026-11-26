@@ -153,6 +153,21 @@ details summary{cursor:pointer;font-weight:700}
 .pager .pg small{font:600 12px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;opacity:.7}
 .pager .pg b{font-size:17px;line-height:1.25}
 @media (max-width:560px){.pager{grid-template-columns:1fr}.pager .pg.next{grid-column:1;grid-row:1}.pager>span{display:none}}
+
+/* Inside Students (?embed=1: a student's Coaching tab, or the Coaching tab of the whole page), the session notebook
+   wears the Students page's light colors and type so it reads as part of that page, not a dark window into another site.
+   Lamp green becomes Wilderland green (with white text on it), ember and sky become readable reds and blues. */
+html.wl-embed{color-scheme:light;
+  --ink:#f5f1ea;--shelf:#fffdf9;--shelf2:#f1ebe1;--line:#ddd3c4;--paper:#231b24;--dim:#625a63;
+  --lamp:#015640;--forest:#015640;--lamp-bg:#e7f0e4;--ember:#b3261e;--ember-bg:#fdecea;--sky:#1d4e89;--sky-bg:#e8eef7;
+  --display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;--pgbg:#fffdf9}
+html.wl-embed .lede{color:var(--dim)}
+html.wl-embed .btn,html.wl-embed .chip[aria-pressed=true],html.wl-embed .rate button[aria-pressed=true],html.wl-embed .steps div::before{color:#fff}
+html.wl-embed .btn.warn,html.wl-embed .recbtn{color:#fff}
+html.wl-embed .say,html.wl-embed .bub.g{border-color:#bcd5b8}
+html.wl-embed .recbtn{box-shadow:0 0 0 8px rgba(179,38,30,.12)}
+html.wl-embed h1 span,html.wl-embed h2 span{color:var(--forest)}
+html.wl-embed .wrap{padding-left:0;padding-right:0}
 </style>
 <!-- Installable as the "Wilderland Guides" app (Add to Home Screen): /guides/app/ -->
 <link rel="manifest" href="/guides/app/manifest.webmanifest">

@@ -109,4 +109,4 @@ a.wl-ch{color:var(--green)}
 /* A student's Life Skills and Coaching tabs: those pages, framed (?embed=1), sized to their content by /wlnav.js. */
 .stabs{border-bottom:0;padding-bottom:0}
 iframe.embed{display:block;width:100%;min-height:420px;height:70vh;border:1px solid var(--line);border-radius:16px;background:#fff}
-iframe.embed.dark{background:#08140f;border-color:#28493d}
+.tab-intro{margin:0;max-width:820px}
