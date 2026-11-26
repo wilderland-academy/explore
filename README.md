@@ -544,3 +544,9 @@ the `PAGES` list at the top of `/search.js`.
 - **My goals**: the "What's expected" line is now a quiet status line (no box); the new-goal form is a light sheet with numbered steps; hero illustration in the Guides site's paper-cut style. `#new=life` / `#new=acad` open the form.
 - **Students home**: Treebeard Library card is an illustration of a library in the same style.
 - **Publish `firestore.rules`** (new: `incentives`, `guideGoals`, `behaviorLog`) or these features can't save.
+
+## Notifications for students and parents (Nov 25, 2026)
+- **Students** hear when a guide records a pass or a not yet, approves or answers their reward idea, sets a goal with them, shares 1:1 takeaways, and when their Suggestion Wall idea gets a vote, a reply or is accepted, or their Town Hall item goes on the agenda. The empty bell says so, in a student's words.
+- **Parents** now have the 🔔 on the Parents site (`/wlnav.js` adds it even though Parents pages have no account chip). They hear about each linked child's passes and not yets, goals set or finished, challenges and project ideas saved, challenges started, reward ideas approved, ideas accepted, Town Hall items on the agenda (not the item's words), goals set with a guide, and 1:1 takeaways. Not the Camp Store list. `notify.js`: `wlNotifyParents` (from a student's page) and `wlNotifyFamily` (from a guide's page: student plus linked parents).
+- **1:1 takeaways**: in the session room, a reviewed session has "Share takeaways with …": what you talked about and what they said they'd do, edited by the guide, with "Their parents see it too" (on by default). Saved to `coachShare/{session id}` (rules: only the student, the chosen parents and staff read it). Students see them on My goals ("From your 1:1s", `/goals/#oneonone`), parents on their child's profile. The notebook, transcript and coaching feedback stay private.
+- **Publish `firestore.rules`** again (new: `coachShare`).

@@ -116,7 +116,7 @@ function tellGuides() {
   if (SITE === "challenges") added(j(prev, "wl-picks"), j(now, "wl-picks")).forEach(id => out.push(["save", `${n} saved a challenge: “${ch(id)}”`]));
   if (SITE === "goals") {
     const a = (j(prev, "wl-goals") || {}).list || [], b = (j(now, "wl-goals") || {}).list || [], had = Object.fromEntries(a.map(g => [g.id, g]));
-    b.forEach(g => { const lab = g.label || g.text || "a goal"; if (!had[g.id]) out.push(["goal", `${n} set a goal: ${lab}`]); else if (g.done && !had[g.id].done) out.push(["goal", `${n} finished a goal: ${lab}`]); });
+    b.forEach(g => { const lab = g.label || g.text || "a goal"; if (!had[g.id] && !g.by) out.push(["goal", `${n} set a goal: ${lab}`]); else if (g.done && !had[g.id].done) out.push(["goal", `${n} finished a goal: ${lab}`]); });
   }
   if (SITE === "books") {
     const a = j(prev, "lantern-stacks") || {}, b = j(now, "lantern-stacks") || {};
@@ -130,6 +130,12 @@ function tellGuides() {
   const link = r0.sid ? "/guides/lifeskills/#s=" + r0.sid : "/guides/roster/";
   if (out.length > 4) window.wlNotifyGuides({ kind: out[0][0], text: `${n}: ${out.length} new things saved, including ${out[0][1].replace(n + " ", "")}`, link });
   else out.forEach(([kind, text]) => window.wlNotifyGuides({ kind, text, link }));
+  // Their linked parents hear about their progress too (not the Camp Store list, which stays private).
+  const fam = out.filter(([kind]) => kind !== "store");
+  if (window.wlNotifyParents && fam.length) {
+    if (fam.length > 4) window.wlNotifyParents({ kind: fam[0][0], text: `${n} saved ${fam.length} new things, including ${fam[0][1].replace(n + " ", "")}` });
+    else fam.forEach(([kind, text]) => window.wlNotifyParents({ kind, text }));
+  }
 }
 // A copy for the student's guides and linked parents (their profile on /parents/lifeskills/ and /guides/lifeskills/):
 // lsShared/{sid}/sites/{site}. Only these sites; the Camp Store list stays private. A failed copy never blocks a save.

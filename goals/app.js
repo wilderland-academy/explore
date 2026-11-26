@@ -78,8 +78,28 @@
     if (S.gg.length) save();
     if (added.length) { draw(); toast(added.length === 1 ? `${added[0].by} added a goal you set together.` : `Your guide added ${added.length} goals you set together.`); }
   }
+  // Takeaways a Field Guide shared after a 1:1 (coachShare, /fieldguide/): what they talked about and what the student
+  // said they'd do. Newest first; the latest is open.
+  async function loadOneOnOnes(r) {
+    const u = window.wlFirebase && window.wlFirebase.auth.currentUser, box = $("#oneonone"); if (!u || !r.email || !box) return;
+    const fam = { fieldFilter: { field: { fieldPath: "family" }, op: "ARRAY_CONTAINS", value: { stringValue: String(r.email).toLowerCase() } } };
+    const where = r.test ? { compositeFilter: { op: "AND", filters: [fam, { fieldFilter: { field: { fieldPath: "test" }, op: "EQUAL", value: { booleanValue: true } } }] } } : fam;
+    const res = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "coachShare" }], where, limit: 60 } }) });
+    if (!res.ok) throw new Error("1:1s " + res.status);
+    const arr = v => (v && v.arrayValue && v.arrayValue.values || []).map(val).filter(Boolean);
+    const xs = (await res.json()).filter(x => x.document).map(x => { const f = x.document.fields || {}; return { at: val(f.sessionAt) || val(f.at) || 0, by: val(f.byName) || "your guide", talked: arr(f.talked), actions: arr(f.actions), test: !!val(f.test) }; })
+      .filter(x => x.test === !!r.test).sort((a, b) => b.at - a.at);
+    if (!xs.length) { box.hidden = true; return; }
+    const day = ms => new Date(ms).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    const one = x => `${x.actions.length ? `<h3>What you said you'd do</h3><ul class="acts">${x.actions.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ul>` : ""}${x.talked.length ? `<h3>What you talked about</h3><ul>${x.talked.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}`;
+    box.innerHTML = `<h2>From your 1:1s</h2><p class="meta">With ${esc(xs[0].by)}, ${esc(day(xs[0].at))}. Turn what you said you'd do into a goal if it helps.</p>${one(xs[0])}` +
+      (xs.length > 1 ? `<details><summary>Earlier 1:1s (${xs.length - 1})</summary>${xs.slice(1, 10).map(x => `<p class="meta" style="margin-top:12px">With ${esc(x.by)}, ${esc(day(x.at))}</p>${one(x)}`).join("")}</details>` : "");
+    box.hidden = false;
+    if (/^#oneonone\b/.test(location.hash)) box.scrollIntoView({ block: "start" });
+  }
   function onRole(r) {
     ROLE = r || null;
+    if (r && r.role === "student") loadOneOnOnes(r).catch(e => console.warn("1:1 takeaways:", e));
     if (r && r.role === "student") pullGuideGoals(r).catch(e => console.warn("Goals from guides:", e));
     BAND = r && r.band || BAND;
     if (r && r.role === "student" && !S.grade && /^[2-8]$/.test(String(r.grade || "").trim())) { S.grade = String(r.grade).trim(); save(); }
