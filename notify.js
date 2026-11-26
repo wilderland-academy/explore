@@ -132,7 +132,7 @@
   var ALERT_CAT = { self_harm: "self-harm or suicide", harmed_by_others: "may be unsafe or harmed", threat_to_others: "threat to others", sexual: "sexual content",
     weapons_danger: "weapons or dangerous activity", drugs_alcohol: "drugs or alcohol", bullying_hate: "bullying or hate", distress: "upset or struggling",
     personal_info: "shared personal details", manipulation: "tried to get around the rules", cheating: "asked AI to do the work", profanity: "rude language",
-    off_topic: "off topic", tampering: "log tampering", coach_reply_held_back: "coach reply held back", coach_glitch: "a coach reply came out broken (technical)",
+    off_topic: "off topic", tampering: "log tampering", coach_reply_held_back: "coach reply held back", coach_glitch: "a coach reply came out broken (technical)", risky_project: "a project that needs an adult there",
     academic_use: "used the coach for academics", academic_interest: "wants to try the academics coach" };
   var seenIds = null, seenLoaded = false;   // read from the account, kept in step with every change
   function seenDoc() { return FS + "/accounts/" + user().uid + "/sites/alerts"; }
