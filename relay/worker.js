@@ -72,11 +72,31 @@ async function isStaff(email, token) {
   return r.ok;
 }
 
+// Claude 5 models think before answering unless told not to, and that thinking counts toward max_tokens. Every call here
+// was sized for an answer alone, so with thinking on, replies came back cut off, as a lone "*", or empty (Nov 2026). So
+// unless a call asks for thinking, it gets the lowest setting each model accepts: Haiku 5.5 "disabled", Sonnet 5.5
+// "between_tools" (it rejects "disabled"). Docs: platform.claude.com/docs/en/build-with-claude/thinking
+function quiet(payload) {
+  if (payload.thinking) return payload;
+  if (/haiku/.test(payload.model)) return { ...payload, thinking: { type: "disabled" } };
+  if (/sonnet-5-5/.test(payload.model)) return { ...payload, thinking: { type: "between_tools" } };
+  return payload;
+}
+// Busy or overloaded API (429, 529, 5xx) and dropped connections are retried twice, a moment apart, before giving up.
 async function claude(env, payload) {
-  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "content-type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" }, body: JSON.stringify(payload) });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) { const e = new Error((j.error && j.error.message) || "Claude API error " + r.status); e.status = r.status; throw e; }
-  return { text: (j.content || []).filter(b => b.type === "text").map(b => b.text).join(""), stop: j.stop_reason || "" };
+  const body = JSON.stringify(quiet(payload));
+  for (let i = 0; ; i++) {
+    let r, j;
+    try {
+      r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "content-type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" }, body });
+      j = await r.json().catch(() => ({}));
+    } catch (e) { if (i < 2) { await new Promise(res => setTimeout(res, 600 * (i + 1))); continue; } throw e; }
+    if (!r.ok) {
+      if (i < 2 && (r.status === 429 || r.status >= 500)) { await new Promise(res => setTimeout(res, 800 * (i + 1))); continue; }
+      const e = new Error((j.error && j.error.message) || "Claude API error " + r.status); e.status = r.status; throw e;
+    }
+    return { text: (j.content || []).filter(b => b.type === "text").map(b => b.text).join(""), stop: j.stop_reason || "" };
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -219,14 +239,17 @@ ${kind === "academic" ? `Academic help (this conversation): hint-only
 
 ` : ""}${kind === "find-challenge" ? `Helping the student find a challenge (this conversation)
 - <topic> lists the Life Skills challenges the student can choose from, one per line: an ID like EN-03.2, the life skill, then the "I can" sentence.
-- Start by asking what they're into lately or what they want to get better at. Ask one or two short questions to learn more (a hobby, something they want to try, a skill they're missing for their year goal).
-- Then suggest 2 or 3 challenges that fit, only from that list. Always write the ID exactly as listed in the format [EN-03.2] followed by a few words about why it fits them. The page turns [EN-03.2] into a link the student can tap to see the whole challenge.
-- Never invent challenges or IDs. If nothing fits, say so and ask another question. Once they pick one, help them make a first small step and suggest they save it to their plan.
+- Start by asking what they're into lately or what they want to get better at.
+- As soon as the student names any interest, hobby, goal or activity, even in a few words ("calisthenics", "a backflip", "hosting parties", "games with AI"), suggest 2 or 3 challenges in that same reply. Don't ask another question first, and never ask the same question twice. Kids answer in short phrases; treat every short phrase as an answer. You can add one short follow-up question after the suggestions.
+- Only suggest challenges from that list. Always write the ID exactly as listed in the format [EN-03.2] followed by a few words about why it fits them. The page turns [EN-03.2] into a link the student can tap to see the whole challenge.
+- Always find something. If no challenge is about their exact interest, use the challenges that let a student bring their own interest: a 30-day challenge they choose, drilling the hardest part of a skill they're learning, a training plan, a project on something they care about, saving toward a goal they choose, teaching or presenting a skill, planning an event, and the like. Read the "I can" sentences to find them, then say how their interest fits in ("your backflip could be your 30-day challenge").
+- Never invent challenges or IDs. Once they pick one, help them make a first small step and suggest they save it to their plan.
 
 ` : kind === "find-project" ? `Helping the student find a passion project (this conversation)
 - <topic> lists the kinds of projects on the Projects map ("Atlas of Sparks"), one per line: an id in double brackets like [[paint]], the kind's name, and what it is.
-- Start by asking what they're into lately, what they wish existed, or a problem they've noticed. Ask one or two short follow-up questions.
-- Then suggest 2 or 3 kinds of projects that fit, only from that list, each written with its id in double brackets exactly as listed, like [[paint]], plus one small, specific project idea of your own in that kind that fits what they told you. The page turns [[paint]] into a link to that part of the map, where they'll find real examples and more sparks.
+- Start by asking what they're into lately, what they wish existed, or a problem they've noticed.
+- As soon as the student names any interest, even in a few words, suggest ideas in that same reply; don't ask another question first, and never ask the same question twice. Kids answer in short phrases; treat every short phrase as an answer.
+- Suggest 2 or 3 kinds of projects that fit, only from that list, each written with its id in double brackets exactly as listed, like [[paint]], plus one small, specific project idea of your own in that kind that fits what they told you. The page turns [[paint]] into a link to that part of the map, where they'll find real examples and more sparks.
 - Keep ideas small enough to start this week. Never write the project for them. Once they pick one, help them plan a tiny first version.
 
 ` : kind === "conflict" ? `Working through a conflict (this conversation), using Wilderland's Behavior Policy
@@ -270,6 +293,22 @@ const SCRIPTS = {
   distress_note: ""
 };
 const NEXT_BACK = ["Let's get back to work", "Help me with the next step", "What should I try first?"];
+// When no AI reply can be shown (rare: two drafts held back, or none came back), a fixed line that fits the conversation,
+// so the student can keep going instead of being asked a question that doesn't match what they were doing.
+const FALLBACK = {
+  "find-challenge": "Hmm, I tripped over my own tail there. Tell me one thing you like doing or want to get better at, in a few words, and I'll pick some challenges for it.",
+  "find-project": "Hmm, I tripped over my own tail there. Tell me one thing you love, or something you wish existed, and I'll suggest some project ideas.",
+  conflict: "Sorry, I lost my place for a second. Can you tell me again, in a sentence or two, what happened?",
+  lesson: "Sorry, I lost my place for a second. Want to keep going with the lesson?",
+  academic: "Sorry, I lost my place for a second. What's the question you're working on, and what have you tried so far?",
+  challenge: "Sorry, I lost my place for a second. Which part of this do you want help with right now?"
+};
+const NEXT_FOR = {
+  "find-challenge": ["I like sports", "I like building things", "I like art"],
+  "find-project": ["I love animals", "I like making videos", "I want to build something"],
+  conflict: ["Okay, here's what happened", "I need to calm down first"],
+  lesson: ["Yes, keep going", "Can you explain that again?"]
+};
 
 // Models sometimes wrap the JSON in a code fence or add a sentence around it. Try each {...} block from the last one back.
 function parseJSON(t) {
@@ -476,18 +515,36 @@ async function coach(req, env, who, token, staff, body, out) {
     const first = `<topic kind="${kind}" id="${topicId}">${topicTitle ? "Title: " + topicTitle + "\n" : ""}${context}</topic>\n\n`;
     messages.push({ role: "user", content: (messages.length ? "" : first) + message });
     if (messages.length > 1) messages[0] = { role: "user", content: first + messages[0].content };
-    try {
-      const r = await claude(env, { model: COACH_MODEL, max_tokens: 500, system: coachSystem(band, kind), messages });
-      ({ reply, next } = splitNext(r.text));
-    } catch (e) { return out(e.status === 429 ? 429 : 502, { error: "The coach is busy right now. Try again in a minute." }); }
+    // A whole reply, never a cut-off one: if it stops at the token limit (or comes back empty), it's written again with
+    // more room. The system prompt keeps replies short, so this is rare.
+    const write = async (extra) => {
+      const sys = coachSystem(band, kind) + (extra ? "\n\n" + extra : "");
+      let r = await claude(env, { model: COACH_MODEL, max_tokens: 1200, system: sys, messages });
+      if (r.stop === "max_tokens" || !splitNext(r.text).reply) r = await claude(env, { model: COACH_MODEL, max_tokens: 2400, system: sys, messages });
+      return r.stop === "max_tokens" ? { reply: "", next: [] } : splitNext(r.text);
+    };
+    const check = async () => checkReply(env, message, reply + (next.length ? "\n[Buttons the student can tap: " + next.join(" | ") + "]" : ""), kind);
+    try { ({ reply, next } = await write()); }
+    catch (e) { return out(e.status === 429 ? 429 : 502, { error: "The coach is busy right now. Try again in a minute." }); }
     // 4. Check the coach's reply before the student sees it. If the check fails, the reply is not shown (fail closed).
-    // The suggested-reply buttons are checked too, since the student sees them.
+    // The suggested-reply buttons are checked too, since the student sees them. A reply the check holds back gets one
+    // rewrite, told why, and is checked again; only if that one is held back too does the student get a fixed line.
     let c, down = false;
-    try { c = await checkReply(env, message, reply + (next.length ? "\n[Buttons the student can tap: " + next.join(" | ") + "]" : ""), kind); } catch (e) { c = { ok: false }; down = true; }
+    if (reply) {
+      try { c = await check(); } catch (e) { c = { ok: false }; down = true; }
+      if (!down && !c.ok) {
+        const why = c.reason || "it didn't pass the safety check";
+        try {
+          ({ reply, next } = await write(`Your previous draft of this reply was held back by the safety check, because: ${why}. Write a new, complete reply that fixes that. Keep it short and finish every sentence.`));
+          c = reply ? await check() : { ok: false, reason: why };
+        } catch (e) { c = { ok: false, reason: why }; }
+        if (!c.ok) blocked = c.reason || why;
+      }
+    }
     if (down) { reply = "The coach couldn't double-check its answer just now, so it won't show it. Try again in a minute."; next = ["Try again"]; blocked = ""; }
-    else if (!c.ok) { blocked = c.reason || "failed the safety check"; reply = "Hmm, let me try that a different way. Which part of your work do you want help with right now?"; next = NEXT_BACK; }
+    else if (blocked) { reply = FALLBACK[kind] || FALLBACK.challenge; next = NEXT_FOR[kind] || NEXT_BACK; }
   }
-  if (!reply) { reply = "Can you tell me a little more about what you're working on?"; }
+  if (!reply) { reply = FALLBACK[kind] || FALLBACK.challenge; next = NEXT_FOR[kind] || NEXT_BACK; }
 
   // 5. Save the coach's turn, update the conversation, and alert staff when needed.
   const at2 = Date.now();

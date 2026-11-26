@@ -70,7 +70,8 @@ dialog.wlc-beside[open]{position:fixed;inset:16px calc(var(--wlc-w) + 16px) 16px
 .wlc-intro ol,.wlc-intro ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
 .wlc-intro li b{display:block}
 .wlc-intro .why{background:#f2f8dc;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:15px}
-.wlc-chips{display:flex;flex-wrap:wrap;gap:8px;padding:4px 14px 10px}
+.wlc-chips{display:flex;flex-wrap:wrap;gap:8px;padding:4px 14px 10px;max-height:38%;overflow-y:auto;flex:none}
+.wlc-chips:has(.wlc-home){max-height:none}
 .wlc-chip{border:1.5px solid #015640;background:#fff;color:#015640;border-radius:999px;padding:7px 13px;font:600 14px/1.2 inherit;cursor:pointer;text-align:left}
 .wlc-chip:hover{background:#eef4d6}
 .wlc-foot{border-top:1px solid #e1e7d6;padding:10px 12px 12px;background:#fff}
@@ -137,6 +138,10 @@ function mount() {
     <p class="wlc-hint">Good questions say what you're working on, what you tried, and what help you want. <a href="/coach/">All my chats</a></p></div>`;
   document.body.append(box);
   el = { box, log: box.querySelector("#wlc-log"), chips: box.querySelector("#wlc-chips"), form: box.querySelector("#wlc-form"), input: box.querySelector("#wlc-in"), send: box.querySelector(".wlc-send"), topic: box.querySelector("#wlc-topic") };
+  // The reply buttons sit below the messages and take room from them as they appear, which used to cover the end of
+  // Mr. Fox's newest message. Whenever the buttons (or the panel) change size, the newest message is scrolled back
+  // into view.
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => settle()); ro.observe(el.chips); ro.observe(el.log); }
   box.querySelector(".wlc-x").addEventListener("click", close);
   // Phones only: grow the coach to (almost) full height and back. On wide screens it is always full height beside the page.
   box.querySelector(".wlc-size").addEventListener("click", e => { const big = box.classList.toggle("big"); e.currentTarget.setAttribute("aria-pressed", String(big)); e.currentTarget.setAttribute("aria-label", big ? "Make the coach smaller" : "Make the coach bigger"); });
@@ -194,8 +199,18 @@ function bubble(role, text) {
     linkify(d, parts[0].trim());
     parts.slice(1).forEach(p => { const t = document.createElement("span"); t.className = "tip"; linkify(t, p.trim()); d.appendChild(t); });
   } else d.textContent = text;
-  el.log.appendChild(d); el.log.scrollTop = el.log.scrollHeight;
+  el.log.appendChild(d); settle();
   return d;
+}
+// Keep the newest message in view: all of it when it fits, otherwise its beginning (so a long reply is read from the top).
+function settle() {
+  if (!el) return;
+  requestAnimationFrame(() => {
+    const last = el.log.lastElementChild; if (!last) return;
+    const lr = el.log.getBoundingClientRect(), br = last.getBoundingClientRect();
+    if (br.height > lr.height - 24) el.log.scrollTop += br.top - lr.top - 12;
+    else el.log.scrollTop = el.log.scrollHeight;
+  });
 }
 // Turn [EN-03.2] (a challenge) and [[paint]] (a project kind on the Projects map) into links. Everything else stays text.
 function linkify(el, text) {

@@ -676,20 +676,25 @@ function savedPanel(sid, parent) {
     n ? h("div", { class: "grid2" }, W.skills.filter(k => by[k.k]).map(k => h("div", { class: "panel" }, [h("p", { class: "sklbl", style: { color: k.col }, text: k.n }), savedList(by[k.k])])))
       : h("p", { class: "empty", text: S.saved === null ? "Couldn't read saved challenges." : parent ? "Nothing saved yet. Students save challenges on the Challenges site at school." : "Nothing saved (or they haven't signed in on Challenges yet)." })]);
 }
-// Books (finished: loved it, or read it and not for them; and want to read) and saved project ideas, from the
-// student sites. Guides and parents see it on the student's profile.
+// Reading and project ideas on the student's profile (guides, parents, the student).
+// "Books finished this year" is only books a student truly finished this school year, which will come from Basecamp
+// (not connected yet, Nov 2026). The Books site's "loved it" and "not for me" lists are a student's tastes, from any
+// time in their life, so they're shown as that and never counted as books finished.
 function readingPanel(sid, opts) {
   const name = firstName(S.students[sid].name), b = S.books[sid] || { saved: [], want: [], nope: [] }, sparks = S.sparks[sid] || [];
   if (!BOOKT && (b.saved.length || b.want.length || b.nope.length)) bookTitles().then(route);
   const t = id => (BOOKT || {})[id] || "…";
   const list = (items, empty) => items.length ? h("ul", { class: "plain-list" }, items) : h("p", { class: "empty", text: empty });
-  const finished = b.saved.map(id => h("li", {}, [h("span", { text: t(id) }), h("span", { class: "small muted", text: " · loved it" })]))
-    .concat(b.nope.map(id => h("li", {}, [h("span", { text: t(id) }), h("span", { class: "small muted", text: " · read it, not for " + (opts.self ? "me" : "them") }) ])));
+  const tastes = b.saved.map(id => h("li", {}, [h("span", { text: t(id) }), h("span", { class: "small muted", text: " · loved it" })]))
+    .concat(b.nope.map(id => h("li", {}, [h("span", { text: t(id) }), h("span", { class: "small muted", text: " · not for " + (opts.self ? "me" : "them") }) ])));
   return h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
     h("h2", { class: "h", text: "Reading and project ideas" }),
-    h("p", { class: "small muted", text: `What ${name} has saved on the Books and Projects sites at school.` }),
-    h("div", { class: "grid3" }, [
-      h("div", { class: "panel stack" }, [h("h3", { class: "h", text: `Books finished (${finished.length})` }), list(finished, "None marked yet.")]),
+    h("div", { class: "grid2" }, [
+      h("div", { class: "panel stack" }, [h("h3", { class: "h", text: "Books finished this year" }),
+        h("p", { class: "empty", text: "Coming from Basecamp. Once it's connected, the books " + (opts.self ? "you finish" : name + " finishes") + " this school year will show here." })]),
+      h("div", { class: "panel stack" }, [h("h3", { class: "h", text: `Book tastes (${tastes.length})` }),
+        h("p", { class: "small muted", text: (opts.self ? "Books you've" : "Books " + name + " has") + " read at some point and loved, or that weren't for " + (opts.self ? "you" : "them") + ", from the Books site. Not a list of books finished this year." }),
+        list(tastes, "None marked yet.")]),
       h("div", { class: "panel stack" }, [h("h3", { class: "h", text: `Wants to read (${b.want.length})` }), list(b.want.map(id => h("li", { text: t(id) })), "None saved yet.")]),
       h("div", { class: "panel stack" }, [h("h3", { class: "h", text: `Project ideas saved (${sparks.length})` }), list(sparks.map(x => h("li", { text: x.t })), "None saved yet.")])
     ])
