@@ -587,3 +587,9 @@ the `PAGES` list at the top of `/search.js`.
   "Read it together" home shelf, and from other books for that age. They don't appear in recommendations from older books,
   in home shelves, Moments or New ground for older readers, and they sort last on tag pages for them (`isPic`, `youngR`,
   `near`, `forReader` next to `allowed()`). The K–1 band's starting shelf now opens with picture books.
+- **Covers (Nov 26, 2026).** 368 K–1 books now have real covers from Open Library, on new sprite sheets `books/s/9–12.jpg`
+  (one `Object.assign(SPR, ...)` line after `SPR`): 298 of the new picture books and 70 older early readers and picture books.
+  Each was matched by title and author, then checked by eye; foreign-language editions, audiobook packaging, box sets and
+  sequels were swapped for the right English edition. Wide covers are shown whole on a blurred backdrop instead of cropped.
+  12 still use drawn covers because Open Library had no good match (The True Story of the 3 Little Pigs!, There's a Nightmare
+  in My Closet, Henry and Mudge: The First Book, Poppleton, Press Start, Stink, Geronimo Stilton and a few nonfiction readers).
