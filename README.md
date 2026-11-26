@@ -645,3 +645,24 @@ the `PAGES` list at the top of `/search.js`.
   (anyone, 2nd grade and up). "Projector and speaker" is now just Projector, and its note points to the speaker.
 - **Tested:** rules in the Firestore emulator (42 cases, 5 new) and the page in jsdom (51 cases, 5 new).
 - **Publish `firestore.rules`** in the Firebase console to turn on the K–1 backstop. The page changes work without it.
+
+## Weekly 1:1s: student-led, scored, with check-ins (Nov 26, 2026)
+Based on Alpha School's Limitless Meetings (Future of Education podcast).
+- **Weekly 1:1s page (`/fieldguide/#oneonone`)** now has the rules (one-on-one but never behind a closed door, the student
+  drives, any goal counts, no shame, end with accountability), seven moves (help them prepare → read last week → start with
+  their list → check the commitment → find the goal and what it's for → make it small → close with a check-in time),
+  questions that go deeper, "keep their hands busy" ideas, and 10 to 30 minutes instead of 10 to 20. New "stuck" prompts.
+- **AI review (`SESSION_PROMPT` in `fieldguide/data.js`)** adds an overall rating (exceeds / meets / below expectations) and
+  scores for Student-led, Depth and Accountability, plus the check-in time, the life skill the goal builds, and rough counts of
+  the guide's questions vs statements. Talk share and counts are only kept for recordings.
+- **Leadership sees ratings and scores.** Firestore `coachScores/{session id}`: guide, band, mode, minutes, date, rating and
+  scores only (no student name, notes, transcript or quotes). Guides write their own once (no edits); admins read all and can
+  delete. Admin tab shows a 30-day table by guide. Guides are told on the Weekly 1:1s page, every session, the notebook and
+  onboarding. Only sessions reviewed from Nov 26, 2026 are shared; older ones stay private as promised.
+- **Students bring the agenda.** "For my next 1:1" on My goals (`/goals/#oneonone`) saves `coachAgenda/{sid}` (up to 8 lines);
+  the guide sees it first, as "<name>'s topics for today", on the student's Coaching tab.
+- **Accountability.** The notes form's last field is now "Check-in" (day and time the student chose). Takeaways (`coachShare`)
+  carry `checkIn`; students see "When <guide> will check in" on My goals, parents on their child's profile, and the guide sees
+  "You said you'd check in" before the next 1:1.
+- **Publish `firestore.rules`** (new: `coachScores`, `coachAgenda`, `checkIn` on `coachShare`). Until then, scores and agendas
+  don't save, and takeaways send without the check-in.

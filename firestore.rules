@@ -281,13 +281,31 @@ service cloud.firestore {
     match /coachShare/{id} {
       allow read: if staffSchool() || (verified() && me() in resource.data.family) || (tester() && resource.data.test == true);
       allow create, update: if (staffSchool() || (tester() && request.resource.data.test == true))
-        && request.resource.data.keys().hasOnly(['sid', 'name', 'band', 'family', 'talked', 'actions', 'by', 'byName', 'at', 'sessionAt', 'test'])
+        && request.resource.data.keys().hasOnly(['sid', 'name', 'band', 'family', 'talked', 'actions', 'checkIn', 'by', 'byName', 'at', 'sessionAt', 'test'])
         && request.resource.data.sid is string
         && request.resource.data.family is list && request.resource.data.family.size() <= 8
         && request.resource.data.talked is list && request.resource.data.talked.size() <= 12
         && request.resource.data.actions is list && request.resource.data.actions.size() <= 12
         && request.resource.data.at is int;
       allow delete: if staffSchool();
+    }
+    // ---- 1:1 ratings and scores leadership sees (/fieldguide/ Admin), for feedback sessions with guides ----
+    // No student name, notes, transcript or quotes. A guide writes their own once per session (no edits, so a score
+    // can't be re-rolled) and reads their own; admins read everyone's and can delete. Guides are told on every session.
+    match /coachScores/{id} {
+      allow read: if isAdmin() || (staffSchool() && resource.data.by == me()) || (tester() && resource.data.test == true);
+      allow create: if ((staffSchool() && request.resource.data.by == me()) || (tester() && request.resource.data.test == true))
+        && request.resource.data.keys().hasOnly(['by', 'byName', 'band', 'mode', 'mins', 'at', 'rating', 'standards', 'support', 'autonomy', 'studentLed', 'depth', 'accountability', 'talk', 'questions', 'statements', 'checkIn', 'confidence', 'test'])
+        && request.resource.data.rating in ['exceeds', 'meets', 'below', ''];
+      allow delete: if isAdmin();
+    }
+    // ---- What a student wants to talk about at their next 1:1 (My goals, /goals/) ----
+    // The student writes their own (by roster id); staff read it before the meeting.
+    match /coachAgenda/{sid} {
+      allow read: if staffSchool() || lsSelf(sid) || testStudent(sid);
+      allow write: if (lsSelf(sid) || testStudent(sid))
+        && request.resource.data.keys().hasOnly(['items', 'at', 'test'])
+        && request.resource.data.items is list && request.resource.data.items.size() <= 8;
     }
     // ---- Behavior incidents (/guides/roster/: each student's page and Coaching tab) ----
     // Staff only: facts, tier and whether the restore is signed off. Never readable by students or parents.

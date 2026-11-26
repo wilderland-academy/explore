@@ -610,6 +610,7 @@ function oneOnOnePanel(sid) {
       xs.slice(0, 3).forEach((x, i) => box.append(...[
         h("p", { class: "small muted", style: i ? { marginTop: "12px" } : {}, text: `With ${x.byName || "their guide"}, ${day(x.sessionAt || x.at)}` }),
         (x.actions || []).length ? h("div", {}, [h("b", { text: `What ${name} said they'd do` }), h("ul", {}, x.actions.map(t => h("li", { text: t })))]) : null,
+        x.checkIn ? h("div", {}, [h("b", { text: "When their guide will check in" }), h("p", { text: x.checkIn })]) : null,
         (x.talked || []).length ? h("div", {}, [h("b", { text: "What they talked about" }), h("ul", {}, x.talked.map(t => h("li", { text: t })))]) : null].filter(Boolean)));
     } catch (e) { box.replaceChildren(h("h2", { class: "h", text: "From 1:1s with their Field Guide" }), h("p", { class: "muted", text: "Couldn't load these right now." })); }
   })();
