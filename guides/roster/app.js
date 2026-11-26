@@ -181,7 +181,7 @@ async function bookTitles() {
 function tabs(cur) {
   const open = S.alerts.filter(a => a.status === "open").length;
   return `<nav class="tabs" aria-label="Students">
-    <a href="#roster"${cur === "roster" ? ' aria-current="page"' : ""}>Students and parents</a>
+    <a href="#roster"${cur === "roster" ? ' aria-current="page"' : ""}>Roster</a>
     <a href="#info"${cur === "info" ? ' aria-current="page"' : ""}>Pickup, allergies &amp; photos</a>
     <a href="#alerts"${cur === "alerts" ? ' aria-current="page"' : ""}>Alerts <span class="count${open ? "" : " zero"}">${open}</span></a>
     <a href="#chats"${cur === "chats" ? ' aria-current="page"' : ""}>All AI conversations</a>
@@ -243,7 +243,7 @@ function vEdit(sid, preEmail) {
   const pre = preEmail ? S.people[key(preEmail)] || {} : {};
   const v = s || { name: pre.name || "", band: pre.band || "2–4", grade: "", email: preEmail || "", guide: S.me, parents: [] };
   return `<p class="crumb"><a href="${s ? "#s=" + encodeURIComponent(pkey(s)) : "#roster"}">← ${s ? esc(s.name) : "Roster"}</a></p>` +
-    head(s ? "Edit " + esc(s.name) : "Add a student", "Each parent signs in with the exact email you put here and sees only this child: their Life Skills record and the Labs schedule for their band.") + (s && s.viewOnly ? `<p class="note err">This is a real student. In a Test view you can look, but saving is turned off. Try editing Test Student.</p>` : "") +
+    head(s ? "Edit " + esc(s.name) + "'s profile" : "Add a student", "Their name, band and grade, sign-in, guide and parents. Each parent signs in with the exact email you put here and sees only this child: their Life Skills record and the Labs schedule for their band.") + (s && s.viewOnly ? `<p class="note err">This is a real student. In a Test view you can look, but saving is turned off. Try editing Test Student.</p>` : "") +
     `<form class="card form" id="stu" data-sid="${esc(sid || "")}" novalidate>
       <div class="grid2"><label>Full name<input class="in" name="name" maxlength="60" value="${esc(v.name)}" autocomplete="off" required></label>
       <div class="row" style="align-items:flex-end"><label style="flex:1">Band<select class="in" name="band">${BANDS.map(b => `<option value="${b}"${v.band === b ? " selected" : ""}>Grades ${b}</option>`).join("")}</select></label><label style="width:90px">Grade<input class="in" name="grade" maxlength="2" value="${esc(v.grade || "")}" placeholder="3" style="min-width:0"></label></div></div>
@@ -403,7 +403,7 @@ async function vStudent(k, tab = "s") {
   return (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") + `<p class="crumb"><a href="#roster">← Roster</a></p>` +
     head(esc(p.name || p.email), `${p.band ? "Grades " + esc(p.band) + (p.grade ? ", grade " + esc(p.grade) : "") + " · " : ""}${esc(p.school || (p.sid ? "no student sign-in" : p.email))}${p.guide ? " · Guide: " + esc(p.guide) : ""}${p.coach ? ` · Mr. Fox: ${p.coach.count || 0} messages on ${esc(p.coach.day || "")}` : ""}`) +
     studentTabs(p, k, "s") +
-    `<div class="row">${p.sid ? `<a class="btn" href="#edit=${esc(p.sid)}">Edit student and parents</a>` : `<a class="btn" href="#add=${encodeURIComponent(p.email)}">Add to the roster</a>`}</div>` +
+    `<div class="row">${p.sid ? `<a class="btn" href="#edit=${esc(p.sid)}">Edit student profile</a>` : `<a class="btn" href="#add=${encodeURIComponent(p.email)}">Add to the roster</a>`}</div>` +
     (p.sid ? `<section class="card"><h3>Parents (${(p.parents || []).length})</h3>${(p.parents || []).length ? `<ul class="items">${p.parents.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : `<p class="muted small">No parents linked yet. <a href="#edit=${esc(p.sid)}">Add their emails</a>.</p>`}</section>` : "") +
     (p.alerts.filter(a => a.status === "open").length ? `<div class="list">${p.alerts.filter(a => a.status === "open").map(alertCard).join("")}</div>` : "") +
     (allowed ? `<div class="grid2">
