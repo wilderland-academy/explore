@@ -226,6 +226,8 @@ const PRODUCTS = [
 // a guide together) or earned by the whole crew with a guide who chose to take part.
 // Not for K–1: incentives start in 2nd grade, so nothing here is offered to K–1 (Nov 25, 2026).
 // g = grade bands it suits (24 58), lim = how often, sup = a rule that comes with it.
+// Movie rewards are off (Nov 25, 2026) until the school has a public performance movie license (Swank, priced by
+// enrollment). Showing a movie as a reward needs one. Turn x-movielunch and x-movienight back on by removing off:true.
 const EXPERIENCES = [
   // Play with the guides (guides opt in; both sides play, or the whole crew earns it)
   {id:"x-pie", n:"Crew pie: your crew earns a pie for a guide", e:"🥧", b:200, g:"24 58", lim:"Once a month per crew", why:"Pool blazes with your crew. When you get there, a guide who volunteered takes a whipped-cream pie, the crew picks who throws it, and then the guide gets to pie one volunteer back.", sup:"Only guides who volunteer. Outside, with towels ready."},
@@ -236,7 +238,7 @@ const EXPERIENCES = [
   {id:"x-nickname", n:"Give a guide a nickname for a day", e:"🏷️", b:20, g:"24 58", lim:"Once a week", why:"Everyone, guides included, has to call them by it until pickup.", sup:"Kind names only; the guide can veto one."},
   // Friends and food
   {id:"x-restaurantlunch", n:"Order lunch in for you and a friend", e:"🍔", b:70, g:"24 58", lim:"One a week", why:"Pick from a few local spots and a guide brings it in. You and your friend eat it somewhere better than the usual table.", sup:"Up to about $25 for the two of you; families okay any allergies."},
-  {id:"x-movielunch", n:"Movie lunch with three friends", e:"🍿", b:60, g:"24 58", lim:"Two a month", why:"Pizza, popcorn and the first part of a movie you pick from the approved list, in a room just for you four.", sup:"Guide-approved movies, shown under the school's movie license; a guide nearby."},
+  {id:"x-movielunch", off:true, n:"Movie lunch with three friends", e:"🍿", b:60, g:"24 58", lim:"Two a month", why:"Pizza, popcorn and the first part of a movie you pick from the approved list, in a room just for you four.", sup:"Guide-approved movies, shown under the school's movie license; a guide nearby."},
   {id:"x-cookies", n:"Fancy cookie box for your crew", e:"🍪", b:90, g:"24 58", lim:"Once a month", why:"A box of the big bakery cookies, delivered at lunch. You hand them out. Everyone knows who brought them.", sup:"Families okay any allergies."},
   {id:"x-cocoabar", n:"Hot cocoa bar for you and three friends", e:"☕", b:30, g:"24 58", lim:"Any week in winter", why:"Whipped cream, marshmallows, sprinkles, candy canes. After sledding is best.", sup:""},
   {id:"x-lunchguide", n:"Pizza lunch with your favorite guide and two friends", e:"🍕", b:45, g:"24 58", lim:"Two a week, school-wide", why:"Pizza's on us. The guide brings the stories.", sup:"In an open spot on campus."},
@@ -250,7 +252,7 @@ const EXPERIENCES = [
   {id:"x-watermelon", n:"Exploding watermelon challenge", e:"🍉", b:60, g:"24 58", lim:"Warm months, twice a month", why:"Your crew guesses how many rubber bands it takes, then everyone adds them one at a time until the watermelon bursts. Closest guess gets the first slice.", sup:"Outside, goggles on, and nobody leans over the melon."},
   {id:"x-dryice", n:"Dry ice fog show and smoke bubbles", e:"🌫️", b:70, g:"24 58", lim:"Twice a month", why:"Buckets of rolling fog, bubbles full of smoke you can bounce on a glove, and a smoke-ring cannon.", sup:"Only guides touch the dry ice, with thick gloves or tongs. Outside or in a well-aired room, and nothing sealed shut with dry ice inside."},
   {id:"x-rockets", n:"Water rocket launch day", e:"🚀", b:60, g:"24 58", lim:"Warm months, twice a month", why:"Turn a soda bottle into a rocket, pump it up, and launch it over the field. Longest flight wins bragging rights.", sup:"A guide runs the launcher, and everyone stands behind the line."},
-  {id:"x-movienight", n:"Crew movie night at school", e:"🎬", b:300, g:"24 58", lim:"Once a term", why:"Your crew back at school in the evening: pajamas, blankets, popcorn, a giant screen and a movie you all vote on.", sup:"A guide-approved movie, shown under the school's movie license. Families sign up and pick up; two adults minimum."},
+  {id:"x-movienight", off:true, n:"Crew movie night at school", e:"🎬", b:300, g:"24 58", lim:"Once a term", why:"Your crew back at school in the evening: pajamas, blankets, popcorn, a giant screen and a movie you all vote on.", sup:"A guide-approved movie, shown under the school's movie license. Families sign up and pick up; two adults minimum."},
   // Your own space and time
   {id:"x-lounge", n:"Lounge pass for a week", e:"🛋️", b:60, g:"58", lim:"A few passes at a time", why:"The best room in the school, during free time and lunch, for you and anyone you invite.", sup:"Guides choose the room; it stays in sight."},
   {id:"x-fort", n:"Build a giant fort with your friends", e:"🏰", b:35, g:"24 58", lim:"One a week", why:"Blankets, tarps, rope, snow or sticks: one free block to build it, and you get to eat lunch in it.", sup:""},
@@ -271,7 +273,7 @@ const EXPERIENCES = [
   {id:"x-campfire", n:"Campfire and s'mores for your crew", e:"🏕️", b:80, g:"24 58", lim:"Two a month", why:"You call it. The guide builds the fire and brings the marshmallows.", sup:"A guide runs the fire."},
   // Good news home
   {id:"x-bragcall", n:"Brag call home", e:"📞", b:15, g:"24 58", lim:"Any week", why:"A guide calls your family to tell them something specific you did well. Just them, not the whole school.", sup:""},
-];
+].filter(x => !x.off);   // off: true hides an experience for now (kept here so it can come back)
 
 // ---- Who each product appeals to most (grade bands: 24 = 2–4, 58 = 5–8; the store isn't for K–1) ----
 // The age on a product (a) is the youngest it is safe and usable for. This is different: the bands where kids actually want it.
@@ -300,5 +302,5 @@ const APPEAL = {
 // From grade 2 up, experiences are mixed in near the top; around 4th grade they start to beat toys.
 const FEATURED = {
   "2–4": ["x-pie","x-toothpaste","lego-classic","x-nerf","x-watermelon","gravitrax","x-snowfight","perplexus","kendama","x-fort","snap-jr","fossils","x-crewparty","mcisland","minihoop","rushhour"],
-  "5–8": ["x-pie","x-toothpaste","x-lounge","x-restaurantlunch","x-movienight","spikeball","x-nerf","hydroflask","x-movielunch","kanken","x-headphones","leatherman","x-crewparty","instax","x-lockin","codenames","catan","x-snowfight"]
+  "5–8": ["x-pie","x-toothpaste","x-lounge","x-restaurantlunch","spikeball","x-nerf","hydroflask","kanken","x-headphones","leatherman","x-crewparty","instax","x-lockin","codenames","catan","x-snowfight"]
 };
