@@ -15,7 +15,8 @@
 // Parents get the bell too (Parents site), for their children's progress. Parents never send.
 // Staff also get every open Mr. Fox alert (aiAlerts, status "open", the same list as Students › Alerts) as a notification,
 // except technical ones (wlTechAlert in /wlnav.js), which only the tech admin gets. An alert leaves the bell once a guide
-// marks it reviewed in Students; "read" for an alert just means this person has seen it (wlNotes "seen" ids below).
+// marks it reviewed in Students; "read" for an alert means this person has seen it, kept on their account
+// (accounts/{uid}/sites/alerts, field seen: alert ids; firestore.rules) so it's the same on every device.
 (function () {
   if (window.wlNotify) return;
   var FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
@@ -133,16 +134,38 @@
     personal_info: "shared personal details", manipulation: "tried to get around the rules", cheating: "asked AI to do the work", profanity: "rude language",
     off_topic: "off topic", tampering: "log tampering", coach_reply_held_back: "coach reply held back", coach_glitch: "a coach reply came out broken (technical)",
     academic_use: "used the coach for academics", academic_interest: "wants to try the academics coach" };
-  var SEEN_KEY = "wl-alerts-seen";
-  function seen() { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"); } catch (e) { return []; } }
-  function addSeen(ids) { try { var s = seen(); ids.forEach(function (i) { if (s.indexOf(i) < 0) s.push(i); }); localStorage.setItem(SEEN_KEY, JSON.stringify(s.slice(-500))); } catch (e) { } }
+  var seenIds = null, seenLoaded = false;   // read from the account, kept in step with every change
+  function seenDoc() { return FS + "/accounts/" + user().uid + "/sites/alerts"; }
+  async function loadSeen() {
+    // Re-read each time the bell refreshes, so something marked read on another device clears here too.
+    var had = seenIds || [];
+    seenIds = had.slice();
+    try {
+      var r = await fetch(seenDoc(), { headers: { Authorization: "Bearer " + await token() } });
+      if (r.ok) { var f = ((await r.json()).fields || {}).seen; ((f && f.arrayValue && f.arrayValue.values) || []).forEach(function (v) { if (v.stringValue && seenIds.indexOf(v.stringValue) < 0) seenIds.push(v.stringValue); }); }
+      seenLoaded = r.ok || r.status === 404;   // never overwrite the account's list if we couldn't read it
+    } catch (e) { }
+    // Seen on this device before it moved to the account: fold it in once.
+    try { var old = JSON.parse(localStorage.getItem("wl-alerts-seen") || "[]"); if (old.length) { old.forEach(function (i) { if (seenIds.indexOf(i) < 0) seenIds.push(i); }); if (seenLoaded && await saveSeen()) localStorage.removeItem("wl-alerts-seen"); } } catch (e) { }
+    return seenIds;
+  }
+  async function saveSeen() {
+    if (!seenLoaded) return false;
+    try {
+      var keep = seenIds.slice(-500);
+      var r = await fetch(seenDoc() + "?updateMask.fieldPaths=seen&updateMask.fieldPaths=updated", { method: "PATCH", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: { seen: { arrayValue: { values: keep.map(function (i) { return { stringValue: i }; }) } }, updated: { integerValue: String(Date.now()) } } }) });
+      return r.ok;
+    } catch (e) { console.warn("Alerts seen:", e); return false; }
+  }
+  function addSeen(ids) { if (!seenIds) seenIds = []; ids.forEach(function (i) { if (seenIds.indexOf(i) < 0) seenIds.push(i); }); saveSeen(); }
   async function alertNotes() {
     if (!role || role.role !== "staff") return [];
     try {
       var r = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" },
         body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "aiAlerts" }], where: { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: str("open") } }, limit: 200 } }) });
       if (!r.ok) return [];
-      var mine = String((user() || {}).email || "").toLowerCase(), techOK = !!(window.wlTechAdmin && window.wlTechAdmin(mine)), s = seen();
+      var mine = String((user() || {}).email || "").toLowerCase(), techOK = !!(window.wlTechAdmin && window.wlTechAdmin(mine)), s = await loadSeen();
       return (await r.json()).filter(function (x) { return x.document; }).map(function (x) {
         var f = x.document.fields || {}, a = { id: x.document.name.split("/").pop() };
         Object.keys(f).forEach(function (k) { a[k] = val(f[k]); }); return a;
@@ -197,7 +220,7 @@
   });
   addEventListener("keydown", function (e) { if (e.key === "Escape" && open) { open = false; draw(); } });
   function start(r) {
-    role = r || null; guidesCache = null; parentsCache = null;
+    role = r || null; guidesCache = null; parentsCache = null; seenIds = null; seenLoaded = false;
     clearInterval(timer);
     var wait = 0, go = function () { if (user() || wait++ > 40) { load(); timer = setInterval(load, 120000); } else setTimeout(go, 250); };
     go();
