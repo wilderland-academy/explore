@@ -38,7 +38,7 @@ The old `/families/` addresses forward to `/parents/` (`families/*/index.html`),
 ## Pages added Nov 16, 2026
 - `/` landing page: image cards for Books, Challenges, Projects, Treebeard Library, Basecamp, Camp Store and the Suggestion Box (`img/`).
 - `/store/`: Camp Store, shown only after school sign-in. 176 products in `store/products.js`, grouped into 14 interest categories (price in dollars; blazes = price × 2), one photo each in `store/img/<id>.jpg` (480×480, white background). Wishlist and blaze count live in localStorage key `wl-store` and sync through `auth.js`. The sign-in gate hides the page; the product list itself is not secret.
-- `/tools/` (students) and `/guides/tools/` (guides): the Tool & Materials Library, both built from `_includes/tools.html`. The catalog is `tools/catalog.js` (229 tools, machines and materials in 18 categories, each with access level, starting grade and loan type; `have` is what we know we own, `want` what a project school our size should have). Logic in `tools/app.js`. Firestore: `toolInventory/{item}` (what guides counted; overrides the catalog's `have`), `toolLoans` (requests and checkouts, like a book library: a student asks, a guide hands it out and checks it back in), `toolBadges/{sid}` (tools a student was taught), `toolItems/{id}` (tools and materials guides added from the page; merged into the catalog). `toolHolds/{loan id}` (a reservation's place on the calendar, no names; see below). Students can request anything, including things not in the catalog (`toolLoans` kind `new`); guides add those to the catalog and mark items stocked from each item's sheet, and the students who asked are told. Rules are in `firestore.rules`. The guides' Shopping list tab is everything below `want` after counting.
+- `/tools/` (students) and `/guides/tools/` (guides): the Tool & Materials Library, both built from `_includes/tools.html`. The catalog is `tools/catalog.js` (244 tools, machines and materials in 18 categories, each with access level, starting grade and loan type; `have` is what we know we own, `want` what a project school our size should have). Logic in `tools/app.js`. Firestore: `toolInventory/{item}` (what guides counted; overrides the catalog's `have`), `toolLoans` (requests and checkouts, like a book library: a student asks, a guide hands it out and checks it back in), `toolBadges/{sid}` (tools a student was taught), `toolItems/{id}` (tools and materials guides added from the page; merged into the catalog). `toolHolds/{loan id}` (a reservation's place on the calendar, no names; see below). `toolReports/{id}` ("running low" reports on materials). Students can request anything, including things not in the catalog (`toolLoans` kind `new`); guides add those to the catalog and mark items stocked from each item's sheet, and the students who asked are told. Rules are in `firestore.rules`. The guides' Shopping list tab is everything below `want` after counting.
 - `/suggest/`: Suggestion Box on Firestore collection `suggestions`, readable only by signed-in school accounts. Rules are in `firestore.rules` (paste into Firebase console → Firestore → Rules). Admin emails are listed in both `firestore.rules` and `suggest/index.html`.
 
 ## Sign-in gate
@@ -617,3 +617,18 @@ the `PAGES` list at the top of `/search.js`.
   guides mark and remove holds, testers only touch test holds), and the page itself in jsdom (34 cases: availability math,
   quantity limits, badges and grades, materials, cancel, hand out and check in).
 - **Publish `firestore.rules`** in the Firebase console, or reservations fail with "Not allowed".
+
+## Tool Library: kitchen appliances, consumables, "running low" reports (Nov 26, 2026)
+- **15 new catalog items** (the block marked "Added Nov 26, 2026: kitchen appliances..." in `tools/catalog.js`):
+  high-power blender (Vitamix), stand mixer (KitchenAid, badge), food processor, electric griddle, bowls and bakeware,
+  garden hoses (split out of "Watering cans"), and consumables that run out: laminating pouches, Cameo blades and mats,
+  batteries, sandpaper and finish, kitchen consumables, pantry staples, first-aid refills, cleaning supplies, and mulch
+  and compost. Already in the catalog before this: dehydrator, shovels and spades, hoes, rakes, trowels, laminator,
+  PLA filament and Toybox Printer Food.
+- **"Running low?"** On any material that's been stocked, a student picks "A little" or "None", adds a note, and taps
+  Tell the guides. That writes a `toolReports` doc and notifies guides. A student sees "You told the guides" on that item.
+- **Guides:** the Desk has a **Running low** section (counted in the Desk tab) with **Add to restock list** (sets the item's
+  stock to low or out and closes the reports) and **Dismiss**. The item's sheet lists its reports, and saving its stock level
+  closes them. The Shopping list counts reported items as Restock, sorts them up with student requests, and says who reported.
+- **Tested:** rules in the Firestore emulator (37 cases, 10 new for reports) and the page in jsdom (47 cases, 13 new).
+- **Publish `firestore.rules`** in the Firebase console, or reports fail with "Not allowed".
