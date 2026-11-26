@@ -129,6 +129,8 @@
       { id: "projects", label: "Projects", href: "/projects/" },
       { id: "coach", label: "Mr. Fox", href: "/coach/" },
       { id: "store", label: "Store", href: "/store/" },
+      // The Tool & Materials Library: borrow tools and ask for materials (/_includes/tools.html, tools/app.js).
+      { id: "tools", label: "Tools", href: "/tools/" },
       { id: "suggest", label: "Suggestion Wall", href: "/suggest/" },
       BASECAMP] },
     guides: { name: "Guides", home: "/guides/", label: "Guides", tabs: [
@@ -145,6 +147,8 @@
       { id: "parentcomms", label: "Parent Comms", href: "/guides/parents/" },
       // The Camp Store (with Rewards from guides) and the Suggestion Wall, in the Guides site (/_includes/store.html, suggest.html).
       { id: "store", label: "Camp Store", href: "/guides/store/" },
+      // The Tool Library desk: requests, checkouts, inventory, badges, shopping list (/guides/tools/).
+      { id: "tools", label: "Tool Library", href: "/guides/tools/" },
       { id: "suggest", label: "Suggestion Wall", href: "/guides/suggest/" },
       // The Staff Handbook and every other staff policy and form (/guides/policies/, /guides/handbook/).
       { id: "policies", label: "Policies", href: "/guides/policies/" },
@@ -587,10 +591,11 @@
   // A link to a page that has a copy in this site (the Challenges map, the Life Skills tracker, the Camp Store, the
   // Suggestion Wall) is pointed at this site's copy. A link that has to leave for another site (a parent opening the
   // Books site, say) asks first, so the top bar changing isn't a surprise. The site switcher and the front door are left alone.
-  var OWNER = [[/^\/(guides|fieldguide|behavior)\//, "guides"], [/^\/parents\//, "parents"], [/^\/(students|books|challenges|goals|projects|coach|store|suggest|lifeskills)\//, "students"]];
+  var OWNER = [[/^\/(guides|fieldguide|behavior)\//, "guides"], [/^\/parents\//, "parents"], [/^\/(students|books|challenges|goals|projects|coach|store|suggest|tools|lifeskills)\//, "students"]];
   var SAME = [{ students: "/challenges/", guides: "/guides/challenges/", parents: "/parents/challenges/" },
     { students: "/lifeskills/", guides: "/guides/lifeskills/", parents: "/parents/lifeskills/" },
-    { students: "/store/", guides: "/guides/store/" }, { students: "/suggest/", guides: "/guides/suggest/" }];
+    { students: "/store/", guides: "/guides/store/" }, { students: "/suggest/", guides: "/guides/suggest/" },
+    { students: "/tools/", guides: "/guides/tools/" }];
   function ownerOf(path) { for (var i = 0; i < OWNER.length; i++) if (OWNER[i][0].test(path)) return OWNER[i][1]; return null; }
   function portalLink(a) {
     if (!SITES[key] || key === "home" || !a.href || a.closest(".wlbar-switch, .wlbar-menu, .wl-portal-ok, [data-wl-portal-ok]")) return null;

@@ -64,7 +64,7 @@
       var d = await get(base + name).catch(function () { return null; });
       var all = d && parse(d.data); return all && all[key] ? parse(all[key]) : null;
     }
-    var got = await Promise.all([site("challenges", "wl-picks"), site("goals", "wl-goals"), site("store", "wl-store"), site("projects", "atlas-sparks"), myIdeas()]);
+    var got = await Promise.all([site("challenges", "wl-picks"), site("goals", "wl-goals"), site("store", "wl-store"), site("projects", "atlas-sparks"), myIdeas(), myTools()]);
     var picks = got[0] || [], goals = (got[1] || {}).list || [], store = got[2] || {}, sparks = got[3] || [], ideas = got[4];
     var g = window.wlGoalsCurrent(goals), band = role.band || "", grade = String(role.grade || "").trim(), out = [];
     if (band !== "K–1") out.push({ id: "picks", title: "Save 3 challenges you're curious about", detail: picks.length >= 3 ? picks.length + " saved" : picks.length + " of 3 saved. Tap the bookmark on any challenge.", link: "/challenges/", done: picks.length >= 3 });
@@ -74,6 +74,10 @@
     // The Camp Store (and reward ideas) start in 2nd grade.
     if (band !== "K–1") out.push({ id: "store", title: "Pick something to save for", detail: saving ? "On your Camp Store list." : "Find something in the Camp Store and add it to your list.", link: "/store/", done: saving });
     if (grade === "7" || grade === "8") out.push({ id: "spark", title: "Save a project idea for this year", detail: sparks.length ? "You saved " + sparks.length + "." : "Browse Project Sparks and save one you'd want to work on all year.", link: "/projects/", done: sparks.length > 0 });
+    // Tool Library: anything checked out that's due today or late.
+    (got[5] || []).filter(function (l) { return l.status === "out" && l.due && l.due <= today(); }).forEach(function (l) {
+      out.push({ id: "tool-" + l.id, title: "Bring back the " + l.n, detail: l.due < today() ? "It was due " + fmt(l.due) + "." : "It's due back today.", link: "/tools/", done: false });
+    });
     if (band === "K–1") return out;
     var seenAt = 0; try { seenAt = Number(localStorage.getItem("wl-idea-seen")) || 0; } catch (e) { }
     if (ideas.some(function (x) { return x.status !== "pending" && (x.decidedAt || 0) > seenAt; })) out.push({ id: "idea-back", title: "Your Field Guide answered your reward idea", detail: "See what they decided.", link: "/store/#idea", done: false });
@@ -82,6 +86,11 @@
   }
   async function myIdeas() {
     try { return await query({ from: [{ collectionId: "incentives" }], where: isTest() ? { compositeFilter: { op: "AND", filters: [eq("email", role.email), eq("test", true)] } } : eq("email", String(role.email || "").toLowerCase()), limit: 50 }); }
+    catch (e) { return []; }
+  }
+
+  async function myTools() {
+    try { return await query({ from: [{ collectionId: "toolLoans" }], where: isTest() ? { compositeFilter: { op: "AND", filters: [eq("email", role.email), eq("test", true)] } } : eq("email", String(role.email || "").toLowerCase()), limit: 50 }); }
     catch (e) { return []; }
   }
 
@@ -103,6 +112,12 @@
       var done = un.done || [], left = STEPS.filter(function (s) { return done.indexOf(s[0]) < 0; });
       out.push({ id: "onboard", title: left.length ? "Finish onboarding" : "Onboarding finished", detail: left.length ? (STEPS.length - left.length) + " of " + STEPS.length + " steps done. Next: " + left[0][1] + "." : "Every part of the Guides site is open to you.", link: "/guides/onboarding/", done: !left.length });
     }
+    // Tool Library desk: every guide can hand out and check in tools.
+    var loans = await query({ from: [{ collectionId: "toolLoans" }], where: (function () { var st = { fieldFilter: { field: { fieldPath: "status" }, op: "IN", value: { arrayValue: { values: [{ stringValue: "requested" }, { stringValue: "out" }] } } } }; return isTest() ? { compositeFilter: { op: "AND", filters: [st, eq("test", true)] } } : st; })(), limit: 300 }).catch(soft([]));
+    loans = loans.filter(function (l) { return !!l.test === isTest(); });
+    var asked = loans.filter(function (l) { return l.status === "requested"; }), late = loans.filter(function (l) { return l.status === "out" && l.due && l.due < today(); });
+    if (asked.length) out.push({ id: "tools-asked", title: asked.length + " Tool Library request" + (asked.length === 1 ? "" : "s"), detail: "From " + asked.slice(0, 4).map(function (l) { return first(l.name); }).join(", ") + (asked.length > 4 ? "…" : "") + ". Hand it out or say not now.", link: "/guides/tools/#desk", done: false });
+    if (late.length) out.push({ id: "tools-late", title: late.length + " tool" + (late.length === 1 ? " is" : "s are") + " late", detail: late.slice(0, 4).map(function (l) { return first(l.name) + " (" + l.n + ")"; }).join(", ") + (late.length > 4 ? "…" : "") + ".", link: "/guides/tools/#desk", done: false });
     if (!band) { out.noBand = true; return out; }
     var bandName = band === "K–1" ? "K–1" : "grades " + band;
     var jobs = await Promise.all([
