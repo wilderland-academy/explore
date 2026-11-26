@@ -96,7 +96,7 @@ const firstName = n => String(n || "").trim().split(/\s+/)[0] || "";
 const chLink = id => window.WLChallenge ? window.WLChallenge.link(id, (CH[id] || {}).t || id) : esc((CH[id] || {}).t || id);
 
 // ---------- state ----------
-const S = { test: null, cf: "all", me: "", admin: false, alerts: [], chats: [], people: {}, ls: [], myBands: [], band: "All", q: "", showDone: false, books: null, loaded: false, flash: "" };
+const S = { guideGoals: [], ideas: [], beh: [], entries: {}, view: "", test: null, cf: "all", me: "", admin: false, alerts: [], chats: [], people: {}, ls: [], myBands: [], band: "All", q: "", showDone: false, books: null, loaded: false, flash: "" };
 const key = e => String(e || "").toLowerCase();
 // Admins turn on the academics pilot; in a test view, the test guide can too (for the test student only).
 const canPilot = () => S.admin || !!S.test;
@@ -104,7 +104,7 @@ const canPilot = () => S.admin || !!S.test;
 const pkey = s => s.email ? key(s.email) : "sid:" + s.id;
 function person(email) {
   const k = key(email);
-  return S.people[k] || (S.people[k] = { email: k, name: "", band: "", guide: "", uid: "", sid: "", grade: "", parents: [], school: "", picks: [], sparks: [], saved: [], want: [], nope: [], nwhy: {}, chats: [], alerts: [], coach: null });
+  return S.people[k] || (S.people[k] = { email: k, name: "", band: "", guide: "", uid: "", sid: "", grade: "", parents: [], school: "", picks: [], sparks: [], saved: [], want: [], nope: [], nwhy: {}, goals: [], chats: [], alerts: [], coach: null });
 }
 // A tester's test view (the test guide) sees the test accounts, plus the test band's real students on the roster (view
 // only, so it looks like a real guide's roster); everyone else never sees the test accounts.
@@ -134,6 +134,7 @@ async function loadAll() {
     const j = k => { try { return JSON.parse(data[k]); } catch (e) { return null; } };
     if (d.id === "challenges") p.picks = (j("wl-picks") || []).filter(id => CH[id]);
     if (d.id === "projects") p.sparks = (j("atlas-sparks") || []).filter(x => x && x.t);
+    if (d.id === "goals") p.goals = ((j("wl-goals") || {}).list || []).filter(g => g && g.area);
     if (d.id === "books") { const b = j("lantern-stacks") || {}; p.saved = b.saved || []; p.want = b.want || []; p.nope = Array.isArray(b.nope) ? b.nope : []; p.nwhy = b.nwhy || {}; }
   });
   chats.forEach(c => person(c.email).chats.push(c));
@@ -142,6 +143,7 @@ async function loadAll() {
   S.chats = chats.sort((a, b) => (b.updated || 0) - (a.updated || 0));
   // A guide's bands: any student they're named on, plus their own band (WLPeople.STAFF_BANDS, or the test band in a
   // test view), so a band's guides work with all of its students without filling in every record.
+  await loadExtras();
   S.myBands = [...new Set(ls.filter(s => String(s.guide || "").toLowerCase().split(/[\s,;]+/).includes(S.me)).map(s => s.band).concat(myBand() ? [myBand()] : []).filter(Boolean))];
   S.loaded = true;
   badge();
@@ -184,7 +186,10 @@ function tabs(cur) {
     <a href="#roster"${cur === "roster" ? ' aria-current="page"' : ""}>Roster</a>
     <a href="#info"${cur === "info" ? ' aria-current="page"' : ""}>Pickup, allergies &amp; photos</a>
     <a href="#alerts"${cur === "alerts" ? ' aria-current="page"' : ""}>Alerts <span class="count${open ? "" : " zero"}">${open}</span></a>
-    <a href="#chats"${cur === "chats" ? ' aria-current="page"' : ""}>All AI conversations</a>
+    <a href="#chats"${cur === "chats" ? ' aria-current="page"' : ""}>AI chats</a>
+    <a href="#goals"${cur === "goals" ? ' aria-current="page"' : ""}>Goals</a>
+    <a href="#rewards"${cur === "rewards" ? ' aria-current="page"' : ""}>Reward ideas${(() => { const n = (S.ideas || []).filter(x => x.status === "pending").length; return n ? ` <span class="count">${n}</span>` : ""; })()}</a>
+    <a href="#behavior"${cur === "behavior" ? ' aria-current="page"' : ""}>Behavior</a>
     <a href="#lifeskills"${cur === "lifeskills" ? ' aria-current="page"' : ""}>Life Skills</a>${S.coach ? `
     <a href="#coaching"${cur === "coaching" ? ' aria-current="page"' : ""}>Coaching</a>` : ""}</nav>`;
 }
@@ -391,14 +396,14 @@ addEventListener("message", e => {
   document.querySelectorAll("iframe.embed").forEach(f => { if (f.contentWindow === e.source) f.style.height = Math.max(320, Number(e.data.h) || 0) + "px"; });
 });
 async function vStudent(k, tab = "s") {
-  const p = S.people[key(k)] || S.people[k];
+  const p = S.people[key(k)] || S.people[k] || (/^sid:/.test(k) ? bySid(k.slice(4)) : null);
   if (!p) return `<p class="crumb"><a href="#roster">← Roster</a></p><p class="empty">No student with that email.</p>`;
   if (tab === "coach" && !S.coach) tab = "s";
   if ((tab === "ls" || tab === "coach") && p.sid) {
     const top = `<p class="crumb"><a href="#roster">← Roster</a></p>` + head(esc(p.name || p.email), `${p.band ? "Grades " + esc(p.band) + (p.grade ? ", grade " + esc(p.grade) : "") : ""}`) + studentTabs(p, k, tab);
     return top + (tab === "ls"
       ? embedFrame(`/guides/lifeskills/?embed=1#s=${encodeURIComponent(p.sid)}`, "Life Skills record")
-      : embedFrame(`/fieldguide/?embed=1&sid=${encodeURIComponent(p.sid)}#sessions`, "Coaching sessions", { mic: true }));
+      : (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") + await snapshot(p) + `<h2 style="margin-top:6px">Session notebook</h2>` + embedFrame(`/fieldguide/?embed=1&sid=${encodeURIComponent(p.sid)}#sessions`, "Coaching sessions", { mic: true }));
   }
   const allowed = S.admin || S.myBands.includes(p.band);
   const books = allowed && (p.saved.length || p.want.length || (p.nope || []).length) ? await bookTitles() : {};
@@ -409,6 +414,7 @@ async function vStudent(k, tab = "s") {
     `<div class="row">${p.sid ? `<a class="btn" href="#edit=${esc(p.sid)}">Edit student profile</a>` : `<a class="btn" href="#add=${encodeURIComponent(p.email)}">Add to the roster</a>`}</div>` +
     (p.sid ? `<section class="card"><h3>Parents (${(p.parents || []).length})</h3>${(p.parents || []).length ? `<ul class="items">${p.parents.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : `<p class="muted small">No parents linked yet. <a href="#edit=${esc(p.sid)}">Add their emails</a>.</p>`}</section>` : "") +
     (p.alerts.filter(a => a.status === "open").length ? `<div class="list">${p.alerts.filter(a => a.status === "open").map(alertCard).join("")}</div>` : "") +
+    (p.sid ? `<div class="grid2">${goalsCard(p)}${behCard(p)}</div>` + ((S.ideas || []).filter(x => x.sid === p.sid).length ? `<section style="display:flex;flex-direction:column;gap:10px"><h2>Reward ideas</h2><div class="list">${S.ideas.filter(x => x.sid === p.sid).map(x => ideaCard(x, false)).join("")}</div></section>` : "") : "") +
     (allowed ? `<div class="grid2">
       <section class="card"><h3>Challenges saved (${p.picks.length})</h3>${p.picks.length ? `<ul class="items">${p.picks.map(id => `<li>${chLink(id)} <span class="meta">· ${esc(CH[id].b)}</span></li>`).join("")}</ul>` : `<p class="muted small">None saved.</p>`}<p class="small muted">Compared with what's expected this year on the <a href="/guides/lifeskills/#overview">Life Skills overview</a> (Show: Saved to plan).</p></section>
       ${sec(`Project sparks saved (${p.sparks.length})`, p.sparks.map(x => `<li>${esc(x.t)}</li>`), "None saved.")}
@@ -432,6 +438,204 @@ async function vChat(id) {
     }).join("") || '<p class="empty">No messages.</p>'}</div>`;
 }
 
+// ---------- Goals, reward ideas, behavior incidents and the coaching snapshot (added Nov 25, 2026) ----------
+// Goals: what each student keeps on My goals (/goals/), read from their students/{uid}/sites/goals record, plus goals a
+// guide set with them here (guideGoals/{id}) that the student hasn't opened My goals to pick up yet. Every student
+// keeps a Life Skills goal and an academic goal going (#goals lists who's missing one).
+// Reward ideas: incentives/{id}, proposed by students in the Camp Store (/store/propose.js). Only the student's band's
+// Field Guide (WLPeople.FIELD_GUIDES; the test guide in a test view) approves or declines. Approving adds a reward for
+// that student alone to the Camp Store (storeRewards).
+// Behavior: behaviorLog/{id}, staff only. Facts, tier, and for Tier 2 and 3 the restore, signed off by the Field Guide.
+const pad2 = n => String(n).padStart(2, "0");
+const isoD = d => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+const todayISO = () => isoD(new Date());
+const parseD = s => { const [y, m, d] = String(s).split("-").map(Number); return new Date(y, m - 1, d); };
+const fmtD = s => s ? parseD(s).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "";
+const syStart = () => { const d = new Date(); return isoD(new Date(d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1, 7, 1)); };
+function dueFor(span) {
+  const d = new Date();
+  if (span === "week") { const day = d.getDay(), add = day === 6 ? 6 : day === 0 ? 5 : 5 - day; return isoD(new Date(d.getFullYear(), d.getMonth(), d.getDate() + add)); }
+  if (span === "month") return isoD(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+  const y = d.getMonth() >= 7 ? d.getFullYear() + 1 : d.getFullYear(); return isoD(new Date(y, 4, 31));
+}
+const AREAS = { life: ["🧭", "Life Skills"], acad: ["📚", "Academics"], store: ["🔥", "Camp Store"], project: ["🛠️", "Project"], habit: ["🌱", "Habit or behavior"] };
+const SPANS = { week: "This week", month: "This month", year: "This school year" };
+const goalLabel = g => g.label || (g.area === "life" && g.kind === "count" ? `Pass ${g.n} Life Skills challenge${g.n == 1 ? "" : "s"}` : g.area === "store" ? `Save ${g.n} blazes for ${g.text}` : g.text || "A goal");
+const goalCurrent = g => g && !g.done && String(g.due || "") >= todayISO();
+const myName = () => { const u = window.wlFirebase && window.wlFirebase.auth.currentUser; return S.test ? "Test Guide" : String((u && u.displayName) || S.me.split("@")[0]).trim().split(/\s+/)[0]; };
+// The one guide who decides a band's reward ideas (and signs off its restores).
+const fieldGuideOf = band => { const P = window.WLPeople || { FIELD_GUIDES: [], STAFF_BANDS: {} }; return P.FIELD_GUIDES.find(e => P.STAFF_BANDS[e] === band) || ""; };
+const iDecide = band => S.test ? true : key(fieldGuideOf(band)) === S.me;
+const fgName = band => S.test ? "the test guide" : (firstName(fieldGuideOf(band).split("@")[0]).replace(/^./, c => c.toUpperCase()) || "the Field Guide");
+const inMyView = x => !!x.test === !!S.test;
+async function loadExtras() {
+  const safe = p => p.catch(e => { console.warn("Roster extras:", e); return []; });
+  const [gg, ideas, beh] = await Promise.all([safe(fetchAll("guideGoals")), safe(fetchAll("incentives")), safe(fetchAll("behaviorLog"))]);
+  S.guideGoals = gg; S.ideas = ideas.sort((a, b) => (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1) || (b.at || 0) - (a.at || 0)); S.beh = beh.sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.at || 0) - (a.at || 0));
+}
+const bySid = sid => Object.values(S.people).find(p => p.sid === sid) || null;
+// A student's goals: their own list, plus guide-set goals they haven't picked up yet.
+function goalsOf(p) {
+  const own = p.goals || [], ids = new Set(own.map(g => g.id));
+  const waiting = (S.guideGoals || []).filter(x => x.sid === p.sid && !ids.has("gg-" + x.id)).map(x => { let g = {}; try { g = JSON.parse(x.goal); } catch (e) { } return { ...g, id: "gg-" + x.id, by: x.byName, waiting: true }; });
+  return { own, waiting, cur: own.filter(goalCurrent).concat(waiting.filter(goalCurrent)) };
+}
+function goalsCard(p) {
+  const { cur, waiting } = goalsOf(p), life = cur.some(g => g.area === "life"), acad = cur.some(g => g.area === "acad");
+  const li = g => `<li><span class="gtag">${AREAS[g.area] ? AREAS[g.area][0] + " " + AREAS[g.area][1] : "Goal"}</span> ${esc(goalLabel(g))} <span class="meta">· ${esc(SPANS[g.span] || "")}${g.due ? ", by " + esc(fmtD(g.due)) : ""}${g.by ? " · set with " + esc(g.by) : ""}${g.waiting ? " · shows on their My goals page next time they open it" : ""}</span></li>`;
+  return `<section class="card" id="goalsc"><div class="row" style="justify-content:space-between"><h3>Goals</h3>${p.sid && !isViewOnly(p.sid) ? `<button class="btn ghost" type="button" data-goal-form="${esc(p.sid)}">+ Set a goal with ${esc(firstName(p.name))}</button>` : ""}</div>
+    <p class="small">${p.band === "K–1" ? "" : `${life ? "✓" : "✗"} Life Skills goal · ${acad ? "✓" : "✗"} Academic goal${life && acad ? "" : ` <span class="muted">(every student keeps both going)</span>`}`}</p>
+    ${cur.length ? `<ul class="items">${cur.map(li).join("")}</ul>` : `<p class="muted small">No current goals.${p.school ? "" : " This student doesn't sign in, so set goals together on paper."}</p>`}
+    <div id="goalform-${esc(p.sid)}"></div></section>`;
+}
+function goalForm(sid) {
+  const opt = (v, l) => `<option value="${v}">${l}</option>`;
+  return `<form class="gform" data-gsid="${esc(sid)}"><div class="row">
+      <label>About<select name="area">${Object.entries(AREAS).map(([k, a]) => opt(k, a[0] + " " + a[1])).join("")}</select></label>
+      <label>When<select name="span">${Object.entries(SPANS).map(([k, n]) => opt(k, n)).join("")}</select></label>
+      <label class="gn">How many challenges<input name="n" type="number" min="1" max="40" value="1"></label></div>
+    <label class="gt">The goal, in their words<input name="text" maxlength="140" placeholder="For example: Math Academy, 300 XP"></label>
+    <label class="gb" hidden>Blazes it costs<input name="b" type="number" min="1" max="5000"></label>
+    <label>Why it matters to them (optional)<input name="why" maxlength="140"></label>
+    <p class="small muted">Set it together at your 1:1, in their words. It goes on their My goals page, marked as set with you.</p>
+    <div class="row"><button class="btn" type="submit">Add the goal</button><button class="btn ghost" type="button" data-goal-x="${esc(sid)}">Cancel</button></div></form>`;
+}
+function goalFormSync(f) {
+  const a = f.area.value;
+  f.querySelector(".gn").hidden = a !== "life"; f.querySelector(".gt").hidden = a === "life"; f.querySelector(".gb").hidden = a !== "store";
+  f.text.placeholder = a === "acad" ? "For example: Math Academy, 300 XP" : a === "store" ? "For example: a skateboard" : a === "project" ? "For example: finish the birdhouse frame" : "For example: ask for help before I get stuck";
+}
+async function saveGoal(f) {
+  const p = bySid(f.dataset.gsid); if (!p) return;
+  const a = f.area.value, span = f.span.value, g = { area: a, span, due: dueFor(span), why: f.why.value.trim(), created: todayISO(), at: 0, done: "" };
+  if (a === "life") Object.assign(g, { kind: "count", n: Math.max(1, Number(f.n.value) || 1) });
+  else { const t = f.text.value.trim(); if (!t) { alert("Write the goal."); return; } Object.assign(g, { text: t }); if (a === "acad") g.kind = "text"; if (a === "store") { const b = Math.round(Number(f.b.value)); if (!(b >= 1)) { alert("How many blazes?"); return; } Object.assign(g, { item: "custom", n: b }); } }
+  g.label = goalLabel(g);
+  const btn = f.querySelector("[type=submit]"); btn.disabled = true;
+  try {
+    const id = newId(), data = { sid: p.sid, email: key(p.school || ""), goal: JSON.stringify(g), by: S.me, byName: myName(), at: Date.now(), ...(S.test ? { test: true } : {}) };
+    await commit([{ set: "guideGoals/" + id, data, create: true }]);
+    S.guideGoals.push({ id, ...data });
+    if (p.school && window.wlNotify) window.wlNotify([p.school], { kind: "goal", text: `${myName()} set a goal with you: ${g.label}`, link: "/goals/" });
+    S.flash = "Goal added. It shows on their My goals page."; route();
+  } catch (x) { btn.disabled = false; alert(x.status === 403 ? "Couldn't save: the database rules for goals aren't published yet. Tell Alex." : x.message); }
+}
+// Behavior
+const TIER = { 1: "Tier 1", 2: "Tier 2", 3: "Tier 3" };
+function behCard(p, opts) {
+  const xs = (S.beh || []).filter(b => b.sid === p.sid), wk = Date.now() - 7 * 864e5, t2 = xs.filter(b => b.tier >= 2 && parseD(b.date).getTime() >= wk).length;
+  return `<section class="card" id="behc"><div class="row" style="justify-content:space-between"><h3>Behavior incidents (${xs.length})</h3>${p.sid && !isViewOnly(p.sid) ? `<button class="btn ghost" type="button" data-beh-form="${esc(p.sid)}">+ Record an incident</button>` : ""}</div>
+    ${t2 >= 2 ? `<p class="small" style="color:var(--urgent)">${t2} Tier 2 or 3 incidents in the last 7 days. Two Tier 2s in a school week means an email to parents with the incident reports.</p>` : ""}
+    <div id="behform-${esc(p.sid)}"></div>
+    ${xs.length ? `<ul class="items">${xs.slice(0, opts && opts.all ? 200 : 8).map(behLi).join("")}</ul>` : `<p class="muted small">None recorded.</p>`}
+    <p class="small muted">Staff only. Facts, not labels: what you saw and heard. Students and parents can't see this.</p></section>`;
+}
+function behLi(b) {
+  const p = bySid(b.sid) || {}, rest = b.restore === "open" ? (iDecide(b.band) ? ` <button class="btn ghost" type="button" data-sign="${esc(b.id)}">Sign off the restore</button>` : ` <span class="sev high">restore open</span>`) : b.restore === "done" ? ` <span class="meta">· restore signed off by ${esc(b.signedBy || "")}</span>` : "";
+  return `<li><span class="sev ${b.tier >= 3 ? "urgent" : b.tier === 2 ? "high" : "low"}">${TIER[b.tier] || "Tier ?"}</span> <b>${esc(fmtD(b.date))}</b>${S.view === "behavior" ? ` · <a href="#s=${encodeURIComponent(key(p.email || ""))}">${esc(p.name || b.name || "")}</a>` : ""} ${esc(b.what)} <span class="meta">· ${esc(b.byName || "")}</span>${rest}</li>`;
+}
+function behForm(sid) {
+  return `<form class="bform" data-bsid="${esc(sid)}"><div class="row"><label>Date<input name="date" type="date" value="${todayISO()}" max="${todayISO()}"></label>
+    <label>Tier<select name="tier"><option value="1">Tier 1</option><option value="2">Tier 2</option><option value="3">Tier 3</option></select></label></div>
+    <label>What happened (facts: what you saw and heard, who was affected, what you did)<textarea name="what" rows="3" maxlength="2000" required></textarea></label>
+    <p class="small muted">Tier 2 and 3 get a restore, due by the end of the next school day and signed off by the Field Guide.</p>
+    <div class="row"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-beh-x="${esc(sid)}">Cancel</button></div></form>`;
+}
+async function saveBeh(f) {
+  const p = bySid(f.dataset.bsid); if (!p) return;
+  const tier = Number(f.tier.value), what = f.what.value.trim(); if (!what) return;
+  const btn = f.querySelector("[type=submit]"); btn.disabled = true;
+  try {
+    const id = newId(), data = { sid: p.sid, name: p.name || "", band: p.band || "", date: f.date.value || todayISO(), tier, what, restore: tier >= 2 ? "open" : "none", by: S.me, byName: myName(), at: Date.now(), ...(S.test ? { test: true } : {}) };
+    await commit([{ set: "behaviorLog/" + id, data, create: true }]);
+    S.beh.unshift({ id, ...data }); S.flash = "Incident recorded."; route();
+  } catch (x) { btn.disabled = false; alert(x.status === 403 ? "Couldn't save: the database rules for the behavior log aren't published yet. Tell Alex." : x.message); }
+}
+async function signRestore(id, t) {
+  const b = S.beh.find(x => x.id === id); if (!b) return; t.disabled = true;
+  try { const now = Date.now(); await commit([{ set: "behaviorLog/" + id, data: { restore: "done", signedBy: myName(), signedAt: now }, merge: true }]); Object.assign(b, { restore: "done", signedBy: myName(), signedAt: now }); route(); }
+  catch (x) { t.disabled = false; alert(x.message); }
+}
+// Reward ideas
+function ideaCard(x, withName) {
+  const p = bySid(x.sid) || {}, mine = iDecide(x.band);
+  const st = x.status === "pending" ? `<span class="sev medium">waiting</span>` : x.status === "approved" ? `<span class="sev none">approved</span>` : `<span class="sev low">declined</span>`;
+  return `<article class="card${x.status === "pending" ? "" : " done"}"><div class="row" style="justify-content:space-between"><div class="row">${st}<b>${esc(x.n)}</b><span class="meta">${esc(x.b)} blazes</span></div><span class="meta">${esc(when(x.at))}</span></div>
+    ${withName ? `<p><a href="#s=${encodeURIComponent(key(p.email || x.email))}">${esc(p.name || x.name)}</a> <span class="muted">· grades ${esc(x.band)}</span></p>` : ""}
+    <p><span class="muted">To earn it:</span> ${esc(x.earn)}</p>${x.why ? `<p><span class="muted">Why:</span> ${esc(x.why)}</p>` : ""}
+    ${x.status !== "pending" ? `<p class="meta">${x.status === "approved" ? "Approved" : "Declined"} by ${esc(x.decidedBy || "")}${x.note ? ": " + esc(x.note) : ""}</p>`
+      : mine ? `<div class="row"><label class="small">Price <input class="in" style="min-width:0;width:90px" type="number" min="1" max="5000" value="${esc(x.b)}" id="ib-${esc(x.id)}"> blazes</label><input class="in" id="in-${esc(x.id)}" maxlength="300" placeholder="A note for them (say why, if it's a no)"></div>
+        <div class="row"><button class="btn" type="button" data-idea-ok="${esc(x.id)}">Approve: add it to their store</button><button class="btn ghost" type="button" data-idea-no="${esc(x.id)}">Decline</button></div>`
+      : `<p class="small muted">Waiting for ${esc(fgName(x.band))}, the Field Guide for grades ${esc(x.band)}. Only they decide.</p>`}</article>`;
+}
+async function decideIdea(id, ok, t) {
+  const x = S.ideas.find(i => i.id === id); if (!x || !iDecide(x.band)) return;
+  const b = Math.round(Number((document.getElementById("ib-" + id) || {}).value) || x.b), note = ((document.getElementById("in-" + id) || {}).value || "").trim();
+  if (!ok && !note && !confirm("Decline without a note? A sentence about why helps.")) return;
+  t.disabled = true;
+  try {
+    const now = Date.now(), ws = [], dec = { status: ok ? "approved" : "declined", b, note, decidedBy: myName(), decidedAt: now };
+    if (ok) {
+      const rid = newId(); dec.rewardId = rid;
+      ws.push({ set: "storeRewards/" + rid, data: { n: x.n, why: "Your own idea. To earn it: " + x.earn, b, e: "💡", open: false, bands: [], to: [key(x.email)], active: true, by: S.me, byName: myName(), created: now, updated: now }, create: true });
+    }
+    ws.push({ set: "incentives/" + id, data: dec, merge: true });
+    await commit(ws);
+    Object.assign(x, dec);
+    if (window.wlNotify) window.wlNotify([x.email], { kind: ok ? "reward" : "reply", text: ok ? `${myName()} approved your reward idea: ${x.n} (${b} blazes). It's in your Camp Store.` : `${myName()} answered your reward idea: ${x.n}${note ? ". " + note : ""}`, link: "/store/#idea" });
+    S.flash = ok ? "Approved. It's in their Camp Store now." : "Declined."; route();
+    if (window.wlTasks) window.wlTasks.refresh();
+  } catch (e) { t.disabled = false; alert(e.status === 403 ? "Couldn't save: only the Field Guide for this band can decide, and the database rules must be published." : e.message); }
+}
+// Life Skills this year, for the snapshot: passes per life skill (from the tracker) against the 2 expected, and saves.
+async function lsEntries(sid) {
+  S.entries = S.entries || {};
+  if (S.entries[sid]) return S.entries[sid];
+  try { S.entries[sid] = await list("lsStudents/" + sid + "/entries"); } catch (e) { S.entries[sid] = null; }
+  return S.entries[sid];
+}
+async function lsCard(p) {
+  const es = await lsEntries(p.sid), from = syStart(), skills = (W.skills || []);
+  if (!es) return `<section class="card"><h3>Life Skills this year</h3><p class="muted small">Couldn't load their record.</p></section>`;
+  const yr = es.filter(e => String(e.date || "") >= from), pass = {}, ny = {}, saved = {};
+  yr.forEach(e => { const k = String(e.cid || "").slice(0, 2); if (e.result === "pass") pass[k] = (pass[k] || 0) + (Number(e.credits) || 1); else ny[k] = (ny[k] || 0) + 1; });
+  (p.picks || []).forEach(id => { const k = id.slice(0, 2); if (!yr.some(e => e.cid === id && e.result === "pass")) saved[k] = (saved[k] || 0) + 1; });
+  const total = Object.values(pass).reduce((a, b) => a + b, 0), met = skills.filter(s => (pass[s.k] || 0) >= 2).length;
+  return `<section class="card"><div class="row" style="justify-content:space-between"><h3>Life Skills this year</h3><a class="small" href="#ls=${encodeURIComponent(key(p.email))}">Full record →</a></div>
+    <p class="small">${total} credit${total === 1 ? "" : "s"} passed · ${met} of ${skills.length} life skills at the expected 2</p>
+    <table class="tbl lsg"><thead><tr><th>Life skill</th><th class="num">Passed</th><th class="num">Not yet</th><th class="num">Saved</th></tr></thead><tbody>${skills.map(s => `<tr><td>${esc(s.n)}</td><td class="num">${pass[s.k] || 0}${(pass[s.k] || 0) >= 2 ? " ✓" : ""}</td><td class="num">${ny[s.k] || ""}</td><td class="num">${saved[s.k] || ""}</td></tr>`).join("")}</tbody></table></section>`;
+}
+// Everything a Field Guide needs at a 1:1, above the session notebook.
+async function snapshot(p) {
+  return `<div class="snap"><p class="eyebrow">Before your 1:1</p><div class="grid2">${goalsCard(p)}${await lsCard(p)}${behCard(p)}
+    <section class="card"><h3>Academics</h3><p class="muted small">Coming from Basecamp and Treebeard. Once they're connected, ${esc(firstName(p.name))}'s app progress and books finished this year show here.</p>
+    ${(S.ideas || []).filter(x => x.sid === p.sid).length ? `<h3 style="margin-top:8px">Reward ideas</h3><ul class="items">${S.ideas.filter(x => x.sid === p.sid).slice(0, 4).map(x => `<li>${esc(x.n)} <span class="meta">· ${esc(x.b)} blazes · ${esc(x.status)}</span></li>`).join("")}</ul>` : ""}</section></div></div>`;
+}
+// Band views
+const bandKids = () => S.ls.filter(s => !s.archived && (S.band === "All" || s.band === S.band));
+function bandChips() { return `<div class="row" role="group" aria-label="Band">${["All"].concat(BANDS).map(b => `<button class="chip" type="button" data-band="${b}" aria-pressed="${S.band === b}">${b === "All" ? "All bands" : b}</button>`).join("")}</div>`; }
+function vGoals() {
+  const rows = bandKids().filter(s => s.band !== "K–1").map(s => { const p = S.people[pkey(s)] || { sid: s.id }, { cur } = goalsOf(p); return { s, p, cur, life: cur.some(g => g.area === "life"), acad: cur.some(g => g.area === "acad") }; })
+    .sort((a, b) => (a.life && a.acad) - (b.life && b.acad) || String(a.s.name).localeCompare(String(b.s.name)));
+  const miss = rows.filter(r => !r.life || !r.acad).length;
+  return page("goals", "Every student keeps a Life Skills goal and an academic goal going. Set one together at their 1:1: open a student and use “Set a goal with them”.") + bandChips() +
+    `<p>${miss ? `<b>${miss}</b> of ${rows.length} students are missing a Life Skills or academic goal.` : `All ${rows.length} students have both.`}</p>` +
+    `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>Band</th><th>Life Skills</th><th>Academic</th><th>Current goals</th></tr></thead><tbody>${rows.map(r => `<tr><td><a href="#coach=${encodeURIComponent(pkey(r.s))}">${esc(r.s.name)}</a></td><td>${esc(r.s.band)}</td><td>${r.life ? "✓" : "<b style='color:var(--urgent)'>✗</b>"}</td><td>${r.acad ? "✓" : "<b style='color:var(--urgent)'>✗</b>"}</td><td class="small">${r.cur.map(g => esc(goalLabel(g))).slice(0, 3).join("; ") || "<span class='muted'>None</span>"}</td></tr>`).join("")}</tbody></table></div>` +
+    `<p class="small muted">K–1 students don't sign in, so their goals are set together on paper.</p>`;
+}
+function vRewards() {
+  const xs = (S.ideas || []).filter(x => S.band === "All" || x.band === S.band), pend = xs.filter(x => x.status === "pending"), done = xs.filter(x => x.status !== "pending");
+  return page("rewards", "Rewards students proposed for themselves in the Camp Store. Only the Field Guide for each band approves or declines. Approved ideas go into that student's store, for them alone.") + bandChips() +
+    (pend.length ? `<div class="list">${pend.map(x => ideaCard(x, true)).join("")}</div>` : `<p class="empty">No reward ideas waiting.</p>`) +
+    (done.length ? `<details${S.showDone ? " open" : ""} data-done><summary>Decided (${done.length})</summary><div class="list">${done.map(x => ideaCard(x, true)).join("")}</div></details>` : "");
+}
+function vBehavior() {
+  const xs = (S.beh || []).filter(b => S.band === "All" || b.band === S.band), open = xs.filter(b => b.restore === "open");
+  return page("behavior", "Every incident recorded for a student, newest first. Record one from the student's page. Staff only.") + bandChips() +
+    (open.length ? `<section class="card"><h3>Restores to sign off (${open.length})</h3><ul class="items">${open.map(behLi).join("")}</ul><p class="small muted">The Field Guide signs off each restore, due by the end of the next school day.</p></section>` : "") +
+    `<section class="card"><h3>All incidents (${xs.length})</h3>${xs.length ? `<ul class="items">${xs.slice(0, 300).map(behLi).join("")}</ul>` : `<p class="muted small">None recorded.</p>`}</section>`;
+}
+
 // Student Info (/guides/roster/info.js) draws itself into this element. It's moved into the page for #info and taken
 // out for every other view, so it keeps its place (search, selected student) while you look at the roster.
 const INFO = document.getElementById("info");
@@ -448,6 +652,7 @@ async function route() {
   }
   if (INFO) INFO.hidden = true;
   if (!S.loaded) return;
+  S.view = v;
   try {
     if (v === "s" || v === "ls" || v === "coach") app.innerHTML = await vStudent(decodeURIComponent(arg || ""), v);
     else if (v === "c") app.innerHTML = await vChat(arg || "");
@@ -455,6 +660,9 @@ async function route() {
     else if (v === "add") app.innerHTML = vEdit("", arg ? decodeURIComponent(arg) : "");
     else if (v === "alerts") app.innerHTML = vAlerts();
     else if (v === "chats") app.innerHTML = vChats();
+    else if (v === "goals") app.innerHTML = vGoals();
+    else if (v === "rewards") app.innerHTML = vRewards();
+    else if (v === "behavior") app.innerHTML = vBehavior();
     // Everyone's Life Skills and (Field Guides) everyone's 1:1 coaching, one tab away. Each student's page still has
     // its own Life Skills and Coaching tabs; these are the whole-class views of the same pages.
     else if (v === "lifeskills") app.innerHTML = page("lifeskills", "Every student's Life Skills record. Open a name to see their milestones.") + embedFrame("/guides/lifeskills/?embed=1", "Life Skills");
@@ -481,11 +689,22 @@ async function start(r) {
 }
 
 addEventListener("hashchange", () => { route(); scrollTo(0, 0); });
-document.addEventListener("submit", e => { if (e.target.id === "stu") { e.preventDefault(); saveStudent(e.target); } });
-document.addEventListener("change", e => { if (e.target.id === "imf" && e.target.files[0]) readImport(e.target.files[0]); });
+document.addEventListener("submit", e => {
+  if (e.target.id === "stu") { e.preventDefault(); saveStudent(e.target); }
+  if (e.target.matches(".gform")) { e.preventDefault(); saveGoal(e.target); }
+  if (e.target.matches(".bform")) { e.preventDefault(); saveBeh(e.target); }
+});
+document.addEventListener("change", e => { if (e.target.id === "imf" && e.target.files[0]) readImport(e.target.files[0]); if (e.target.name === "area" && e.target.form && e.target.form.matches(".gform")) goalFormSync(e.target.form); });
 document.addEventListener("click", async e => {
   const t = e.target.closest("button"); if (!t) return;
   if (t.dataset.band) { S.band = t.dataset.band; route(); return; }
+  if (t.dataset.goalForm) { const b = document.getElementById("goalform-" + t.dataset.goalForm); if (b) { b.innerHTML = goalForm(t.dataset.goalForm); goalFormSync(b.querySelector("form")); } return; }
+  if (t.dataset.goalX) { const b = document.getElementById("goalform-" + t.dataset.goalX); if (b) b.innerHTML = ""; return; }
+  if (t.dataset.behForm) { const b = document.getElementById("behform-" + t.dataset.behForm); if (b) b.innerHTML = behForm(t.dataset.behForm); return; }
+  if (t.dataset.behX) { const b = document.getElementById("behform-" + t.dataset.behX); if (b) b.innerHTML = ""; return; }
+  if (t.dataset.sign) { signRestore(t.dataset.sign, t); return; }
+  if (t.dataset.ideaOk) { decideIdea(t.dataset.ideaOk, true, t); return; }
+  if (t.dataset.ideaNo) { decideIdea(t.dataset.ideaNo, false, t); return; }
   if (t.dataset.cf) { S.cf = t.dataset.cf; route(); return; }
   if (t.dataset.del) { deleteStudent(t.dataset.del, t); return; }
   if (t.hasAttribute("data-import")) { runImport(t); return; }
