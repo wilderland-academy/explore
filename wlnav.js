@@ -248,8 +248,12 @@
   if (key === "parents") { document.addEventListener("wl-kids", relabel); if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", relabel); else relabel(); }
   var cur = curTab();
   // A tab for a section this guide hasn't trained for yet isn't drawn at all.
+  // Incentives start in 2nd grade: a K–1 student doesn't get the Store tab.
+  function k1Student() { var r = role || (known && known.r ? { role: known.r, band: known.b } : null); return !!(r && r.role === "student" && r.band === "K–1"); }
+  window.wlK1Student = k1Student;
   function tabLink(t, cls) {
     if (tabHidden(t.id)) return "";
+    if (key === "students" && t.id === "store" && k1Student()) return "";
     return '<a href="' + t.href + '"' + (cls ? ' class="' + cls.trim() + '"' : "") + ' data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.id === "children" ? kidsLabel() : t.label) + "</a>";
   }
   var tabsHtml = function () { return site.tabs.map(function (t) {

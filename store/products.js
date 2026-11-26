@@ -224,26 +224,37 @@ const PRODUCTS = [
 // (but too much and they lose standing). Teacher-student relationships matter more for engagement in middle school than
 // in elementary (Roorda et al. 2011 meta-analysis). So every stunt here is two-sided (both teams throw), shared (a kid and
 // a guide together) or earned by the whole crew with a guide who chose to take part.
-// g = grade bands it suits (k1 24 58), lim = how often, sup = a rule that comes with it.
+// Not for K–1: incentives start in 2nd grade, so nothing here is offered to K–1 (Nov 25, 2026).
+// g = grade bands it suits (24 58), lim = how often, sup = a rule that comes with it.
 const EXPERIENCES = [
   // Play with the guides (guides opt in; both sides play, or the whole crew earns it)
   {id:"x-pie", n:"Crew pie: your crew earns a pie for a guide", e:"🥧", b:200, g:"24 58", lim:"Once a month per crew", why:"Pool blazes with your crew. When you get there, a guide who volunteered takes a whipped-cream pie, the crew picks who throws it, and then the guide gets to pie one volunteer back.", sup:"Only guides who volunteer. Outside, with towels ready."},
-  {id:"x-snowfight", n:"Snowball fight: your crew vs. the guides", e:"☃️", b:80, g:"k1 24 58", lim:"Winter, once a week", why:"Forts on both sides, guides who throw back, and you pick the moment it starts.", sup:"Soft snow, below the shoulders. Anyone can call time out."},
+  {id:"x-snowfight", n:"Snowball fight: your crew vs. the guides", e:"☃️", b:80, g:"24 58", lim:"Winter, once a week", why:"Forts on both sides, guides who throw back, and you pick the moment it starts.", sup:"Soft snow, below the shoulders. Anyone can call time out."},
   {id:"x-waterfight", n:"Water balloon fight: your crew vs. the guides", e:"🎈", b:120, g:"24 58", lim:"Warm months, twice a month", why:"A few hundred balloons split between two teams. Guides get soaked too.", sup:"Below the shoulders; bring dry clothes; everyone helps pick up the scraps."},
-  {id:"x-twinday", n:"Twin day with a guide", e:"👯", b:30, g:"k1 24 58", lim:"Once a week per guide", why:"You and a guide you pick dress exactly alike for a day. Plan the outfit together and see who notices.", sup:"The guide says yes first."},
-  {id:"x-outfit", n:"Pick what a guide wears tomorrow", e:"🤡", b:50, g:"k1 24 58", lim:"Once a month per guide", why:"A banana suit, your favorite team's jersey, a tutu, a cape. They wear it all day.", sup:"Guides who sign up only; it has to be school-appropriate."},
+  {id:"x-twinday", n:"Twin day with a guide", e:"👯", b:30, g:"24 58", lim:"Once a week per guide", why:"You and a guide you pick dress exactly alike for a day. Plan the outfit together and see who notices.", sup:"The guide says yes first."},
+  {id:"x-outfit", n:"Pick what a guide wears tomorrow", e:"🤡", b:50, g:"24 58", lim:"Once a month per guide", why:"A banana suit, your favorite team's jersey, a tutu, a cape. They wear it all day.", sup:"Guides who sign up only; it has to be school-appropriate."},
   {id:"x-nickname", n:"Give a guide a nickname for a day", e:"🏷️", b:20, g:"24 58", lim:"Once a week", why:"Everyone, guides included, has to call them by it until pickup.", sup:"Kind names only; the guide can veto one."},
   // Friends and food
   {id:"x-restaurantlunch", n:"Order lunch in for you and a friend", e:"🍔", b:70, g:"24 58", lim:"One a week", why:"Pick from a few local spots and a guide brings it in. You and your friend eat it somewhere better than the usual table.", sup:"Up to about $25 for the two of you; families okay any allergies."},
-  {id:"x-movielunch", n:"Movie lunch with three friends", e:"🍿", b:60, g:"24 58", lim:"Two a month", why:"Pizza, popcorn and the first part of a movie you pick from the approved list, in a room just for you four.", sup:"Guide-approved movies; a guide nearby."},
-  {id:"x-cookies", n:"Fancy cookie box for your crew", e:"🍪", b:90, g:"k1 24 58", lim:"Once a month", why:"A box of the big bakery cookies, delivered at lunch. You hand them out. Everyone knows who brought them.", sup:"Families okay any allergies."},
-  {id:"x-cocoabar", n:"Hot cocoa bar for you and three friends", e:"☕", b:30, g:"k1 24 58", lim:"Any week in winter", why:"Whipped cream, marshmallows, sprinkles, candy canes. After sledding is best.", sup:""},
-  {id:"x-lunchguide", n:"Pizza lunch with your favorite guide and two friends", e:"🍕", b:45, g:"k1 24 58", lim:"Two a week, school-wide", why:"Pizza's on us. The guide brings the stories.", sup:"In an open spot on campus."},
+  {id:"x-movielunch", n:"Movie lunch with three friends", e:"🍿", b:60, g:"24 58", lim:"Two a month", why:"Pizza, popcorn and the first part of a movie you pick from the approved list, in a room just for you four.", sup:"Guide-approved movies, shown under the school's movie license; a guide nearby."},
+  {id:"x-cookies", n:"Fancy cookie box for your crew", e:"🍪", b:90, g:"24 58", lim:"Once a month", why:"A box of the big bakery cookies, delivered at lunch. You hand them out. Everyone knows who brought them.", sup:"Families okay any allergies."},
+  {id:"x-cocoabar", n:"Hot cocoa bar for you and three friends", e:"☕", b:30, g:"24 58", lim:"Any week in winter", why:"Whipped cream, marshmallows, sprinkles, candy canes. After sledding is best.", sup:""},
+  {id:"x-lunchguide", n:"Pizza lunch with your favorite guide and two friends", e:"🍕", b:45, g:"24 58", lim:"Two a week, school-wide", why:"Pizza's on us. The guide brings the stories.", sup:"In an open spot on campus."},
   {id:"x-crewparty", n:"Throw a party for your crew", e:"🎉", b:250, g:"24 58", lim:"Once a month per band", why:"You pick the theme, the music and the food. Guides set it up. A Friday afternoon your whole crew owes you for.", sup:"Guides make the final plan work."},
+  // Science shows (Nov 25, 2026): crowd-pleasing demonstrations a guide runs for the crew, with the buyer at the
+  // controls (picking the color, dropping the Mentos, adding the last rubber band). Priced like the rest: supplies at
+  // 2 blazes a dollar plus guide time. Elephant toothpaste's big foam needs 30% hydrogen peroxide, a strong oxidizer
+  // that burns skin and eyes (ten times drugstore strength), so only a guide handles it, in goggles and gloves.
+  {id:"x-toothpaste", n:"Giant elephant toothpaste for your crew", e:"🧪", b:100, g:"24 58", lim:"Twice a month", why:"A guide sets it up, you pick the color and pour in the catalyst, and a tower of hot foam shoots out of the bottle while your crew watches.", sup:"Outside or on a tarp. Only the guide handles the strong peroxide; everyone wears goggles and stays back. The foam is warm and can stain: hands off till a guide says."},
+  {id:"x-mentos", n:"Soda geyser launch", e:"🥤", b:35, g:"24 58", lim:"Warm months, once a week", why:"Six bottles of soda, a sleeve of Mentos each, and a countdown. You set them off and see whose geyser goes highest.", sup:"Outside, goggles on, and step back right after the drop."},
+  {id:"x-watermelon", n:"Exploding watermelon challenge", e:"🍉", b:60, g:"24 58", lim:"Warm months, twice a month", why:"Your crew guesses how many rubber bands it takes, then everyone adds them one at a time until the watermelon bursts. Closest guess gets the first slice.", sup:"Outside, goggles on, and nobody leans over the melon."},
+  {id:"x-dryice", n:"Dry ice fog show and smoke bubbles", e:"🌫️", b:70, g:"24 58", lim:"Twice a month", why:"Buckets of rolling fog, bubbles full of smoke you can bounce on a glove, and a smoke-ring cannon.", sup:"Only guides touch the dry ice, with thick gloves or tongs. Outside or in a well-aired room, and nothing sealed shut with dry ice inside."},
+  {id:"x-rockets", n:"Water rocket launch day", e:"🚀", b:60, g:"24 58", lim:"Warm months, twice a month", why:"Turn a soda bottle into a rocket, pump it up, and launch it over the field. Longest flight wins bragging rights.", sup:"A guide runs the launcher, and everyone stands behind the line."},
+  {id:"x-movienight", n:"Crew movie night at school", e:"🎬", b:300, g:"24 58", lim:"Once a term", why:"Your crew back at school in the evening: pajamas, blankets, popcorn, a giant screen and a movie you all vote on.", sup:"A guide-approved movie, shown under the school's movie license. Families sign up and pick up; two adults minimum."},
   // Your own space and time
   {id:"x-lounge", n:"Lounge pass for a week", e:"🛋️", b:60, g:"58", lim:"A few passes at a time", why:"The best room in the school, during free time and lunch, for you and anyone you invite.", sup:"Guides choose the room; it stays in sight."},
-  {id:"x-fort", n:"Build a giant fort with your friends", e:"🏰", b:35, g:"k1 24 58", lim:"One a week", why:"Blankets, tarps, rope, snow or sticks: one free block to build it, and you get to eat lunch in it.", sup:""},
-  {id:"x-sledding", n:"Sledding hill takeover", e:"🛷", b:40, g:"k1 24 58", lim:"Winter, two a week", why:"An extra 30 minutes on the hill for you and three friends while everyone else is inside.", sup:"A guide comes with you."},
+  {id:"x-fort", n:"Build a giant fort with your friends", e:"🏰", b:35, g:"24 58", lim:"One a week", why:"Blankets, tarps, rope, snow or sticks: one free block to build it, and you get to eat lunch in it.", sup:""},
+  {id:"x-sledding", n:"Sledding hill takeover", e:"🛷", b:40, g:"24 58", lim:"Winter, two a week", why:"An extra 30 minutes on the hill for you and three friends while everyone else is inside.", sup:"A guide comes with you."},
   {id:"x-nerf", n:"Nerf war: your crew vs. the guides", e:"🔫", b:200, g:"24 58", lim:"Once a month", why:"Foam darts, the whole campus, guides who do not go easy. You decide when it starts.", sup:"Eye protection on; guide-run rules."},
   {id:"x-flashlight", n:"Flashlight tag night", e:"🔦", b:300, g:"58", lim:"Once a term", why:"Your crew back at school after dark for flashlight tag and capture the flag, with hot dogs.", sup:"Families sign up and pick up; two adults minimum."},
   {id:"x-lockin", n:"Crew lock-in at school", e:"🌙", b:900, g:"58", lim:"Once a year, if approved", why:"The big one. Your crew stays the evening at school: games, a movie, pizza and a midnight snack. Pool blazes with your friends.", sup:"Needs approval from the school's leaders, family permission, and enough guides."},
@@ -253,42 +264,41 @@ const EXPERIENCES = [
   {id:"x-earlyout", n:"Leave the work block early", e:"🏃", b:25, g:"24 58", lim:"Once a week", why:"Done with your goals? Walk out 20 minutes early and go outside.", sup:"Only after your daily goals are met."},
   {id:"x-chorepass", n:"Skip-a-chore pass", e:"🧹", b:20, g:"24 58", lim:"Twice a month", why:"Hand it in at clean-up. Someone else gets your job today.", sup:""},
   {id:"x-latestart", n:"Sleep-in pass: arrive an hour late", e:"😴", b:60, g:"58", lim:"Once a month", why:"Sleep in one morning. You still have to hit your daily goals.", sup:"Your family has to agree and drive you."},
-  {id:"x-frontofline", n:"First in line for a week", e:"🥇", b:15, g:"k1 24 58", lim:"Any week", why:"Lunch, sleds, the field trip bus. You first.", sup:""},
-  {id:"x-guidechair", n:"The guide's chair for a day", e:"💺", b:15, g:"k1 24 58", lim:"Any day", why:"The rolling chair is yours till pickup.", sup:""},
-  {id:"x-dog", n:"Bring your dog to school", e:"🐕", b:40, g:"k1 24 58", lim:"One a week", why:"Your dog, your crew, one very good hour.", sup:"Guide and family approve first."},
-  {id:"x-pajamas", n:"Pajama day for you and a friend", e:"🩳", b:15, g:"k1 24 58", lim:"Any week", why:"Slippers, hoodie, the works.", sup:""},
-  {id:"x-campfire", n:"Campfire and s'mores for your crew", e:"🏕️", b:80, g:"k1 24 58", lim:"Two a month", why:"You call it. The guide builds the fire and brings the marshmallows.", sup:"A guide runs the fire."},
+  {id:"x-frontofline", n:"First in line for a week", e:"🥇", b:15, g:"24 58", lim:"Any week", why:"Lunch, sleds, the field trip bus. You first.", sup:""},
+  {id:"x-guidechair", n:"The guide's chair for a day", e:"💺", b:15, g:"24 58", lim:"Any day", why:"The rolling chair is yours till pickup.", sup:""},
+  {id:"x-dog", n:"Bring your dog to school", e:"🐕", b:40, g:"24 58", lim:"One a week", why:"Your dog, your crew, one very good hour.", sup:"Guide and family approve first."},
+  {id:"x-pajamas", n:"Pajama day for you and a friend", e:"🩳", b:15, g:"24 58", lim:"Any week", why:"Slippers, hoodie, the works.", sup:""},
+  {id:"x-campfire", n:"Campfire and s'mores for your crew", e:"🏕️", b:80, g:"24 58", lim:"Two a month", why:"You call it. The guide builds the fire and brings the marshmallows.", sup:"A guide runs the fire."},
   // Good news home
-  {id:"x-bragcall", n:"Brag call home", e:"📞", b:15, g:"k1 24 58", lim:"Any week", why:"A guide calls your family to tell them something specific you did well. Just them, not the whole school.", sup:""},
+  {id:"x-bragcall", n:"Brag call home", e:"📞", b:15, g:"24 58", lim:"Any week", why:"A guide calls your family to tell them something specific you did well. Just them, not the whole school.", sup:""},
 ];
 
-// ---- Who each product appeals to most (grade bands: k1 = K–1, 24 = 2–4, 58 = 5–8) ----
+// ---- Who each product appeals to most (grade bands: 24 = 2–4, 58 = 5–8; the store isn't for K–1) ----
 // The age on a product (a) is the youngest it is safe and usable for. This is different: the bands where kids actually want it.
 // A Squishmallow is safe at 7 and still loved at 13, but it is a K–4 favorite; a Hydro Flask is a middle-school one.
 // Anything not listed appeals to every band. Used for the grade filter and for "Picked for your grades".
 const APPEAL = {
-  "lego-classic":"k1 24","lego-creator":"24","plusplus":"k1 24","magnatiles":"k1 24","keva":"24 58","gravitrax":"24 58","ugears":"58","kiwico":"24 58","balsa":"24 58","origami":"24 58",
-  "nocs-bino":"24 58","compass":"24 58","birds-utah":"24 58","tracks":"24 58","rite-rain":"58","hammock":"58","kite":"k1 24","paracord":"24 58","firesteel":"58","bugviewer":"k1 24",
+  "lego-classic":"24","lego-creator":"24","plusplus":"24","magnatiles":"24","keva":"24 58","gravitrax":"24 58","ugears":"58","kiwico":"24 58","balsa":"24 58","origami":"24 58",
+  "nocs-bino":"24 58","compass":"24 58","birds-utah":"24 58","tracks":"24 58","rite-rain":"58","hammock":"58","kite":"24","paracord":"24 58","firesteel":"58","bugviewer":"24",
   "opinel-first":"24","mora-scout":"24 58","victorinox":"58","leatherman":"58","beavercraft":"58","gloves-cut":"24 58",
-  "spotit":"k1 24","sushigo":"24 58","kanoodle":"24","rushhour":"k1 24","rubiks":"24 58","perplexus":"24","chess":"24 58","blokus":"24 58","kingdomino":"24","ticket":"k1 24","catan-jr":"k1 24","catan":"58","codenames":"58","azul":"24 58","forbidden":"24 58","skyjo":"24 58","tacocat":"24 58","bananagrams":"24 58","yahtzee":"24",
+  "spotit":"24","sushigo":"24 58","kanoodle":"24","rushhour":"24","rubiks":"24 58","perplexus":"24","chess":"24 58","blokus":"24 58","kingdomino":"24","ticket":"24","catan-jr":"24","catan":"58","codenames":"58","azul":"24 58","forbidden":"24 58","skyjo":"24 58","tacocat":"24 58","bananagrams":"24 58","yahtzee":"24",
   "prismacolor":"58","posca":"24 58","micron":"58","sketchbook":"24 58","watercolor":"24 58","sculpey":"24 58","comicbook":"24","leuchtturm":"58","frixion":"24 58","lamy":"58","bracelets":"24 58",
   "snap-jr":"24","microbit":"58","makey":"24 58","sphero":"24 58","campsnap":"24 58","telescope":"24 58","tumbler":"24","rockets":"58","waythings":"24 58",
-  "frisbee":"24 58","kanjam":"58","spikeball":"58","jumprope":"k1 24","soccer":"k1 24","basketball":"24 58","football":"24 58","wiffle":"k1 24","pickleball":"58","minihoop":"24 58","startkick":"k1 24","pogo":"24","darts":"24 58",
-  "yoyo":"24 58","kendama":"24 58","juggling":"24 58","slackline":"58","footbag":"58","scooter":"k1 24","penny":"58","helmet":"24 58","pads":"24 58","bikelights":"58","fingerboard":"24 58","diabolo":"24 58","boomerang":"24 58","hotwheels":"k1 24","chalk":"k1 24",
-  "harmonica":"24 58","ukulele":"24 58","kalimba":"k1 24","headphones":"k1 24","ocarina":"58","loog":"24",
-  "guinness":"24 58","almanac":"24","calvin":"24 58","booklight":"24 58","bookmarks":"24","dogman":"k1 24","wimpy":"24","bone":"24","catkid":"k1 24","weirdtrue":"24","madlibs":"24 58","mcisland":"24 58","cookbook":"24 58",
-  "nalgene":"24 58","hydroflask":"58","crazycreek":"24 58","bentgo":"k1 24","stars":"k1 24",
-  "kanken":"58","beanie":"24 58","sunglasses":"58","nails":"k1 24","clips":"58","scrunchies":"24 58","tiedye":"24 58","jibbitz":"k1 24","tattoos":"k1 24","hippack":"58","tracks-cards":"24",
-  "breyer":"24 58","stablemates":"k1 24","schleich":"k1 24","schleichwild":"k1 24","jellycat":"k1 24","squish":"k1 24","butterfly":"k1 24","bugjar":"k1 24","hummingbird":"24 58",
-  "flytrap":"24 58","seamonkeys":"k1 24","owlpellet":"24 58","geodes":"k1 24","fossils":"k1 24","crystalmine":"k1 24","magic":"24","instax":"58",
-  "fishing":"24 58","walkie":"24 58","saucer":"k1 24","metaldetector":"24 58","makedo":"k1 24","coaster":"58","paperplanes":"24","legomc":"24 58","perler":"k1 24",
-  "saw":"58","sharpener":"58","gluegun":"24 58","uno":"k1 24","kittens":"24 58","dutchblitz":"24 58","phase10":"24 58","mclabyrinth":"k1 24","kingoftokyo":"24 58","klask":"24 58","speedcube":"24 58",
+  "frisbee":"24 58","kanjam":"58","spikeball":"58","jumprope":"24","soccer":"24","basketball":"24 58","football":"24 58","wiffle":"24","pickleball":"58","minihoop":"24 58","startkick":"24","pogo":"24","darts":"24 58",
+  "yoyo":"24 58","kendama":"24 58","juggling":"24 58","slackline":"58","footbag":"58","scooter":"24","penny":"58","helmet":"24 58","pads":"24 58","bikelights":"58","fingerboard":"24 58","diabolo":"24 58","boomerang":"24 58","hotwheels":"24","chalk":"24",
+  "harmonica":"24 58","ukulele":"24 58","kalimba":"24","headphones":"24","ocarina":"58","loog":"24",
+  "guinness":"24 58","almanac":"24","calvin":"24 58","booklight":"24 58","bookmarks":"24","dogman":"24","wimpy":"24","bone":"24","catkid":"24","weirdtrue":"24","madlibs":"24 58","mcisland":"24 58","cookbook":"24 58",
+  "nalgene":"24 58","hydroflask":"58","crazycreek":"24 58","bentgo":"24","stars":"24",
+  "kanken":"58","beanie":"24 58","sunglasses":"58","nails":"24","clips":"58","scrunchies":"24 58","tiedye":"24 58","jibbitz":"24","tattoos":"24","hippack":"58","tracks-cards":"24",
+  "breyer":"24 58","stablemates":"24","schleich":"24","schleichwild":"24","jellycat":"24","squish":"24","butterfly":"24","bugjar":"24","hummingbird":"24 58",
+  "flytrap":"24 58","seamonkeys":"24","owlpellet":"24 58","geodes":"24","fossils":"24","crystalmine":"24","magic":"24","instax":"58",
+  "fishing":"24 58","walkie":"24 58","saucer":"24","metaldetector":"24 58","makedo":"24","coaster":"58","paperplanes":"24","legomc":"24 58","perler":"24",
+  "saw":"58","sharpener":"58","gluegun":"24 58","uno":"24","kittens":"24 58","dutchblitz":"24 58","phase10":"24 58","mclabyrinth":"24","kingoftokyo":"24 58","klask":"24 58","speedcube":"24 58",
   "sewing":"24","embroidery":"24 58"
 };
 // "Picked for your grades": the top of the store for each band, in order, after any rewards guides made for that student.
 // From grade 2 up, experiences are mixed in near the top; around 4th grade they start to beat toys.
 const FEATURED = {
-  "K–1": ["squish","magnatiles","kite","x-twinday","bugviewer","catan-jr","x-dog","seamonkeys","crystalmine","x-fort","plusplus","hotwheels","dogman","jellycat"],
-  "2–4": ["x-pie","lego-classic","x-nerf","gravitrax","x-snowfight","perplexus","kendama","x-fort","snap-jr","fossils","x-crewparty","mcisland","minihoop","rushhour"],
-  "5–8": ["x-pie","x-lounge","x-restaurantlunch","spikeball","x-nerf","hydroflask","x-movielunch","kanken","x-headphones","leatherman","x-crewparty","instax","x-lockin","codenames","catan","x-snowfight"]
+  "2–4": ["x-pie","x-toothpaste","lego-classic","x-nerf","x-watermelon","gravitrax","x-snowfight","perplexus","kendama","x-fort","snap-jr","fossils","x-crewparty","mcisland","minihoop","rushhour"],
+  "5–8": ["x-pie","x-toothpaste","x-lounge","x-restaurantlunch","x-movienight","spikeball","x-nerf","hydroflask","x-movielunch","kanken","x-headphones","leatherman","x-crewparty","instax","x-lockin","codenames","catan","x-snowfight"]
 };
