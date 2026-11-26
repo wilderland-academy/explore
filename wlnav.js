@@ -33,7 +33,7 @@
     if (a.category === "coach_glitch" || a.audience === "admin") return true;
     // Older alerts: technical only if the reason is about a broken reply and names nothing unsafe.
     var why = String(a.reason || "");
-    return a.category === "coach_reply_held_back" && /truncat|cut off|cuts off|cut-off|mid-?sentence|mid-?thought|incomplete|unfinished|not finish|without finishing|garbled|stray|internal-looking|formatting|ends abruptly/i.test(why) &&
+    return a.category === "coach_reply_held_back" && /truncat|cut off|cuts off|cut-off|mid-?sentence|mid-?thought|incomplete|unfinished|not finish|without finishing|garbled|stray|internal-looking|formatting|ends abruptly|off-?task|fails to deliver|does ?n[o']t deliver|generic|does ?n[o']t answer|unhelpful|not relevant|confusing/i.test(why) &&
       !/sexual|romantic|violen|weapon|graphic|scary|drug|alcohol|vap|gambl|personal (info|detail)|address|phone|password|photo|secret|feeling|relationship|claims to be|medical|diagnos|legal|link|politic|religio|unkind|sham|insult|hurt|supervision|safety gear|fire|knife|sharp|chemical|heights|answer|solves|writes their/i.test(why);
   };
   window.wlTechAdmin = function (email) { return TECH_ADMINS.indexOf(String(email || "").toLowerCase()) >= 0; };

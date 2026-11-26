@@ -555,7 +555,7 @@ the `PAGES` list at the top of `/search.js`.
 - **Guides' 🔔 includes open Mr. Fox alerts** (`notify.js`), the same ones Students › Alerts counts. Each links to the conversation.
   - An alert leaves the bell once someone marks it reviewed in Students.
   - "Mark all read" only records the alerts as seen on that device (`wl-alerts-seen`). It doesn't review them.
-- **Technical alerts go only to the tech admin** (`TECH_ADMINS` in `/wlnav.js`: Alex). These are Mr. Fox replies held back only because they came out cut off, garbled or with stray tags.
+- **Technical alerts go only to the tech admin** (`TECH_ADMINS` in `/wlnav.js`: Alex). These are Mr. Fox replies held back only because they came out cut off, garbled, off-task or with stray tags.
   - `wlTechAlert(a)` decides. For older `coach_reply_held_back` alerts, an alert counts as technical only if its reason describes a broken reply and names nothing unsafe.
   - Guides don't see them in the bell or in Students. Alex gets them in the bell and in "Technical: only you" at the bottom of Alerts.
 - **Relay (`relay/worker.js`):** the reply check now says whether a held-back reply was a `safety` or a `quality` problem.
