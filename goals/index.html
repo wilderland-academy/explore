@@ -80,14 +80,73 @@ summary{cursor:pointer;color:var(--dim);font-weight:600;margin-bottom:10px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(92vw,460px);background:var(--shelf);color:var(--paper);border:1px solid var(--lamp);border-radius:12px;padding:12px 14px;font-size:14px;z-index:60}
 .fine{color:#7f978b;font-size:13px;max-width:70ch;margin-top:30px}
 @media (max-width:640px){.two{grid-template-columns:1fr}}
+.hero{display:grid;grid-template-columns:1.3fr 1fr;gap:26px;align-items:center}
+.gartw{border-radius:18px;overflow:hidden;height:210px;border:1px solid var(--line)}
+.gart{display:block;width:100%;height:100%}
+/* What's expected: a quiet status line, not a box you can click. */
+.box.need{background:transparent;border:0;border-left:3px solid var(--warn);border-radius:0;padding:2px 0 2px 16px;margin:22px 0}
+.box.need.met{border-left-color:rgba(213,243,103,.5)}
+.need .ey{font:700 11px/1 Inter,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
+.need p{font-size:15px;color:#c9d6cc}
+.needs .ok{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13.5px;color:var(--lamp);padding:5px 11px;border-radius:99px;background:rgba(213,243,103,.1)}
+/* The form: a light sheet with numbered steps, so it reads as the thing to fill in. */
+#form{background:var(--paper);color:var(--ink);border:0;box-shadow:0 0 0 3px rgba(213,243,103,.55),0 18px 40px rgba(0,0,0,.35);gap:16px;padding:20px 22px}
+#form .fh h2{color:var(--ink)}
+#form .fsub{margin:-8px 0 0;color:#4a5d52;font-size:14px}
+#form .step{display:flex;align-items:center;gap:8px;font:700 14px/1.2 Inter,sans-serif;color:var(--ink);margin:2px 0 -4px}
+#form .step i{font-style:normal;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:99px;background:var(--ink);color:var(--lamp);font-size:12px}
+#form label{color:#4a5d52}
+#form select,#form input[type=text],#form input[type=number],#form input[type=date]{background:#fff;color:var(--ink);border:1.5px solid #c5d0c0;color-scheme:light}
+#form .areas button{background:#fff;color:var(--ink);border:1.5px solid #c5d0c0;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+#form .areas button:hover{border-color:var(--ink)}
+#form .areas button small{color:#a2620c}
+#form .areas button.on{background:var(--ink);color:var(--lamp);border-color:var(--ink)}
+#form .areas button.on small{color:var(--lamp)}
+#form .ghost{color:var(--ink);border-color:#c5d0c0}
+#form .dim,#form .small.dim{color:#5b6e63}
+#form .btn{background:var(--ink);color:var(--lamp)}
+#form .err{color:#b3261e}
+.by{font:600 11px/1.6 Inter,sans-serif;color:var(--neon);letter-spacing:.02em}
+@media (max-width:760px){.hero{grid-template-columns:1fr}.gartw{height:160px;order:-1}}
 </style>
 </head>
 <body>
+<svg class="wlfx" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><defs>
+<filter id="wlx-c" x="-3%" y="-6%" width="106%" height="112%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="7" result="w"/>
+<feDisplacementMap in="SourceGraphic" in2="w" scale="2.4" xChannelSelector="R" yChannelSelector="G" result="cut"/>
+<feTurbulence type="fractalNoise" baseFrequency=".012 .2" numOctaves="3" seed="3" result="s"/>
+<feColorMatrix in="s" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .32 0 0 0 -.15" result="s2"/>
+<feComposite in="s2" in2="cut" operator="in" result="streak"/>
+<feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="1" seed="11" result="g"/>
+<feColorMatrix in="g" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.1 0 0 0 -.68" result="g2"/>
+<feComposite in="g2" in2="cut" operator="in" result="dark"/>
+<feColorMatrix in="g" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 -1.1 0 0 .42" result="g3"/>
+<feComposite in="g3" in2="cut" operator="in" result="light"/>
+<feMerge><feMergeNode in="cut"/><feMergeNode in="streak"/><feMergeNode in="dark"/><feMergeNode in="light"/></feMerge>
+</filter>
+<filter id="wlx-m" x="-2%" y="-3%" width="104%" height="106%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="2" seed="7" result="w"/>
+<feDisplacementMap in="SourceGraphic" in2="w" scale="6" xChannelSelector="R" yChannelSelector="G" result="cut"/>
+<feTurbulence type="fractalNoise" baseFrequency=".005 .07" numOctaves="3" seed="3" result="s"/>
+<feColorMatrix in="s" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .32 0 0 0 -.15" result="s2"/>
+<feComposite in="s2" in2="cut" operator="in" result="streak"/>
+<feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="1" seed="11" result="g"/>
+<feColorMatrix in="g" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.1 0 0 0 -.68" result="g2"/>
+<feComposite in="g2" in2="cut" operator="in" result="dark"/>
+<feColorMatrix in="g" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 -1.1 0 0 .42" result="g3"/>
+<feComposite in="g3" in2="cut" operator="in" result="light"/>
+<feMerge><feMergeNode in="cut"/><feMergeNode in="streak"/><feMergeNode in="dark"/><feMergeNode in="light"/></feMerge>
+</filter>
+</defs></svg>
 <div class="wlbar" data-wlnav="students" data-current="goals"></div><script src="/wlnav.js"></script>
 <main class="in">
   <div class="hero">
-    <h1>My <span>goals</span></h1>
-    <p>Pick where you want to be this week, this month and by the end of the school year. Small weekly goals add up to big year goals. Your guide looks at these with you at your 1:1, and your parents can see them too.</p>
+    <div>
+      <h1>My <span>goals</span></h1>
+      <p>Pick where you want to be this week, this month and by the end of the school year. Small weekly goals add up to big year goals. Your guide looks at these with you at your 1:1, and your parents can see them too.</p>
+    </div>
+    <div class="gartw"><svg class="gart" viewBox="0 0 360 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><g filter="url(#wlx-c)"><rect x="-8" y="-8" width="376" height="236" fill="#e4ecd8"/><circle cx="62" cy="48" r="16" fill="#d5f367"/><polygon points="-8,109.9 -0.9,111 6.4,113 12.2,108.1 20.1,110.1 26.4,116 33.3,114.7 40.2,113.1 46.3,113.1 54.3,112.2 62,113.4 67.8,114.1 75,110.4 80.7,114.9 87.6,113.8 95.7,113.7 103.9,111.2 111.7,111.6 119.9,115 125.8,109.1 132,115.7 138.8,113 145.3,112.1 151.9,110.8 159.2,112.7 167.3,113.5 175.5,114.9 183.9,113.4 190,114.9 198.3,115.2 205.4,113.7 211.6,114.7 218.8,110.3 224.6,114.8 233,108.7 240,112 240,228 -8,228" fill="#bcd3b1"/><polygon points="220,97.9 225.9,99.2 231.9,96.5 238.6,103.3 246.5,102.1 252.7,100.3 259.1,97.4 265,97.7 273.2,102.6 281,102.4 287.2,98.5 294.5,101.9 302.5,103 308.4,100.8 315.9,100 321.9,99.8 327.8,103.5 335.8,100.4 342.3,103.3 349.5,103.1 357.4,100.1 364.2,100.8 368,100 368,228 220,228" fill="#bcd3b1"/><polygon points="70,228 79.6,210.8 91.2,195.7 101,182.6 109.4,169 119.6,154.8 130,139.6 141.7,128.9 150.8,112.9 163.1,102.3 173.2,86.7 185,71.9 194.9,59.6 202.3,45.7 214,34 232,120 220,170 236,228" fill="#3a8f5b"/><polygon points="214,34 224.2,47.4 234.7,59.5 247.6,72 258.2,84.3 267.2,98.6 280.7,113.4 290.3,128 301.8,141 314.2,156.8 323,170.6 335.1,186.1 346.9,198.2 358.9,211.9 368,228 236,228 220,170 232,120" fill="#0d5732"/><polygon points="120,170 160,140 182,136 150,168" fill="#327f50"/><polygon points="250,110 280,132 266,138" fill="#0a4a2a"/><polygon points="214,34 194,54 200,55 190,66 203,61 210,70 219,58 226,64" fill="#f6f0e2"/><polygon points="214,34 226,64 232,56 242,64 236,50" fill="#cbd5c4"/><path d="M214 35V19" stroke="#1d2a22" stroke-width="1.2" stroke-linecap="round"/><polygon points="214.5,19 224.5,22.2 214.5,25.4" fill="#d5f367"/><path d="M96 214 L150 188 L128 172 L176 150 L154 136 L196 112 L180 96 L206 72 L198 60 L213 40" stroke="#9fcd9f" stroke-width="2" stroke-dasharray="3 3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M150 186V175" stroke="#1d2a22" stroke-width="1.2" stroke-linecap="round"/><polygon points="150.5,175 157.5,177.2 150.5,179.4" fill="#ffb454"/><path d="M176 148V136" stroke="#1d2a22" stroke-width="1.2" stroke-linecap="round"/><polygon points="176.5,136 184.5,138.4 176.5,140.8" fill="#7cc6f0"/><polygon points="157.3,138 163.1,138 177,141.7 173.6,142.9" fill="#2c7348" opacity=".55"/><polygon points="157.6,127.1 159.7,127.1 159.2,138 156.6,138" fill="#36507a"/><polygon points="160.3,127.1 163.9,127.1 163.7,138 161.2,138" fill="#36507a"/><path d="M153.9 119.3Q152.5 124.4 154.2 127.8L158 127.5L157.6 119.3Z" fill="#d5f367"/><path d="M157.3 118.6Q161 117.3 164.6 118.6L163.7 127.5L157.3 127.5Z" fill="#e2674a"/><path d="M163.4 119.3L167.8 111.5" stroke="#e2674a" stroke-width="2.2" stroke-linecap="round"/><circle cx="160.8" cy="114.9" r="3.2" fill="#d99a78"/><path d="M157.4 115.2A3.4 3.4 0 0 1 164.2 114.2Q161.5 113.2 157.4 115.2Z" fill="#3b2a20"/><polygon points="131.7,170 136.6,170 148.5,173.2 145.6,174.2" fill="#2c7348" opacity=".55"/><polygon points="132,160.7 133.7,160.7 133.3,170 131.1,170" fill="#2c3b52"/><polygon points="134.3,160.7 137.3,160.7 137.2,170 135,170" fill="#2c3b52"/><path d="M128.8 154.1Q127.6 158.4 129.1 161.3L132.3 161L132 154.1Z" fill="#7cc6f0"/><path d="M131.7 153.5Q134.9 152.3 137.9 153.5L137.2 161L131.7 161Z" fill="#d5f367"/><path d="M136.9 154.6L141.8 157.5" stroke="#d5f367" stroke-width="1.9" stroke-linecap="round"/><circle cx="134.7" cy="150.3" r="2.8" fill="#b8805e"/><path d="M131.8 150.6A2.9 2.9 0 0 1 137.6 149.7Q135.3 148.8 131.8 150.6Z" fill="#1d1410"/><polygon points="-8,194.4 0.3,193.8 7.9,193.5 14.2,199 20.3,196.9 27.2,195.7 34.2,194.2 42.1,193.5 48.4,193.1 54.7,195.4 62.9,195.3 68.8,194.6 77.2,193.4 84.5,195.3 92,195 99.5,196 106.9,198.4 114.1,193.9 119.9,198.7 120,196 120,228 -8,228" fill="#155f37"/><polygon points="250,199.8 256.6,197.8 264.7,197 271.7,202.4 277.5,200.3 284.8,197.2 291.5,201.2 298.4,201.4 304.4,198.4 310.3,200 318.5,200.5 326.3,199.3 334,197.6 340.4,201 348,199.5 353.8,198.6 360,198.7 367.9,198.2 368,200 368,228 250,228" fill="#155f37"/><polygon points="5.7,207 14.3,207 32.8,210 28.6,211" fill="#0f4a2b"/><rect x="8.3" y="201.2" width="3.4" height="5.1" fill="#0b3d22"/><polygon points="10,172 2.1,186.3 6.9,185.7 10,186.9" fill="#1f6e42"/><polygon points="10,172 17.9,186.3 13.1,185.7 10,186.9" fill="#0b3d22"/><polygon points="10,181.7 -1.4,196 5.4,195.4 10,196.6" fill="#1f6e42"/><polygon points="10,181.7 21.4,196 14.6,195.4 10,196.6" fill="#0b3d22"/><polygon points="10,190.7 -5,205 4,204.4 10,205.6" fill="#1f6e42"/><polygon points="10,190.7 25,205 16,204.4 10,205.6" fill="#0b3d22"/><polygon points="25,215 31,215 44.1,218 41.1,219" fill="#0f4a2b"/><rect x="26.8" y="210.6" width="2.4" height="3.6" fill="#0b3d22"/><polygon points="28,190 22.5,200.1 25.8,199.5 28,200.7" fill="#1f6e42"/><polygon points="28,190 33.5,200.1 30.2,199.5 28,200.7" fill="#0b3d22"/><polygon points="28,196.8 19.9,206.9 24.8,206.3 28,207.5" fill="#1f6e42"/><polygon points="28,196.8 36.1,206.9 31.2,206.3 28,207.5" fill="#0b3d22"/><polygon points="28,203.2 17.4,213.3 23.8,212.7 28,213.9" fill="#1f6e42"/><polygon points="28,203.2 38.6,213.3 32.2,212.7 28,213.9" fill="#0b3d22"/><polygon points="40.2,209 47.8,209 64.2,212 60.4,213" fill="#0f4a2b"/><rect x="42.5" y="203.8" width="3" height="4.5" fill="#0b3d22"/><polygon points="44,178 37.1,190.6 41.2,190 44,191.2" fill="#1f6e42"/><polygon points="44,178 50.9,190.6 46.8,190 44,191.2" fill="#0b3d22"/><polygon points="44,186.6 33.9,199.2 40,198.6 44,199.8" fill="#1f6e42"/><polygon points="44,186.6 54.1,199.2 48,198.6 44,199.8" fill="#0b3d22"/><polygon points="44,194.5 30.8,207.1 38.7,206.5 44,207.7" fill="#1f6e42"/><polygon points="44,194.5 57.2,207.1 49.3,206.5 44,207.7" fill="#0b3d22"/><polygon points="296.2,211 303.8,211 320.2,214 316.4,215" fill="#0f4a2b"/><rect x="298.5" y="205.8" width="3" height="4.5" fill="#0b3d22"/><polygon points="300,180 293.1,192.6 297.2,192 300,193.2" fill="#1f6e42"/><polygon points="300,180 306.9,192.6 302.8,192 300,193.2" fill="#0b3d22"/><polygon points="300,188.6 289.9,201.2 296,200.6 300,201.8" fill="#1f6e42"/><polygon points="300,188.6 310.1,201.2 304,200.6 300,201.8" fill="#0b3d22"/><polygon points="300,196.5 286.8,209.1 294.7,208.5 300,209.7" fill="#1f6e42"/><polygon points="300,196.5 313.2,209.1 305.3,208.5 300,209.7" fill="#0b3d22"/><polygon points="313.2,205 322.8,205 343.5,208 338.7,209" fill="#0f4a2b"/><rect x="316.1" y="198.7" width="3.8" height="5.7" fill="#0b3d22"/><polygon points="318,166 309.2,182 314.5,181.4 318,182.6" fill="#1f6e42"/><polygon points="318,166 326.8,182 321.5,181.4 318,182.6" fill="#0b3d22"/><polygon points="318,176.8 305.2,192.8 312.9,192.2 318,193.4" fill="#1f6e42"/><polygon points="318,176.8 330.8,192.8 323.1,192.2 318,193.4" fill="#0b3d22"/><polygon points="318,186.9 301.2,202.9 311.3,202.3 318,203.5" fill="#1f6e42"/><polygon points="318,186.9 334.8,202.9 324.7,202.3 318,203.5" fill="#0b3d22"/><polygon points="334.7,215 341.3,215 355.5,218 352.2,219" fill="#0f4a2b"/><rect x="336.7" y="210.4" width="2.6" height="3.9" fill="#0b3d22"/><polygon points="338,188 332,198.9 335.6,198.3 338,199.5" fill="#1f6e42"/><polygon points="338,188 344,198.9 340.4,198.3 338,199.5" fill="#0b3d22"/><polygon points="338,195.4 329.3,206.3 334.5,205.7 338,206.9" fill="#1f6e42"/><polygon points="338,195.4 346.7,206.3 341.5,205.7 338,206.9" fill="#0b3d22"/><polygon points="338,202.3 326.5,213.2 333.4,212.6 338,213.8" fill="#1f6e42"/><polygon points="338,202.3 349.5,213.2 342.6,212.6 338,213.8" fill="#0b3d22"/></g></svg></div>
   </div>
   <div class="top">
     <label for="grade">Your grade</label><select id="grade"></select>

@@ -240,6 +240,54 @@ service cloud.firestore {
         && request.resource.data.bands is list;
       allow delete: if staffSchool();
     }
+    // ---- Reward ideas (/store/ "Propose your own reward"; decided on /guides/roster/#rewards) ----
+    // A student proposes a reward for themselves; only their band's Field Guide (FIELD_GUIDES in /wlnav.js, keep in
+    // step) approves or declines it. Every guide can read them. Testers: the test student's, decided by the test guide.
+    function fieldGuideOf(band) { return school() && ((band == 'K–1' && me() == 'chelse@wilderland.academy') || (band == '2–4' && me() == 'april@wilderland.academy') || (band == '5–8' && me() == 'scott@wilderland.academy')); }
+    match /incentives/{id} {
+      allow read: if staffSchool() || (school() && resource.data.email == me()) || (tester() && resource.data.test == true);
+      allow create: if ((school() && request.resource.data.email == me() && !('test' in request.resource.data)) || (tester() && request.resource.data.test == true))
+        && request.resource.data.keys().hasOnly(['email', 'sid', 'name', 'band', 'n', 'earn', 'why', 'b', 'status', 'at', 'test'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.band in ['K–1', '2–4', '5–8']
+        && request.resource.data.n is string && request.resource.data.n.size() > 0 && request.resource.data.n.size() <= 80
+        && request.resource.data.earn is string && request.resource.data.earn.size() <= 200
+        && request.resource.data.why is string && request.resource.data.why.size() <= 200
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.resource.data.b is int && request.resource.data.b >= 1 && request.resource.data.b <= 2000
+        && request.resource.data.at is int;
+      allow update: if (fieldGuideOf(resource.data.band) || (tester() && resource.data.test == true))
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'note', 'b', 'decidedBy', 'decidedAt', 'rewardId'])
+        && request.resource.data.status in ['approved', 'declined']
+        && request.resource.data.b is int && request.resource.data.b >= 1 && request.resource.data.b <= 5000
+        && (!('note' in request.resource.data) || (request.resource.data.note is string && request.resource.data.note.size() <= 300));
+      allow delete: if isAdmin() || (school() && resource.data.email == me() && resource.data.status == 'pending') || (tester() && resource.data.test == true);
+    }
+    // ---- Goals a guide sets with a student (/guides/roster/, on the student's page and their Coaching tab) ----
+    // The student's My goals page (/goals/) adds each one to their list the next time they open it.
+    match /guideGoals/{id} {
+      allow read: if staffSchool() || (school() && resource.data.email == me()) || (tester() && resource.data.test == true);
+      allow create: if (staffSchool() || (tester() && request.resource.data.test == true))
+        && request.resource.data.keys().hasOnly(['sid', 'email', 'goal', 'by', 'byName', 'at', 'test'])
+        && request.resource.data.sid is string && request.resource.data.email is string
+        && request.resource.data.goal is string && request.resource.data.goal.size() <= 3000
+        && request.resource.data.byName is string && request.resource.data.byName.size() <= 60
+        && request.resource.data.at is int;
+      allow delete: if staffSchool() || (tester() && resource.data.test == true);
+    }
+    // ---- Behavior incidents (/guides/roster/: each student's page and Coaching tab) ----
+    // Staff only: facts, tier and whether the restore is signed off. Never readable by students or parents.
+    match /behaviorLog/{id} {
+      allow read: if staffSchool();
+      allow create, update: if staffSchool()
+        && request.resource.data.keys().hasOnly(['sid', 'name', 'band', 'date', 'tier', 'what', 'restore', 'restoreNote', 'by', 'byName', 'at', 'signedBy', 'signedAt', 'test'])
+        && request.resource.data.sid is string && request.resource.data.tier in [1, 2, 3]
+        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.what is string && request.resource.data.what.size() > 0 && request.resource.data.what.size() <= 2000
+        && request.resource.data.restore in ['none', 'open', 'done'];
+      allow delete: if staffSchool();
+    }
+
     // ---- Life Skill Labs schedule (/guides/lifeskills/#schedule, parents at /parents/lifeskills/#schedule) ----
     // Guides write it. Linked parents read it (the page shows each family only their children's bands; Lab details
     // aren't private, so the rule doesn't filter by band). Files live in Storage under labs/{id}/ (storage.rules).

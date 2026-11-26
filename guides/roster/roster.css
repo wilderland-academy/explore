@@ -110,3 +110,13 @@ a.wl-ch{color:var(--green)}
 .stabs{border-bottom:0;padding-bottom:0}
 iframe.embed{display:block;width:100%;min-height:420px;height:70vh;border:1px solid var(--line);border-radius:16px;background:#fff}
 .tab-intro{margin:0;max-width:820px}
+iframe.embed.dark{background:#08140f;border-color:#28493d}
+/* Goals, behavior, reward ideas and the 1:1 snapshot (Nov 25, 2026) */
+.gform,.bform{display:flex;flex-direction:column;gap:10px;background:#f6f1e7;border:1px solid var(--line);border-radius:10px;padding:12px}
+.gform label,.bform label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--dim)}
+.gform input,.gform select,.bform input,.bform select,.bform textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--sheet);border:1.5px solid var(--line);border-radius:9px;padding:8px 10px}
+.gform [hidden]{display:none}
+.gtag{font:700 11px var(--body);letter-spacing:.04em;text-transform:uppercase;color:var(--green)}
+.snap{display:flex;flex-direction:column;gap:10px}
+.tbl.lsg{min-width:0;font-size:14px}.tbl.lsg td,.tbl.lsg th{padding:5px 8px}
+.items li .btn{padding:5px 10px;font-size:13px;margin-left:4px}

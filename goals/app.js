@@ -36,7 +36,7 @@
 
   // ---------- saved data ----------
   let S = { grade: "", list: [] };
-  try { const v = JSON.parse(localStorage.getItem(KEY) || "null"); if (v && Array.isArray(v.list)) S = { grade: v.grade || "", list: v.list }; } catch (e) { }
+  try { const v = JSON.parse(localStorage.getItem(KEY) || "null"); if (v && Array.isArray(v.list)) S = { grade: v.grade || "", list: v.list, gg: v.gg || [] }; } catch (e) { }
   // /auth.js copies this to the student's account and to lsShared/{sid}/sites/goals for their guides and parents.
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
 
@@ -57,8 +57,30 @@
     } while (page);
     PASSES = out;
   }
+  // Goals a guide set with this student on the Guides site (guideGoals/{id}): added to the list once, then theirs
+  // like any other goal (S.gg remembers which ones were added, so a goal they remove doesn't come back).
+  async function pullGuideGoals(r) {
+    const u = window.wlFirebase && window.wlFirebase.auth.currentUser; if (!u || !r.email) return;
+    const eq = (f, v) => ({ fieldFilter: { field: { fieldPath: f }, op: "EQUAL", value: typeof v === "boolean" ? { booleanValue: v } : { stringValue: v } } });
+    const where = r.test ? { compositeFilter: { op: "AND", filters: [eq("email", r.email), eq("test", true)] } } : eq("email", String(r.email).toLowerCase());
+    const res = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "guideGoals" }], where, limit: 100 } }) });
+    if (!res.ok) throw new Error("guide goals " + res.status);
+    S.gg = S.gg || []; let added = [];
+    (await res.json()).filter(x => x.document).forEach(x => {
+      const id = x.document.name.split("/").pop(), f = x.document.fields || {};
+      if (S.gg.includes(id) || !!val(f.test) !== !!r.test) return;
+      let g = null; try { g = JSON.parse(val(f.goal)); } catch (e) { }
+      S.gg.push(id);
+      if (!g || !g.area || !AREAS[g.area]) return;
+      g = Object.assign(g, { id: "gg-" + id, by: val(f.byName) || "your guide", created: g.created || today(), at: 0, done: "" });
+      if (!S.list.some(x => x.id === g.id)) { S.list.push(g); added.push(g); }
+    });
+    if (S.gg.length) save();
+    if (added.length) { draw(); toast(added.length === 1 ? `${added[0].by} added a goal you set together.` : `Your guide added ${added.length} goals you set together.`); }
+  }
   function onRole(r) {
     ROLE = r || null;
+    if (r && r.role === "student") pullGuideGoals(r).catch(e => console.warn("Goals from guides:", e));
     BAND = r && r.band || BAND;
     if (r && r.role === "student" && !S.grade && /^[2-8]$/.test(String(r.grade || "").trim())) { S.grade = String(r.grade).trim(); save(); }
     if (r && r.role === "student" && r.sid) { loadPasses(r.sid).then(draw).catch(e => { console.warn("Goals:", e); draw(); }); }
@@ -120,7 +142,7 @@
       : st === "past" ? `<button class="ghost" data-renew="${g.id}">Go again: ${esc(SPANS[g.span].toLowerCase())}</button>`
       : (p && p.auto ? "" : `<button class="ghost" data-done="${g.id}">${g.area === "habit" ? "✓ I kept it" : "✓ Done"}</button>`) + `<button class="ghost" data-edit="${g.id}">Edit</button>`;
     return `<li class="goal ${st}" data-area="${g.area}"><div class="gh"><span class="tag">${a.e} ${esc(a.n)}</span><span class="when">${esc(when)}</span></div>
-      <p class="gt">${st === "done" ? "✓ " : ""}${esc(title(g))}</p>${why}${prog}
+      <p class="gt">${st === "done" ? "✓ " : ""}${esc(title(g))}</p>${g.by ? `<p class="by">Set with ${esc(g.by)}</p>` : ""}${why}${prog}
       <div class="acts">${acts}<button class="ghost x" data-del="${g.id}" aria-label="Remove this goal">Remove</button></div></li>`;
   }
   function needs() {
@@ -129,9 +151,9 @@
   }
   function draw() {
     const nd = needs();
-    $("#need").innerHTML = `<p>Every Wilderland student keeps two goals going all the time: one for <b>Life Skills</b> and one for <b>academics</b>. Everything else is up to you.</p>
+    $("#need").innerHTML = `<p class="ey">What's expected</p><p>Every Wilderland student keeps two goals going all the time: one for <b>Life Skills</b> and one for <b>academics</b>. Everything else is up to you.</p>
       <div class="needs">${[["life", "Life Skills goal", "a Life Skills goal"], ["acad", "Academic goal", "an academic goal"]].map(([k, n, a]) => nd[k]
-        ? `<span class="ok">✓ ${n}</span>` : `<button class="btn" type="button" data-new="${k}">+ Set ${a}</button>`).join("")}</div>`;
+        ? `<span class="ok">✓ ${n} set</span>` : `<button class="btn" type="button" data-new="${k}">+ Set ${a}</button>`).join("")}</div>`;
     $("#need").className = "box need" + (nd.life && nd.acad ? " met" : "");
     // Grade picker (for the academic apps).
     $("#grade").innerHTML = `<option value="">Pick your grade</option>` + APPS.GRADES.map(g => `<option value="${g}"${S.grade === g ? " selected" : ""}>Grade ${g}</option>`).join("") + `<option value="K1"${S.grade === "K1" ? " selected" : ""}>Kindergarten or 1st</option>`;
@@ -203,12 +225,15 @@
         <label>How often?<select data-f="freq">${opt("", "Not a set schedule", g.freq)}${["every day", "every school day", "3 times a week", "once a week"].map(f => opt(f, f[0].toUpperCase() + f.slice(1), g.freq)).join("")}</select></label>`;
     }
     box.innerHTML = `<div class="fh"><h2>${EDIT ? "Change your goal" : "New goal"}</h2><button class="ghost" type="button" data-cancel>Cancel</button></div>
+      <p class="fsub">Fill this in, then press ${EDIT ? "Save changes" : "Set this goal"} at the bottom.</p>
+      <p class="step"><i>1</i> What is this goal about?</p>
       <div class="areas" role="group" aria-label="What is this goal about?">${Object.entries(AREAS).filter(([k]) => k !== "store" || BAND !== "K–1" || g.area === "store").map(([k, a]) => `<button type="button" data-area-pick="${k}" class="${g.area === k ? "on" : ""}">${a.e} ${a.n}${a.req ? " <small>expected</small>" : ""}</button>`).join("")}</div>
-      ${g.area ? `<div class="two"><label>When?<select data-f="span">${Object.entries(SPANS).map(([k, n]) => opt(k, n, g.span)).join("")}</select></label><label>By<input type="date" data-f="due" value="${esc(g.due)}" min="${today()}"></label></div>
+      ${g.area ? `<p class="step"><i>2</i> When, and what exactly?</p><div class="two"><label>When?<select data-f="span">${Object.entries(SPANS).map(([k, n]) => opt(k, n, g.span)).join("")}</select></label><label>By<input type="date" data-f="due" value="${esc(g.due)}" min="${today()}"></label></div>
       ${fields}
-      <label>Why does it matter to you? (optional)<input type="text" maxlength="140" data-f="why" value="${esc(g.why)}" placeholder="What will be different when you've done it?"></label>
+      <p class="step"><i>3</i> Why does it matter? <span class="dim" style="font-weight:500">(optional)</span></p>
+      <label>Why does it matter to you?<input type="text" maxlength="140" data-f="why" value="${esc(g.why)}" placeholder="What will be different when you've done it?"></label>
       <p class="err" id="ferr" role="alert"></p>
-      <button class="btn" type="button" data-save>${EDIT ? "Save changes" : "Set this goal"}</button>` : `<p class="dim">Pick what this goal is about.</p>`}`;
+      <button class="btn" type="button" data-save>${EDIT ? "Save changes" : "Set this goal"}</button>` : `<p class="dim">Pick one above to keep going.</p>`}`;
     box.hidden = false;
   }
   function check(g) {
@@ -277,5 +302,8 @@
 
   document.addEventListener("wl-role", e => onRole(e.detail));
   if (window.wlRole !== undefined) onRole(window.wlRole); else draw();
+  // From a to-do (/tasks.js): /goals/#new=life or #new=acad opens the form for that kind of goal.
+  function fromHash() { const m = /^#new=(life|acad|store|project|habit)$/.exec(location.hash); if (m) { open(blank(m[1], m[1] === "life" ? "week" : "month")); history.replaceState(null, "", location.pathname); } }
+  fromHash(); addEventListener("hashchange", fromHash);
   window.WLGoals = { dueFor, startFor };   // for tests
 })();

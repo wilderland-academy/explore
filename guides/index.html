@@ -50,6 +50,7 @@ p{margin:0}
 .onb div{flex:1;min-width:220px;display:flex;flex-direction:column;gap:2px}
 .onb b{font:700 20px var(--display)}.onb span{color:#c9d6cc;font-size:15px}
 .onb i{font-style:normal;font-weight:700;color:#d5f367}
+.todo{--wltk-bg:var(--sheet);--wltk-ink:var(--ink);--wltk-line:var(--line);--wltk-dim:var(--dim);--wltk-hover:#f1ebe0}.todo .wltk-card{border-radius:14px}.todo .wltk-box{color:#0b2b20}.todo li.done .wltk-t b{text-decoration-color:rgba(0,0,0,.3)}.todo .wltk-t em{color:var(--dim);border-color:var(--line)}.todo h2{font-size:22px}
 </style>
 <!-- Installable as the "Wilderland Guides" app (Add to Home Screen): /guides/app/ -->
 <link rel="manifest" href="/guides/app/manifest.webmanifest">
@@ -94,6 +95,7 @@ p{margin:0}
     <h1>Everything a guide needs, <span>in one place.</span></h1>
   </header>
   <p class="gm" data-wl-unlock="partner"><a href="/guides/partner/"><span aria-hidden="true">🐲</span> Trail Partner</a><span>Think it through with a fellow guide. Your past conversations are there too.</span></p>
+  <div class="todo" data-wl-tasks hidden></div>
   <a class="onb" href="/guides/onboarding/"><span class="ic" aria-hidden="true">🧭</span><div><b>Guide onboarding</b><span id="onbs">One step at a time. Each step you finish adds its part of the site here.</span></div><i>Open →</i></a>
   <header style="display:flex;flex-direction:column;gap:10px">
     <p class="lede">Guides for the work that matters most: how we mentor, how we hold the line on behavior, how students earn Life Skills, and how we talk with families. The menu at the top follows you through all of them.</p>

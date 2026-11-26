@@ -93,7 +93,7 @@ async function push() {
   const body = { fields: { data: { stringValue: JSON.stringify(readLocal()) }, updated: { timestampValue: new Date().toISOString() }, email: { stringValue: view ? TEST.student : user.email || "" }, ...(view ? { test: { booleanValue: true } } : {}) } };
   const r = await fetch(DOC(user.uid), { method: "PATCH", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
   setState(r.ok ? "saved" : "error");
-  if (r.ok) { share(SITE, body.fields.data.stringValue); tellGuides(); }
+  if (r.ok) { share(SITE, body.fields.data.stringValue); tellGuides(); document.dispatchEvent(new CustomEvent("wl-saved", { detail: SITE })); }
 }
 // ---------- Telling a student's guides what they did (/notify.js) ----------
 // Compared with what this device last saw (set after each sign-in sync, so things merged in from another Chromebook

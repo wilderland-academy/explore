@@ -103,6 +103,13 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
 .grf .acts .save{font:600 14px/1 Inter,sans-serif;color:#0b2b20;background:var(--lamp);border:0;border-radius:10px;padding:11px 16px;cursor:pointer}
 .grl .em{font-size:22px} .grl .t{flex:1;font-size:14px} .grl small{color:var(--dim)} .gr h3{font-size:15px;margin:16px 0 0}
 main[data-k1]>:not(.k1note){display:none!important}.k1note{padding:40px 0;display:flex;flex-direction:column;gap:12px;max-width:620px}
+.idea{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px}
+.idea h3{font-size:16px}.idea .sm{font-size:13.5px;color:var(--dim);margin:0}.idea .sm.ok{color:var(--lamp)}
+.idea .go{justify-self:start;font:600 14px/1 Inter,sans-serif;color:#0b2b20;background:var(--lamp);border:0;border-radius:10px;padding:11px 14px;cursor:pointer}
+.ideas{list-style:none;margin:0;padding:0;display:grid;gap:8px}.ideas li{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font-size:14px}.ideas small{flex-basis:100%;color:var(--dim);font-size:12.5px}
+.ideas .st{font:700 10.5px/1 Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;border-radius:99px;padding:3px 7px}.ideas .st.p{background:#3a3320;color:#ffd98a}.ideas .st.a{background:#2e4a1c;color:var(--lamp)}.ideas .st.d{background:#3a2422;color:#ffb3a8}
+.ideaf{display:grid;gap:10px}.ideaf label{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--dim)}.ideaf input{font:inherit;font-size:15px;color:var(--paper);background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%}
+.ideaf .r{display:flex;gap:8px}.ideaf .r button:not(.go){background:none;border:1px solid var(--line);color:var(--paper);border-radius:10px;padding:10px 12px;font:600 13px Inter,sans-serif;cursor:pointer}
 </style>
 {% if include.site == "guides" %}<!-- Installable as the "Wilderland Guides" app (Add to Home Screen): /guides/app/ -->
 <link rel="manifest" href="/guides/app/manifest.webmanifest">
@@ -133,6 +140,7 @@ main[data-k1]>:not(.k1note){display:none!important}.k1note{padding:40px 0;displa
     <div class="row"><input id="have" type="text" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="How many blazes you have"><span style="color:var(--dim)">blazes right now</span></div>
     <small>Check your real total in <a href="https://my.wilderland.academy">Basecamp</a>. This page just does the math.</small>
     <div class="wish" id="wish"></div>
+    <div class="idea" id="idea" hidden></div>
   </div>
 {% endunless %}
 </section>
@@ -151,6 +159,7 @@ main[data-k1]>:not(.k1note){display:none!important}.k1note{padding:40px 0;displa
 </main>
 <dialog class="grd" id="grd" aria-labelledby="grd-title"><div class="gr" id="gr"></div></dialog>
 <script src="/store/products.js"></script>
+{% unless include.site == "guides" %}<script src="/store/propose.js" defer></script>{% endunless %}
 <script>
 const $=s=>document.querySelector(s);
 const KEY="wl-store";
