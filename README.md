@@ -550,3 +550,14 @@ the `PAGES` list at the top of `/search.js`.
 - **Parents** now have the 🔔 on the Parents site (`/wlnav.js` adds it even though Parents pages have no account chip). They hear about each linked child's passes and not yets, goals set or finished, challenges and project ideas saved, challenges started, reward ideas approved, ideas accepted, Town Hall items on the agenda (not the item's words), goals set with a guide, and 1:1 takeaways. Not the Camp Store list. `notify.js`: `wlNotifyParents` (from a student's page) and `wlNotifyFamily` (from a guide's page: student plus linked parents).
 - **1:1 takeaways**: in the session room, a reviewed session has "Share takeaways with …": what you talked about and what they said they'd do, edited by the guide, with "Their parents see it too" (on by default). Saved to `coachShare/{session id}` (rules: only the student, the chosen parents and staff read it). Students see them on My goals ("From your 1:1s", `/goals/#oneonone`), parents on their child's profile. The notebook, transcript and coaching feedback stay private.
 - **Publish `firestore.rules`** again (new: `coachShare`).
+
+## Mr. Fox alerts in the bell; technical alerts only for the admin (Nov 25, 2026)
+- **Guides' 🔔 includes open Mr. Fox alerts** (`notify.js`), the same ones Students › Alerts counts. Each links to the conversation.
+  - An alert leaves the bell once someone marks it reviewed in Students.
+  - "Mark all read" only records the alerts as seen on that device (`wl-alerts-seen`). It doesn't review them.
+- **Technical alerts go only to the tech admin** (`TECH_ADMINS` in `/wlnav.js`: Alex). These are Mr. Fox replies held back only because they came out cut off, garbled or with stray tags.
+  - `wlTechAlert(a)` decides. For older `coach_reply_held_back` alerts, an alert counts as technical only if its reason describes a broken reply and names nothing unsafe.
+  - Guides don't see them in the bell or in Students. Alex gets them in the bell and in "Technical: only you" at the bottom of Alerts.
+- **Relay (`relay/worker.js`):** the reply check now says whether a held-back reply was a `safety` or a `quality` problem.
+  - Quality problems are saved as `coach_glitch` (low, `audience: "admin"`). They don't raise the conversation's level and don't go to Slack.
+  - **Deploy:** paste `worker.js` into Cloudflare and Deploy. Until then, new glitches still arrive as "Coach reply held back", and the reason-based rule sorts them.

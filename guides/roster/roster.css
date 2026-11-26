@@ -120,3 +120,5 @@ iframe.embed.dark{background:#08140f;border-color:#28493d}
 .snap{display:flex;flex-direction:column;gap:10px}
 .tbl.lsg{min-width:0;font-size:14px}.tbl.lsg td,.tbl.lsg th{padding:5px 8px}
 .items li .btn{padding:5px 10px;font-size:13px;margin-left:4px}
+
+.techsec{margin-top:28px;padding-top:20px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}.techsec h2{margin:0}

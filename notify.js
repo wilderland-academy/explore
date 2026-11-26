@@ -13,6 +13,9 @@
 //   window.wlNotifyFamily({ student: "ava@…", sid, kind: "pass", text: "You passed …", link, parentText: "Ava passed …" })
 //       (from a guide's page: the student, and every parent linked to them on the Student Roster)
 // Parents get the bell too (Parents site), for their children's progress. Parents never send.
+// Staff also get every open Mr. Fox alert (aiAlerts, status "open", the same list as Students › Alerts) as a notification,
+// except technical ones (wlTechAlert in /wlnav.js), which only the tech admin gets. An alert leaves the bell once a guide
+// marks it reviewed in Students; "read" for an alert just means this person has seen it (wlNotes "seen" ids below).
 (function () {
   if (window.wlNotify) return;
   var FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
@@ -107,7 +110,7 @@
     var m = Math.round((Date.now() - ms) / 60000);
     return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : m < 2880 ? "yesterday" : new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
-  var ICON = { coach: "📝", pass: "✅", notyet: "🔁", reward: "🎁", accepted: "🌟", reply: "💬", townhall: "🏛️", vote: "👍", save: "🔖", goal: "🎯", book: "📚", project: "💡", store: "🛒", idea: "🗳️", working: "🧭", note: "🔔" };
+  var ICON = { alert: "⚠️", urgent: "🚨", tech: "🛠️", coach: "📝", pass: "✅", notyet: "🔁", reward: "🎁", accepted: "🌟", reply: "💬", townhall: "🏛️", vote: "👍", save: "🔖", goal: "🎯", book: "📚", project: "💡", store: "🛒", idea: "🗳️", working: "🧭", note: "🔔" };
   function draw() {
     var s = slot(); if (!s) return;
     var show = role && (role.role === "student" || role.role === "staff" || role.role === "parent") && user();
@@ -120,9 +123,42 @@
         (notes.length ? "<ul>" + notes.slice(0, 40).map(function (n) {
           return '<li class="' + (n.read ? "" : "new") + '"><a href="' + esc(n.link || "#") + '" data-wlbell-id="' + esc(n.id) + '"><span class="i" aria-hidden="true">' + (ICON[n.kind] || "🔔") + '</span><span class="t">' + esc(n.text) +
             '<small>' + esc(n.fromName ? n.fromName + " · " : "") + ago(n.at || 0) + "</small></span></a></li>";
-        }).join("") + "</ul>" : '<p class="wlbell-empty">' + (role.role === "staff" ? "Nothing yet. You'll hear here when your students pass challenges, save things, set goals or post ideas."
+        }).join("") + "</ul>" : '<p class="wlbell-empty">' + (role.role === "staff" ? "Nothing yet. You'll hear here when your students pass challenges, save things, set goals or post ideas, and when a Mr. Fox alert needs a look."
           : role.role === "parent" ? "Nothing yet. You'll hear here when your child passes a challenge, sets or finishes a goal, saves something new, has a reward idea approved, has an idea accepted, or gets takeaways from a 1:1 with their Field Guide."
           : "Nothing yet. You'll hear here when a guide checks a challenge you showed them, approves your reward idea or shares takeaways from your 1:1, and when someone votes for or accepts your Suggestion Wall idea or puts your Town Hall item on the agenda.") + "</p>") + "</div>" : "");
+  }
+  // ---------- Mr. Fox alerts, for staff ----------
+  var ALERT_CAT = { self_harm: "self-harm or suicide", harmed_by_others: "may be unsafe or harmed", threat_to_others: "threat to others", sexual: "sexual content",
+    weapons_danger: "weapons or dangerous activity", drugs_alcohol: "drugs or alcohol", bullying_hate: "bullying or hate", distress: "upset or struggling",
+    personal_info: "shared personal details", manipulation: "tried to get around the rules", cheating: "asked AI to do the work", profanity: "rude language",
+    off_topic: "off topic", tampering: "log tampering", coach_reply_held_back: "coach reply held back", coach_glitch: "a coach reply came out broken (technical)",
+    academic_use: "used the coach for academics", academic_interest: "wants to try the academics coach" };
+  var SEEN_KEY = "wl-alerts-seen";
+  function seen() { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"); } catch (e) { return []; } }
+  function addSeen(ids) { try { var s = seen(); ids.forEach(function (i) { if (s.indexOf(i) < 0) s.push(i); }); localStorage.setItem(SEEN_KEY, JSON.stringify(s.slice(-500))); } catch (e) { } }
+  async function alertNotes() {
+    if (!role || role.role !== "staff") return [];
+    try {
+      var r = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await token(), "Content-Type": "application/json" },
+        body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "aiAlerts" }], where: { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: str("open") } }, limit: 200 } }) });
+      if (!r.ok) return [];
+      var mine = String((user() || {}).email || "").toLowerCase(), techOK = !!(window.wlTechAdmin && window.wlTechAdmin(mine)), s = seen();
+      return (await r.json()).filter(function (x) { return x.document; }).map(function (x) {
+        var f = x.document.fields || {}, a = { id: x.document.name.split("/").pop() };
+        Object.keys(f).forEach(function (k) { a[k] = val(f[k]); }); return a;
+      }).filter(function (a) {
+        if (!!a.test !== isTest()) return false;
+        var tech = !!(window.wlTechAlert && window.wlTechAlert(a));
+        return tech ? techOK : true;
+      }).map(function (a) {
+        var tech = !!(window.wlTechAlert && window.wlTechAlert(a)), sev = String(a.severity || "");
+        var who = String(a.name || a.email || "A student").split(/\s+/)[0] + (a.band ? " (grades " + a.band + ")" : "");
+        return { id: "alert:" + a.id, kind: tech ? "tech" : sev === "urgent" ? "urgent" : "alert", at: a.at || 0, read: s.indexOf("alert:" + a.id) >= 0,
+          fromName: tech ? "Technical, only you" : "Mr. Fox alert",
+          text: (tech ? "" : sev === "urgent" ? "URGENT: " : sev === "high" ? "High: " : "") + who + ": " + (ALERT_CAT[a.category] || String(a.category || "alert").replace(/_/g, " ")),
+          link: "/guides/roster/" + (a.chatId ? "#c=" + a.chatId : "#alerts") };
+      });
+    } catch (e) { return []; }
   }
   async function load() {
     if (!role || !user() || !(role.role === "student" || role.role === "staff" || role.role === "parent")) { notes = []; draw(); return; }
@@ -135,12 +171,16 @@
       notes = (await r.json()).filter(function (x) { return x.document; }).map(function (x) {
         var f = x.document.fields || {}, o = { id: x.document.name.split("/").pop() };
         Object.keys(f).forEach(function (k) { o[k] = val(f[k]); }); return o;
-      }).filter(function (n) { return !!n.test === isTest(); }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+      }).filter(function (n) { return !!n.test === isTest(); });
     } catch (e) { notes = []; }
+    notes = notes.concat(await alertNotes()).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
     draw();
   }
   async function markRead(ids) {
     if (!ids.length) return;
+    // Alerts aren't wlNotes: "read" is remembered as seen; reviewing them happens in Students › Alerts.
+    var al = ids.filter(function (i) { return i.indexOf("alert:") === 0; });
+    if (al.length) { addSeen(al); ids = ids.filter(function (i) { return i.indexOf("alert:") !== 0; }); notes.forEach(function (n) { if (al.indexOf(n.id) >= 0) n.read = true; }); if (!ids.length) { draw(); return; } }
     var H = { Authorization: "Bearer " + await token(), "Content-Type": "application/json" };
     notes.forEach(function (n) { if (ids.indexOf(n.id) >= 0) n.read = true; });
     draw();

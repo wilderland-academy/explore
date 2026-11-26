@@ -22,6 +22,21 @@
   //     Students (/guides/roster/), which opens their private session notebook for that student. Testers see it too.
   var FIELD_GUIDES = ["april@wilderland.academy", "scott@wilderland.academy", "chelse@wilderland.academy"];
   window.WLPeople = { TESTERS: TESTERS, STAFF_BANDS: STAFF_BANDS, TEST: TEST, FIELD_GUIDES: FIELD_GUIDES, BANDS: ["K–1", "2–4", "5–8"] };
+  //   TECH_ADMINS: who gets technical alerts, the site's own glitches rather than anything about a student: a Mr. Fox
+  //     reply held back only because it came out cut off, garbled or with stray tags (relay/worker.js: "coach_glitch";
+  //     older ones were "coach_reply_held_back" with a reason like that). Guides never see these, in the bell or in
+  //     Students › Alerts.
+  var TECH_ADMINS = ["alex@wilderland.academy"];
+  window.WLPeople.TECH_ADMINS = TECH_ADMINS;
+  window.wlTechAlert = function (a) {
+    if (!a) return false;
+    if (a.category === "coach_glitch" || a.audience === "admin") return true;
+    // Older alerts: technical only if the reason is about a broken reply and names nothing unsafe.
+    var why = String(a.reason || "");
+    return a.category === "coach_reply_held_back" && /truncat|cut off|cuts off|cut-off|mid-?sentence|mid-?thought|incomplete|unfinished|not finish|without finishing|garbled|stray|internal-looking|formatting|ends abruptly/i.test(why) &&
+      !/sexual|romantic|violen|weapon|graphic|scary|drug|alcohol|vap|gambl|personal (info|detail)|address|phone|password|photo|secret|feeling|relationship|claims to be|medical|diagnos|legal|link|politic|religio|unkind|sham|insult|hurt|supervision|safety gear|fire|knife|sharp|chemical|heights|answer|solves|writes their/i.test(why);
+  };
+  window.wlTechAdmin = function (email) { return TECH_ADMINS.indexOf(String(email || "").toLowerCase()) >= 0; };
   window.wlCoaches = function (email) { email = String(email || "").toLowerCase(); return FIELD_GUIDES.indexOf(email) >= 0 || TESTERS.indexOf(email) >= 0; };
   // Phones: the bar's pop-up panels (notifications 🔔, to-dos ✓, the account menu) hang from buttons that aren't at the
   // screen's right edge, so anchored to their button they ran off the left side. Under 640px they open across the
