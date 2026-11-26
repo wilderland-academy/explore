@@ -202,3 +202,19 @@ header.nav.wlsub .nav-links a[aria-current="page"]{color:#121213;background:#d5f
 .wlbar .wlbar-more>button:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 .wlbar .wlbar-more .wlbar-menu{left:auto;right:0}
 @media (max-width:760px){.wlbar .wlbar-more{display:none !important}}
+/* Phones (Nov 25, 2026): the bar's row (logo, site name, search, Trail Partner, to-dos, notifications, account, menu)
+   was wider than a 375px screen, so the whole page scrolled sideways and its pop-ups ran off the edge. Tighter spacing
+   and 32px buttons make it fit; under 400px the Trail Partner shortcut steps aside (it's on the Guides home and in
+   search), and the site name can shrink with an ellipsis rather than push the row wider. */
+@media (max-width:480px){
+  .wlbar .wlbar-in{padding:0 8px;gap:4px}
+  .wlbar .wlbar-search,.wlbar .wlbar-mentor{min-height:32px;padding:0 7px}
+  .wlbar .wltk,.wlbar .wlbell{width:32px;height:32px}
+  .wlbar .wlbar-auth{margin-left:4px}
+  .wlbar .wla>button{padding:3px}
+  .wlbar .wla>button .st{display:none}
+  .wlbar .wlbar-burger{width:34px}
+  .wlbar .wlbar-switch{flex:0 1 auto;min-width:0}
+  .wlbar .wlbar-switch>button.wlbar-site{max-width:100%;min-width:0;overflow:hidden}
+}
+@media (max-width:400px){.wlbar .wlbar-mentor{display:none}}
