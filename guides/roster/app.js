@@ -407,7 +407,7 @@ async function vStudent(k, tab = "s") {
     (p.sid ? `<section class="card"><h3>Parents (${(p.parents || []).length})</h3>${(p.parents || []).length ? `<ul class="items">${p.parents.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : `<p class="muted small">No parents linked yet. <a href="#edit=${esc(p.sid)}">Add their emails</a>.</p>`}</section>` : "") +
     (p.alerts.filter(a => a.status === "open").length ? `<div class="list">${p.alerts.filter(a => a.status === "open").map(alertCard).join("")}</div>` : "") +
     (allowed ? `<div class="grid2">
-      <section class="card"><h3>Challenges saved (${p.picks.length})</h3>${p.picks.length ? `<ul class="items">${p.picks.map(id => `<li>${chLink(id)} <span class="meta">· ${esc(CH[id].b)}</span></li>`).join("")}</ul>` : `<p class="muted small">None saved.</p>`}<p class="small muted">Compared with their year goals on the <a href="/guides/lifeskills/#overview">Life Skills overview</a> (Show: Saved to plan).</p></section>
+      <section class="card"><h3>Challenges saved (${p.picks.length})</h3>${p.picks.length ? `<ul class="items">${p.picks.map(id => `<li>${chLink(id)} <span class="meta">· ${esc(CH[id].b)}</span></li>`).join("")}</ul>` : `<p class="muted small">None saved.</p>`}<p class="small muted">Compared with what's expected this year on the <a href="/guides/lifeskills/#overview">Life Skills overview</a> (Show: Saved to plan).</p></section>
       ${sec(`Project sparks saved (${p.sparks.length})`, p.sparks.map(x => `<li>${esc(x.t)}</li>`), "None saved.")}
       ${sec(`Books they loved (${p.saved.length})`, p.saved.map(id => `<li>${esc(books[id] || id)}</li>`), "None saved.")}
       ${sec(`Books they want to read (${p.want.length})`, p.want.map(id => `<li>${esc(books[id] || id)}</li>`), "None yet.")}

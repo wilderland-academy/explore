@@ -44,7 +44,7 @@ export const STEPS = [
       ] },
       { id: "l-skills", kind: "text", art: "skills", title: "The eight Life Skills", text: [
         "Wilderland teaches eight Life Skills: Energy, Self-Governance, Character & Grit, Adaptability & Ingenuity, Value Creation, Storytelling & Speaking, Fellowship, and Nature & Living Systems. Each has sub-skills and specific abilities, mapped on the Skill Map. Content is the vehicle; the skill is the point.",
-        ["The yearly goal, K–8: 16 Challenges, 2 in every Life Skill. An Epic counts as 2. From grade 2, students choose their own. In K–1, the challenges are always part of a Life Skill Lab, so children don't choose them or work on them alone, and some run over several weeks.", "Passes from a Lab's Skill Validation count toward the goal too.", "Progress lives in two places: the printed wall chart, where students see each other getting hard things done, and the Life Skills tracker, which families can see from home."]
+        ["Expected each year, K–8: 16 Challenges, 2 in every Life Skill. An Epic counts as 2. From grade 2, students choose their own. In K–1, the challenges are always part of a Life Skill Lab, so children don't choose them or work on them alone, and some run over several weeks.", "Passes from a Lab's Skill Validation count toward the 16 too.", "Progress lives in two places: the printed wall chart, where students see each other getting hard things done, and the Life Skills tracker, which families can see from home."]
       ] },
       { id: "l-map", kind: "text", art: "skillmap", title: "The Skill Map", text: [
         "The Skill Map is how the eight Life Skills become things a child can actually do. Each Life Skill breaks into subskills, each subskill into competencies, and each competency into Challenges: one “I can…” statement with a Skill Validation, at the right level for each grade band.",
@@ -54,7 +54,7 @@ export const STEPS = [
       ] },
       { id: "l-labs3", kind: "text", art: "labs", title: "1. Life Skill Labs", text: [
         "Life Skill Labs are the flagship experiences of the afternoon, and everyone takes part. They're high-energy, often themed, and each one runs 3 to 8 weeks, building toward a real, public feat. Every student should be excited to be part of them, and that excitement should pull them to finish their academic work, too.",
-        "Labs aren't required to tie into academics, though they're welcome to. Plan them ahead, on purpose. In a Lab you lead a crew through learning and practicing a skill together. Then run a quick testing session: each student takes their own Skill Validation. Not every student passes every Lab, but every pass counts toward their yearly goal.",
+        "Labs aren't required to tie into academics, though they're welcome to. Plan them ahead, on purpose. In a Lab you lead a crew through learning and practicing a skill together. Then run a quick testing session: each student takes their own Skill Validation. Not every student passes every Lab, but every pass counts toward the 16 expected each year.",
         "The strongest Labs pass four tests: anyone can see the pass (a time, a count, a weight, or a yes from someone outside school); the Skill Validation itself fits in one Lab week (one day in K–1); kids can practice it here; and it leaves something to show.",
         ["Design backward from the Skill Validation. Name its quality bar: Score it, Make something happen, or Satisfy the expert.", "Make it thrilling by changing the arena (race an adult, a real audience, a real event), never the bar.", "Epic Life Skill Labs run for weeks and end in a real, public feat. Every band can do them, K–1 included."]
       ] },
@@ -83,7 +83,7 @@ export const STEPS = [
       { id: "l-year", kind: "text", art: "year", title: "A year at a glance", text: [
         "The school year runs from September to May. Here's roughly how the afternoon adds up for one student:",
         ["Life Skill Labs: each runs 3 to 8 weeks, one after another, so a crew moves through about 5 to 10 Labs a year. Everyone takes part.", "Challenges: 16 a year, 2 in each Life Skill, chosen by the student from grade 2 on. That's about 2 a month, at 3 to 8 hours of work a week, with up to 3 on the go at once.", "Honor Court: a milestone every 4 credits, so 4 milestones for a student who reaches 16.", "1:1 Coaching: every week, all year.", "Passion Projects: about 25 hours each, with start, halfway and finish milestones, for the students who are ready. Mostly 7th and 8th graders."],
-        "K–1 has the same goal, 2 per Life Skill. The difference: every K–1 challenge is part of a Life Skill Lab, run by the guide with the whole crew, and some take several weeks."
+        "K–1 has the same expectation, 2 per Life Skill. The difference: every K–1 challenge is part of a Life Skill Lab, run by the guide with the whole crew, and some take several weeks."
       ] }
     ],
     quiz: "lifeskills",

@@ -168,7 +168,7 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
 ## Challenges in all three sites, student progress, and the home page art, added Nov 21, 2026
 
 - **One page, three sites.** The Challenges page lives in `_includes/challenges.html`. GitHub Pages (Jekyll) builds it into `/challenges/` (Students), `/guides/challenges/` (Guides) and `/parents/challenges/` (Parents); each of those `index.html` files is only front matter plus a one-line Jekyll include of `challenges.html` with its site name. Edit the include, not the three pages. Asset paths in the include and in `challenges/app.js` are absolute (`/challenges/...`) so the copies work from any folder. Guides and parents get the full map with no student plan; students also get My progress and the Crew board.
-- **Students no longer have a Life Skills tab.** Their progress is in Challenges: `challenges/progress.js` shows their trail (credits, rank, year goal, working on, not yets with what to practice, feats), marks passed challenges on the map, lets them set up to 3 "working on" challenges from any challenge's sheet, and shows the Crew board (their band and older). It reads `lsStudents/{sid}`, its entries and `lsBoard` through the same Firestore rules as the tracker; `/auth.js` now includes the student's tracker record id (`sid`) in the `wl-role` event. A student who opens `/lifeskills/` is sent to `/challenges/#progress`.
+- **Students no longer have a Life Skills tab.** Their progress is in Challenges: `challenges/progress.js` shows their trail (credits, rank, what's expected this year, working on, not yets with what to practice, feats), marks passed challenges on the map, lets them set up to 3 "working on" challenges from any challenge's sheet, and shows the Crew board (their band and older). It reads `lsStudents/{sid}`, its entries and `lsBoard` through the same Firestore rules as the tracker; `/auth.js` now includes the student's tracker record id (`sid`) in the `wl-role` event. A student who opens `/lifeskills/` is sent to `/challenges/#progress`.
 - **Home pages.** Each card on `/guides/` and `/parents/` has a small inline SVG illustration in its own color (no image files).
 
 ## Student AI Coach, staff Students page, and the parents' safety page, added Nov 21, 2026
@@ -197,10 +197,10 @@ Linked from Challenges ("My progress"), the parent pass-off page and the Field G
   old links forward): every student and their parents (add, edit, CSV import, delete for admins), Alerts, and every AI
   conversation (filter: academics, not reviewed yet). A student's page has their parents, conversations, alerts and saved sparks
   and books. Writes go through Firestore's `:commit` endpoint, so a student and their crew-board record save together.
-- **Saved challenges are on the Life Skills overview.** Show: "Saved to plan" turns each cell into saved/goal for that life skill
+- **Saved challenges are on the Life Skills overview.** Show: "Saved to plan" turns each cell into saved/expected for that life skill
   (challenges in the student's Challenges plan they haven't passed). With a mouse, pointing at (or clicking, or tabbing to) a
   count lists those challenges as links. On phones and touch screens the overview is one card per student and each life skill
-  opens with a tap, so nothing needs hover. "Plan short of the goal" finds students whose passes plus saves don't reach the year
+  opens with a tap, so nothing needs hover. "Plan short of expected" finds students whose passes plus saves don't reach the year
   goal in some life skill. A student's record also lists what they saved. Read from `students/{uid}/sites/challenges` (staff can).
 - **Life Skill Labs schedule** (`#schedule` in the tracker: guides at `/guides/lifeskills/#schedule`, parents at
   `/parents/lifeskills/#schedule`). Guides add, edit and delete Labs: date (and last day for multi-day Labs), times, bands, place,
@@ -293,7 +293,7 @@ the `PAGES` list at the top of `/search.js`.
   says plainly that it's an AI, not a person.
 - **Parents › Life Skills** now has, for each child: their record, plus **Supporting them at home**: their next Labs with the
   guides' notes for home, and challenges they can pass off at home (what they're working on first, then the life skills
-  furthest from this year's goal). Staff who open Parents › Life Skills get a **parent preview** (pick any student to see
+  furthest from what's expected this year). Staff who open Parents › Life Skills get a **parent preview** (pick any student to see
   their family's view) instead of being sent to the Guides copy.
 - The guides' AI is now **Trail Partner** 🐲 ("Think it through with a fellow guide"). Its instructions treat guides as
   experienced colleagues: ask what they've tried, offer options and evidence rather than verdicts.
@@ -405,7 +405,7 @@ the `PAGES` list at the top of `/search.js`.
   challenges for all of 5–8, and the Grades buttons still show the other grades or all of 5–8 (`gradeDefault` in
   `challenges/app.js`).
 - The year tracker says what the dots mean: "2 passed · 3 saved" under each life skill (Epics noted, since they fill 2 dots),
-  and every save beyond the goal of 2 adds a gray lined dot, so no save is hidden.
+  and every save beyond the expected 2 adds a gray lined dot, so no save is hidden.
 
 ## Challenges: AI-built family solutions, and no phone dropdown for students (Nov 24, 2026)
 
@@ -466,7 +466,7 @@ the `PAGES` list at the top of `/search.js`.
   - On a profile, the tracker's sub-bar says "My child" and lists one tab per child (none for one child).
 - **Challenges to try at home** (on a child's profile) only lists challenges at the child's level: their band, and in 5–8,
   their half of it (5–6 or 7–8 from their grade; "5–8" challenges fit both), as the Challenges page does. Saved ones from
-  another level are left out. If a band has no home challenges, it says so instead of "met the year goal".
+  another level are left out. If a band has no home challenges, it says so instead of "passed the expected 2".
 - **Saved to your account, everywhere.** Families' At Home and Our Approach choices and their Challenges plan
   (`wl-family-…`, `wl-picks` on the Parents site), and guides' Field Guide reps, if-then plan, self-check and streak
   (`fg-…`), now copy to `accounts/{uid}/sites/{parents|fieldguide}` through `/auth.js` (`ACCT`). The first sign-in on a
@@ -513,3 +513,6 @@ the `PAGES` list at the top of `/search.js`.
 - **Books finished this year** (student profile, Life Skills record) is empty until Basecamp is connected. Books a student marked "loved it" or "not for me" on the Books site are shown as **Book tastes**, with a note that these aren't books finished this year. Guides' Students page says "Books they loved"; notifications say "said they loved…".
 - **Students home:** Treebeard Library and Camp Store cards show small drawings of the apps instead of photos; the "Sign in with your school account" notes are gone (every page needs sign-in anyway).
 - **Guides › Students** has **Life Skills** (everyone's tracker, `#lifeskills`) and, for Field Guides, **Coaching** (the whole session room, `#coaching`, framed as `/fieldguide/?embed=1&sid=all#sessions`) next to Roster, Pickup, Alerts and AI conversations. Each student's own Life Skills and Coaching tabs are unchanged.
+
+## "Expected", not "goal", for the yearly 2 per Life Skill (Nov 25, 2026)
+- "Goal" is kept for what a student sets for themselves (the Goals page, 1:1s). The school's yearly 2 challenges in each Life Skill (16 a year) is now called **expected**: "Expected this year: 2 in every life skill" in Challenges, the Life Skills tracker, parents' and guides' views; the tracker filter is "Plan short of expected"; onboarding and the training quiz say "expected each year". The Goals page says "Wilderland expects 16 this year… You pick your own number."

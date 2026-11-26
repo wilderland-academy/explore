@@ -572,7 +572,7 @@ function record(sid, opts = {}) {
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
       opts.parent ? launchNote() : null,
       h("div", { class: "grid2" }, [
-        h("div", { class: "panel" }, [h("h2", { class: "h", text: `Year goal: ${goal} in every life skill` }),
+        h("div", { class: "panel" }, [h("h2", { class: "h", text: `Expected this year: ${goal} in every life skill` }),
           h("p", { class: "muted" }, [h("b", { style: { color: "var(--ink)" }, text: `${done} of 8 skills met. ` }), missingSkills.length === 8 ? "No passes yet this year." : missingSkills.length ? "Not started yet: " + missingSkills.join(", ") + "." : "Every life skill has a pass this year."]), skillsList]),
         h("div", { class: "panel" }, [h("h2", { class: "h", text: s.band === "K–1" ? "This year" : sum.rank ? "Rank: " + sum.rank : "On the trail" }), rankLine, s.band === "K–1" ? h("p", { class: "big", text: String(sum.year) }) : trackBar(sid)])
       ]),
@@ -637,7 +637,7 @@ function tellPass(sid, cid, result, o) {
   window.wlNotify([s.email], { kind: result === "pass" ? "pass" : "notyet", text: t, link: "/challenges/#progress" });
 }
 // Families: how to support it at home. The child's next Labs (with the guides' notes for home) and challenges they can
-// pass off at home: what they're working on first, then the life skills furthest from this year's goal.
+// pass off at home: what they're working on first, then the life skills furthest from what's expected this year.
 function homeSupport(sid) {
   const s = S.students[sid], sum = summary(sid), goal = goalFor(s.band), now = today();
   const labs = (S.labs || []).filter(l => (l.bands || []).includes(s.band) && labEnd(l) >= now).slice(0, 3);
@@ -663,7 +663,7 @@ function homeSupport(sid) {
         h("div", {}, h("a", { class: "btn", href: "#schedule", text: "All Labs" }))]),
       h("div", { class: "panel stack" }, [h("h3", { class: "h", text: "Challenges to try at home" }),
         h("p", { class: "small muted", text: home.length ? `These can be passed off at home with you, all at ${name}'s level (grades ${half || s.band}). ${working.some(c => home.includes(c)) ? "The first are what " + name + " is working on; the rest" : "They"} are in the life skills where ${name} has the fewest passes this year.` : "" }),
-        home.length ? savedList(home) : h("p", { class: "empty", text: anyHome ? name + " has met the year goal everywhere a home challenge fits. Nice work." : `None of the grades ${half || s.band} challenges are set up to pass off at home yet. The Labs coming up are the best things to practice together.` }),
+        home.length ? savedList(home) : h("p", { class: "empty", text: anyHome ? name + " has passed the expected 2 everywhere a home challenge fits. Nice work." : `None of the grades ${half || s.band} challenges are set up to pass off at home yet. The Labs coming up are the best things to practice together.` }),
         h("div", { class: "row" }, [h("a", { class: "btn", href: "/parents/challenges/", text: "Browse all challenges" }), h("a", { class: "btn plain", href: "/parents/passoff/", text: "How passing off at home works" })])])
     ])
   ]));
@@ -708,7 +708,7 @@ function launchNote() {
 }
 
 // ---------- guides: band overview ----------
-// Two ways to read it: credits passed this year per life skill, or challenges saved to each student's plan (saved/goal).
+// Two ways to read it: credits passed this year per life skill, or challenges saved to each student's plan (saved/expected).
 // Wide screens with a mouse get a table where pointing at a saved count lists those challenges; phones and touch
 // screens get one card per student with each life skill as a tap-to-open row, so nothing depends on hover.
 let ovBand = "2–4", ovFilter = "all", ovShow = "passed";
@@ -732,7 +732,7 @@ function popShow(btn, pin) {
   const sid = btn.getAttribute("data-sid"), k = btn.getAttribute("data-k"), s = S.students[sid], list = savedBySkill(sid)[k] || [];
   pop.innerHTML = "";
   pop.setAttribute("aria-label", `${s.name}: saved ${SKILL[k].n} challenges`);
-  pop.append(h("p", { class: "svh" }, [h("b", { text: firstName(s.name) }), ` · ${SKILL[k].n} · ${list.length} saved, goal ${goalFor(s.band)} this year`]),
+  pop.append(h("p", { class: "svh" }, [h("b", { text: firstName(s.name) }), ` · ${SKILL[k].n} · ${list.length} saved, ${goalFor(s.band)} expected this year`]),
     list.length ? savedList(list) : h("p", { class: "small muted", text: "Nothing saved in this life skill yet." }));
   const r = btn.getBoundingClientRect();
   pop.hidden = false;
@@ -765,7 +765,7 @@ function overview() {
   const stale = inBand.filter(s => daysAgo(sums[s.id].last) > 21);
   const open = inBand.filter(s => sums[s.id].notyets.length);
   const fresh = inBand.filter(s => sums[s.id].newMilestone);
-  // Students whose plan doesn't cover the year goal yet in at least one life skill (passed + saved < goal).
+  // Students whose plan doesn't cover what's expected this year in at least one life skill (passed + saved < expected).
   const thin = inBand.filter(s => W.skills.some(k => (sums[s.id].per[k.k] || 0) + (saves[s.id][k.k] || []).length < goalFor(s.band)));
   const rows = { all: inBand, stale, open, fresh, thin }[ovFilter] || inBand;
   const chip = (id, label) => h("button", { class: "chip", type: "button", "aria-pressed": String(ovFilter === id), text: label, onclick: () => { ovFilter = id; route(); } });
@@ -800,8 +800,8 @@ function overview() {
   } else {
     const table = h("table", { class: "ov" }, [
       h("caption", { class: "small muted", style: { textAlign: "left", padding: "14px 18px 4px" }, text: savedView
-        ? `Challenges each student has saved to their plan in each life skill (not yet passed), out of the year goal of ${goal}. Point at or tap a count to see which ones.`
-        : `Credits this school year per life skill. A filled circle means the year goal of ${goal} is met.` }),
+        ? `Challenges each student has saved to their plan in each life skill (not yet passed), out of the ${goal} expected this year. Point at or tap a count to see which ones.`
+        : `Credits this school year per life skill. A filled circle means the expected ${goal} are passed.` }),
       h("thead", {}, h("tr", {}, [h("th", { scope: "col", text: "Student" }), ...W.skills.map(k => h("th", { scope: "col", title: k.n, style: { borderTopColor: k.col }, text: SHORT[k.k] })),
         h("th", { scope: "col", text: savedView ? "Saved" : "This year" }), h("th", { scope: "col", text: "Trail" }), h("th", { scope: "col", style: { textAlign: "left" }, text: "Last pass" })])),
       h("tbody", {}, rows.map(s => {
@@ -817,13 +817,13 @@ function overview() {
   const said = [];
   if (stale.length) said.push(`${stale.map(s => firstName(s.name)).join(", ")} ${stale.length === 1 ? "hasn't" : "haven't"} passed a challenge in 3 weeks. Bring it up in this week's coaching: what are they working on, and what's in the way?`);
   if (fresh.length) said.push(`${fresh.map(s => firstName(s.name)).join(", ")} reached a new milestone. Call them up at the next Honor Court.`);
-  if (savedView && thin.length) said.push(`${thin.length} of ${inBand.length} students haven't passed or saved enough challenges to reach the year goal in every life skill. Use "Plan short of the goal" to find them.`);
+  if (savedView && thin.length) said.push(`${thin.length} of ${inBand.length} students haven't passed or saved enough challenges to reach what's expected in every life skill. Use "Plan short of expected" to find them.`);
   return h("div", {}, [
     head("Band overview", "Who's moving, who's stuck, who to celebrate, and what each student has saved to their plan."),
     h("section", { class: "band" }, h("div", { class: "wrap stack" }, [
       h("div", { class: "row" }, ["All", ...BANDS].map(bandChip)),
       h("div", { class: "row", role: "group", "aria-label": "Show" }, [h("span", { class: "small muted", text: "Show:" }), showChip("passed", "Passed this year"), showChip("saved", "Saved to plan")]),
-      h("div", { class: "row" }, [chip("all", `All ${inBand.length} students`), chip("stale", `No pass in 3 weeks (${stale.length})`), chip("open", `Open not yets (${open.length})`), chip("fresh", `New milestones (${fresh.length})`), chip("thin", `Plan short of the goal (${thin.length})`),
+      h("div", { class: "row" }, [chip("all", `All ${inBand.length} students`), chip("stale", `No pass in 3 weeks (${stale.length})`), chip("open", `Open not yets (${open.length})`), chip("fresh", `New milestones (${fresh.length})`), chip("thin", `Plan short of expected (${thin.length})`),
         h("a", { class: "btn go", href: "#validate", style: { marginLeft: "auto" }, text: "Validate" })]),
       savedView && noSaves ? h("p", { class: "note err", text: "Couldn't read students' saved challenges. The database rules may need publishing (see firestore.rules)." }) : null,
       body,
