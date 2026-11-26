@@ -571,3 +571,20 @@ the `PAGES` list at the top of `/search.js`.
 ## Camp Store and Students home illustrations (Nov 25, 2026)
 - The "Camp Store starts in 2nd grade" note is gone. Its `display:flex` beat the `hidden` attribute, so every student saw it. K–1 students get no Store tab or home card (`wlK1Student` in `/wlnav.js`), and if one opens /store/ anyway, the page sends them to /students/ once their role is confirmed.
 - The Camp Store page opens with an illustration of a camp trading post. On the Students home, Basecamp (tents and a progress board), Camp Store and Suggestion Wall (a board of notes) are illustrations too, in the Guides site's paper-cut style, like Treebeard Library.
+
+## 300 picture books for K–1 in the Lantern Stacks (Nov 26, 2026)
+- **The Lantern Stacks has 1,736 books.** 300 picture books, read-alouds and interactive books for kindergarten and first grade
+  are on their own `BOOKS.push(...)` line (marked "K–1 picture books") in `books/index.html`, with the same `"id": "x", "t": "..."`
+  spacing. The mix: about 120 Caldecott Medal and Honor books, Geisel winners (the best books for brand-new readers), classics
+  from Peter Rabbit to Corduroy, books you press, shake and lift (Press Here, The Book with No Pictures, Where's Spot?),
+  poetry, folktales from around the world, wordless books and true picture books about space, seeds, water and real people.
+- **Awards were checked** against the ALA Caldecott list, ALA/library Geisel and Coretta Scott King lists, and the Greenaway list;
+  they live in `AWD` (one `Object.assign(AWD, ...)` line) so the "Caldecott Medal or Honor book" Life List item finds them.
+- **No Lexile on purpose.** Picture books are read together, so their covers say "Read-aloud" instead of a number, and a
+  reader with a Lexile of 500L or less still sees them on "Right for your grade."
+- **New "Picture books" section** (`pic`, first genre on each new book) with its own region on the map. Older picture books already
+  in the Stacks (Where the Wild Things Are, The Snowy Day...) keep their home section and also join this one.
+- **Picture books stay with younger readers.** They show for kindergarten–1st grade (grade set, or the K–1 band), on a new
+  "Read it together" home shelf, and from other books for that age. They don't appear in recommendations from older books,
+  in home shelves, Moments or New ground for older readers, and they sort last on tag pages for them (`isPic`, `youngR`,
+  `near`, `forReader` next to `allowed()`). The K–1 band's starting shelf now opens with picture books.

@@ -187,7 +187,7 @@ export const EXPLORE = [
     more: ["Home pass-off guide for parents", "/parents/passoff/"], note: "In K–1, challenges are run by guides at school, so this is mostly for grades 2–8." },
   { name: "Atlas of Sparks", href: "/projects/", img: "✨", what: "A giant map of real projects people have made, including standout projects by kids, to spark ideas for your child's own passion project.",
     how: ["Explore side by side and ask “Which one would you want to try?”", "Take a wild idea seriously. Ask what it would take.", "Help find gear, places and people. Leave the planning and the doing to them."], note: "Projects begin in grades 5–8. Younger children follow passion pursuits at school." },
-  { name: "The Lantern Stacks", href: "/books/", img: "📚", what: "An exhibit of great books for ages 7–16, connected by theme, genre and feeling, with ways in for readers who don't think they like reading.",
+  { name: "The Lantern Stacks", href: "/books/", img: "📚", what: "An exhibit of great books for kindergarten through ninth grade, from picture books to read together up to novels, connected by theme, genre and feeling, with ways in for readers who don't think they like reading.",
     how: ["Let your child pick. Choice is what turns kids into readers.", "Bookmark a few, then hunt them down at the library or on Libby.", "Read one they picked and talk about it."], note: "You can browse without signing in. Saving happens on your child's school account." }
 ];
 
