@@ -24,7 +24,8 @@
 (function () {
   var FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
   var T = window.WLTools, SITE = document.body.dataset.site === "guides" ? "guides" : "students";
-  var BANDS = ["K–1", "2–4", "5–8"];
+  // The library is Upper Campus only (grades 2–8). K–1 students don't see it; guides on both campuses do.
+  var BANDS = ["2–4", "5–8"];
   var S = { role: null, inv: {}, loans: [], holds: [], reports: [], badges: {}, kids: [], q: "", cat: "all", f: "", view: "", band: "All", kid: "", dirty: {}, msg: "" };
   var $ = function (q) { return document.querySelector(q); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
@@ -33,7 +34,7 @@
   // Items guides added (toolItems/{id}): same shape as the catalog's. Merged in, replacing an earlier copy.
   function addCustom(d) {
     if (!d || !d.n || !T.CATS[d.c]) return;
-    var t = { id: d.id, n: d.n, c: d.c, k: ["tool", "machine", "material"].indexOf(d.k) >= 0 ? d.k : "tool", have: 0, want: Number(d.want) || 0, a: T.ACCESS[d.a] ? d.a : "open", b: BANDS.indexOf(d.b) >= 0 ? d.b : "K–1", loan: T.LOAN[d.loan] ? d.loan : "day", e: d.e || "🧰", d: d.d || "", m: d.m || "", tip: d.tip || "", custom: true };
+    var t = { id: d.id, n: d.n, c: d.c, k: ["tool", "machine", "material"].indexOf(d.k) >= 0 ? d.k : "tool", have: 0, want: Number(d.want) || 0, a: T.ACCESS[d.a] ? d.a : "open", b: BANDS.indexOf(d.b) >= 0 ? d.b : "2–4", loan: T.LOAN[d.loan] ? d.loan : "day", e: d.e || "🧰", d: d.d || "", m: d.m || "", tip: d.tip || "", custom: true };
     var i = T.TOOLS.findIndex(function (x) { return x.id === t.id; });
     if (i >= 0) T.TOOLS[i] = t; else T.TOOLS.push(t);
     byId[t.id] = t;
@@ -154,12 +155,15 @@
   }
   var accessPill = function (t) { return '<span class="pill p-' + t.a + '">' + esc(T.ACCESS[t.a][0]) + "</span>"; };
   var bandOk = function (t, band) { return BANDS.indexOf(band || "5–8") >= BANDS.indexOf(t.b); };
-  var gradesFrom = function (t) { return t.b === "K–1" ? "every grade" : t.b === "2–4" ? "grades 2 and up" : "grades 5 and up"; };
+  var gradesFrom = function (t) { return t.b === "5–8" ? "grades 5 and up" : "grades 2 and up"; };
+  var k1 = function () { return SITE === "students" && S.role && S.role.role === "student" && S.role.band === "K–1"; };
+  var upper = function (s) { return s.band !== "K–1"; };
   var myBadges = function () { var sid = S.role && S.role.sid; return (sid && S.badges[sid]) || []; };
 
   // ---------- loading ----------
   async function load() {
     if (!S.role || !user()) return;
+    if (k1()) { S.loaded = true; draw(); return; }
     var none = function () { return []; };
     var inv = list("toolInventory").catch(none), items = list("toolItems").catch(none), holds = list("toolHolds").catch(none);
     var loans = Promise.resolve([]), badgesP = Promise.resolve([]), kids = Promise.resolve(null), reps = Promise.resolve([]);
@@ -190,6 +194,7 @@
   // ---------- drawing ----------
   function draw() {
     if (!S.loaded) { $("#view").innerHTML = '<p class="note">Loading the library…</p>'; return; }
+    if (k1()) { $("#side").innerHTML = ""; $("#gtabs").innerHTML = ""; $("#view").innerHTML = '<section class="panel"><h2>The Tool Library opens in 2nd grade</h2><p class="sub">It\'s for Upper Campus students. Until then, your guides have the tools you need for your work. Ask them!</p></section>'; return; }
     var v = guide() ? (location.hash.replace("#", "") || "desk") : "catalog";
     S.view = v;
     $("#side").innerHTML = guide() ? deskSummary() : myTools();
@@ -264,7 +269,7 @@
     }
     dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + t.e + "</span><h2>" + esc(t.n) + '</h2><button class="x" data-close aria-label="Close">✕</button></div><p>' + esc(t.d) + "</p>" +
       (t.tip ? '<p class="tip">⚠️ ' + esc(t.tip) + "</p>" : "") +
-      "<dl><dt>Status</dt><dd>" + availHtml(t) + "</dd><dt>Who</dt><dd>" + accessPill(t) + " " + esc(T.ACCESS[t.a][1]) + "</dd><dt>Grades</dt><dd>" + (t.b === "K–1" ? "Every grade" : t.b === "2–4" ? "2nd grade and up" : "5th grade and up") + "</dd><dt>Loan</dt><dd>" + esc(T.LOAN[t.loan]) + "</dd>" + (t.m ? "<dt>Model</dt><dd>" + esc(t.m) + "</dd>" : "") +
+      "<dl><dt>Status</dt><dd>" + availHtml(t) + "</dd><dt>Who</dt><dd>" + accessPill(t) + " " + esc(T.ACCESS[t.a][1]) + "</dd><dt>Grades</dt><dd>" + (t.b === "5–8" ? "5th grade and up" : "2nd grade and up (all of Upper Campus)") + "</dd><dt>Loan</dt><dd>" + esc(T.LOAN[t.loan]) + "</dd>" + (t.m ? "<dt>Model</dt><dd>" + esc(t.m) + "</dd>" : "") +
       (t.ch && t.ch.length ? "<dt>Challenges</dt><dd>" + t.ch.map(function (c) { return '<a href="' + (SITE === "guides" ? "/guides/challenges/" : "/challenges/") + "#c=" + encodeURIComponent(c) + '">' + esc(c) + "</a>"; }).join(", ") + "</dd>" : "") + (s.loc ? "<dt>Where</dt><dd>" + esc(s.loc) + "</dd>" : "") + "</dl>" +
       '<div class="act">' + act + '</div><p class="note" id="ddmsg" role="status"></p></div>';
     if (!dd.open) dd.showModal();
@@ -416,7 +421,7 @@
   var EMOJI = { digital: "🖨️", wood: "🪚", carve: "🔪", clay: "🏺", fiber: "🧵", elec: "🔌", nature: "🔭", garden: "🌱", camp: "🏕️", kitchen: "🍳", art: "🎨", media: "📷", measure: "📏", bike: "🚲", safety: "🦺", play: "🤸", learn: "📋", mat: "📦" };
   function itemForm(id, from) {
     var t = id ? byId[id] : null, req = from ? S.loans.find(function (l) { return l.id === from; }) : null;
-    var v = t || { n: req ? req.n : "", c: "wood", k: req && req.amt === "material" ? "material" : "tool", a: "open", b: "K–1", loan: "day", e: "", d: "", m: "", tip: "", want: 1 };
+    var v = t || { n: req ? req.n : "", c: "wood", k: req && req.amt === "material" ? "material" : "tool", a: "open", b: "2–4", loan: "day", e: "", d: "", m: "", tip: "", want: 1 };
     var sel = function (idn, opts, cur) { return '<select id="' + idn + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === cur ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select>"; };
     var dd = $("#dd");
     dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + (v.e || "🧰") + "</span><h2>" + (t ? "Edit " + esc(t.n) : "Add a tool or material") + '</h2><button class="x" data-close aria-label="Close">✕</button></div>' +
@@ -426,7 +431,7 @@
       "<label>Kind" + sel("it-k", [["tool", "Tool (borrow it)"], ["machine", "Machine (book a time)"], ["material", "Material (used up)"]], v.k) + "</label>" +
       "<label>Category" + sel("it-c", Object.keys(T.CATS).map(function (k) { return [k, T.CATS[k][1] + " " + T.CATS[k][0]]; }), v.c) + "</label>" +
       "<label>Who can use it" + sel("it-a", Object.keys(T.ACCESS).map(function (k) { return [k, T.ACCESS[k][0]]; }), v.a) + "</label>" +
-      "<label>Grades" + sel("it-b", [["K–1", "Every grade"], ["2–4", "2nd grade and up"], ["5–8", "5th grade and up"]], v.b) + "</label>" +
+      "<label>Grades" + sel("it-b", [["2–4", "All of Upper Campus (2–8)"], ["5–8", "5th grade and up"]], v.b) + "</label>" +
       "<label>Loan" + sel("it-loan", Object.keys(T.LOAN).map(function (k) { return [k, T.LOAN[k]]; }), v.loan) + "</label>" +
       '<label>Icon (an emoji)<input id="it-e" maxlength="4" value="' + esc(v.e) + '" placeholder="' + (EMOJI[v.c] || "🧰") + '"></label>' +
       (t ? "" : '<label>How many we have now<input type="number" id="it-have" min="0" max="999" value="' + (req ? 0 : 1) + '"></label>') +
@@ -571,7 +576,7 @@
     };
     var back = function (l) { return '<select id="cond-' + l.id + '" aria-label="Condition"><option value="fine">Fine</option><option value="repair">Needs repair</option><option value="missing">Missing pieces</option></select><button class="ghost sm" data-back="' + l.id + '">Back</button>'; };
     var section = function (h, xs, act, empty) { return '<section class="panel"><h2>' + h + " (" + xs.length + ")</h2>" + (xs.length ? '<ul class="loans">' + xs.map(function (l) { return loanRow(l, act(l)); }).join("") + "</ul>" : '<p class="sub">' + empty + "</p>") + "</section>"; };
-    var kidOpts = S.kids.map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + " (" + esc(s.band) + ")</option>"; }).join("");
+    var kidOpts = S.kids.filter(upper).map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + " (" + esc(s.band) + ")</option>"; }).join("");
     var itemOpts = T.TOOLS.filter(function (t) { return t.k !== "material" && stock(t).have > 0; }).map(function (t) { return '<option value="' + t.id + '">' + esc(t.n) + "</option>"; }).join("");
     return (S.msg ? '<p class="note ok" role="status">' + esc(S.msg) + "</p>" : "") + '<div class="cols">' +
       section("Asked for", req, give, "No requests right now.") +
@@ -587,7 +592,7 @@
       section("Reserved", resv, give, "No reservations coming up. Students reserve from each item's sheet, in 4-hour blocks.") +
       (missed.length ? section("Reservations nobody picked up", missed, function (l) { return '<button class="ghost sm" data-expire="' + l.id + '">Clear</button>'; }, "") : "") +
       section("Waiting in line", wait, function (l) { return stock(byId[l.item] || {}).free > 0 ? give(l) : '<button class="ghost sm" data-decline="' + l.id + '">Remove</button>'; }, "Nobody in line.") +
-      '<section class="panel"><h2>Check out to a student</h2><p class="sub">For a student who asked in person, or who doesn\'t sign in (K–1).</p><div class="act" style="display:grid;gap:8px"><select id="co-kid"><option value="">Student…</option>' + kidOpts + '</select><select id="co-item"><option value="">Tool…</option>' + itemOpts + '</select><input type="date" id="co-due" value="' + today() + '"><button class="go" data-checkout>Check it out</button></div>' +
+      '<section class="panel"><h2>Check out to a student</h2><p class="sub">For an Upper Campus student who asked in person, or who doesn\'t sign in.</p><div class="act" style="display:grid;gap:8px"><select id="co-kid"><option value="">Student…</option>' + kidOpts + '</select><select id="co-item"><option value="">Tool…</option>' + itemOpts + '</select><input type="date" id="co-due" value="' + today() + '"><button class="go" data-checkout>Check it out</button></div>' +
       (itemOpts ? "" : '<p class="sub">Only tools with at least one counted in Inventory can be checked out.</p>') + "</section></div>";
   }
   async function hand(lid, btn) {
@@ -674,7 +679,7 @@
 
   // ---------- Guides: badges ----------
   function badges() {
-    var kids = S.kids.filter(function (s) { return S.band === "All" || s.band === S.band; });
+    var kids = S.kids.filter(upper).filter(function (s) { return S.band === "All" || s.band === S.band; });
     var bt = T.TOOLS.filter(function (t) { return t.a === "badge"; });
     var cur = S.kid && S.kids.find(function (k) { return k.id === S.kid; });
     var has = cur ? (S.badges[cur.id] || []) : [];
