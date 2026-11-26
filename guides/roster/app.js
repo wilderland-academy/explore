@@ -18,7 +18,7 @@ const CAT = {
   self_harm: "Self-harm or suicide", harmed_by_others: "May be unsafe or harmed", threat_to_others: "Threat to others", sexual: "Sexual content",
   weapons_danger: "Weapons or dangerous activity", drugs_alcohol: "Drugs or alcohol", bullying_hate: "Bullying or hate", distress: "Upset or struggling",
   personal_info: "Shared personal details", manipulation: "Tried to get around the rules", cheating: "Asked AI to do the work", profanity: "Rude language",
-  off_topic: "Off topic", tampering: "Log tampering", coach_reply_held_back: "Coach reply held back", academic_use: "Used the coach for academics", academic_interest: "Wants to try the academics coach", none: "None"
+  off_topic: "Off topic", tampering: "Log tampering", coach_reply_held_back: "Coach reply held back", coach_glitch: "Coach reply came out broken (technical)", academic_use: "Used the coach for academics", academic_interest: "Wants to try the academics coach", none: "None"
 };
 // What to do, shown on urgent alerts. Sources: Utah Code 80-2-602 (everyone must report suspected abuse or neglect
 // immediately to DCFS or law enforcement; telling a school official does not satisfy it, per USBE rule R277-401),
@@ -138,8 +138,14 @@ async function loadAll() {
     if (d.id === "books") { const b = j("lantern-stacks") || {}; p.saved = b.saved || []; p.want = b.want || []; p.nope = Array.isArray(b.nope) ? b.nope : []; p.nwhy = b.nwhy || {}; }
   });
   chats.forEach(c => person(c.email).chats.push(c));
-  alerts.forEach(a => person(a.email).alerts.push(a));
-  S.alerts = alerts.sort((a, b) => (a.status === "open" ? 0 : 1) - (b.status === "open" ? 0 : 1) || SEV.indexOf(b.severity) - SEV.indexOf(a.severity) || b.at - a.at);
+  // Technical alerts (the site's own glitches, wlTechAlert in /wlnav.js) aren't for guides: only the tech admin sees
+  // them, in their own section of Alerts. Everything else is for every staff member, as before.
+  const isTech = a => !!(window.wlTechAlert && window.wlTechAlert(a));
+  const order = (a, b) => (a.status === "open" ? 0 : 1) - (b.status === "open" ? 0 : 1) || SEV.indexOf(b.severity) - SEV.indexOf(a.severity) || b.at - a.at;
+  S.techAlerts = S.techAdmin ? alerts.filter(isTech).sort(order) : [];
+  const shown = alerts.filter(a => !isTech(a));
+  shown.forEach(a => person(a.email).alerts.push(a));
+  S.alerts = shown.sort((a, b) => (a.status === "open" ? 0 : 1) - (b.status === "open" ? 0 : 1) || SEV.indexOf(b.severity) - SEV.indexOf(a.severity) || b.at - a.at);
   S.chats = chats.sort((a, b) => (b.updated || 0) - (a.updated || 0));
   // A guide's bands: any student they're named on, plus their own band (WLPeople.STAFF_BANDS, or the test band in a
   // test view), so a band's guides work with all of its students without filling in every record.
@@ -218,7 +224,17 @@ function vAlerts() {
   const open = S.alerts.filter(a => a.status === "open"), done = S.alerts.filter(a => a.status !== "open");
   return page("alerts", "When a student's message to Mr. Fox is worrying or breaks the rules, it shows up here. Urgent ones come with what to do. Every staff member sees every alert.") +
     (open.length ? `<div class="list">${open.map(alertCard).join("")}</div>` : `<p class="empty">No open alerts. Nice.</p>`) +
-    (done.length ? `<details${S.showDone ? " open" : ""} data-done><summary class="small">Reviewed (${done.length})</summary><div class="list" style="margin-top:12px">${done.slice(0, 100).map(alertCard).join("")}</div></details>` : "");
+    (done.length ? `<details${S.showDone ? " open" : ""} data-done><summary class="small">Reviewed (${done.length})</summary><div class="list" style="margin-top:12px">${done.slice(0, 100).map(alertCard).join("")}</div></details>` : "") +
+    techSection();
+}
+// Only the tech admin: Mr. Fox replies that came out broken (cut off, garbled), held back so the student got a fixed
+// line instead. Nothing about the student; something to fix in the relay.
+function techSection() {
+  if (!S.techAdmin) return "";
+  const open = S.techAlerts.filter(a => a.status === "open"), done = S.techAlerts.filter(a => a.status !== "open");
+  return `<section class="techsec"><h2>Technical: only you</h2><p class="muted">Mr. Fox replies that came out broken (cut off, garbled or with stray tags), so the student got a fixed line instead. Nothing about the student; guides don't see these.</p>` +
+    (open.length ? `<div class="list">${open.map(alertCard).join("")}</div>` : `<p class="empty">No technical alerts.</p>`) +
+    (done.length ? `<details><summary class="small">Reviewed (${done.length})</summary><div class="list" style="margin-top:12px">${done.slice(0, 50).map(alertCard).join("")}</div></details>` : "") + `</section>`;
 }
 
 function scope() {
@@ -681,6 +697,7 @@ async function start(r) {
   S.test = r.test || null; S.me = key(S.test ? r.email : u.email); S.admin = !S.test && ADMINS.includes(S.me);
   // Field Guides (and testers, by their own account) get each student's Coaching tab.
   S.coach = !!(window.wlCoaches && window.wlCoaches(u.email));
+  S.techAdmin = !!(window.wlTechAdmin && window.wlTechAdmin(u.email));
   // Start on this guide's own band (All for admins without one).
   if (!S.bandSet && window.wlBand) { S.band = window.wlBand({ all: true }); S.bandSet = true; }
   if (/^#info\b/.test(location.hash)) route();
@@ -719,7 +736,7 @@ document.addEventListener("click", async e => {
   if (t.dataset.saveReview) {
     const id = t.dataset.saveReview, note = (document.getElementById("n-" + id) || {}).value || "";
     t.disabled = true;
-    try { const now = Date.now(); await patch(`aiAlerts/${id}`, { status: "reviewed", note: note.trim(), reviewedBy: S.me, reviewedAt: now }); Object.assign(S.alerts.find(a => a.id === id), { status: "reviewed", note: note.trim(), reviewedBy: S.me, reviewedAt: now }); badge(); route(); }
+    try { const now = Date.now(); await patch(`aiAlerts/${id}`, { status: "reviewed", note: note.trim(), reviewedBy: S.me, reviewedAt: now }); Object.assign(S.alerts.concat(S.techAlerts || []).find(a => a.id === id), { status: "reviewed", note: note.trim(), reviewedBy: S.me, reviewedAt: now }); badge(); route(); }
     catch (x) { t.disabled = false; alert("Couldn't save. Try again."); }
     return;
   }
