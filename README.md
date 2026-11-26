@@ -38,7 +38,7 @@ The old `/families/` addresses forward to `/parents/` (`families/*/index.html`),
 ## Pages added Nov 16, 2026
 - `/` landing page: image cards for Books, Challenges, Projects, Treebeard Library, Basecamp, Camp Store and the Suggestion Box (`img/`).
 - `/store/`: Camp Store, shown only after school sign-in. 176 products in `store/products.js`, grouped into 14 interest categories (price in dollars; blazes = price × 2), one photo each in `store/img/<id>.jpg` (480×480, white background). Wishlist and blaze count live in localStorage key `wl-store` and sync through `auth.js`. The sign-in gate hides the page; the product list itself is not secret.
-- `/tools/` (students) and `/guides/tools/` (guides): the Tool & Materials Library, both built from `_includes/tools.html`. The catalog is `tools/catalog.js` (176 tools, machines and materials in 16 categories, each with access level, starting grade and loan type; `have` is what we know we own, `want` what a project school our size should have). Logic in `tools/app.js`. Firestore: `toolInventory/{item}` (what guides counted; overrides the catalog's `have`), `toolLoans` (requests and checkouts, like a book library: a student asks, a guide hands it out and checks it back in), `toolBadges/{sid}` (tools a student was taught), `toolItems/{id}` (tools and materials guides added from the page; merged into the catalog). Students can request anything, including things not in the catalog (`toolLoans` kind `new`); guides add those to the catalog and mark items stocked from each item's sheet, and the students who asked are told. Rules are in `firestore.rules`. The guides' Shopping list tab is everything below `want` after counting.
+- `/tools/` (students) and `/guides/tools/` (guides): the Tool & Materials Library, both built from `_includes/tools.html`. The catalog is `tools/catalog.js` (229 tools, machines and materials in 18 categories, each with access level, starting grade and loan type; `have` is what we know we own, `want` what a project school our size should have). Logic in `tools/app.js`. Firestore: `toolInventory/{item}` (what guides counted; overrides the catalog's `have`), `toolLoans` (requests and checkouts, like a book library: a student asks, a guide hands it out and checks it back in), `toolBadges/{sid}` (tools a student was taught), `toolItems/{id}` (tools and materials guides added from the page; merged into the catalog). `toolHolds/{loan id}` (a reservation's place on the calendar, no names; see below). Students can request anything, including things not in the catalog (`toolLoans` kind `new`); guides add those to the catalog and mark items stocked from each item's sheet, and the students who asked are told. Rules are in `firestore.rules`. The guides' Shopping list tab is everything below `want` after counting.
 - `/suggest/`: Suggestion Box on Firestore collection `suggestions`, readable only by signed-in school accounts. Rules are in `firestore.rules` (paste into Firebase console → Firestore → Rules). Admin emails are listed in both `firestore.rules` and `suggest/index.html`.
 
 ## Sign-in gate
@@ -588,3 +588,32 @@ the `PAGES` list at the top of `/search.js`.
   "Read it together" home shelf, and from other books for that age. They don't appear in recommendations from older books,
   in home shelves, Moments or New ground for older readers, and they sort last on tag pages for them (`isPic`, `youngR`,
   `near`, `forReader` next to `allowed()`). The K–1 band's starting shelf now opens with picture books.
+
+## Tool Library: challenge gear and reservations (Nov 26, 2026)
+- **53 new catalog items** (`tools/catalog.js`, the block marked "Added Nov 26, 2026") cover what the grades 2–4 and 5–8
+  Life Skills challenges need, from the two challenge shopping lists: rescue throw bag, Ten Essentials pack, slackline,
+  winter sleep system, kick net, planispheres, energy meter, pull-up bar, juggling balls, speed cubes, cones, visual timers,
+  cash boxes, nest box kit, matches and more. Two new categories: Games & movement, Classroom & learning. All start at
+  `have: 0` until a guide counts them.
+- **Items know their challenges.** A `ch` list of challenge ids (111 items, new and old) shows as links on each item's sheet
+  (to `/challenges/#c=ID`, or `/guides/challenges/#c=ID` for guides). Search finds items by challenge id, and a "For a challenge"
+  chip shows only challenge gear. Every id was checked against `/challenges/data.js`, and no 2–4 challenge points at gear
+  only 5th graders can borrow.
+- **Students reserve in 4-hour blocks.** On an item's sheet: a day, a start (12, 4 or 8, AM or PM) and a length (4 hours to a
+  week), up to 90 days ahead. Tools ask how many; materials ask how much ("set some aside"). The same checks as borrowing
+  apply (grade, badge, we own one). Machines that stay put are reserved this way instead of the old morning/afternoon booking.
+  - A reservation is a `toolLoans` doc (`kind: "reserve"`, `status: "reserved"`, `start`, `end`, `qty`) plus, for tools and
+    machines, a `toolHolds/{same id}` doc with only `item`, `start`, `end`, `qty`. Every student reads the holds, so the sheet
+    says "2 of 3 free" for the window they pick without showing who reserved. Materials have no hold.
+  - Students see reservations under My tools and can cancel them (the hold goes too). A reservation that starts today is on
+    their to-do list and on guides' ("N Tool Library reservations start today").
+  - Guides' Desk has **Reserved** (Hand it out, due back the day it ends; or Cancel it, which tells the student) and
+    **Reservations nobody picked up** (Clear). Handing out marks the hold `out`; checking in removes it. Quantities count.
+- **Limits, on purpose:** two students reserving the last one at the same moment can both get it (guides sort it out at the desk);
+  a tool already out on an ordinary loan only counts against reservations that start today, because students can't see
+  other students' due dates.
+- **Tested:** the new rules against the Firestore emulator (27 cases: a student's own reservation and hold, mismatched or
+  foreign holds refused, past or 90-day-plus windows refused, other students can read holds but not loans or change them,
+  guides mark and remove holds, testers only touch test holds), and the page itself in jsdom (34 cases: availability math,
+  quantity limits, badges and grades, materials, cancel, hand out and check in).
+- **Publish `firestore.rules`** in the Firebase console, or reservations fail with "Not allowed".

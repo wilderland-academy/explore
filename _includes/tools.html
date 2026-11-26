@@ -37,6 +37,8 @@ button,input,select,textarea{font:inherit}
 .loans li.late small{color:var(--bad)}
 .newbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.newbar .count{margin:0}
 .stock{margin-top:12px;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;display:grid;gap:8px}.stock h3{margin:0;font-size:15px}
+.resv{margin-top:6px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:grid;gap:8px;background:rgba(8,20,15,.35)}.resv h3{margin:0;font-size:15px}.resv .form{margin:0}
+.dd dd a{color:var(--neon)}
 .form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.form .wide{grid-column:1/-1}@media (max-width:560px){.form{grid-template-columns:1fr}}
 .form label,.stock label{display:grid;gap:4px;font-size:13px;color:var(--dim)}
 .form input,.form select,.form textarea,.stock input,.stock select{background:var(--shelf2);color:var(--paper);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit;font-size:14px;color-scheme:dark}
@@ -133,10 +135,10 @@ dialog.dd::backdrop{background:rgba(0,0,0,.6)}
   <div>
 {% if include.site == "guides" %}
     <h1>The Tool Library, <span>at the desk</span></h1>
-    <p>Hand out and check in tools, keep the inventory honest, give tool badges, and see what to buy next. Students borrow on <a href="/tools/">their side</a>.</p>
+    <p>Hand out and check in tools, hand over reservations when they start, keep the inventory honest, give tool badges, and see what to buy next. Students borrow and reserve on <a href="/tools/">their side</a>.</p>
 {% else %}
     <h1>Borrow what your <span>project needs</span></h1>
-    <p>Like the book library, but for tools and materials. Find it, ask for it, a guide hands it to you, and you bring it back clean.</p>
+    <p>Like the book library, but for tools and materials. Find it, ask for it, a guide hands it to you, and you bring it back clean. Need it later? Reserve it in 4-hour blocks.</p>
 {% endif %}
     <ul class="how">
       <li><b>Anyone</b>: any student can borrow it.</li>

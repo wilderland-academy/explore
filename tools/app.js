@@ -3,18 +3,25 @@
 //   toolInventory/{item id}  what a guide counted: { have, broken, loc, note, stock (materials: ok|low|out), counted,
 //                            out (how many are checked out right now), updated, by }. Overrides the catalog's numbers.
 //                            Every signed-in student and guide reads it (availability); guides write it.
-//   toolLoans/{id}           one request or checkout: { item, n, kind (borrow|book|material|badge|wish), email, sid,
-//                            name, band, status (requested|waiting|wish|out|returned|declined|cancelled|done), at,
-//                            when (a booking: "YYYY-MM-DD morning"), amt, note, due (YYYY-MM-DD), out, back, by,
-//                            byName, cond (fine|repair|missing), gnote, test? }. A student creates their own
-//                            requests and can cancel them; guides do everything else.
+//   toolLoans/{id}           one request or checkout: { item, n, kind (borrow|book|material|badge|wish|new|reserve),
+//                            email, sid, name, band, status (requested|waiting|wish|reserved|out|returned|declined|
+//                            cancelled|done), at, when (an old booking: "YYYY-MM-DD morning"; a reservation:
+//                            "YYYY-MM-DD HH:00"), amt, note, due (YYYY-MM-DD), out, back, by, byName,
+//                            cond (fine|repair|missing), gnote, test?, and for a reservation start, end (ms), qty }.
+//                            A student creates their own requests and reservations and can cancel them; guides do
+//                            everything else.
+//   toolHolds/{loan id}      a reservation's place on the calendar, with no name on it: { item, start, end (ms), qty,
+//                            out (a guide handed it over), test? }. Everyone at school reads them, so a student can
+//                            see when a tool is free; only the student who reserved (or a guide) can add or remove one.
+//                            Materials have no hold: they're used up, so guides just set some aside.
+//   Reservations come in 4-hour blocks on the clock (12, 4 and 8, AM and PM), from 4 hours up to a week.
 //   toolBadges/{sid}         { items: [item ids], by, at }: tools a student was taught and signed off on.
 // Like a book library: a student asks, a guide hands it over (that's the checkout) and checks it back in.
 (function () {
   var FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
   var T = window.WLTools, SITE = document.body.dataset.site === "guides" ? "guides" : "students";
   var BANDS = ["K–1", "2–4", "5–8"];
-  var S = { role: null, inv: {}, loans: [], badges: {}, kids: [], q: "", cat: "all", f: "", view: "", band: "All", kid: "", dirty: {}, msg: "" };
+  var S = { role: null, inv: {}, loans: [], holds: [], badges: {}, kids: [], q: "", cat: "all", f: "", view: "", band: "All", kid: "", dirty: {}, msg: "" };
   var $ = function (q) { return document.querySelector(q); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var byId = {}; T.TOOLS.forEach(function (t) { byId[t.id] = t; });
@@ -36,6 +43,47 @@
   var first = function (n) { return String(n || "").trim().split(/\s+/)[0] || "A student"; };
   var isTest = function () { return !!(S.role && S.role.test); };
   var guide = function () { return SITE === "guides" && S.role && S.role.role === "staff"; };
+
+  // ---------- reservations: 4-hour blocks ----------
+  var HOUR = 3600000, BLOCKS = [0, 4, 8, 12, 16, 20], AHEAD = 90;
+  var LENGTHS = [[4, "4 hours"], [8, "8 hours"], [12, "12 hours"], [16, "16 hours"], [20, "20 hours"], [24, "1 day"], [48, "2 days"], [72, "3 days"], [168, "1 week"]];
+  // Local clock time, so a block always starts on 12, 4 or 8 even across a daylight-saving change.
+  var blockAt = function (date, h) { var p = String(date).split("-"); return new Date(+p[0], +p[1] - 1, +p[2], h).getTime(); };
+  var clock = function (ms) { return new Date(ms).toLocaleTimeString("en-US", { hour: "numeric" }); };
+  var hourTxt = function (h) { return clock(new Date(2000, 0, 1, h).getTime()); };
+  function spanTxt(a, b) {
+    if (!a || !b) return "";
+    var d1 = iso(new Date(a)), d2 = iso(new Date(b - 1));
+    return fmt(d1) + ", " + clock(a) + " to " + (d1 === d2 ? "" : fmt(d2) + ", ") + clock(b);
+  }
+  var endOfToday = function () { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(); };
+  var isResv = function (l) { return l.kind === "reserve"; };
+  var liveResv = function (l) { return isResv(l) && l.status === "reserved" && (l.end || 0) > Date.now(); };
+  // The most of an item held at any one moment between a and b (holds can overlap the window without overlapping each other).
+  function peakHeld(id, a, b) {
+    var hs = S.holds.filter(function (h) { return h.item === id && h.start < b && h.end > a; });
+    return hs.reduce(function (m, x) {
+      var t = Math.max(a, x.start);
+      var n = hs.filter(function (h) { return h.start <= t && h.end > t; }).reduce(function (s, h) { return s + (h.qty || 1); }, 0);
+      return Math.max(m, n);
+    }, 0);
+  }
+  // How many of a tool are free for the whole window. Checked out right now without a reservation counts against today.
+  function freeFor(t, a, b) {
+    var s = stock(t), cap = Math.max(0, s.have - s.broken), busy = peakHeld(t.id, a, b);
+    if (a < endOfToday()) {
+      var heldOut = S.holds.filter(function (h) { return h.item === t.id && h.out; }).reduce(function (n, h) { return n + (h.qty || 1); }, 0);
+      busy += Math.max(0, s.out - heldOut);
+    }
+    return Math.max(0, cap - busy);
+  }
+  // The next block worth suggesting: the next 8 AM or 12 PM start that hasn't begun.
+  function nextSlot() {
+    var d = new Date(), h = d.getHours();
+    if (h < 8) return [iso(d), 8];
+    if (h < 12) return [iso(d), 12];
+    d.setDate(d.getDate() + 1); return [iso(d), 8];
+  }
 
   // ---------- Firestore over REST ----------
   var user = function () { return window.wlFirebase && window.wlFirebase.auth && window.wlFirebase.auth.currentUser; };
@@ -72,9 +120,10 @@
     if (!r.ok) throw Object.assign(new Error(coll + " " + r.status), { status: r.status });
     return (await r.json()).filter(function (x) { return x.document; }).map(function (x) { return doc(x.document); });
   }
-  // writes: [{ path, data, merge (update only these fields), create (fail if it exists), inc: { field: n } }]
+  // writes: [{ path, data, merge (update only these fields), create (fail if it exists), inc: { field: n } }, or { path, del: true }]
   async function commit(writes) {
     var W = writes.map(function (w) {
+      if (w.del) return { delete: "projects/wilderland-df15e/databases/(default)/documents/" + w.path };
       var o = { update: { name: "projects/wilderland-df15e/databases/(default)/documents/" + w.path, fields: fields(w.data || {}) } };
       if (w.merge) o.updateMask = { fieldPaths: Object.keys(w.data || {}) };
       if (w.create) o.currentDocument = { exists: false };
@@ -89,7 +138,7 @@
   // ---------- what the library has ----------
   function stock(t) {
     var v = S.inv[t.id] || {}, have = v.have != null ? v.have : t.have, broken = v.broken || 0, out = Math.max(0, v.out || 0);
-    if (guide()) out = S.loans.filter(function (l) { return l.item === t.id && l.status === "out" && l.kind !== "material"; }).length;
+    if (guide()) out = S.loans.filter(function (l) { return l.item === t.id && l.status === "out" && l.kind !== "material"; }).reduce(function (n, l) { return n + (l.qty || 1); }, 0);
     return { have: have, broken: broken, out: out, free: Math.max(0, have - broken - out), loc: v.loc || "", note: v.note || "", stock: v.stock || (have > 0 ? "ok" : ""), counted: !!v.counted };
   }
   function availHtml(t) {
@@ -107,22 +156,27 @@
   // ---------- loading ----------
   async function load() {
     if (!S.role || !user()) return;
-    var jobs = [list("toolInventory").catch(function () { return []; }), list("toolItems").catch(function () { return []; })];
+    var none = function () { return []; };
+    var inv = list("toolInventory").catch(none), items = list("toolItems").catch(none), holds = list("toolHolds").catch(none);
+    var loans = Promise.resolve([]), badgesP = Promise.resolve([]), kids = Promise.resolve(null);
     if (guide()) {
-      jobs.push(list("toolLoans").catch(function () { return isTest() ? query("toolLoans", eq("test", true)).catch(function () { return []; }) : []; }));
-      jobs.push(list("toolBadges").catch(function () { return []; }));
-      jobs.push(list("lsStudents").catch(function () { return []; }));
+      loans = list("toolLoans").catch(function () { return isTest() ? query("toolLoans", eq("test", true)).catch(none) : []; });
+      badgesP = list("toolBadges").catch(none);
+      kids = list("lsStudents").catch(none);
     } else if (S.role.role === "student") {
       var em = String(S.role.email || "").toLowerCase();
-      jobs.push(query("toolLoans", isTest() ? { compositeFilter: { op: "AND", filters: [eq("email", em), eq("test", true)] } } : eq("email", em)).catch(function () { return []; }));
-      jobs.push(S.role.sid ? fetch(FS + "/toolBadges/" + S.role.sid, { headers: { Authorization: "Bearer " + await tok() } }).then(function (r) { return r.ok ? r.json().then(function (d) { return [doc(d)]; }) : []; }).catch(function () { return []; }) : Promise.resolve([]));
+      loans = query("toolLoans", isTest() ? { compositeFilter: { op: "AND", filters: [eq("email", em), eq("test", true)] } } : eq("email", em)).catch(none);
+      badgesP = S.role.sid ? fetch(FS + "/toolBadges/" + S.role.sid, { headers: { Authorization: "Bearer " + await tok() } }).then(function (r) { return r.ok ? r.json().then(function (d) { return [doc(d)]; }) : []; }).catch(none) : Promise.resolve([]);
     }
-    var got = await Promise.all(jobs);
+    var got = await Promise.all([inv, items, holds, loans, badgesP, kids]);
     S.inv = {}; got[0].forEach(function (d) { S.inv[d.id] = d; });
-    got.splice(1, 1)[0].forEach(addCustom);
-    S.loans = (got[1] || []).filter(function (l) { return !!l.test === isTest(); }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
-    S.badges = {}; (got[2] || []).forEach(function (d) { S.badges[d.id] = d.items || []; });
-    if (got[3]) S.kids = got[3].filter(function (s) { return !s.archived && !!s.test === isTest(); }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+    got[1].forEach(addCustom);
+    // Holds that have ended don't block anything. Test holds only count in test views, and real ones only outside them.
+    var now = Date.now();
+    S.holds = (got[2] || []).filter(function (h) { return !!h.test === isTest() && (h.end || 0) > now; });
+    S.loans = (got[3] || []).filter(function (l) { return !!l.test === isTest(); }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+    S.badges = {}; (got[4] || []).forEach(function (d) { S.badges[d.id] = d.items || []; });
+    if (got[5]) S.kids = got[5].filter(function (s) { return !s.archived && !!s.test === isTest(); }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
     S.loaded = true; draw();
   }
 
@@ -136,13 +190,14 @@
     $("#view").innerHTML = v === "desk" ? desk() : v === "inventory" ? inventory() : v === "badges" ? badges() : v === "shop" ? shop() : catalog();
   }
   function myTools() {
-    var rank = function (l) { return l.status === "out" ? (l.due < today() ? 0 : 1) : 2; };
-    var mine = S.loans.filter(function (l) { return ["requested", "waiting", "out", "wish"].indexOf(l.status) >= 0; }).sort(function (a, b) { return rank(a) - rank(b); });
+    var rank = function (l) { return l.status === "out" ? (l.due < today() ? 0 : 1) : l.status === "reserved" ? 2 : 3; };
+    var mine = S.loans.filter(function (l) { return ["requested", "waiting", "out", "wish"].indexOf(l.status) >= 0 || liveResv(l); })
+      .sort(function (a, b) { return rank(a) - rank(b) || (a.start || 0) - (b.start || 0); });
     var li = function (l) {
       var t = byId[l.item] || { e: "🧰", n: l.n }, late = l.status === "out" && l.due && l.due < today();
-      var st = l.status === "out" ? (late ? '<span class="pill p-late">Late</span>' : '<span class="pill p-out">You have it</span>') : l.status === "waiting" ? '<span class="pill p-wait">In line</span>' : l.status === "wish" ? '<span class="pill p-wait">Requested</span>' : '<span class="pill p-wait">Asked</span>';
-      var sub = l.status === "out" ? (l.kind === "book" ? "Booked for " + fmt(l.due) : late ? "It was due " + fmt(l.due) + ". Bring it back today." : "Bring it back by " + (l.due === today() ? "the end of today" : fmt(l.due))) : l.kind === "book" && l.when ? "Asked for " + esc(whenTxt(l.when)) : l.kind === "badge" ? "Wants to learn it and get its badge" : l.status === "waiting" ? "You're in line for the next one" : l.status === "wish" ? "Guides see this on their shopping list" : "A guide will hand it to you";
-      return '<li class="' + (late ? "late" : "") + '"><span class="em">' + t.e + '</span><span class="t"><b>' + esc(t.n || l.n) + "</b><small>" + sub + "</small></span>" + st + (["requested", "waiting", "wish"].indexOf(l.status) >= 0 ? ' <button class="ghost sm" data-cancel="' + l.id + '">Cancel</button>' : "") + "</li>";
+      var st = l.status === "out" ? (late ? '<span class="pill p-late">Late</span>' : '<span class="pill p-out">You have it</span>') : l.status === "reserved" ? '<span class="pill p-wait">Reserved</span>' : l.status === "waiting" ? '<span class="pill p-wait">In line</span>' : l.status === "wish" ? '<span class="pill p-wait">Requested</span>' : '<span class="pill p-wait">Asked</span>';
+      var sub = l.status === "out" ? (l.kind === "book" ? "Booked for " + fmt(l.due) : late ? "It was due " + fmt(l.due) + ". Bring it back today." : "Bring it back by " + (l.due === today() ? "the end of today" : fmt(l.due))) : l.status === "reserved" ? esc(spanTxt(l.start, l.end)) + ((l.qty || 1) > 1 ? " · " + l.qty + " of them" : "") + (l.amt ? " · " + esc(l.amt) : "") + ". A guide hands it to you then." : l.kind === "book" && l.when ? "Asked for " + esc(whenTxt(l.when)) : l.kind === "badge" ? "Wants to learn it and get its badge" : l.status === "waiting" ? "You're in line for the next one" : l.status === "wish" ? "Guides see this on their shopping list" : "A guide will hand it to you";
+      return '<li class="' + (late ? "late" : "") + '"><span class="em">' + t.e + '</span><span class="t"><b>' + esc(t.n || l.n) + "</b><small>" + sub + "</small></span>" + st + (["requested", "waiting", "wish", "reserved"].indexOf(l.status) >= 0 ? ' <button class="ghost sm" data-cancel="' + l.id + '">Cancel</button>' : "") + "</li>";
     };
     return '<div class="panel"><h2>My tools</h2>' + (mine.length ? '<ul class="loans">' + mine.map(li).join("") + "</ul>" : '<p class="sub">Nothing borrowed. Find what your project needs below and ask for it.</p>') +
       (myBadges().length ? '<p class="sub" style="margin-top:12px">Your badges: ' + myBadges().map(function (id) { return byId[id] ? byId[id].e + " " + esc(byId[id].n) : ""; }).filter(Boolean).join(", ") + "</p>" : "") + "</div>";
@@ -151,7 +206,8 @@
     var q = S.q.trim().toLowerCase(), band = S.role && S.role.band;
     return T.TOOLS.filter(function (t) {
       if (S.cat !== "all" && t.c !== S.cat) return false;
-      if (q && (t.n + " " + (t.m || "") + " " + t.d + " " + T.CATS[t.c][0]).toLowerCase().indexOf(q) < 0) return false;
+      if (q && (t.n + " " + (t.m || "") + " " + t.d + " " + T.CATS[t.c][0] + " " + (t.ch || []).join(" ")).toLowerCase().indexOf(q) < 0) return false;
+      if (S.f === "ch" && !(t.ch && t.ch.length)) return false;
       var s = stock(t);
       if (S.f === "shelf" && !(t.k === "material" ? s.stock && s.stock !== "out" && (s.have || S.inv[t.id]) : s.free > 0)) return false;
       if (S.f === "mine" && !(t.a === "open" || (t.a === "badge" && myBadges().indexOf(t.id) >= 0)) ) return false;
@@ -163,8 +219,8 @@
   function catalog() {
     var xs = filtered(), stu = !guide();
     var cats = '<div class="chips" role="group" aria-label="Kind of tool"><button type="button" data-cat="all" class="' + (S.cat === "all" ? "on" : "") + '">Everything</button>' + Object.keys(T.CATS).map(function (k) { return '<button type="button" data-cat="' + k + '" class="' + (S.cat === k ? "on" : "") + '">' + T.CATS[k][1] + " " + esc(T.CATS[k][0]) + "</button>"; }).join("") + "</div>";
-    var tg = '<div class="tg" role="group" aria-label="Show">' + [["", "All"], ["shelf", "On the shelf now"]].concat(stu ? [["mine", "I can borrow"]] : [["need", "Need more"]]).map(function (x) { return '<button type="button" data-f="' + x[0] + '" class="' + (S.f === x[0] ? "on" : "") + '">' + x[1] + "</button>"; }).join("") + "</div>";
-    return '<div class="ctrl"><div class="in"><input type="search" id="q" placeholder="Search tools and materials" value="' + esc(S.q) + '" autocomplete="off">' + tg + cats + "</div></div>" +
+    var tg = '<div class="tg" role="group" aria-label="Show">' + [["", "All"], ["shelf", "On the shelf now"]].concat(stu ? [["mine", "I can borrow"]] : [["need", "Need more"]]).concat([["ch", "For a challenge"]]).map(function (x) { return '<button type="button" data-f="' + x[0] + '" class="' + (S.f === x[0] ? "on" : "") + '">' + x[1] + "</button>"; }).join("") + "</div>";
+    return '<div class="ctrl"><div class="in"><input type="search" id="q" placeholder="Search tools, materials or a challenge (like NL-25.3)" value="' + esc(S.q) + '" autocomplete="off">' + tg + cats + "</div></div>" +
       '<div class="newbar"><p class="count">' + xs.length + " of " + T.TOOLS.length + " tools and materials</p>" + (stu ? '<button type="button" class="ghost sm" data-newreq>Can\'t find it? Ask for it</button>' : '<button type="button" class="go sm" data-additem>Add a tool or material</button>') + "</div>" +
       (!xs.length && stu ? '<section class="panel" style="margin-top:10px"><h2>Nothing matches' + (S.q ? " “" + esc(S.q) + "”" : "") + '</h2><p class="sub">If your project needs something we don\'t have, ask for it. Guides see every request and decide what to get.</p><button type="button" class="go" data-newreq>Ask for it</button></section>' : "") +
       '<div class="grid">' + xs.map(function (t) {
@@ -185,19 +241,90 @@
       else if (t.k === "material") act = '<label>How much do you need, and for what?<input id="ddamt" maxlength="120" placeholder="For example: 2 boards for my birdhouse"></label><button class="go" data-ask="material" data-id="' + id + '">Ask for it</button>';
       else if (t.a === "staff") act = '<p class="note">Guides run this one. Tell us your project and a guide will plan it with you.</p><label>Your project<input id="ddnote" maxlength="200"></label><button class="go" data-ask="borrow" data-id="' + id + '">Ask a guide</button>';
       else if (t.a === "badge" && myBadges().indexOf(id) < 0) act = '<p class="note">You need this tool\'s badge first: a guide shows you how and watches you use it safely.</p><button class="go" data-ask="badge" data-id="' + id + '">I want to learn it</button>';
-      else if (t.loan === "place") act = '<div class="act"><label>When?<span style="display:flex;gap:8px"><input type="date" id="dddate" min="' + today() + '" value="' + today() + '"><select id="ddpart"><option>Morning</option><option>Afternoon</option></select></span></label><label>What are you making?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="book" data-id="' + id + '">Book it</button>' + (t.a === "guide" ? '<p class="note">A guide will be there the whole time.</p>' : "") + "</div>";
-      else act = (s.free > 0 ? "" : '<p class="note">All of them are out right now. Get in line and you\'re next.</p>') + '<label>What\'s it for?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="' + (s.free > 0 ? "borrow" : "wait") + '" data-id="' + id + '">' + (s.free > 0 ? "Borrow it" : "Get in line") + "</button>" + (t.a === "guide" ? '<p class="note">A guide will be with you while you use it.</p>' : "");
+      // Machines stay put, so students reserve a time instead of borrowing them now.
+      else if (t.loan === "place") act = '<p class="note">Reserve a time below.' + (t.a === "guide" ? " A guide will be there the whole time." : "") + "</p>";
+      else act = (s.free > 0 ? "" : '<p class="note">All of them are out right now. Get in line and you\'re next, or reserve one for later.</p>') + '<label>What\'s it for?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="' + (s.free > 0 ? "borrow" : "wait") + '" data-id="' + id + '">' + (s.free > 0 ? "Borrow it now" : "Get in line") + "</button>" + (t.a === "guide" ? '<p class="note">A guide will be with you while you use it.</p>' : "");
+      if (canReserve(t, s, band)) act += reserveForm(t);
     } else {
       act = active.length ? '<p class="note"><b>Right now:</b> ' + active.map(function (l) { return esc(first(l.name)) + " (" + ({ out: "has it, due " + fmt(l.due), requested: "asked", waiting: "in line", wish: "asked us to get it" })[l.status] + ")"; }).join(", ") + '</p>' : "";
+      var rs = S.loans.filter(function (l) { return l.item === id && liveResv(l); }).sort(function (a, b) { return a.start - b.start; });
+      if (rs.length) act += '<p class="note"><b>Reserved:</b> ' + rs.map(function (l) { return esc(first(l.name)) + " (" + esc(spanTxt(l.start, l.end)) + ((l.qty || 1) > 1 ? ", " + l.qty : "") + ")"; }).join("; ") + "</p>";
       act += stockForm(t, s);
       act += '<p class="note">Inventory: ' + s.have + " owned" + (s.broken ? ", " + s.broken + " out of service" : "") + (s.loc ? ", kept at " + esc(s.loc) : "") + (s.counted ? "" : " (not counted yet)") + '. <a href="#inventory">Update</a> · <a href="#desk">Check it out to a student</a></p>';
     }
     dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + t.e + "</span><h2>" + esc(t.n) + '</h2><button class="x" data-close aria-label="Close">✕</button></div><p>' + esc(t.d) + "</p>" +
       (t.tip ? '<p class="tip">⚠️ ' + esc(t.tip) + "</p>" : "") +
-      "<dl><dt>Status</dt><dd>" + availHtml(t) + "</dd><dt>Who</dt><dd>" + accessPill(t) + " " + esc(T.ACCESS[t.a][1]) + "</dd><dt>Grades</dt><dd>" + (t.b === "K–1" ? "Every grade" : t.b === "2–4" ? "2nd grade and up" : "5th grade and up") + "</dd><dt>Loan</dt><dd>" + esc(T.LOAN[t.loan]) + "</dd>" + (t.m ? "<dt>Model</dt><dd>" + esc(t.m) + "</dd>" : "") + (s.loc ? "<dt>Where</dt><dd>" + esc(s.loc) + "</dd>" : "") + "</dl>" +
+      "<dl><dt>Status</dt><dd>" + availHtml(t) + "</dd><dt>Who</dt><dd>" + accessPill(t) + " " + esc(T.ACCESS[t.a][1]) + "</dd><dt>Grades</dt><dd>" + (t.b === "K–1" ? "Every grade" : t.b === "2–4" ? "2nd grade and up" : "5th grade and up") + "</dd><dt>Loan</dt><dd>" + esc(T.LOAN[t.loan]) + "</dd>" + (t.m ? "<dt>Model</dt><dd>" + esc(t.m) + "</dd>" : "") +
+      (t.ch && t.ch.length ? "<dt>Challenges</dt><dd>" + t.ch.map(function (c) { return '<a href="' + (SITE === "guides" ? "/guides/challenges/" : "/challenges/") + "#c=" + encodeURIComponent(c) + '">' + esc(c) + "</a>"; }).join(", ") + "</dd>" : "") + (s.loc ? "<dt>Where</dt><dd>" + esc(s.loc) + "</dd>" : "") + "</dl>" +
       '<div class="act">' + act + '</div><p class="note" id="ddmsg" role="status"></p></div>';
     if (!dd.open) dd.showModal();
+    var rb = dd.querySelector("[data-reserve]"); if (rb) showFree(rb.dataset.reserve);
   }
+  // Can this student reserve this item? The same checks as borrowing it now: their grade, its badge, and that we have one.
+  function canReserve(t, s, band) {
+    if (band && !bandOk(t, band)) return false;
+    if (t.a === "staff" || (t.a === "badge" && myBadges().indexOf(t.id) < 0)) return false;
+    if (t.k === "material") return !!(s.have || S.inv[t.id]) && s.stock !== "out";
+    return s.have - s.broken > 0;
+  }
+  function reserveForm(t) {
+    var mat = t.k === "material", s = stock(t), cap = Math.max(1, s.have - s.broken), d = nextSlot();
+    var mine = S.loans.filter(function (l) { return l.item === t.id && liveResv(l); }).sort(function (a, b) { return a.start - b.start; });
+    var opt = function (v, label, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + esc(label) + "</option>"; };
+    return '<div class="resv"><h3>' + (mat ? "Set some aside for later" : "Reserve it for later") + '</h3><p class="note">In 4-hour blocks. A guide hands it to you when your time starts.</p>' +
+      (mine.length ? '<p class="note ok">You reserved it: ' + mine.map(function (l) { return esc(spanTxt(l.start, l.end)); }).join("; ") + ".</p>" : "") +
+      '<div class="form">' +
+      '<label>Day<input type="date" id="rv-date" min="' + today() + '" max="' + plusDays(AHEAD) + '" value="' + d[0] + '"></label>' +
+      '<label>Starting at<select id="rv-h">' + BLOCKS.map(function (h) { return opt(h, hourTxt(h), d[1]); }).join("") + "</select></label>" +
+      '<label>For<select id="rv-len">' + LENGTHS.map(function (x) { return opt(x[0], x[1], 4); }).join("") + "</select></label>" +
+      (mat ? '<label>How much, and for what?<input id="rv-amt" maxlength="120" placeholder="For example: 2 boards for my birdhouse"></label>'
+        : cap > 1 ? '<label>How many<input type="number" id="rv-qty" min="1" max="' + cap + '" value="1"></label>' : "") +
+      '<label class="wide">What\'s it for?<input id="rv-note" maxlength="200"></label></div>' +
+      '<p class="note" id="rv-free" role="status"></p><button class="go" data-reserve="' + t.id + '">Reserve it</button></div>';
+  }
+  // A reservation may start in the block that's under way, but no earlier (firestore.rules allows a start up to 4 hours back).
+  var startGone = function (w) { return w.a <= Date.now() - 4 * HOUR; };
+  // The window the reservation form describes right now, or null if it isn't a real one.
+  function formWindow() {
+    var date = ($("#rv-date") || {}).value, h = Number(($("#rv-h") || {}).value), len = Number(($("#rv-len") || {}).value);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "") || BLOCKS.indexOf(h) < 0 || !LENGTHS.some(function (x) { return x[0] === len; })) return null;
+    return { date: date, h: h, a: blockAt(date, h), b: blockAt(date, h + len) };
+  }
+  function showFree(id) {
+    var t = byId[id], el = $("#rv-free"), w = formWindow(); if (!t || !el || !w) return;
+    if (startGone(w)) { el.className = "note bad"; el.textContent = "That start time has passed. Pick the block that's under way now or a later one."; return; }
+    if (t.k === "material") { el.className = "note"; el.textContent = spanTxt(w.a, w.b) + "."; return; }
+    var s = stock(t), cap = Math.max(0, s.have - s.broken), f = freeFor(t, w.a, w.b);
+    el.className = f > 0 ? "note ok" : "note bad";
+    el.textContent = spanTxt(w.a, w.b) + ": " + (f > 0 ? (cap > 1 ? f + " of " + cap + " free." : "free.") : "already taken. Try another time.");
+  }
+  async function reserve(id, btn) {
+    var t = byId[id], r = S.role, msg = $("#ddmsg"), w = formWindow(), mat = t.k === "material", now = Date.now();
+    var bad = function (m) { msg.className = "note bad"; msg.textContent = m; };
+    if (!w) return bad("Pick a day, a start time and how long.");
+    if (startGone(w)) return bad("That start time has passed. Pick the block that's under way now or a later one.");
+    if (w.a > now + AHEAD * 24 * HOUR) return bad("You can reserve up to " + AHEAD + " days ahead.");
+    var qty = mat ? 1 : Math.max(1, Math.min(50, Math.round(Number(($("#rv-qty") || {}).value) || 1)));
+    var amt = mat ? (($("#rv-amt") || {}).value || "").trim() : "", note = (($("#rv-note") || {}).value || "").trim();
+    if (mat && !amt) return bad("Say how much you need.");
+    if (!mat) { var f = freeFor(t, w.a, w.b); if (qty > f) return bad(f ? "Only " + f + " free then. Ask for fewer or pick another time." : "That time is already taken. Try another time."); }
+    btn.disabled = true; msg.className = "note"; msg.textContent = "Reserving…";
+    try {
+      var name = isTest() ? "Test Student" : String((user() && user().displayName) || String(r.email).split("@")[0]);
+      var data = { item: id, n: t.n, kind: "reserve", email: String(r.email || "").toLowerCase(), sid: r.sid || "", name: name.slice(0, 60), band: r.band || "", status: "reserved", at: now, when: w.date + " " + pad(w.h) + ":00", amt: amt.slice(0, 120), note: note.slice(0, 200), start: w.a, end: w.b, qty: qty };
+      var hold = { item: id, start: w.a, end: w.b, qty: qty };
+      if (isTest()) { data.test = true; hold.test = true; }
+      var lid = newId(), W = [{ path: "toolLoans/" + lid, data: data, create: true }];
+      if (!mat) W.push({ path: "toolHolds/" + lid, data: hold, create: true });
+      await commit(W);
+      S.loans.unshift(Object.assign({ id: lid }, data));
+      if (!mat) S.holds.push(Object.assign({ id: lid }, hold));
+      if (window.wlNotifyGuides) window.wlNotifyGuides({ kind: "tool", text: first(name) + " reserved " + t.n + (qty > 1 ? " (" + qty + ")" : "") + " for " + spanTxt(w.a, w.b) + (amt ? ": " + amt.slice(0, 80) : ""), link: "/guides/tools/#desk" });
+      draw(); openItem(id); var m = $("#ddmsg"); if (m) { m.className = "note ok"; m.textContent = "Reserved: " + spanTxt(w.a, w.b) + ". It's under My tools, where you can cancel it."; }
+      refreshTasks();
+    } catch (e) { btn.disabled = false; bad(e.message); }
+  }
+
   // Guides: set what we have of an item, which moves it from "Not in the library yet" to on the shelf / ready to book.
   function stockForm(t, s) {
     var mat = t.k === "material", label = mat ? "In stock" : t.k === "machine" ? "Ready to book" : "On the shelf";
@@ -228,7 +355,7 @@
   }
 
   // Guides: add a new tool or material to the catalog (or edit one they added). from: a student's request to turn into an item.
-  var EMOJI = { digital: "🖨️", wood: "🪚", carve: "🔪", clay: "🏺", fiber: "🧵", elec: "🔌", nature: "🔭", garden: "🌱", camp: "🏕️", kitchen: "🍳", art: "🎨", media: "📷", measure: "📏", bike: "🚲", safety: "🦺", mat: "📦" };
+  var EMOJI = { digital: "🖨️", wood: "🪚", carve: "🔪", clay: "🏺", fiber: "🧵", elec: "🔌", nature: "🔭", garden: "🌱", camp: "🏕️", kitchen: "🍳", art: "🎨", media: "📷", measure: "📏", bike: "🚲", safety: "🦺", play: "🤸", learn: "📋", mat: "📦" };
   function itemForm(id, from) {
     var t = id ? byId[id] : null, req = from ? S.loans.find(function (l) { return l.id === from; }) : null;
     var v = t || { n: req ? req.n : "", c: "wood", k: req && req.amt === "material" ? "material" : "tool", a: "open", b: "K–1", loan: "day", e: "", d: "", m: "", tip: "", want: 1 };
@@ -338,36 +465,48 @@
   }
   async function cancel(lid) {
     var l = S.loans.find(function (x) { return x.id === lid; }); if (!l) return;
-    try { await commit([{ path: "toolLoans/" + lid, data: { status: "cancelled", closed: Date.now() }, merge: true }]); l.status = "cancelled"; draw(); }
+    var W = [{ path: "toolLoans/" + lid, data: { status: "cancelled", closed: Date.now() }, merge: true }];
+    if (hasHold(l)) W.push({ path: "toolHolds/" + lid, del: true });
+    try { await commit(W); l.status = "cancelled"; dropHold(lid); draw(); refreshTasks(); }
     catch (e) { alert(e.message); }
   }
 
+  // A reservation of a tool or machine has a hold on the calendar with the same id; a material doesn't.
+  var hasHold = function (l) { return isResv(l) && (byId[l.item] || {}).k !== "material"; };
+  var dropHold = function (lid) { S.holds = S.holds.filter(function (h) { return h.id !== lid; }); };
+
   // ---------- Guides: the desk ----------
   function gtabs(v) {
-    var req = S.loans.filter(function (l) { return l.status === "requested"; }).length, late = S.loans.filter(function (l) { return l.status === "out" && l.due < today(); }).length;
+    var req = S.loans.filter(function (l) { return l.status === "requested"; }).length, late = S.loans.filter(function (l) { return l.status === "out" && l.due < today(); }).length, rtoday = resvToday().length;
     var a = function (id, label, n) { return '<a href="#' + id + '"' + (v === id ? ' aria-current="page"' : "") + ">" + label + (n ? '<span class="n">' + n + "</span>" : "") + "</a>"; };
-    return '<nav class="gtabs" aria-label="Tool Library">' + a("desk", "Desk", req + late) + a("catalog", "Catalog") + a("inventory", "Inventory") + a("badges", "Badges") + a("shop", "Shopping list") + "</nav>";
+    return '<nav class="gtabs" aria-label="Tool Library">' + a("desk", "Desk", req + late + rtoday) + a("catalog", "Catalog") + a("inventory", "Inventory") + a("badges", "Badges") + a("shop", "Shopping list") + "</nav>";
   }
   function deskSummary() {
     var out = S.loans.filter(function (l) { return l.status === "out"; }), late = out.filter(function (l) { return l.due < today(); });
     var counted = T.TOOLS.filter(function (t) { return (S.inv[t.id] || {}).counted; }).length;
-    return '<div class="panel"><h2>Today</h2><p class="sub">' + S.loans.filter(function (l) { return l.status === "requested"; }).length + " asked for · " + out.length + " out · " + (late.length ? '<b style="color:var(--bad)">' + late.length + " late</b>" : "none late") + "</p>" +
+    return '<div class="panel"><h2>Today</h2><p class="sub">' + S.loans.filter(function (l) { return l.status === "requested"; }).length + " asked for · " + out.length + " out · " + (late.length ? '<b style="color:var(--bad)">' + late.length + " late</b>" : "none late") + " · " + resvToday().length + " reserved for today</p>" +
       '<p class="sub">Inventory: ' + counted + " of " + T.TOOLS.length + ' items counted</p><div class="bar"><i style="width:' + Math.round(100 * counted / T.TOOLS.length) + '%"></i></div>' +
       '<p class="sub"><a href="#inventory">Count what we have</a> · <a href="#shop">What to buy</a>' + (S.loans.some(function (l) { return l.status === "wish"; }) ? ' · <b><a href="#shop">' + S.loans.filter(function (l) { return l.status === "wish"; }).length + " student requests</a></b>" : "") + '</p><button type="button" class="ghost sm" data-additem>Add a tool or material</button></div>';
   }
-  var dueFor = function (t, l) { return l && l.kind === "book" && l.when ? l.when.split(" ")[0] : t && t.loan === "week" ? plusDays(7) : today(); };
+  // Reservations still waiting to be handed over that start before the end of today.
+  var resvToday = function () { return S.loans.filter(function (l) { return liveResv(l) && l.start < endOfToday(); }); };
+  // A reservation is due back on the day its last block ends (one that ends at midnight is due the day before).
+  var dueFor = function (t, l) { return l && isResv(l) && l.end ? iso(new Date(l.end - 1)) : l && l.kind === "book" && l.when ? l.when.split(" ")[0] : t && t.loan === "week" ? plusDays(7) : today(); };
   function loanRow(l, actions) {
     var t = byId[l.item] || { e: "🧰", n: l.n }, late = l.status === "out" && l.due < today();
-    var kind = { borrow: "Borrow", book: "Booking", material: "Materials", badge: "Wants its badge", wish: "Asked us to get it", "new": "New request" + (l.amt === "material" ? " (material)" : "") }[l.kind] || "";
-    return '<li class="' + (late ? "late" : "") + '"><span class="em">' + t.e + '</span><span class="t"><b>' + esc(l.name) + "</b> · " + esc(t.n || l.n) + "<small>" + esc(kind) + (l.when ? " · " + esc(whenTxt(l.when)) : "") + (l.amt && l.kind !== "new" ? " · " + esc(l.amt) : "") + (l.note ? " · “" + esc(l.note) + "”" : "") + (l.status === "out" ? " · " + (late ? "was due " : "due ") + esc(fmt(l.due)) : "") + "</small></span>" + actions + "</li>";
+    var kind = { borrow: "Borrow", book: "Booking", reserve: "Reserved" + ((l.qty || 1) > 1 ? " × " + l.qty : ""), material: "Materials", badge: "Wants its badge", wish: "Asked us to get it", "new": "New request" + (l.amt === "material" ? " (material)" : "") }[l.kind] || "";
+    return '<li class="' + (late ? "late" : "") + '"><span class="em">' + t.e + '</span><span class="t"><b>' + esc(l.name) + "</b> · " + esc(t.n || l.n) + "<small>" + esc(kind) + (isResv(l) ? " · " + esc(spanTxt(l.start, l.end)) : l.when ? " · " + esc(whenTxt(l.when)) : "") + (l.amt && l.kind !== "new" ? " · " + esc(l.amt) : "") + (l.note ? " · “" + esc(l.note) + "”" : "") + (l.status === "out" ? " · " + (late ? "was due " : "due ") + esc(fmt(l.due)) : "") + "</small></span>" + actions + "</li>";
   }
   function desk() {
     var req = S.loans.filter(function (l) { return l.status === "requested"; }), wait = S.loans.filter(function (l) { return l.status === "waiting"; });
     var out = S.loans.filter(function (l) { return l.status === "out"; }).sort(function (a, b) { return String(a.due).localeCompare(String(b.due)); });
+    var resv = S.loans.filter(liveResv).sort(function (a, b) { return a.start - b.start; });
+    var missed = S.loans.filter(function (l) { return isResv(l) && l.status === "reserved" && (l.end || 0) <= Date.now(); });
     var give = function (l) {
       var t = byId[l.item];
       if (l.kind === "badge") return '<button class="ghost sm" data-badge-from="' + l.id + '">Taught: give badge</button><button class="ghost sm" data-decline="' + l.id + '">Not now</button>';
-      if (l.kind === "material") return '<button class="ghost sm" data-given="' + l.id + '">Given</button><button class="ghost sm" data-decline="' + l.id + '">Not now</button>';
+      if (l.kind === "material" || (isResv(l) && t && t.k === "material")) return '<button class="ghost sm" data-given="' + l.id + '">Given</button><button class="ghost sm" data-decline="' + l.id + '">' + (isResv(l) ? "Cancel it" : "Not now") + "</button>";
+      if (isResv(l)) return '<input type="date" value="' + dueFor(t, l) + '" id="due-' + l.id + '" aria-label="Due"><button class="ghost sm" data-hand="' + l.id + '">Hand it out</button><button class="ghost sm" data-decline="' + l.id + '">Cancel it</button>';
       return '<input type="date" value="' + dueFor(t, l) + '" id="due-' + l.id + '" aria-label="Due"><button class="ghost sm" data-hand="' + l.id + '">Hand it out</button><button class="ghost sm" data-decline="' + l.id + '">Not now</button>';
     };
     var back = function (l) { return '<select id="cond-' + l.id + '" aria-label="Condition"><option value="fine">Fine</option><option value="repair">Needs repair</option><option value="missing">Missing pieces</option></select><button class="ghost sm" data-back="' + l.id + '">Back</button>'; };
@@ -377,18 +516,23 @@
     return (S.msg ? '<p class="note ok" role="status">' + esc(S.msg) + "</p>" : "") + '<div class="cols">' +
       section("Asked for", req, give, "No requests right now.") +
       section("Out now", out, back, "Nothing checked out.") +
+      section("Reserved", resv, give, "No reservations coming up. Students reserve from each item's sheet, in 4-hour blocks.") +
+      (missed.length ? section("Reservations nobody picked up", missed, function (l) { return '<button class="ghost sm" data-expire="' + l.id + '">Clear</button>'; }, "") : "") +
       section("Waiting in line", wait, function (l) { return stock(byId[l.item] || {}).free > 0 ? give(l) : '<button class="ghost sm" data-decline="' + l.id + '">Remove</button>'; }, "Nobody in line.") +
       '<section class="panel"><h2>Check out to a student</h2><p class="sub">For a student who asked in person, or who doesn\'t sign in (K–1).</p><div class="act" style="display:grid;gap:8px"><select id="co-kid"><option value="">Student…</option>' + kidOpts + '</select><select id="co-item"><option value="">Tool…</option>' + itemOpts + '</select><input type="date" id="co-due" value="' + today() + '"><button class="go" data-checkout>Check it out</button></div>' +
       (itemOpts ? "" : '<p class="sub">Only tools with at least one counted in Inventory can be checked out.</p>') + "</section></div>";
   }
   async function hand(lid, btn) {
-    var l = S.loans.find(function (x) { return x.id === lid; }), t = byId[l.item]; if (!l) return;
-    var due = ($("#due-" + lid) || {}).value || dueFor(t, l), now = Date.now(), nm = myName();
-    if (t && stock(t).free <= 0 && !confirm("The inventory says none are free. Hand it out anyway?")) return;
+    var l = S.loans.find(function (x) { return x.id === lid; }); if (!l) return;
+    var t = byId[l.item], n = l.qty || 1, due = ($("#due-" + lid) || {}).value || dueFor(t, l), now = Date.now(), nm = myName();
+    if (t && stock(t).free < n && !confirm("The inventory says " + (n > 1 ? "fewer than " + n + " are" : "none are") + " free. Hand it out anyway?")) return;
     btn.disabled = true;
     try {
-      await commit([{ path: "toolLoans/" + lid, data: { status: "out", due: due, out: now, by: me(), byName: nm }, merge: true }, { path: "toolInventory/" + l.item, data: { updated: now }, merge: true, inc: { out: 1 } }]);
-      Object.assign(l, { status: "out", due: due, out: now, by: me(), byName: nm }); bumpInv(l.item, 1);
+      var W = [{ path: "toolLoans/" + lid, data: { status: "out", due: due, out: now, by: me(), byName: nm }, merge: true }, { path: "toolInventory/" + l.item, data: { updated: now }, merge: true, inc: { out: n } }];
+      if (hasHold(l)) W.push({ path: "toolHolds/" + lid, data: { out: true }, merge: true });
+      await commit(W);
+      Object.assign(l, { status: "out", due: due, out: now, by: me(), byName: nm }); bumpInv(l.item, n);
+      S.holds.forEach(function (h) { if (h.id === lid) h.out = true; });
       if (window.wlNotify && l.email) window.wlNotify([l.email], { kind: "tool", text: (l.kind === "book" ? "You're booked: " + l.n + " on " + fmt(due) : "You've got " + l.n + ". Bring it back by " + (due === today() ? "the end of today" : fmt(due))) + ".", link: "/tools/" });
       S.msg = l.n + " is checked out to " + l.name + "."; draw(); refreshTasks();
     } catch (e) { btn.disabled = false; alert(e.message); }
@@ -398,18 +542,22 @@
     var cond = ($("#cond-" + lid) || {}).value || "fine", gnote = cond === "fine" ? "" : (prompt(cond === "repair" ? "What needs fixing?" : "What's missing?") || "");
     btn.disabled = true;
     try {
-      var now = Date.now(), inc = { out: -1 }; if (cond === "repair") inc.broken = 1;
-      await commit([{ path: "toolLoans/" + lid, data: { status: "returned", back: now, cond: cond, gnote: gnote.slice(0, 200) }, merge: true }, { path: "toolInventory/" + l.item, data: { updated: now }, merge: true, inc: inc }]);
-      Object.assign(l, { status: "returned", back: now, cond: cond }); bumpInv(l.item, -1); if (cond === "repair") { S.inv[l.item].broken = (S.inv[l.item].broken || 0) + 1; }
+      var now = Date.now(), n = l.qty || 1, inc = { out: -n }; if (cond === "repair") inc.broken = 1;
+      var W = [{ path: "toolLoans/" + lid, data: { status: "returned", back: now, cond: cond, gnote: gnote.slice(0, 200) }, merge: true }, { path: "toolInventory/" + l.item, data: { updated: now }, merge: true, inc: inc }];
+      if (hasHold(l)) W.push({ path: "toolHolds/" + lid, del: true });
+      await commit(W);
+      Object.assign(l, { status: "returned", back: now, cond: cond }); bumpInv(l.item, -n); dropHold(lid); if (cond === "repair") { S.inv[l.item].broken = (S.inv[l.item].broken || 0) + 1; }
       S.msg = l.n + " is back" + (cond === "fine" ? "." : ", marked " + (cond === "repair" ? "needs repair" : "missing pieces") + "."); draw(); refreshTasks();
     } catch (e) { btn.disabled = false; alert(e.message); }
   }
   async function closeLoan(lid, status, btn) {
     var l = S.loans.find(function (x) { return x.id === lid; }); if (!l) return; btn.disabled = true; var was = l.status;
     try {
-      await commit([{ path: "toolLoans/" + lid, data: { status: status, closed: Date.now(), by: me(), byName: myName() }, merge: true }]);
-      l.status = status;
-      if (status === "declined" && window.wlNotify && l.email) window.wlNotify([l.email], { kind: "tool", text: was === "wish" ? myName() + " says the library won't get " + l.n + " for now. Ask them about it." : myName() + " couldn't hand out " + l.n + " right now. Ask them about it.", link: "/tools/" });
+      var W = [{ path: "toolLoans/" + lid, data: { status: status, closed: Date.now(), by: me(), byName: myName() }, merge: true }];
+      if (hasHold(l)) W.push({ path: "toolHolds/" + lid, del: true });
+      await commit(W);
+      l.status = status; dropHold(lid);
+      if (status === "declined" && window.wlNotify && l.email) window.wlNotify([l.email], { kind: "tool", text: was === "wish" ? myName() + " says the library won't get " + l.n + " for now. Ask them about it." : was === "reserved" ? myName() + " cancelled your reservation of " + l.n + " (" + spanTxt(l.start, l.end) + "). Ask them about it." : myName() + " couldn't hand out " + l.n + " right now. Ask them about it.", link: "/tools/" });
       draw(); refreshTasks();
     } catch (e) { btn.disabled = false; alert(e.message); }
   }
@@ -503,6 +651,7 @@
   });
   document.addEventListener("change", function (e) {
     if (e.target.id === "bk") { S.kid = e.target.value; draw(); }
+    if (/^rv-/.test(e.target.id || "")) { var rb = document.querySelector("[data-reserve]"); if (rb) showFree(rb.dataset.reserve); }
     var tr = e.target.closest && e.target.closest("tr[data-row]"); if (tr) { S.dirty[tr.dataset.row] = 1; tr.classList.add("dirty"); }
   });
   document.addEventListener("click", function (e) {
@@ -518,6 +667,8 @@
     if (d.hand) { hand(d.hand, b); return; }
     if (d.back) { back(d.back, b); return; }
     if (d.given) { closeLoan(d.given, "done", b); return; }
+    if (d.expire) { closeLoan(d.expire, "done", b); return; }
+    if (d.reserve) { reserve(d.reserve, b); return; }
     if (d.decline) { closeLoan(d.decline, "declined", b); return; }
     if (d.badgeFrom) { badgeFrom(d.badgeFrom, b); return; }
     if (d.checkout !== undefined) { checkout(b); return; }
