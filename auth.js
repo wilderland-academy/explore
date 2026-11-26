@@ -116,7 +116,7 @@ function tellGuides() {
   if (SITE === "challenges") added(j(prev, "wl-picks"), j(now, "wl-picks")).forEach(id => out.push(["save", `${n} saved a challenge: “${ch(id)}”`]));
   if (SITE === "goals") {
     const a = (j(prev, "wl-goals") || {}).list || [], b = (j(now, "wl-goals") || {}).list || [], had = Object.fromEntries(a.map(g => [g.id, g]));
-    b.forEach(g => { const lab = g.label || g.text || "a goal"; if (!had[g.id]) out.push(["goal", `${n} set a goal: ${lab}`]); else if (g.done && !had[g.id].done) out.push(["goal", `${n} finished a goal: ${lab}`]); });
+    b.forEach(g => { const lab = g.label || g.text || "a goal"; if (!had[g.id] && !g.by) out.push(["goal", `${n} set a goal: ${lab}`]); else if (g.done && !had[g.id].done) out.push(["goal", `${n} finished a goal: ${lab}`]); });
   }
   if (SITE === "books") {
     const a = j(prev, "lantern-stacks") || {}, b = j(now, "lantern-stacks") || {};
