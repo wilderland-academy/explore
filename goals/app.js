@@ -176,7 +176,7 @@
     if (g.area === "life") {
       fields = `<label>What kind?<select data-f="kind">${opt("count", "Pass a number of challenges", g.kind)}${opt("one", "Pass one challenge I've picked", g.kind)}</select></label>`
         + (g.kind === "one" ? `<label>Which challenge?<select data-f="item"><option value="">Pick a challenge</option>${challengeOptions(g.item)}</select></label>`
-          : `<label>How many?<input type="number" min="1" max="40" data-f="n" value="${esc(g.n)}"></label><p class="small dim">${already(g) ? `You've already passed ${already(g)} in this stretch, so aim above that. ` : ""}The year goal is 16: 2 in each Life Skill. One a week is a strong pace.</p>`);
+          : `<label>How many?<input type="number" min="1" max="40" data-f="n" value="${esc(g.n)}"></label><p class="small dim">${already(g) ? `You've already passed ${already(g)} in this stretch, so aim above that. ` : ""}Wilderland expects 16 this year: 2 in each Life Skill. You pick your own number. One a week is a strong pace.</p>`);
     } else if (g.area === "acad") {
       if (!S.grade) fields = `<label>Your grade, so you see your own apps<select id="grade2"><option value="">Pick your grade</option>${APPS.GRADES.map(x => opt(x, "Grade " + x, "")).join("")}${opt("K1", "Kindergarten or 1st", "")}</select></label>`;
       else if (!apps.length) fields = `<label>Your goal<input type="text" maxlength="140" data-f="text" value="${esc(g.text)}" placeholder="For example: read 20 minutes every day"></label><p class="small dim">Your guide can help you pick the right app goal.</p>`;

@@ -133,7 +133,7 @@
       : 'Finish 2 challenges in each of the 8 life skills this year. An Epic counts as 2. Saved challenges show as lined dots, and a dot fills in when you pass. Gray lined dots are extra saves beyond the 2.';
     document.getElementById('year-skills').innerHTML = D.skills.map(function (s) {
       // Filled: passed (from the Life Skills tracker, for a signed-in student). Lined: saved to the plan, not passed yet.
-      // Gray lined: saved beyond the goal, one dot per extra credit, so every save is visible.
+      // Gray lined: saved beyond the expected 2, one dot per extra credit, so every save is visible.
       var sv = savedIn(s.k), p = Math.min(passedIn(s.k), t), n = Math.min(p + sv, t), extra = Math.max(0, sv - (n - p)), dots = '';
       for (var i = 0; i < t; i++) dots += '<span class="dot' + (i < p ? ' on' : i < n ? ' saved' : '') + '"></span>';
       for (var j = 0; j < extra; j++) dots += '<span class="dot saved extra"></span>';

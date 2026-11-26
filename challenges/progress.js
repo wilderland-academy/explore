@@ -1,5 +1,5 @@
 // My progress and the Crew board, inside Challenges (students site only).
-// A signed-in student sees their own trail from the Life Skills tracker (credits, rank, year goal, working on, not yets,
+// A signed-in student sees their own trail from the Life Skills tracker (credits, rank, what's expected this year, working on, not yets,
 // feats), the challenges they've passed marked on the map, and what their crew is working on and has passed.
 // Data: lsStudents/{sid} and its entries (only the student themself, their parents and staff can read these) and
 // lsBoard (every school account can read; a student may change only their own "working on" list). See firestore.rules.
@@ -138,7 +138,7 @@ function drawProgress() {
     <div class="prog-head"><p class="eyebrow">My progress</p><h2 id="progress-title">${esc(firstName(me.name) || "Your")}${firstName(me.name) ? "'s" : ""} trail</h2>
       <p class="muted">Grades ${esc(band)}${me.guide ? " · Field Guide: " + esc(me.guide) : ""}. Your guide records each pass and not yet. <a href="/goals/">Set your goals →</a></p></div>
     <div class="prog-grid">${rankCard}
-      <div class="pcard"><h3>Year goal: ${goal} in every life skill</h3><ul class="pskills">${skills}</ul><p class="muted">${done} of 8 skills met this year.</p></div></div>
+      <div class="pcard"><h3>Expected this year: ${goal} in every life skill</h3><ul class="pskills">${skills}</ul><p class="muted">${done} of 8 skills met this year.</p></div></div>
     <div class="prog-grid">
       <div class="pcard"><h3>Working on</h3>${working.length ? `<ul class="plist">${working.map(c => row(c, "", true)).join("")}</ul>` : ""}<p class="muted small">${working.length < 3 ? "Open any challenge on the map and tap <b>I'm working on this</b>. Up to 3 at a time, so your crew knows what you're practicing." : "That's 3. Finish or drop one to add another."}</p></div>
       <div class="pcard"><h3>Not yet, and what to practice</h3>${sum.notyets.length ? `<ul class="plist">${sum.notyets.map(e => row(e.cid, `<dl><dt>Missing</dt><dd>${esc(e.missing || "—")}</dd><dt>Practice</dt><dd>${esc(e.practice || "—")}</dd>${e.retry ? `<dt>Retry</dt><dd>${esc(fmt(e.retry))}</dd>` : ""}</dl>`)).join("")}</ul>` : `<p class="muted">No not yets right now. A not yet always comes with what to practice.</p>`}</div>
