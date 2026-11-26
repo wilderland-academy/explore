@@ -554,16 +554,16 @@ function behForm(sid) {
   return `<form class="bform" data-bsid="${esc(sid)}"><div class="row"><label>Date<input name="date" type="date" value="${todayISO()}" max="${todayISO()}"></label>
     <label>Tier<select name="tier"><option value="1">Tier 1</option><option value="2">Tier 2</option><option value="3">Tier 3</option></select></label></div>
     <label>What happened (facts: what you saw and heard, who was affected, what you did)<textarea name="what" rows="3" maxlength="2000" required></textarea></label>
-    <p class="small muted">Tier 2 and 3 get a restore, due by the end of the next school day and signed off by the Field Guide. For a Tier 3, sending home is required if the student already has a Tier 2 or 3 for physical aggression this school year; otherwise it's your call. It counts if they admit it, even though no one saw it.</p>
+    <p class="small muted">Tier 2 and 3 get a restore, due by the end of the next school day and signed off by the Field Guide. For a Tier 3, sending home is required if the student already had a Tier 3 this school year; otherwise it's your call. It counts if they admit it, even though no one saw it.</p>
     <div class="row"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-beh-x="${esc(sid)}">Cancel</button></div></form>`;
 }
 async function saveBeh(f) {
   const p = bySid(f.dataset.bsid); if (!p) return;
   const tier = Number(f.tier.value), what = f.what.value.trim(); if (!what) return;
-  // The Behavior Guide (v0.5): a Tier 3 by a student with a pattern of physical aggression (an earlier Tier 2 or 3 for it
-  // this school year) means sending home is required.
-  const before = (S.beh || []).filter(b => b.sid === p.sid && b.tier >= 2 && String(b.date) >= syStart());
-  if (tier === 3 && before.length && !confirm(`${firstName(p.name)} already has ${before.length} Tier 2 or 3 this school year. If any of those was physical aggression, sending home for a full school day is required for this Tier 3, not a judgment call. Save it?`)) return;
+  // The Behavior Guide (v0.5): a Tier 3 by a student who already had a Tier 3 this school year means sending home is
+  // required.
+  const before = (S.beh || []).filter(b => b.sid === p.sid && b.tier >= 3 && String(b.date) >= syStart());
+  if (tier === 3 && before.length && !confirm(`${firstName(p.name)} already had ${before.length === 1 ? "a Tier 3" : before.length + " Tier 3s"} this school year, so sending home for a full school day is required for this one, not a judgment call. Save it?`)) return;
   const btn = f.querySelector("[type=submit]"); btn.disabled = true;
   try {
     const id = newId(), data = { sid: p.sid, name: p.name || "", band: p.band || "", date: f.date.value || todayISO(), tier, what, restore: tier >= 2 ? "open" : "none", by: S.me, byName: myName(), at: Date.now(), ...(S.test ? { test: true } : {}) };
