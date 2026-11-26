@@ -301,6 +301,39 @@ service cloud.firestore {
         && request.resource.data.restore in ['none', 'open', 'done'];
       allow delete: if staffSchool();
     }
+    // ---- Tool & Materials Library (/tools/ for students, /guides/tools/ for guides; tools/app.js) ----
+    // Inventory: what guides counted. Everyone at school sees it (that's how students see what's on the shelf).
+    match /toolInventory/{item} {
+      allow read: if school() || tester();
+      allow write: if staffSchool();
+    }
+    // Loans: a student asks (requested / waiting / wish) and can cancel their own ask; guides hand out and check in.
+    // Testers: only test loans.
+    match /toolLoans/{id} {
+      allow read: if staffSchool() || (school() && resource.data.email == me()) || (tester() && resource.data.test == true);
+      allow create: if staffSchool() || (tester() && request.resource.data.test == true)
+        || (school() && request.resource.data.email == me() && !('test' in request.resource.data)
+          && request.resource.data.keys().hasOnly(['item', 'n', 'kind', 'email', 'sid', 'name', 'band', 'status', 'at', 'when', 'amt', 'note'])
+          && request.resource.data.status in ['requested', 'waiting', 'wish']
+          && request.resource.data.kind in ['borrow', 'book', 'material', 'badge', 'wish']
+          && request.resource.data.item is string && request.resource.data.item.size() <= 40
+          && request.resource.data.n is string && request.resource.data.n.size() <= 100
+          && request.resource.data.name is string && request.resource.data.name.size() <= 60
+          && request.resource.data.note is string && request.resource.data.note.size() <= 200
+          && request.resource.data.amt is string && request.resource.data.amt.size() <= 120
+          && request.resource.data.when is string && request.resource.data.when.size() <= 40
+          && request.resource.data.at is int);
+      allow update: if staffSchool() || (tester() && resource.data.test == true)
+        || (school() && resource.data.email == me() && resource.data.status in ['requested', 'waiting', 'wish']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'closed'])
+          && request.resource.data.status == 'cancelled');
+      allow delete: if staffSchool();
+    }
+    // Badges: the tools a guide taught a student and signed off on. The student (and guides) can read them.
+    match /toolBadges/{sid} {
+      allow read: if staffSchool() || lsSelf(sid) || testStudent(sid);
+      allow write: if staffSchool();
+    }
 
     // ---- Life Skill Labs schedule (/guides/lifeskills/#schedule, parents at /parents/lifeskills/#schedule) ----
     // Guides write it. Linked parents read it (the page shows each family only their children's bands; Lab details
