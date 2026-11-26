@@ -666,3 +666,9 @@ Based on Alpha School's Limitless Meetings (Future of Education podcast).
   "You said you'd check in" before the next 1:1.
 - **Publish `firestore.rules`** (new: `coachScores`, `coachAgenda`, `checkIn` on `coachShare`). Until then, scores and agendas
   don't save, and takeaways send without the check-in.
+
+## Weekly 1:1s are now "Summit Sessions" (Nov 26, 2026)
+Every user-facing mention of 1:1s / coaching sessions (Field Guide, Students, My goals, parents' child profile, onboarding,
+training quizzes, tasks, alerts, search) now says Summit Session(s). Unchanged on purpose: the `#oneonone` links, Firestore
+names (`coachShare`, `coachScores`, `coachAgenda`, `mentor/{uid}/sessions`), the "Coaching" tab, the Behavior Guide's
+morning "Open Coaching Session" (a different thing) and "1:1 aide". Alpha School's own "1:1 meetings" keep their name.

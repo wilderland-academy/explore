@@ -9,7 +9,7 @@
 // Guides:    finish onboarding; schedule Life Skill Labs for their band and give parents at-home instructions for
 //            each one; help students who don't have a Life Skills or academic goal set one.
 // Field Guides (/wlnav.js FIELD_GUIDES, one per band; only they approve their band's reward ideas): reward ideas to
-//            approve or decline, this week's 1:1s, and restores to sign off after Tier 2 and Tier 3 incidents.
+//            approve or decline, this week's Summit Sessions, and restores to sign off after Tier 2 and Tier 3 incidents.
 // Reads (all allowed by firestore.rules): a student's own students/{uid}/sites/*; for guides lsStudents,
 // lsShared/{sid}/sites/goals, labs, incentives, behaviorLog and their own mentor/{uid}/sessions.
 (function () {
@@ -152,7 +152,7 @@
       var shared = await Promise.all(kids.map(function (s) { return get("lsShared/" + s.id + "/sites/goals").catch(soft(null)); }));
       var missing = [];
       kids.forEach(function (s, i) { var d = shared[i], all = d && parse(d.data), list = ((all && parse(all["wl-goals"])) || {}).list || [], g = window.wlGoalsCurrent(list); if (!g.life || !g.acad) missing.push(s.name || "A student"); });
-      out.push({ id: "goals", title: missing.length ? "Help " + missing.length + " student" + (missing.length === 1 ? "" : "s") + " set goals" : "Every student has goals going", detail: missing.length ? "Missing a Life Skills or academic goal: " + missing.slice(0, 6).map(first).join(", ") + (missing.length > 6 ? "…" : "") + ". Set one together at their 1:1." : "Each of your students has a Life Skills goal and an academic goal.", link: "/guides/roster/#goals", done: !missing.length });
+      out.push({ id: "goals", title: missing.length ? "Help " + missing.length + " student" + (missing.length === 1 ? "" : "s") + " set goals" : "Every student has goals going", detail: missing.length ? "Missing a Life Skills or academic goal: " + missing.slice(0, 6).map(first).join(", ") + (missing.length > 6 ? "…" : "") + ". Set one together at their Summit Session." : "Each of your students has a Life Skills goal and an academic goal.", link: "/guides/roster/#goals", done: !missing.length });
     }
     if (fg) {
       var ideas = jobs[2].filter(function (x) { return x.band === band && !!x.test === isTest(); });
@@ -163,7 +163,7 @@
       if (sess && kids.length) {
         var seen = {}; sess.forEach(function (s) { seen[s.studentId] = 1; });
         var due = kids.filter(function (s) { return !seen["ls-" + s.id]; });
-        out.push({ id: "oneonone", title: due.length ? due.length + " weekly 1:1" + (due.length === 1 ? "" : "s") + " left this week" : "Every 1:1 done this week", detail: due.length ? "Still to meet: " + due.slice(0, 6).map(function (s) { return first(s.name); }).join(", ") + (due.length > 6 ? "…" : "") + "." : "Nice work.", link: "/guides/roster/#coaching", done: !due.length });
+        out.push({ id: "oneonone", title: due.length ? due.length + " weekly Summit Session" + (due.length === 1 ? "" : "s") + " left this week" : "Every Summit Session done this week", detail: due.length ? "Still to meet: " + due.slice(0, 6).map(function (s) { return first(s.name); }).join(", ") + (due.length > 6 ? "…" : "") + "." : "Nice work.", link: "/guides/roster/#coaching", done: !due.length });
       }
     }
     if (fails) out.partial = true;
@@ -205,7 +205,7 @@
     if (!tasks) return '<p class="wltk-empty">Working out your to-dos…</p>';
     var todo = tasks.filter(function (t) { return !t.done; }), done = tasks.filter(function (t) { return t.done; });
     return (tasks.partial ? '<p class="wltk-empty">Some to-dos couldn\'t be checked just now. Reload to try again.</p>' : "") +
-      (todo.length ? "<ul>" + todo.map(item).join("") + "</ul>" : tasks.partial ? "" : tasks.noBand ? '<p class="wltk-empty">Most guide to-dos (Labs, goals, 1:1s) belong to a grade band, and you don\'t have one. To see a guide\'s list, use Test view as the test guide.</p>' : '<p class="wltk-empty">All done. Nice work.</p>') +
+      (todo.length ? "<ul>" + todo.map(item).join("") + "</ul>" : tasks.partial ? "" : tasks.noBand ? '<p class="wltk-empty">Most guide to-dos (Labs, goals, Summit Sessions) belong to a grade band, and you don\'t have one. To see a guide\'s list, use Test view as the test guide.</p>' : '<p class="wltk-empty">All done. Nice work.</p>') +
       (done.length ? '<p class="wltk-sub">Done</p><ul>' + done.map(item).join("") + "</ul>" : "");
   }
   function paint() {

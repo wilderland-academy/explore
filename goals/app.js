@@ -78,7 +78,7 @@
     if (S.gg.length) save();
     if (added.length) { draw(); toast(added.length === 1 ? `${added[0].by} added a goal you set together.` : `Your guide added ${added.length} goals you set together.`); }
   }
-  // Takeaways a Field Guide shared after a 1:1 (coachShare, /fieldguide/): what they talked about and what the student
+  // Takeaways a Field Guide shared after a Summit Session (coachShare, /fieldguide/): what they talked about and what the student
   // said they'd do. Newest first; the latest is open.
   async function loadOneOnOnes(r) {
     const u = window.wlFirebase && window.wlFirebase.auth.currentUser, box = $("#oneonone"); if (!u || !r.email || !box) return;
@@ -88,12 +88,12 @@
     let xs = [];
     try {
       const res = await fetch(FS + ":runQuery", { method: "POST", headers: auth, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "coachShare" }], where, limit: 60 } }) });
-      if (!res.ok) throw new Error("1:1s " + res.status);
+      if (!res.ok) throw new Error("Summit Sessions " + res.status);
       const arr = v => (v && v.arrayValue && v.arrayValue.values || []).map(val).filter(Boolean);
       xs = (await res.json()).filter(x => x.document).map(x => { const f = x.document.fields || {}; return { at: val(f.sessionAt) || val(f.at) || 0, by: val(f.byName) || "your guide", talked: arr(f.talked), actions: arr(f.actions), checkIn: val(f.checkIn) || "", test: !!val(f.test) }; })
         .filter(x => x.test === !!r.test).sort((a, b) => b.at - a.at);
-    } catch (e) { console.warn("1:1 takeaways:", e); }
-    // What the student wants to talk about at their next 1:1 (coachAgenda/{sid}): their guide sees it before the meeting.
+    } catch (e) { console.warn("Summit Session takeaways:", e); }
+    // What the student wants to talk about at their next Summit Session (coachAgenda/{sid}): their guide sees it before the meeting.
     let agenda = [], agendaAt = 0;
     if (r.sid) try {
       const res = await fetch(FS + "/coachAgenda/" + encodeURIComponent(r.sid), { headers: auth });
@@ -101,12 +101,12 @@
     } catch (e) { }
     const day = ms => new Date(ms).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
     const one = x => `${x.actions.length ? `<h3>What you said you'd do</h3><ul class="acts">${x.actions.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ul>` : ""}${x.checkIn ? `<h3>When ${esc(x.by)} will check in</h3><p class="ck">${esc(x.checkIn)}</p>` : ""}${x.talked.length ? `<h3>What you talked about</h3><ul>${x.talked.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}`;
-    const prep = r.sid ? `<div class="prep"><h2>For my next 1:1</h2><p class="meta">It's your meeting. Add what you want to talk about, one per line: anything at all, school or not. Your guide sees it before you meet.</p>
+    const prep = r.sid ? `<div class="prep"><h2>For my next Summit Session</h2><p class="meta">Your weekly one-on-one with your guide. It's your meeting. Add what you want to talk about, one per line: anything at all, school or not. Your guide sees it before you meet.</p>
       <textarea id="agendaIn" rows="4" maxlength="1200" placeholder="A goal I want to work on&#10;Something that's in my way&#10;Something I'm proud of"></textarea>
       <details class="qs"><summary>Questions to think about first</summary><ul><li>What do I want to get done or get better at?</li><li>What's in my way?</li><li>Why does it matter to me? What would it mean to get there?</li><li>What's one small step I could take this week?</li></ul></details>
-      <div class="row"><button class="btn" id="agendaSave" type="button">Save for my 1:1</button><span class="meta" id="agendaSt">${agenda.length ? "Saved " + esc(day(agendaAt)) + "." : ""}</span></div></div>` : "";
-    box.innerHTML = prep + (xs.length ? `<h2${prep ? ' style="margin-top:22px"' : ""}>From your 1:1s</h2><p class="meta">With ${esc(xs[0].by)}, ${esc(day(xs[0].at))}. Turn what you said you'd do into a goal if it helps.</p>${one(xs[0])}` +
-      (xs.length > 1 ? `<details><summary>Earlier 1:1s (${xs.length - 1})</summary>${xs.slice(1, 10).map(x => `<p class="meta" style="margin-top:12px">With ${esc(x.by)}, ${esc(day(x.at))}</p>${one(x)}`).join("")}</details>` : "") : "");
+      <div class="row"><button class="btn" id="agendaSave" type="button">Save for my Summit Session</button><span class="meta" id="agendaSt">${agenda.length ? "Saved " + esc(day(agendaAt)) + "." : ""}</span></div></div>` : "";
+    box.innerHTML = prep + (xs.length ? `<h2${prep ? ' style="margin-top:22px"' : ""}>From your Summit Sessions</h2><p class="meta">With ${esc(xs[0].by)}, ${esc(day(xs[0].at))}. Turn what you said you'd do into a goal if it helps.</p>${one(xs[0])}` +
+      (xs.length > 1 ? `<details><summary>Earlier Summit Sessions (${xs.length - 1})</summary>${xs.slice(1, 10).map(x => `<p class="meta" style="margin-top:12px">With ${esc(x.by)}, ${esc(day(x.at))}</p>${one(x)}`).join("")}</details>` : "") : "");
     if (!prep && !xs.length) { box.hidden = true; return; }
     if (prep) {
       const ta = $("#agendaIn"), st = $("#agendaSt"); ta.value = agenda.join("\n");
@@ -127,7 +127,7 @@
   }
   function onRole(r) {
     ROLE = r || null;
-    if (r && r.role === "student") loadOneOnOnes(r).catch(e => console.warn("1:1 takeaways:", e));
+    if (r && r.role === "student") loadOneOnOnes(r).catch(e => console.warn("Summit Session takeaways:", e));
     if (r && r.role === "student") pullGuideGoals(r).catch(e => console.warn("Goals from guides:", e));
     BAND = r && r.band || BAND;
     if (r && r.role === "student" && !S.grade && /^[2-8]$/.test(String(r.grade || "").trim())) { S.grade = String(r.grade).trim(); save(); }
@@ -311,7 +311,7 @@
     g.label = title(g);
     if (EDIT) S.list = S.list.map(x => x.id === EDIT ? Object.assign({}, x, g) : x);
     else S.list.push(Object.assign(g, { id: uid(), created: today(), at: 0, done: "" }));
-    save(); close(); draw(); toast(EDIT ? "Saved." : "Goal set. Your guide will ask about it at your 1:1.");
+    save(); close(); draw(); toast(EDIT ? "Saved." : "Goal set. Your guide will ask about it at your Summit Session.");
   }
   function toast(t) { const el = $("#toast"); el.textContent = t; el.hidden = false; clearTimeout(el._t); el._t = setTimeout(() => { el.hidden = true; }, 2800); }
 

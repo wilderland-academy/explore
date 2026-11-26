@@ -49,7 +49,7 @@ const sky = (c = "#e4ecd8") => `<rect x="-20" y="-20" width="800" height="340" f
 const ground = (y, c = "#155f37") => `<polygon points="${pts([[-20, y + 6], [120, y], [260, y + 5], [400, y - 2], [540, y + 4], [680, y - 1], [780, y + 3], [780, 320], [-20, 320]])}" fill="${c}"/>`;
 
 // 1. The vision: one climb, four stations. Guides lead at the bottom; students lead at the top.
-const climb = svg("The Life Skills afternoon as one climb: Skill Labs at base camp, then Challenges, weekly 1:1 coaching, and a Passion Project at the summit. Guides lead at the bottom; students lead at the top.",
+const climb = svg("The Life Skills afternoon as one climb: Skill Labs at base camp, then Challenges, weekly Summit Sessions, and a Passion Project at the summit. Guides lead at the bottom; students lead at the top.",
   F + sky() + `<circle cx="84" cy="54" r="22" fill="${LIME}"/>` +
   `<polygon points="${pts([[-20, 200], [60, 170], [150, 180], [240, 150], [330, 175], [330, 320], [-20, 320]])}" fill="#bcd3b1"/>` +
   `<polygon points="${pts([[200, 300], [520, 36], [560, 300]])}" fill="#3a8f5b"/><polygon points="${pts([[520, 36], [820, 300], [560, 300]])}" fill="#0d5732"/>` +
@@ -65,7 +65,7 @@ const climb = svg("The Life Skills afternoon as one climb: Skill Labs at base ca
   pill(686, 42, "Student leads", { size: 13, dark: true }) + pill(686, 232, "Guide leads", { size: 13, dark: true }) +
   num(208, 266, 1) + pill(208, 230, "Skill Labs", { size: 14 }) +
   num(286, 238, 2) + pill(254, 196, "Challenges", { size: 14, dark: true }) +
-  num(436, 186, 3) + pill(456, 222, "1:1 Coaching", { size: 14 }) +
+  num(436, 186, 3) + pill(456, 222, "Summit Sessions", { size: 14 }) +
   num(552, 44, 4) + pill(424, 30, "Passion Project", { size: 14, dark: true })
 );
 
@@ -113,8 +113,8 @@ const challenges = svg("Challenges: at a trailhead signpost, a student picks one
   pill(232, 36, "The student chooses", { size: 15, dark: true }) + pill(560, 36, "You verify the pass", { size: 15, dark: true })
 );
 
-// 5. 1:1 coaching: guide and student by the fire, with wise feedback on the board.
-const coaching = svg("A weekly 1:1: a guide and a student talk by a campfire. Beside them, a board with wise feedback: I'm giving you feedback because I know you can reach a high standard.",
+// 5. Summit Sessions: guide and student by the fire, with wise feedback on the board.
+const coaching = svg("A weekly Summit Session: a guide and a student talk by a campfire. Beside them, a board with wise feedback: I'm giving you feedback because I know you can reach a high standard.",
   F + sky("#e9e4d8") + `<circle cx="96" cy="58" r="20" fill="#f5c542"/>` +
   `<polygon points="${pts([[-20, 180], [110, 150], [240, 170], [380, 136], [520, 168], [660, 140], [780, 160], [780, 320], [-20, 320]])}" fill="#bcd3b1"/>` +
   ground(238, "#3a8f5b") + `<polygon points="${pts([[-20, 288], [260, 282], [520, 290], [780, 284], [780, 320], [-20, 320]])}" fill="#155f37"/>` +
@@ -142,7 +142,7 @@ const projects = svg("Passion Projects: a gate with two checks (a real passion, 
 
 
 // 7. A year at a glance (an example, not a schedule): Labs of 3 to 8 weeks one after another, 16 chosen Challenges
-// (2 per Life Skill), a 1:1 every week, and an Honor Court milestone every 4 credits. September to May.
+// (2 per Life Skill), a Summit Session every week, and an Honor Court milestone every 4 credits. September to May.
 const SKC = ["#C2611F", "#2F5D8A", "#9C3F2A", "#1C6F6A", "#8A6418", "#6E4382", "#A04660", "#356B33"];
 const yearArt = (() => {
   const X0 = 118, X1 = 744, WEEKS = 38, wk = (X1 - X0) / WEEKS, x = w => r1(X0 + w * wk);
@@ -169,10 +169,10 @@ const yearArt = (() => {
   // Honor Court every 4 credits.
   o += lane(184, "Honor Court", "every 4 credits");
   [4, 8, 12, 16].forEach((n, i) => { const cx = r1(X0 + (n - 1 + 0.6) * (X1 - X0) / 16.4); o += `<path d="M${cx} 146V170" stroke="#625a63" stroke-width="1.2" stroke-dasharray="2 3"/><polygon points="${pts([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(j => { const a = -Math.PI / 2 + j * Math.PI / 5, r = j % 2 ? 6 : 13; return [+cx + r * Math.cos(a), 186 + r * Math.sin(a)]; }))}" fill="#f5c542" stroke="#8a6100" stroke-width="1.2"/><text x="${cx}" y="214" text-anchor="middle" style="font:800 11px Inter,system-ui,sans-serif;fill:${INK}">${n}</text>`; });
-  // 1:1 coaching every week.
-  o += lane(246, "1:1 Coaching", "every week");
+  // Summit Sessions every week.
+  o += lane(246, "Summit Sessions", "every week");
   for (let i = 0; i < WEEKS - 1; i++) o += `<rect x="${r1(x(i) + wk / 2 - 2.5)}" y="238" width="5" height="16" rx="2.5" fill="#01412f"/>`;
-  return svg("An example school year from September to May: six Life Skill Labs of 3 to 8 weeks each, 16 Challenges chosen by the student (2 in each Life Skill), an Honor Court milestone every 4 credits, and a 1:1 coaching session every week.", o + pill(380, 316, "An example year, September to May", { size: 13, dark: true }), "0 0 760 336");
+  return svg("An example school year from September to May: six Life Skill Labs of 3 to 8 weeks each, 16 Challenges chosen by the student (2 in each Life Skill), an Honor Court milestone every 4 credits, and a Summit Session every week.", o + pill(380, 316, "An example year, September to May", { size: 13, dark: true }), "0 0 760 336");
 })();
 
 // 8. The Skill Map: one real chain from a Life Skill down to a Challenge, and how many of each there are.

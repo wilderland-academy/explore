@@ -125,8 +125,8 @@
           return '<li class="' + (n.read ? "" : "new") + '"><a href="' + esc(n.link || "#") + '" data-wlbell-id="' + esc(n.id) + '"><span class="i" aria-hidden="true">' + (ICON[n.kind] || "🔔") + '</span><span class="t">' + esc(n.text) +
             '<small>' + esc(n.fromName ? n.fromName + " · " : "") + ago(n.at || 0) + "</small></span></a></li>";
         }).join("") + "</ul>" : '<p class="wlbell-empty">' + (role.role === "staff" ? "Nothing yet. You'll hear here when your students pass challenges, save things, set goals or post ideas, and when a Mr. Fox alert needs a look."
-          : role.role === "parent" ? "Nothing yet. You'll hear here when your child passes a challenge, sets or finishes a goal, saves something new, has a reward idea approved, has an idea accepted, or gets takeaways from a 1:1 with their Field Guide."
-          : "Nothing yet. You'll hear here when a guide checks a challenge you showed them, approves your reward idea or shares takeaways from your 1:1, and when someone votes for or accepts your Suggestion Wall idea or puts your Town Hall item on the agenda.") + "</p>") + "</div>" : "");
+          : role.role === "parent" ? "Nothing yet. You'll hear here when your child passes a challenge, sets or finishes a goal, saves something new, has a reward idea approved, has an idea accepted, or gets takeaways from a Summit Session with their Field Guide."
+          : "Nothing yet. You'll hear here when a guide checks a challenge you showed them, approves your reward idea or shares takeaways from your Summit Session, and when someone votes for or accepts your Suggestion Wall idea or puts your Town Hall item on the agenda.") + "</p>") + "</div>" : "");
   }
   // ---------- Mr. Fox alerts, for staff ----------
   var ALERT_CAT = { self_harm: "self-harm or suicide", harmed_by_others: "may be unsafe or harmed", threat_to_others: "threat to others", sexual: "sexual content",

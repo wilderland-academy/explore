@@ -54,10 +54,10 @@ const clamp4 = x => Math.max(0, Math.min(4, Math.round(Number(x) || 0)));
 const meter = (label, v) => h("div", { class: "score" }, [h("span", { text: label }), h("div", { class: "meter" }, [h("i", { style: "width:" + v * 25 + "%" })]), h("b", { text: v + "/4" })]);
 
 /* ---------------- routing ---------------- */
-const STOPS = [["map", "Map", ""], ["start", "Trailhead", "The idea in five minutes"], ["evidence", "The evidence", "What the studies found"], ["spot", "Lookout", "Spot enforcer and protector moves"], ["phrases", "Phrasebook", "Say this instead"], ["moments", "Trail moments", "What to say right now"], ["trust", "Rough terrain", "Jaded and shut-down kids"], ["stories", "Campfire", "Where it worked"], ["practice", "Practice range", "Rehearse and get scored"], ["coach", "Coach's tent", "Ask about a real situation"], ["oneonone", "Weekly 1:1s", "Run the weekly coaching session"], ["habits", "Pack list", "How we make it stick"], ["checkpoint", "Checkpoint", "Earn your Mentor Mindset badge"]];
+const STOPS = [["map", "Map", ""], ["start", "Trailhead", "The idea in five minutes"], ["evidence", "The evidence", "What the studies found"], ["spot", "Lookout", "Spot enforcer and protector moves"], ["phrases", "Phrasebook", "Say this instead"], ["moments", "Trail moments", "What to say right now"], ["trust", "Rough terrain", "Jaded and shut-down kids"], ["stories", "Campfire", "Where it worked"], ["practice", "Practice range", "Rehearse and get scored"], ["coach", "Coach's tent", "Ask about a real situation"], ["oneonone", "Summit Sessions", "Run the weekly Summit Session"], ["habits", "Pack list", "How we make it stick"], ["checkpoint", "Checkpoint", "Earn your Mentor Mindset badge"]];
 function buildNav() { const nav = $("#nav"); nav.innerHTML = ""; STOPS.concat(isAdmin ? [["admin", "Admin", ""]] : []).forEach(s => nav.appendChild(h("a", { href: "#" + s[0], text: s[1] }))); }
 const VIEWS = {};
-// 1:1 coaching sessions live on each student's page in Students (the Coaching tab, Field Guides only), which shows the
+// Summit Sessions live on each student's page in Students (the Coaching tab, Field Guides only), which shows the
 // session room below in a frame: /fieldguide/?embed=1&sid=<lsStudents id>#sessions, opened on that student. Outside
 // that frame, old #sessions links go to Students.
 const EMBED_SID = window.wlEmbed ? (new URLSearchParams(location.search).get("sid") || "") : "";
@@ -244,9 +244,9 @@ VIEWS.coach = sec => {
   sec.append(card("", [h("div", { class: "grid g2" }, [h("label", { for: "cAge" }, ["Age band", age]), h("label", { for: "cCtx" }, ["Setting", ctx])]), h("label", { for: "cWhat" }, ["What's happening?", what]), h("label", { for: "cTried" }, ["What have you tried, and how did it land? (optional)", tried]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Get suggestions", onclick: () => { if (what.value.trim().length < 20) { note.textContent = "Add a little more about what's happening."; return; } note.textContent = ""; const d = "Age band: " + age.value + "\nSetting: " + ctx.value + "\nWhat's happening: " + what.value.trim() + (tried.value.trim() ? "\nWhat I've tried: " + tried.value.trim() : ""); convo = []; convoId = null; thread.innerHTML = ""; ask(d, d); } }), note, h("a", { class: "btn ghost", href: "/guides/partner/#mentor", text: "Past conversations" })])]), thread, follow);
 };
 
-/* ---------------- weekly 1:1s ---------------- */
+/* ---------------- Summit Sessions ---------------- */
 // How to run the weekly one-on-one, with this week's count from the session notebook (Coaching, in Students). Sources at the bottom of the view.
-// Typed 1:1 notes are a short form (every field optional), saved as labeled lines so the AI review, "Before you sit
+// Typed Summit Session notes are a short form (every field optional), saved as labeled lines so the AI review, "Before you sit
 // down" and the session list read them like any notes. Recorded and recapped sessions keep one free notes box.
 const NOTE_FIELDS = [
   { k: "start", label: "What they brought", hint: "Their topics first, in their words. How did the week go?", rows: 2 },
@@ -261,7 +261,7 @@ const NOTE_FIELDS = [
 ];
 // The form: returns { el, text() } where text() is the labeled notes (empty if nothing was filled in).
 function notesForm() {
-  const vals = {}, el = h("div", { class: "nform" }, [h("p", { class: "small dim wide", text: "Every field is optional. Fill in what you can during the 1:1 or right after; you can fix it all before saving." })]);
+  const vals = {}, el = h("div", { class: "nform" }, [h("p", { class: "small dim wide", text: "Every field is optional. Fill in what you can during the Summit Session or right after; you can fix it all before saving." })]);
   NOTE_FIELDS.forEach(f => {
     const id = "nf-" + f.k, box = h("div", { class: "nf" + (f.k === "other" ? " wide" : "") });
     box.appendChild(h("label", { for: id, class: "nfl", text: f.label }));
@@ -291,13 +291,13 @@ function notesForm() {
   return { el, text };
 }
 VIEWS.oneonone = async sec => {
-  head(sec, "Weekly <span>1:1s</span>", "Every student gets a one-on-one coaching session with their guide every week. It's their meeting: they bring the topics, they do most of the talking, and they leave with a goal and a time you'll check in.");
+  head(sec, "Summit <span>Sessions</span>", "Every student gets a one-on-one Summit Session with their guide every week. It's their meeting: they bring the topics, they do most of the talking, and they leave with a goal and a time you'll check in.");
   const tally = h("div");
   sec.appendChild(card("M-edge", [h("h2", { text: "The standard: every student, every week" }),
-    h("p", { text: "A 1:1 is not optional and not only for students who are struggling. Every week, no exceptions. Aim for 10 to 30 minutes: under 10 rarely gets past the surface, and past 30 it starts to wander. K–1 is shorter and more concrete." }),
+    h("p", { text: "A Summit Session is not optional and not only for students who are struggling. Every week, no exceptions. Aim for 10 to 30 minutes: under 10 rarely gets past the surface, and past 30 it starts to wander. K–1 is shorter and more concrete." }),
     h("p", { class: "dim", text: "Why weekly: in the biggest reviews of youth mentoring, programs did better when they set clear expectations for how often mentor and child meet and when the relationship was strong; relationships that fade or end early can leave a child worse off than none. Alpha School holds one-on-ones with every student, every week, from pre-K through high school." }),
     tally, h("div", { class: "row" }, [h("a", { class: "btn", href: "/guides/roster/", text: "Open Students" })]),
-    h("p", { class: "small dim", text: "Field Guides record and review 1:1s on each student's page in Students, under Coaching." })]));
+    h("p", { class: "small dim", text: "Field Guides record and review Summit Sessions on each student's page in Students, under Coaching." })]));
   (async () => { try { if (sess.students === null) await loadSess(); const k = shownKids(), done = k.filter(x => doneThisWeek(x.id)).length; tally.appendChild(h("p", { class: "say", text: k.length ? `This week: ${done} of ${k.length} ${k.length === 1 ? "student" : "students"} done.` + (done < k.length ? " Students shows who's due." : " Everyone's had theirs.") : "Your students will appear in Students, under Coaching." })); } catch (e) { } })();
   sec.appendChild(card("", [h("h2", { text: "The rules" }), ul([
     "One-on-one. No other student there, and a private conversation, but never behind a closed door: always somewhere other adults can see you.",
@@ -307,7 +307,7 @@ VIEWS.oneonone = async sec => {
     "It ends with accountability: a goal, a first step and a specific time you'll check in."
   ])]));
   sec.appendChild(card("", [h("h2", { text: "Run it in seven moves" }), h("div", { class: "steps" }, [
-    ["Help them prepare", "A day or so before, remind them to add what they want to talk about under “For my next 1:1” on My goals, and to think about three questions: What do I want? What's in my way? Why does it matter to me? Nobody likes to be put on the spot."],
+    ["Help them prepare", "A day or so before, remind them to add what they want to talk about under “For my next Summit Session” on My goals, and to think about three questions: What do I want? What's in my way? Why does it matter to me? Nobody likes to be put on the spot."],
     ["Read last week first", "Open the student in Students, then Coaching. “Before you sit down” shows their topics for today, what they said they'd do, when you said you'd check in, and your one thing."],
     ["Start with their list", "Their topics come first, even if it isn't academics. Ask how the week went and listen. Follow what they say with a real question, not the next item on your list. Aim for them to talk more than you."],
     ["Check the commitment", "Did they do what they said? Name exactly what went well. If not, get curious: “What got in the way?” Point out a gap softly: “I notice you want to finish by Friday, and the work has stayed closed this week. What do you make of that?” No lecture."],
@@ -413,8 +413,8 @@ function sessList(sec) {
   // In Students' Coaching tab, the tab's own intro says what this is.
   if (!EMBED_SID) head(sec, "The <span>session</span> room", "Your weekly one-on-ones: record or take notes, get feedback, and walk into the next one knowing where you left off.");
   const b = sess.band || myBandKey(), kids = shownKids(), due = kids.filter(k => !doneThisWeek(k.id));
-  sec.appendChild(card("M-edge", [h("p", { text: kids.length ? `This week: ${kids.length - due.length} of ${kids.length} done.` + (due.length ? ` Due: ${due.map(k => k.name.split(" ")[0]).slice(0, 12).join(", ")}${due.length > 12 ? "…" : ""}.` : " Everyone's had their 1:1.") : "No students here yet." }),
-    h("p", { class: "small", text: "Every student, every week. " }, [h("a", EMBED_SID ? { href: "/fieldguide/#oneonone", target: "_top", text: "How to run a great 1:1" } : { href: "#oneonone", text: "How to run a great 1:1" })])]));
+  sec.appendChild(card("M-edge", [h("p", { text: kids.length ? `This week: ${kids.length - due.length} of ${kids.length} done.` + (due.length ? ` Due: ${due.map(k => k.name.split(" ")[0]).slice(0, 12).join(", ")}${due.length > 12 ? "…" : ""}.` : " Everyone's had their Summit Session.") : "No students here yet." }),
+    h("p", { class: "small", text: "Every student, every week. " }, [h("a", EMBED_SID ? { href: "/fieldguide/#oneonone", target: "_top", text: "How to run a great Summit Session" } : { href: "#oneonone", text: "How to run a great Summit Session" })])]));
   sec.appendChild(h("div", { class: "chips", role: "group", "aria-label": "Band" }, ["All", "K–1", "2–4", "5–8"].map(x => h("button", { class: "chip", "aria-pressed": String(b === x), text: x === "All" ? "All bands" : x, onclick: () => { sess.band = x; route(); } }))));
   const g = h("div", { class: "grid g3" });
   kids.forEach(k => { const n = sess.sessions.filter(s => s.studentId === k.id), done = doneThisWeek(k.id); g.appendChild(h("button", { class: "kid", onclick: () => { if (EMBED_ALL && k.sid) { window.top.location.href = "/guides/roster/#coach=sid:" + encodeURIComponent(k.sid); return; } go("student", { student: k }); } }, [h("b", { text: k.name }), h("span", { class: "small", text: [k.band, k.test ? "test account" : ""].filter(Boolean).join(" · ") }), h("span", { class: "small" }, [h("span", { class: "dot" + (done ? " ok" : "") }), done ? "Done this week" : "Due this week"]), h("span", { class: "small", text: (k.consent ? "Recording consent on file" : "Notes only (no recording consent)") }), h("span", { class: "small", text: n.length ? n.length + (n.length === 1 ? " session" : " sessions") + " · last " + fmtDate(n[0].at) : "No sessions yet" })])); });
@@ -427,15 +427,15 @@ function sessList(sec) {
 function sessStudent(sec) {
   const k = sess.student, mine = sess.sessions.filter(s => s.studentId === k.id);
   if (!EMBED_SID || EMBED_ALL) { sec.appendChild(h("button", { class: "chip", text: "← All students", onclick: () => go("list") })); head(sec, esc(k.name), k.band); }
-  else sec.appendChild(h("p", { class: "lede", text: "Your private 1:1 notebook for " + k.name.split(" ")[0] + ". Only you can see your notes and transcripts. Leadership sees each session's rating and scores." }));
+  else sec.appendChild(h("p", { class: "lede", text: "Your private Summit Session notebook for " + k.name.split(" ")[0] + ". Only you can see your notes and transcripts. Leadership sees each session's rating and scores." }));
   const last = mine[0];
   // What the student wants to talk about (they add it on My goals: coachAgenda/{sid}). Shown first: it's their meeting.
   if (k.sid) { const ag = card("P-edge", [h("h2", { text: k.name.split(" ")[0] + "'s topics for today" }), h("p", { class: "small dim", text: "Loading…" })]); sec.appendChild(ag);
     (async () => { let items = [], at = 0; try { const d = await getDoc(doc(db, "coachAgenda", k.sid)); if (d.exists()) { items = (d.data().items || []).map(String).filter(Boolean); at = d.data().at || 0; } } catch (e) { }
       ag.lastChild.remove();
       if (items.length) ag.append(ul(items), h("p", { class: "small dim", text: "Added " + fmtDate(at) + " on My goals. Start here." }));
-      else ag.appendChild(h("p", { class: "small dim", text: k.name.split(" ")[0] + " hasn't added anything yet. Remind them they can add topics under “For my next 1:1” on My goals, or start by asking what they want to talk about." })); })(); }
-  sec.appendChild(h("div", { class: "row" }, [h("button", { class: "btn", text: doneThisWeek(k.id) ? "Start another session" : "Start this week's session", onclick: () => go("live") }), h("span", { class: "small", text: doneThisWeek(k.id) ? "This week's 1:1 is done." : last ? "Last 1:1 was " + Math.round((Date.now() - last.at) / 864e5) + " days ago." : "No 1:1s yet." })]));
+      else ag.appendChild(h("p", { class: "small dim", text: k.name.split(" ")[0] + " hasn't added anything yet. Remind them they can add topics under “For my next Summit Session” on My goals, or start by asking what they want to talk about." })); })(); }
+  sec.appendChild(h("div", { class: "row" }, [h("button", { class: "btn", text: doneThisWeek(k.id) ? "Start another session" : "Start this week's session", onclick: () => go("live") }), h("span", { class: "small", text: doneThisWeek(k.id) ? "This week's Summit Session is done." : last ? "Last Summit Session was " + Math.round((Date.now() - last.at) / 864e5) + " days ago." : "No Summit Sessions yet." })]));
   if (last) {
     const a = last.analysis;
     const box = card("M-edge", [h("h2", { text: "Before you sit down" }), h("p", { class: "small", text: "From your session on " + fmtDate(last.at) + " (" + ({ talk: "recorded", recap: "spoken recap", notes: "typed notes" }[last.mode] || "notes") + ")" })]);
@@ -453,7 +453,7 @@ function sessStudent(sec) {
   }
   const cb = h("input", { type: "checkbox", id: "kc", checked: k.consent ? "" : null });
   cb.onchange = async () => { k.consent = cb.checked; k.consentAt = cb.checked ? Date.now() : null; try { await saveKid(k, { consent: k.consent, consentAt: k.consentAt }); } catch (e) { cb.checked = !cb.checked; k.consent = cb.checked; } route(); };
-  sec.appendChild(card("", [h("h3", { text: "Recording consent" }), h("label", { class: "check", for: "kc" }, [cb, h("span", { text: "A parent or guardian has given written consent for " + k.name + "'s coaching sessions to be recorded as text and reviewed with AI, and it is on file with the school." })]), h("p", { class: "small", text: k.consent ? "Marked on " + fmtDate(k.consentAt || Date.now()) + ". Unticking stops new recordings." : "Until this is ticked, take notes during the session or speak a recap afterward. Both can still get AI feedback." })]));
+  sec.appendChild(card("", [h("h3", { text: "Recording consent" }), h("label", { class: "check", for: "kc" }, [cb, h("span", { text: "A parent or guardian has given written consent for " + k.name + "'s Summit Sessions to be recorded as text and reviewed with AI, and it is on file with the school." })]), h("p", { class: "small", text: k.consent ? "Marked on " + fmtDate(k.consentAt || Date.now()) + ". Unticking stops new recordings." : "Until this is ticked, take notes during the session or speak a recap afterward. Both can still get AI feedback." })]));
   sec.appendChild(h("h2", { text: "Sessions" }));
   if (!mine.length) sec.appendChild(h("p", { class: "dim", text: "None yet." }));
   mine.forEach(s => sec.appendChild(h("button", { class: "kid", onclick: () => go("view", { session: s }) }, [h("b", { style: "font-size:17px", text: fmtDate(s.at) + " · " + (s.mins || 0) + " min · " + ({ talk: "Recorded", recap: "Spoken recap", notes: "Typed notes" }[s.mode] || "") }), h("span", { class: "small", text: s.analysis ? s.analysis.summary : (s.notes ? s.notes.split("\n").filter(Boolean).slice(0, 2).join(" · ").slice(0, 160) : "Saved without AI review") })])));
@@ -548,8 +548,8 @@ function shareCard(s, k, a) {
       Object.assign(s, { shared: Date.now(), shareTalked: T, shareActions: A, shareCheckIn: C, shareParents: fam.checked });
       await updateDoc(doc(sessCol(), s.id), { shared: s.shared, shareTalked: T, shareActions: A, shareCheckIn: C, shareParents: fam.checked });
       if (!again && window.wlNotify) {
-        if (email) window.wlNotify([email], { kind: "coach", text: `Your takeaways from your 1:1 with ${byName} are ready`, link: "/goals/#oneonone" });
-        if (fam.checked && parents.length) window.wlNotify(parents, { kind: "coach", text: `${first}'s takeaways from their 1:1 with ${byName} are ready`, link: "/parents/lifeskills/#c=" + k.sid });
+        if (email) window.wlNotify([email], { kind: "coach", text: `Your takeaways from your Summit Session with ${byName} are ready`, link: "/goals/#oneonone" });
+        if (fam.checked && parents.length) window.wlNotify(parents, { kind: "coach", text: `${first}'s takeaways from their Summit Session with ${byName} are ready`, link: "/parents/lifeskills/#c=" + k.sid });
       }
       st.textContent = again ? "Updated." : "Sent. " + first + (fam.checked && parents.length ? " and their parents" : "") + " will see it.";
       btn.textContent = "Send the changes to " + first; btn.disabled = false;
@@ -589,18 +589,18 @@ function sessView(sec) {
   sec.appendChild(h("details", { class: "card" }, [h("summary", { text: "Transcript and notes" }), h("p", { style: "white-space:pre-wrap;font-size:14.5px", text: s.transcript || "(no transcript)" }), s.notes ? h("p", { style: "white-space:pre-wrap", text: "Notes: " + s.notes }) : null]));
   sec.appendChild(h("button", { class: "chip", style: "align-self:flex-start", text: "Delete this session", onclick: async e => { if (e.target.dataset.sure !== "1") { e.target.dataset.sure = "1"; e.target.textContent = "Tap again to delete"; return; } await deleteDoc(doc(sessCol(), s.id)); sess.sessions = sess.sessions.filter(x => x.id !== s.id); k ? go("student", { student: k }) : go("list"); } }));
 }
-// Admin: every guide's 1:1 ratings and scores (coachScores), last 30 days, for feedback sessions. No student names.
+// Admin: every guide's Summit Session ratings and scores (coachScores), last 30 days, for feedback sessions. No student names.
 async function coachScoresCard() {
-  const box = card("M-edge", [h("h2", { text: "1:1 coaching scores" }), h("p", { class: "small", text: "The AI's rating and scores for each reviewed 1:1 in the last 30 days, by guide. Use them to start a conversation, not to settle one: the guide was in the room, and typed notes give the AI much less to go on than a recording." })]);
+  const box = card("M-edge", [h("h2", { text: "Summit Session scores" }), h("p", { class: "small", text: "The AI's rating and scores for each reviewed Summit Session in the last 30 days, by guide. Use them to start a conversation, not to settle one: the guide was in the room, and typed notes give the AI much less to go on than a recording." })]);
   let rows = [];
   try { const since = Date.now() - 30 * 864e5; const snap = await getDocs(query(collection(db, "coachScores"), where("at", ">=", since), orderBy("at", "desc"), limit(1000))); snap.forEach(d => rows.push(d.data())); }
   catch (e) { box.appendChild(h("p", { class: "nope", text: /permission/i.test(e.message || e.code || "") ? "Scores need the updated database rules published first." : "Couldn't load scores." })); return box; }
   rows = rows.filter(r => !!r.test === !!testView());
-  if (!rows.length) { box.appendChild(h("p", { class: "dim", text: "No reviewed 1:1s in the last 30 days yet. Scores appear once guides save a session with AI feedback." })); return box; }
+  if (!rows.length) { box.appendChild(h("p", { class: "dim", text: "No reviewed Summit Sessions in the last 30 days yet. Scores appear once guides save a session with AI feedback." })); return box; }
   const by = {}; rows.forEach(r => (by[r.by] = by[r.by] || []).push(r));
   const avg = (xs, k) => { const v = xs.map(x => x[k]).filter(x => typeof x === "number"); return v.length ? v.reduce((p, q) => p + q, 0) / v.length : null; };
   const f1 = x => x == null ? "–" : x.toFixed(1), tbl = h("table", { class: "scores" });
-  tbl.appendChild(h("tr", null, ["Guide", "1:1s", "Exceeds / meets / below", "Student-led", "Depth", "Account­ability", "Standards", "Support", "Autonomy", "Guide talk", "Check-in set"].map(t => h("th", { text: t }))));
+  tbl.appendChild(h("tr", null, ["Guide", "Summit Sessions", "Exceeds / meets / below", "Student-led", "Depth", "Account­ability", "Standards", "Support", "Autonomy", "Guide talk", "Check-in set"].map(t => h("th", { text: t }))));
   Object.entries(by).sort((x, y) => y[1].length - x[1].length).forEach(([em, xs]) => {
     const c = k => xs.filter(x => x.rating === k).length, t = avg(xs, "talk");
     tbl.appendChild(h("tr", null, [xs[0].byName || em.split("@")[0], String(xs.length), c("exceeds") + " / " + c("meets") + " / " + c("below"), f1(avg(xs, "studentLed")), f1(avg(xs, "depth")), f1(avg(xs, "accountability")), f1(avg(xs, "standards")), f1(avg(xs, "support")), f1(avg(xs, "autonomy")), t == null ? "–" : Math.round(t) + "%", Math.round(100 * xs.filter(x => x.checkIn).length / xs.length) + "%"].map(v => h("td", { text: v }))));
@@ -636,6 +636,6 @@ VIEWS.admin = async sec => {
   const list = h("div"), em = h("input", { type: "email", id: "stE", placeholder: "name@wilderland.academy" }), n2 = h("p", { class: "small" });
   const load = async () => { list.innerHTML = ""; list.appendChild(ul(ADMINS.map(a => a + " (admin)").concat(GUESTS.map(g => g + " (guest)")))); try { const snap = await getDocs(collection(db, "staff")); snap.forEach(d => list.appendChild(h("div", { class: "row", style: "padding:6px 0" }, [h("span", { text: d.id }), h("button", { class: "chip", text: "Remove", onclick: async () => { await deleteDoc(doc(db, "staff", d.id)); load(); } })]))); } catch (e) { n2.textContent = "Update the database rules to manage the staff list."; } };
   sec.appendChild(card("", [h("h3", { text: "Who can open this site" }), list, h("label", { for: "stE" }, ["Add a staff account", em]), h("div", { class: "row" }, [h("button", { class: "btn", text: "Add", onclick: async () => { const e = em.value.trim().toLowerCase(); if (!e.endsWith("@wilderland.academy")) { n2.textContent = "Use a @wilderland.academy address."; return; } try { await setDoc(doc(db, "staff", e), { added: Date.now(), by: user.email }); em.value = ""; n2.textContent = "Added."; load(); } catch (err) { n2.textContent = "Couldn't add. Update the database rules first."; } } })]), n2])); load();
-  sec.appendChild(card("", [h("h3", { text: "What admins can and can't see" }), ul(["Admins manage the staff list and the relay address.", "Admins see each guide's 1:1 ratings and scores (below), for feedback sessions. Guides are told this on the Weekly 1:1s page and on every session.", "Admins cannot open any guide's notes, transcripts, the AI's written feedback or which student a session was with.", "The page's text and scripts are public files, like the rest of Explore. Student data is what sign-in protects."])]));
+  sec.appendChild(card("", [h("h3", { text: "What admins can and can't see" }), ul(["Admins manage the staff list and the relay address.", "Admins see each guide's Summit Session ratings and scores (below), for feedback sessions. Guides are told this on the Summit Sessions page and on every session.", "Admins cannot open any guide's notes, transcripts, the AI's written feedback or which student a session was with.", "The page's text and scripts are public files, like the rest of Explore. Student data is what sign-in protects."])]));
   sec.appendChild(await coachScoresCard());
 };
