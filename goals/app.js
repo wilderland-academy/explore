@@ -82,18 +82,46 @@
   // said they'd do. Newest first; the latest is open.
   async function loadOneOnOnes(r) {
     const u = window.wlFirebase && window.wlFirebase.auth.currentUser, box = $("#oneonone"); if (!u || !r.email || !box) return;
+    const auth = { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" };
     const fam = { fieldFilter: { field: { fieldPath: "family" }, op: "ARRAY_CONTAINS", value: { stringValue: String(r.email).toLowerCase() } } };
     const where = r.test ? { compositeFilter: { op: "AND", filters: [fam, { fieldFilter: { field: { fieldPath: "test" }, op: "EQUAL", value: { booleanValue: true } } }] } } : fam;
-    const res = await fetch(FS + ":runQuery", { method: "POST", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "coachShare" }], where, limit: 60 } }) });
-    if (!res.ok) throw new Error("1:1s " + res.status);
-    const arr = v => (v && v.arrayValue && v.arrayValue.values || []).map(val).filter(Boolean);
-    const xs = (await res.json()).filter(x => x.document).map(x => { const f = x.document.fields || {}; return { at: val(f.sessionAt) || val(f.at) || 0, by: val(f.byName) || "your guide", talked: arr(f.talked), actions: arr(f.actions), test: !!val(f.test) }; })
-      .filter(x => x.test === !!r.test).sort((a, b) => b.at - a.at);
-    if (!xs.length) { box.hidden = true; return; }
+    let xs = [];
+    try {
+      const res = await fetch(FS + ":runQuery", { method: "POST", headers: auth, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "coachShare" }], where, limit: 60 } }) });
+      if (!res.ok) throw new Error("1:1s " + res.status);
+      const arr = v => (v && v.arrayValue && v.arrayValue.values || []).map(val).filter(Boolean);
+      xs = (await res.json()).filter(x => x.document).map(x => { const f = x.document.fields || {}; return { at: val(f.sessionAt) || val(f.at) || 0, by: val(f.byName) || "your guide", talked: arr(f.talked), actions: arr(f.actions), checkIn: val(f.checkIn) || "", test: !!val(f.test) }; })
+        .filter(x => x.test === !!r.test).sort((a, b) => b.at - a.at);
+    } catch (e) { console.warn("1:1 takeaways:", e); }
+    // What the student wants to talk about at their next 1:1 (coachAgenda/{sid}): their guide sees it before the meeting.
+    let agenda = [], agendaAt = 0;
+    if (r.sid) try {
+      const res = await fetch(FS + "/coachAgenda/" + encodeURIComponent(r.sid), { headers: auth });
+      if (res.ok) { const f = (await res.json()).fields || {}; agenda = (f.items && f.items.arrayValue && f.items.arrayValue.values || []).map(val).filter(Boolean); agendaAt = val(f.at) || 0; }
+    } catch (e) { }
     const day = ms => new Date(ms).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-    const one = x => `${x.actions.length ? `<h3>What you said you'd do</h3><ul class="acts">${x.actions.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ul>` : ""}${x.talked.length ? `<h3>What you talked about</h3><ul>${x.talked.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}`;
-    box.innerHTML = `<h2>From your 1:1s</h2><p class="meta">With ${esc(xs[0].by)}, ${esc(day(xs[0].at))}. Turn what you said you'd do into a goal if it helps.</p>${one(xs[0])}` +
-      (xs.length > 1 ? `<details><summary>Earlier 1:1s (${xs.length - 1})</summary>${xs.slice(1, 10).map(x => `<p class="meta" style="margin-top:12px">With ${esc(x.by)}, ${esc(day(x.at))}</p>${one(x)}`).join("")}</details>` : "");
+    const one = x => `${x.actions.length ? `<h3>What you said you'd do</h3><ul class="acts">${x.actions.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ul>` : ""}${x.checkIn ? `<h3>When ${esc(x.by)} will check in</h3><p class="ck">${esc(x.checkIn)}</p>` : ""}${x.talked.length ? `<h3>What you talked about</h3><ul>${x.talked.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}`;
+    const prep = r.sid ? `<div class="prep"><h2>For my next 1:1</h2><p class="meta">It's your meeting. Add what you want to talk about, one per line: anything at all, school or not. Your guide sees it before you meet.</p>
+      <textarea id="agendaIn" rows="4" maxlength="1200" placeholder="A goal I want to work on&#10;Something that's in my way&#10;Something I'm proud of"></textarea>
+      <details class="qs"><summary>Questions to think about first</summary><ul><li>What do I want to get done or get better at?</li><li>What's in my way?</li><li>Why does it matter to me? What would it mean to get there?</li><li>What's one small step I could take this week?</li></ul></details>
+      <div class="row"><button class="btn" id="agendaSave" type="button">Save for my 1:1</button><span class="meta" id="agendaSt">${agenda.length ? "Saved " + esc(day(agendaAt)) + "." : ""}</span></div></div>` : "";
+    box.innerHTML = prep + (xs.length ? `<h2${prep ? ' style="margin-top:22px"' : ""}>From your 1:1s</h2><p class="meta">With ${esc(xs[0].by)}, ${esc(day(xs[0].at))}. Turn what you said you'd do into a goal if it helps.</p>${one(xs[0])}` +
+      (xs.length > 1 ? `<details><summary>Earlier 1:1s (${xs.length - 1})</summary>${xs.slice(1, 10).map(x => `<p class="meta" style="margin-top:12px">With ${esc(x.by)}, ${esc(day(x.at))}</p>${one(x)}`).join("")}</details>` : "") : "");
+    if (!prep && !xs.length) { box.hidden = true; return; }
+    if (prep) {
+      const ta = $("#agendaIn"), st = $("#agendaSt"); ta.value = agenda.join("\n");
+      $("#agendaSave").onclick = async () => {
+        const items = ta.value.split("\n").map(x => x.replace(/^[-•*\s]+/, "").trim()).filter(Boolean).slice(0, 8).map(x => x.slice(0, 200));
+        st.textContent = "Saving…";
+        try {
+          const fields = { items: { arrayValue: { values: items.map(x => ({ stringValue: x })) } }, at: { integerValue: String(Date.now()) } };
+          if (r.test) fields.test = { booleanValue: true };
+          const res = await fetch(FS + "/coachAgenda/" + encodeURIComponent(r.sid), { method: "PATCH", headers: { Authorization: "Bearer " + await u.getIdToken(), "Content-Type": "application/json" }, body: JSON.stringify({ fields }) });
+          if (!res.ok) throw new Error(String(res.status));
+          st.textContent = items.length ? "Saved. Your guide will see it before you meet." : "Cleared.";
+        } catch (e) { st.textContent = "Couldn't save. Try again in a minute."; }
+      };
+    }
     box.hidden = false;
     if (/^#oneonone\b/.test(location.hash)) box.scrollIntoView({ block: "start" });
   }

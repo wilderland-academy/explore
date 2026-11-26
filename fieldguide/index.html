@@ -116,8 +116,10 @@ label.check input{margin-top:4px;width:18px;height:18px;flex:none}
 .steps div::before{content:counter(s);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--lamp);color:#0b2b20;font:700 14px var(--display);margin-bottom:8px}
 .steps b{display:block}
 /* scores */
-.score{display:grid;grid-template-columns:110px 1fr 40px;gap:10px;align-items:center;font-size:14px;font-variant-numeric:tabular-nums}
+.score{display:grid;grid-template-columns:124px 1fr 40px;gap:10px;align-items:center;font-size:14px;font-variant-numeric:tabular-nums}
 .meter{height:10px;background:var(--ink);border-radius:99px;overflow:hidden}.meter i{display:block;height:100%;background:var(--lamp);border-radius:99px}
+.rating{display:inline-block;align-self:flex-start;font-weight:700;font-size:14px;padding:5px 12px;border-radius:99px;margin:0 0 6px;border:1px solid var(--line,rgba(255,255,255,.2))}.rating.exceeds{background:var(--lamp-bg);color:var(--lamp)}.rating.below{background:rgba(255,120,90,.12);color:#ffb29e}
+table.scores{border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:760px}table.scores th,table.scores td{padding:7px 9px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08)}table.scores th{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--dim,#aaa);font-weight:700}
 .total{font:700 40px/1 var(--display);font-variant-numeric:tabular-nums}
 .msg{white-space:pre-wrap;border-radius:14px;padding:12px 14px;max-width:72ch}
 .msg.u{background:var(--shelf2);align-self:flex-end}.msg.a{background:var(--shelf);border:1px solid var(--line)}
