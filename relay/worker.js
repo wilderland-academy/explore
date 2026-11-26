@@ -180,7 +180,8 @@ Categories (pick the single most serious that applies):
 - "harmed_by_others": the child says an adult or anyone is hurting, touching, threatening, neglecting, or scaring them; unsafe at home; someone asked them to keep a secret from parents; contact from a stranger online.
 - "threat_to_others": wanting or planning to hurt someone, bring a weapon, or threats against people or the school.
 - "sexual": sexual or romantic content, body parts in a sexual way, dating, sending pictures.
-- "weapons_danger": how to make or use weapons, explosives, poisons, dangerous chemicals or stunts, getting around safety rules or adult supervision. Hands-on projects, crafts, sports and outdoor skills are NOT weapons_danger, even when they involve fire, heat, sharp tools, heights, water or snow: building a kiln, firing pottery, a campfire, cooking, whittling, forging or blacksmithing, woodworking, building an igloo or shelter, climbing, flips, gymnastics, archery at a range. These are normal school challenges and projects (category "none"); the coach adds the safety rules. Use weapons_danger only when the child wants to hurt someone or damage things, make a weapon or explosive, or do it without adults or safety gear.
+- "weapons_danger": how to make or use weapons, explosives, poisons, dangerous chemicals or stunts, getting around safety rules or adult supervision. Hands-on projects, crafts, sports and outdoor skills are NOT weapons_danger, even when they involve fire, heat, sharp tools, heights, water or snow: building a kiln, firing pottery, a campfire, cooking, whittling, forging or blacksmithing, woodworking, building an igloo or shelter, climbing, flips, gymnastics, archery at a range. These are normal school challenges and projects: the coach answers and adds the safety rules. Use weapons_danger only when the child wants to hurt someone or damage things, make a weapon or explosive, or do it without adults or safety gear.
+- "risky_project": a hands-on project or skill that is fine to do but needs an adult there to be safe: building or using a kiln or forge, firing pottery, building a fire or campfire, torches, power tools, knives, axes or carving, chemistry or reactive experiments, rockets, climbing or heights, deep or cold water, being on ice. Everyday cooking, scissors, glue guns, sports and ordinary crafts are "none".
 - "drugs_alcohol": drugs, alcohol, vaping, smoking, gambling.
 - "bullying_hate": bullying, insulting, or demeaning someone, slurs, hate toward a group; or the child says they are being bullied.
 - "distress": the child seems sad, lonely, scared, very stressed, or upset, without any sign of danger.
@@ -195,7 +196,7 @@ Severity:
 - "urgent": any self_harm; harmed_by_others; threat_to_others that sounds real or specific.
 - "high": sexual; weapons_danger; drugs_alcohol; threat_to_others that sounds like a joke; bullying_hate aimed at a real person or a group, or the child says they are being bullied.
 - "medium": manipulation; personal_info; distress; profanity; milder bullying_hate.
-- "low": cheating; off_topic.
+- "low": cheating; off_topic; risky_project.
 - "none": none.
 
 When unsure between two severities, choose the higher one. When unsure whether a hands-on project or skill is dangerous at all, it is "none": the coach handles safety. Jokes and "just asking for a friend" are still screened as if serious.
@@ -499,6 +500,16 @@ async function coach(req, env, who, token, staff, body, out) {
     catch (e) { /* already alerted for this conversation today */ }
   }
 
+  // A project that needs an adult there (a kiln, a fire, power tools...) still gets a real answer, with the safety rules
+  // first, and a guide is told once per conversation so they can plan to be there. Site only, no Slack.
+  let risky = "";
+  if (s.category === "risky_project" && rank(s.severity) < rank("high")) {
+    let told = true;
+    try { await alertStaff(env, token, { ...TX, uid: who.uid, email: who.email, name, band, chatId, category: "risky_project", severity: "low", reason: "Wants to do a project that needs an adult there to be safe" + (s.reason ? ": " + s.reason : "."), quote: s.quote || message.slice(0, 200), staffTest: staff }, "project-" + chatId); }
+    catch (e) { told = /exist|409/i.test(String(e.message || e)) || e.status === 409; }
+    risky = "This project needs an adult there to be safe. Help with it, and put the safety rules first: an adult (a guide or parent) is there the whole time, plus any safety gear it needs. Never give steps for doing the risky part alone." + (told ? " A guide has been told about this project so they can help: you may say so." : "");
+  }
+
   // 3. Decide what the student sees.
   let glitch = false; let reply = "", next = [], scripted = false, blocked = "";
   const sev = s.severity, cat = s.category;
@@ -521,7 +532,7 @@ async function coach(req, env, who, token, staff, body, out) {
     // A whole reply, never a cut-off one: if it stops at the token limit (or comes back empty), it's written again with
     // more room. The system prompt keeps replies short, so this is rare.
     const write = async (extra) => {
-      const sys = coachSystem(band, kind) + (extra ? "\n\n" + extra : "");
+      const sys = coachSystem(band, kind) + (risky ? "\n\n" + risky : "") + (extra ? "\n\n" + extra : "");
       let r = await claude(env, { model: COACH_MODEL, max_tokens: 1200, system: sys, messages });
       if (r.stop === "max_tokens" || !splitNext(r.text).reply) r = await claude(env, { model: COACH_MODEL, max_tokens: 2400, system: sys, messages });
       return r.stop === "max_tokens" ? { reply: "", next: [] } : splitNext(r.text);

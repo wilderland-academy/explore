@@ -18,7 +18,7 @@ const CAT = {
   self_harm: "Self-harm or suicide", harmed_by_others: "May be unsafe or harmed", threat_to_others: "Threat to others", sexual: "Sexual content",
   weapons_danger: "Weapons or dangerous activity", drugs_alcohol: "Drugs or alcohol", bullying_hate: "Bullying or hate", distress: "Upset or struggling",
   personal_info: "Shared personal details", manipulation: "Tried to get around the rules", cheating: "Asked AI to do the work", profanity: "Rude language",
-  off_topic: "Off topic", tampering: "Log tampering", coach_reply_held_back: "Coach reply held back", coach_glitch: "Coach reply came out broken (technical)", academic_use: "Used the coach for academics", academic_interest: "Wants to try the academics coach", none: "None"
+  off_topic: "Off topic", tampering: "Log tampering", coach_reply_held_back: "Coach reply held back", coach_glitch: "Coach reply came out broken (technical)", risky_project: "Project that needs an adult there", academic_use: "Used the coach for academics", academic_interest: "Wants to try the academics coach", none: "None"
 };
 // What to do, shown on urgent alerts. Sources: Utah Code 80-2-602 (everyone must report suspected abuse or neglect
 // immediately to DCFS or law enforcement; telling a school official does not satisfy it, per USBE rule R277-401),
