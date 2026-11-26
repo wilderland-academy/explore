@@ -518,3 +518,17 @@ the `PAGES` list at the top of `/search.js`.
 - "Goal" is kept for what a student sets for themselves (the Goals page, 1:1s). The school's yearly 2 challenges in each Life Skill (16 a year) is now called **expected**: "Expected this year: 2 in every life skill" in Challenges, the Life Skills tracker, parents' and guides' views; the tracker filter is "Plan short of expected"; onboarding and the training quiz say "expected each year". The Goals page says "Wilderland expects 16 this year… You pick your own number."
 - Guides › Students: the first tab is **Roster** (was "Students and parents"), and a student's button is **Edit student profile** (name, band, grade, sign-in, guide, parents, Academics pilot).
 - Mr. Fox's safety screen no longer flags hands-on projects with fire, heat, tools, heights, water or snow (a kiln, a campfire, whittling, forging, an igloo, flips) as "weapons or danger". It treats them as normal challenge talk and leaves the safety rules to the coach's reply. "Build a kiln" used to get a refusal and a high-severity alert for guides.
+
+## Camp Store: no incentives for K–1; science shows and a crew movie night (Nov 25, 2026)
+- **K–1 removed everywhere.** Incentives start in 2nd grade.
+  - No item or experience lists K–1 (`k1` is gone from `APPEAL` and from experiences' `g`). There's no K–1 featured row and no "Grades K–1" filter: the filter reads Grades 2–8 / 2–4 / 5–8.
+  - A K–1 student who opens the store sees "The Camp Store starts in 2nd grade" (`#k1note`) instead of the shelves.
+  - K–1 students don't get the Store tab (`wlK1Student()` in `/wlnav.js`), the Camp Store card on the Students home, or the "save blazes" goal in Goals.
+  - Guides' custom rewards already skipped K–1.
+- **Science shows,** a guide-run demo for the crew with the buyer at the controls:
+  - Giant elephant toothpaste: 100 blazes. Uses 30% hydrogen peroxide, which only a guide handles, in goggles and gloves.
+  - Soda geyser launch: 35 blazes.
+  - Exploding watermelon challenge: 60 blazes.
+  - Dry ice fog and smoke bubbles: 70 blazes. Only guides handle the dry ice, and only in a ventilated space.
+  - Water rocket launch day: 60 blazes.
+- **Crew movie night at school:** 300 blazes, once a term. Showing movies as rewards needs a public performance license, so the movie night and the movie lunch both say "shown under the school's movie license."

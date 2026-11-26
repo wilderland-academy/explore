@@ -102,6 +102,7 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
 .grf input[type=file]{padding:7px;font-size:13px}
 .grf .acts .save{font:600 14px/1 Inter,sans-serif;color:#0b2b20;background:var(--lamp);border:0;border-radius:10px;padding:11px 16px;cursor:pointer}
 .grl .em{font-size:22px} .grl .t{flex:1;font-size:14px} .grl small{color:var(--dim)} .gr h3{font-size:15px;margin:16px 0 0}
+main[data-k1]>:not(.k1note){display:none!important}.k1note{padding:40px 0;display:flex;flex-direction:column;gap:12px;max-width:620px}
 </style>
 {% if include.site == "guides" %}<!-- Installable as the "Wilderland Guides" app (Add to Home Screen): /guides/app/ -->
 <link rel="manifest" href="/guides/app/manifest.webmanifest">
@@ -116,14 +117,15 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
 <div class="wl-wait">Checking your sign-in…</div>
 <section class="wl-gate" aria-live="polite"><div class="wl-lock" aria-hidden="true">🔒</div><h2>Sign in to see the Camp Store</h2><p>The Camp Store is for Wilderland students. Sign in to browse what you can redeem with your blazes and keep your own wishlist.</p><button type="button" data-wl-signin>Sign in with your school account</button><small>Use your @wilderland.academy Google account.</small></section>
 <main class="in wl-gated">
+<section class="k1note" id="k1note" hidden><h1>The Camp Store starts in 2nd grade</h1><p>Rewards and blazes begin in 2nd grade. Until then, the fun is the Life Skills themselves: keep passing challenges with your guide.</p></section>
 <section class="hero">
   <div>
 {% if include.site == "guides" %}
     <h1>The Camp Store, <span>as students see it</span></h1>
-    <p>Everything students can save their blazes for, at 50 cents a blaze. Add a reward made for particular students, or for a whole grade band, with <b>Rewards from guides</b> at the top right. Students redeem with a guide, in Basecamp.</p>
+    <p>Everything students in grades 2–8 can save their blazes for, at 50 cents a blaze. Incentives aren't for K–1. Add a reward made for particular students, or for a whole grade band, with <b>Rewards from guides</b> at the top right. Students redeem with a guide, in Basecamp.</p>
 {% else %}
     <h1>What are you <span>saving for?</span></h1>
-    <p>Every blaze you earn is worth 50 cents here. Sports, skate, animals, style, gross science, games, tools, books, and more, all built to last. Plus experiences: a snowball fight against the guides, a Nerf war, lunch ordered in, a lounge pass for a week. Your guides can also add rewards made just for you. Add anything to your list and watch the bars fill up.</p>
+    <p>Every blaze you earn is worth 50 cents here. Sports, skate, animals, style, gross science, games, tools, books, and more, all built to last. Plus experiences: giant elephant toothpaste for your crew, a snowball fight against the guides, a Nerf war, lunch ordered in, a lounge pass for a week. Your guides can also add rewards made just for you. Add anything to your list and watch the bars fill up.</p>
 {% endif %}
   </div>
 {% unless include.site == "guides" %}  <div class="blz">
@@ -153,11 +155,12 @@ h1,h2,h3{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacin
 const $=s=>document.querySelector(s);
 const KEY="wl-store";
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const BANDKEY={"K–1":"k1","2–4":"24","5–8":"58"},BANDS=["K–1","2–4","5–8"];
+// Incentives start in 2nd grade: nothing in the store is for K–1, and K–1 students see a note instead (#k1note).
+const BANDKEY={"2–4":"24","5–8":"58"},BANDS=["2–4","5–8"];
 CATS.guide=["From your guides","🎁","#f3c6a5"];
 CATS.exp=["Experiences","🎟️","#c7f1ee"];
 // Things from products.js; b = blazes, bands = the grade bands it appeals to (k1 24 58).
-const THINGS=PRODUCTS.map(p=>Object.assign({},p,{b:Math.round(p.p*2),bands:APPEAL[p.id]||"k1 24 58"}))
+const THINGS=PRODUCTS.map(p=>Object.assign({},p,{b:Math.round(p.p*2),bands:APPEAL[p.id]||"24 58"}))
  .concat(EXPERIENCES.map(x=>Object.assign({},x,{c:"exp",bands:x.g})));
 // Rewards guides add (Firestore storeRewards). Each becomes an item with id "r-<doc id>", c "guide".
 let REWARDS=[],ITEMS=THINGS.slice(),BY={};
@@ -173,7 +176,7 @@ const tier=b=>b<=20?"quick":b<=60?"little":b<=150?"big":"dream";
 const startBand=()=>{const b=window.wlBand?window.wlBand({all:true}):"All";return BANDS.includes(b)?b:"All"};
 let BAND=startBand(),PICKED=false,CAT="all",TIER="all",Q="";
 const fits=i=>i.c==="guide"||BAND==="All"||i.bands.split(" ").includes(BANDKEY[BAND]);
-const bandText=i=>{const k=i.bands.split(" ");return k.length===3?"All grades":"Grades "+(k.includes("k1")?"K":k.includes("24")?"2":"5")+"–"+(k.includes("58")?"8":k.includes("24")?"4":"1")};
+const bandText=i=>{const k=i.bands.split(" ");return k.includes("24")&&k.includes("58")?"Grades 2–8":k.includes("24")?"Grades 2–4":"Grades 5–8"};
 function card(p){const [cn,ce,cc]=CATS[p.c],on=S.wish.includes(p.id),can=S.have>=p.b&&S.have>0,g=p.c==="guide",xp=p.c==="exp";
  const top=xp?`<div class="top xp"><span class="cat">${ce} ${cn}</span><span class="age">${bandText(p)}</span><span class="big" aria-hidden="true">${esc(p.e)}</span></div>`:g&&p.img?`<div class="top"><span class="cat">${p.mine?"Just for you":"🎁 From your guides"}</span><span class="age">${esc(p.from)}</span><img src="${esc(p.img)}" alt="${esc(p.n)}" loading="lazy"></div>`:g?`<div class="top xp"><span class="cat">${p.mine?"Just for you":"🎁 From your guides"}</span><span class="age">${esc(p.from)}</span><span class="big" aria-hidden="true">${esc(p.e)}</span></div>`
   :`<div class="top"><span class="cat">${ce} ${cn}</span><span class="age" title="${bandText(p)}">${p.a}+</span><img src="/store/img/${p.id}.jpg" alt="${esc(p.n)}" loading="lazy" width="480" height="480"></div>`;
@@ -198,7 +201,7 @@ function render(){
 }
 function renderWish(){if(!$("#wish"))return;const w=S.wish.map(id=>BY[id]).filter(Boolean);
  $("#wish").innerHTML=w.length?`<ul>${w.map(p=>{const pct=Math.min(100,S.have/p.b*100);return `<li>${(p.c==="guide"&&!p.img)||p.c==="exp"?`<span class="th thx" aria-hidden="true">${esc(p.e)}</span>`:`<img class="th" src="${p.img?esc(p.img):"/store/img/"+p.id+".jpg"}" alt="">`}<span>${esc(p.n)} <small style="color:var(--dim)">· ${p.b} blazes</small> ${S.have>=p.b?'<span class="ok">ready!</span>':`<small style="color:var(--dim)">· ${p.b-S.have} to go</small>`}</span><button data-x="${p.id}" aria-label="Remove">×</button><span class="bar"><i style="width:${pct}%"></i></span></li>`}).join("")}</ul>`:`<p style="color:var(--dim);font-size:14px;margin:0">Tap “Save for this” on anything below and it shows up here with a progress bar.</p>`}
-function draw(){$("#bands").innerHTML=["All"].concat(BANDS).map(b=>`<button data-b="${b}" class="${b===BAND?"on":""}" aria-pressed="${b===BAND}">${b==="All"?"All grades":"Grades "+b}</button>`).join("");render()}
+function draw(){$("#bands").innerHTML=["All"].concat(BANDS).map(b=>`<button data-b="${b}" class="${b===BAND?"on":""}" aria-pressed="${b===BAND}">${b==="All"?"Grades 2–8":"Grades "+b}</button>`).join("");render()}
 
 // ---------- Guide rewards (Firestore storeRewards, over REST with the sign-in from /auth.js) ----------
 // A reward is for named students (to: their school emails, from the Life Skills tracker roster) or for everyone in some
@@ -216,7 +219,7 @@ const first=n=>String(n||"").trim().split(/\s+/)[0]||"";
 let ROLE=null,STAFF=false,ROSTER=[],GERR="";
 function toItem(r,me){const mine=!r.open&&(r.to||[]).includes(me);
  return {show:r.active!==false&&(STAFF?r.open:(mine||(r.open&&(!(r.bands||[]).length||!ROLE||!ROLE.band||(r.bands||[]).includes(ROLE.band))))),raw:r,
-  item:{id:"r-"+r.id,c:"guide",n:r.n,why:r.why||"",b:r.b,e:r.e||"🎁",img:r.img||"",bands:"k1 24 58",mine,from:r.byName?"From "+first(r.byName):"From your guides"}}}
+  item:{id:"r-"+r.id,c:"guide",n:r.n,why:r.why||"",b:r.b,e:r.e||"🎁",img:r.img||"",bands:"24 58",mine,from:r.byName?"From "+first(r.byName):"From your guides"}}}
 async function loadRewards(){
  const me=String((ROLE&&ROLE.email)||"").toLowerCase();
  try{
@@ -284,7 +287,10 @@ document.addEventListener("input",e=>{if(e.target.id==="pq"){PQ=e.target.value.t
 document.addEventListener("change",e=>{const k=e.target.closest("[data-kid]");if(k){k.checked?PICK.add(k.dataset.kid):PICK.delete(k.dataset.kid);const f=$("#grf");EDIT=Object.assign({},EDIT||{},formNow(f));drawGR();return}
  if(e.target.name==="who"){const f=$("#grf");EDIT=Object.assign({},EDIT||{},formNow(f));drawGR()}});
 function formNow(f){const fd=new FormData(f);return{n:fd.get("n"),why:fd.get("why"),b:fd.get("b"),e:fd.get("e"),open:fd.get("who")==="bands",bands:fd.getAll("bands")}}
-document.addEventListener("wl-role",e=>{const r=e.detail||null;ROLE=r;STAFF=!!r&&r.role==="staff";
+// A K–1 student (or the test view of one) gets the note, not the store.
+function k1(r){const m=document.querySelector("main.in");if(!m)return;const on=!!r&&r.role==="student"&&r.band==="K–1";m.toggleAttribute("data-k1",on);$("#k1note").hidden=!on}
+try{const c=JSON.parse(localStorage.getItem("wl-role")||"null");if(c)k1({role:c.r,band:c.b})}catch(e){}
+document.addEventListener("wl-role",e=>{const r=e.detail||null;ROLE=r;STAFF=!!r&&r.role==="staff";k1(r);
  if(!PICKED){const b=startBand();if(b!==BAND){BAND=b;draw()}}
  if(!r||r.role==="parent"){REWARDS=[];rebuild();render();drawGR();return}
  if(STAFF)listAll("lsStudents").then(l=>{ROSTER=l.filter(s=>s.email&&!s.test).map(s=>({email:String(s.email).toLowerCase(),name:s.name||s.email,band:s.band||""})).sort((a,b)=>a.name.localeCompare(b.name));drawGR()}).catch(()=>{});

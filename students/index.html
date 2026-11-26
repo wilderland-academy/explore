@@ -21,6 +21,7 @@ h2{font:700 13px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .cards.big{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
 .card{display:flex;flex-direction:column;border-radius:18px;background:#0f231c;border:1px solid #28493d;color:inherit;text-decoration:none;overflow:hidden;transition:border-color .15s,transform .15s}
+.card[hidden]{display:none}
 .card:hover{border-color:#d5f367;transform:translateY(-2px)}
 .card .pic{aspect-ratio:16/10;background:#16302a;position:relative;overflow:hidden}
 .card .pic img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
@@ -72,11 +73,18 @@ footer{color:#7f978b;font-size:13px;padding:40px 0}
 <div class="cards">
 <a class="card" href="https://library.wilderland.academy/"><div class="pic"><div class="ui ui-lib" aria-hidden="true"><div class="ui-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Search the shelves…</div><div class="ui-row"><span class="ui-cover" style="background:#e0763b"></span><span class="ui-lines"><i></i><i></i></span><span class="ui-st in">On shelf</span></div><div class="ui-row"><span class="ui-cover" style="background:#5aa0d8"></span><span class="ui-lines"><i></i><i></i></span><span class="ui-st due">Due Fri</span></div></div><span class="tag out">Borrow</span></div><div class="body"><b>Treebeard Library</b><p>Search the shelves, check books out, and see what's due.</p><i>Open the library →</i></div></a>
 <a class="card" href="https://my.wilderland.academy/"><div class="pic"><img src="/img/basecamp.jpg" alt=""><span class="tag out">Track</span></div><div class="body"><b>Basecamp</b><p>Your dashboard: app progress, blazes earned, and your week in one place.</p><i>Open Basecamp →</i></div></a>
-<a class="card" href="/store/"><div class="pic"><div class="ui ui-store" aria-hidden="true"><div class="ui-shelf"><div class="ui-item"><b>🏀</b><span>70 blazes</span></div><div class="ui-item"><b>🛹</b><span>90 blazes</span></div><div class="ui-item"><b>🧱</b><span>40 blazes</span></div><div class="ui-item"><b>🦉</b><span>20 blazes</span></div><div class="ui-item"><b>🎨</b><span>30 blazes</span></div><div class="ui-item"><b>🔬</b><span>60 blazes</span></div></div></div><span class="tag">Earn</span></div><div class="body"><b>Camp Store</b><p>Almost 200 things worth saving your blazes for, from basketballs to owl pellets. Nothing that breaks by Tuesday.</p><i>See the store →</i></div></a>
+<a class="card" href="/store/" data-not-k1><div class="pic"><div class="ui ui-store" aria-hidden="true"><div class="ui-shelf"><div class="ui-item"><b>🏀</b><span>70 blazes</span></div><div class="ui-item"><b>🛹</b><span>90 blazes</span></div><div class="ui-item"><b>🧱</b><span>40 blazes</span></div><div class="ui-item"><b>🦉</b><span>20 blazes</span></div><div class="ui-item"><b>🎨</b><span>30 blazes</span></div><div class="ui-item"><b>🔬</b><span>60 blazes</span></div></div></div><span class="tag">Earn</span></div><div class="body"><b>Camp Store</b><p>Almost 200 things worth saving your blazes for, from basketballs to owl pellets. Nothing that breaks by Tuesday.</p><i>See the store →</i></div></a>
 <a class="card" href="/suggest/"><div class="pic"><img src="/img/suggest.jpg" alt=""><span class="tag">Speak up</span></div><div class="body"><b>Suggestion Wall</b><p>What would make Wilderland better? Post it on the wall for the whole school, vote on others, and see which guide says yes.</p><i>Add an idea →</i></div></a>
 </div>
 </main>
 <footer class="in">Wilderland Academy · Eden, Utah</footer>
 <script type="module" src="/auth.js" data-site="students"></script>
+<script>
+// Incentives start in 2nd grade: K–1 students don't see the Camp Store card.
+(function () {
+  var hide = function () { var k1 = window.wlK1Student && window.wlK1Student(); document.querySelectorAll("[data-not-k1]").forEach(function (el) { el.hidden = !!k1; }); };
+  hide(); document.addEventListener("wl-role", function () { setTimeout(hide, 0); });
+})();
+</script>
 </body>
 </html>

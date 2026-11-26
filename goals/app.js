@@ -203,7 +203,7 @@
         <label>How often?<select data-f="freq">${opt("", "Not a set schedule", g.freq)}${["every day", "every school day", "3 times a week", "once a week"].map(f => opt(f, f[0].toUpperCase() + f.slice(1), g.freq)).join("")}</select></label>`;
     }
     box.innerHTML = `<div class="fh"><h2>${EDIT ? "Change your goal" : "New goal"}</h2><button class="ghost" type="button" data-cancel>Cancel</button></div>
-      <div class="areas" role="group" aria-label="What is this goal about?">${Object.entries(AREAS).map(([k, a]) => `<button type="button" data-area-pick="${k}" class="${g.area === k ? "on" : ""}">${a.e} ${a.n}${a.req ? " <small>expected</small>" : ""}</button>`).join("")}</div>
+      <div class="areas" role="group" aria-label="What is this goal about?">${Object.entries(AREAS).filter(([k]) => k !== "store" || BAND !== "K–1" || g.area === "store").map(([k, a]) => `<button type="button" data-area-pick="${k}" class="${g.area === k ? "on" : ""}">${a.e} ${a.n}${a.req ? " <small>expected</small>" : ""}</button>`).join("")}</div>
       ${g.area ? `<div class="two"><label>When?<select data-f="span">${Object.entries(SPANS).map(([k, n]) => opt(k, n, g.span)).join("")}</select></label><label>By<input type="date" data-f="due" value="${esc(g.due)}" min="${today()}"></label></div>
       ${fields}
       <label>Why does it matter to you? (optional)<input type="text" maxlength="140" data-f="why" value="${esc(g.why)}" placeholder="What will be different when you've done it?"></label>
