@@ -245,7 +245,7 @@ export const STEPS = [
     screens: [
       { id: "s-page", kind: "text", title: "One page for every student", text: [
         "The Students page has four tabs:",
-        ["Students and parents: every student, their parents and their guide. Any guide can add a student or link a parent. A parent sees their child's record only after you add their email and they confirm it.", "Pickup, allergies & photos: what the office keeps on each child. Family contacts, authorized pickup and do-not-release, emergency and health notes, allergies, photo permission and birthday.", "Alerts: when a student's message to Mr. Fox is worrying or breaks the rules. Every staff member sees every alert.", "All AI conversations: every student conversation with Mr. Fox."]
+        ["Roster: every student, their parents and their guide. Any guide can add a student or link a parent. A parent sees their child's record only after you add their email and they confirm it.", "Pickup, allergies & photos: what the office keeps on each child. Family contacts, authorized pickup and do-not-release, emergency and health notes, allergies, photo permission and birthday.", "Alerts: when a student's message to Mr. Fox is worrying or breaks the rules. Every staff member sees every alert.", "All AI conversations: every student conversation with Mr. Fox."]
       ] },
       { id: "s-safety", kind: "text", title: "Check before you go", text: [
         "Red and amber tags on a student mean look closer. Read the notices at the top of your band first.",

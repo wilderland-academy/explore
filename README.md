@@ -516,3 +516,4 @@ the `PAGES` list at the top of `/search.js`.
 
 ## "Expected", not "goal", for the yearly 2 per Life Skill (Nov 25, 2026)
 - "Goal" is kept for what a student sets for themselves (the Goals page, 1:1s). The school's yearly 2 challenges in each Life Skill (16 a year) is now called **expected**: "Expected this year: 2 in every life skill" in Challenges, the Life Skills tracker, parents' and guides' views; the tracker filter is "Plan short of expected"; onboarding and the training quiz say "expected each year". The Goals page says "Wilderland expects 16 this year… You pick your own number."
+- Guides › Students: the first tab is **Roster** (was "Students and parents"), and a student's button is **Edit student profile** (name, band, grade, sign-in, guide, parents, Academics pilot).
