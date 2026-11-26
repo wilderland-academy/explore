@@ -15,13 +15,17 @@
 //                            see when a tool is free; only the student who reserved (or a guide) can add or remove one.
 //                            Materials have no hold: they're used up, so guides just set some aside.
 //   Reservations come in 4-hour blocks on the clock (12, 4 and 8, AM and PM), from 4 hours up to a week.
+//   toolReports/{id}         "this is running low": { item, n, email, name, band, level (low|out), note, at, test? }.
+//                            Any student (or guide) files one from a material's sheet; guides see them on the Desk and
+//                            the Shopping list, and they close when a guide restocks the item, adds it to the restock
+//                            list, or dismisses them. A student reads only their own.
 //   toolBadges/{sid}         { items: [item ids], by, at }: tools a student was taught and signed off on.
 // Like a book library: a student asks, a guide hands it over (that's the checkout) and checks it back in.
 (function () {
   var FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
   var T = window.WLTools, SITE = document.body.dataset.site === "guides" ? "guides" : "students";
   var BANDS = ["K–1", "2–4", "5–8"];
-  var S = { role: null, inv: {}, loans: [], holds: [], badges: {}, kids: [], q: "", cat: "all", f: "", view: "", band: "All", kid: "", dirty: {}, msg: "" };
+  var S = { role: null, inv: {}, loans: [], holds: [], reports: [], badges: {}, kids: [], q: "", cat: "all", f: "", view: "", band: "All", kid: "", dirty: {}, msg: "" };
   var $ = function (q) { return document.querySelector(q); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var byId = {}; T.TOOLS.forEach(function (t) { byId[t.id] = t; });
@@ -158,23 +162,26 @@
     if (!S.role || !user()) return;
     var none = function () { return []; };
     var inv = list("toolInventory").catch(none), items = list("toolItems").catch(none), holds = list("toolHolds").catch(none);
-    var loans = Promise.resolve([]), badgesP = Promise.resolve([]), kids = Promise.resolve(null);
+    var loans = Promise.resolve([]), badgesP = Promise.resolve([]), kids = Promise.resolve(null), reps = Promise.resolve([]);
     if (guide()) {
       loans = list("toolLoans").catch(function () { return isTest() ? query("toolLoans", eq("test", true)).catch(none) : []; });
       badgesP = list("toolBadges").catch(none);
       kids = list("lsStudents").catch(none);
+      reps = list("toolReports").catch(none);
     } else if (S.role.role === "student") {
       var em = String(S.role.email || "").toLowerCase();
       loans = query("toolLoans", isTest() ? { compositeFilter: { op: "AND", filters: [eq("email", em), eq("test", true)] } } : eq("email", em)).catch(none);
+      reps = query("toolReports", eq("email", em)).catch(none);
       badgesP = S.role.sid ? fetch(FS + "/toolBadges/" + S.role.sid, { headers: { Authorization: "Bearer " + await tok() } }).then(function (r) { return r.ok ? r.json().then(function (d) { return [doc(d)]; }) : []; }).catch(none) : Promise.resolve([]);
     }
-    var got = await Promise.all([inv, items, holds, loans, badgesP, kids]);
+    var got = await Promise.all([inv, items, holds, loans, badgesP, kids, reps]);
     S.inv = {}; got[0].forEach(function (d) { S.inv[d.id] = d; });
     got[1].forEach(addCustom);
     // Holds that have ended don't block anything. Test holds only count in test views, and real ones only outside them.
     var now = Date.now();
     S.holds = (got[2] || []).filter(function (h) { return !!h.test === isTest() && (h.end || 0) > now; });
     S.loans = (got[3] || []).filter(function (l) { return !!l.test === isTest(); }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+    S.reports = (got[6] || []).filter(function (x) { return !!x.test === isTest(); }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
     S.badges = {}; (got[4] || []).forEach(function (d) { S.badges[d.id] = d.items || []; });
     if (got[5]) S.kids = got[5].filter(function (s) { return !s.archived && !!s.test === isTest(); }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
     S.loaded = true; draw();
@@ -245,10 +252,13 @@
       else if (t.loan === "place") act = '<p class="note">Reserve a time below.' + (t.a === "guide" ? " A guide will be there the whole time." : "") + "</p>";
       else act = (s.free > 0 ? "" : '<p class="note">All of them are out right now. Get in line and you\'re next, or reserve one for later.</p>') + '<label>What\'s it for?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="' + (s.free > 0 ? "borrow" : "wait") + '" data-id="' + id + '">' + (s.free > 0 ? "Borrow it now" : "Get in line") + "</button>" + (t.a === "guide" ? '<p class="note">A guide will be with you while you use it.</p>' : "");
       if (canReserve(t, s, band)) act += reserveForm(t);
+      if (t.k === "material" && S.inv[t.id] && (!band || bandOk(t, band))) act += reportForm(t);
     } else {
       act = active.length ? '<p class="note"><b>Right now:</b> ' + active.map(function (l) { return esc(first(l.name)) + " (" + ({ out: "has it, due " + fmt(l.due), requested: "asked", waiting: "in line", wish: "asked us to get it" })[l.status] + ")"; }).join(", ") + '</p>' : "";
       var rs = S.loans.filter(function (l) { return l.item === id && liveResv(l); }).sort(function (a, b) { return a.start - b.start; });
       if (rs.length) act += '<p class="note"><b>Reserved:</b> ' + rs.map(function (l) { return esc(first(l.name)) + " (" + esc(spanTxt(l.start, l.end)) + ((l.qty || 1) > 1 ? ", " + l.qty : "") + ")"; }).join("; ") + "</p>";
+      var rp = reportsFor(t.id);
+      if (rp.length) act += '<p class="note"><b>Reported ' + (rp.some(function (x) { return x.level === "out"; }) ? "out" : "running low") + ":</b> " + rp.map(reportTxt).join("; ") + ". Saving the stock level below clears these.</p>";
       act += stockForm(t, s);
       act += '<p class="note">Inventory: ' + s.have + " owned" + (s.broken ? ", " + s.broken + " out of service" : "") + (s.loc ? ", kept at " + esc(s.loc) : "") + (s.counted ? "" : " (not counted yet)") + '. <a href="#inventory">Update</a> · <a href="#desk">Check it out to a student</a></p>';
     }
@@ -342,15 +352,63 @@
     if (mat) { d.stock = $("#stk-stock").value; d.have = d.stock === "out" ? 0 : 1; }
     else d.have = Math.max(0, Math.min(999, Math.round(Number($("#stk-have").value) || 0)));
     var waiting = d.have > 0 ? S.loans.filter(function (l) { return l.item === id && l.status === "wish"; }) : [];
+    // A guide setting the level answers any "running low" reports: in stock means restocked, low or out puts it on the restock list.
+    var reps = mat ? reportsFor(id) : [];
     btn.disabled = true;
     try {
-      await commit([{ path: "toolInventory/" + id, data: d, merge: true }].concat(waiting.map(function (l) { return { path: "toolLoans/" + l.id, data: { status: "done", closed: now, by: me(), byName: myName() }, merge: true }; })));
+      await commit([{ path: "toolInventory/" + id, data: d, merge: true }].concat(waiting.map(function (l) { return { path: "toolLoans/" + l.id, data: { status: "done", closed: now, by: me(), byName: myName() }, merge: true }; }))
+        .concat(reps.map(function (x) { return { path: "toolReports/" + x.id, del: true }; })));
+      dropReports(id);
       S.inv[id] = Object.assign(S.inv[id] || {}, d);
       waiting.forEach(function (l) { l.status = "done"; });
       var emails = waiting.map(function (l) { return l.email; }).filter(Boolean);
       if (emails.length && window.wlNotify) window.wlNotify(emails, { kind: "tool", text: t.n + " is in the Tool Library now. You asked for it: go borrow it.", link: "/tools/" });
       S.msg = t.n + (d.have ? " is " + (mat ? "in stock" : t.k === "machine" ? "ready to book" : "on the shelf") : " is marked not in the library") + (emails.length ? ". " + emails.length + " student" + (emails.length === 1 ? " who asked was" : "s who asked were") + " told." : ".");
       draw(); openItem(id); var m = $("#ddmsg"); if (m) { m.className = "note ok"; m.textContent = S.msg; }
+    } catch (e) { btn.disabled = false; alert(e.message); }
+  }
+
+  // ---------- "running low" reports ----------
+  var reportsFor = function (id) { return S.reports.filter(function (x) { return x.item === id; }); };
+  var dropReports = function (id) { S.reports = S.reports.filter(function (x) { return x.item !== id; }); };
+  var reportTxt = function (x) { return esc(first(x.name)) + " (" + (x.level === "out" ? "out" : "low") + ", " + esc(fmt(iso(new Date(x.at)))) + (x.note ? ": " + esc(x.note) : "") + ")"; };
+  function reportForm(t) {
+    var mine = reportsFor(t.id)[0], lvl = (S.inv[t.id] || {}).stock;
+    if (mine) return '<div class="resv"><h3>Running low?</h3><p class="note ok">You told the guides on ' + esc(fmt(iso(new Date(mine.at)))) + ". It's on their restock list.</p></div>";
+    return '<div class="resv"><h3>Running low?</h3><p class="note">' + (lvl === "low" || lvl === "out" ? "Guides already know it's " + (lvl === "out" ? "out" : "low") + ". Tell them anyway if you need it soon." : "Tell the guides so it goes on the restock list.") + "</p>" +
+      '<div class="form"><label>How much is left?<select id="rp-level"><option value="low">A little</option><option value="out">None</option></select></label>' +
+      '<label>Anything else?<input id="rp-note" maxlength="200" placeholder="For example: only white PLA left"></label></div>' +
+      '<button class="ghost" data-report="' + t.id + '">Tell the guides</button></div>';
+  }
+  async function report(id, btn) {
+    var t = byId[id], r = S.role, msg = $("#ddmsg"), now = Date.now();
+    var level = ($("#rp-level") || {}).value === "out" ? "out" : "low", note = (($("#rp-note") || {}).value || "").trim().slice(0, 200);
+    var name = isTest() ? "Test Student" : String((user() && user().displayName) || String(r.email).split("@")[0]).slice(0, 60);
+    var data = { item: id, n: t.n.slice(0, 80), email: String(r.email || "").toLowerCase(), name: name, band: r.band || "", level: level, note: note, at: now };
+    if (isTest()) data.test = true;
+    btn.disabled = true;
+    try {
+      var rid = newId();
+      await commit([{ path: "toolReports/" + rid, data: data, create: true }]);
+      S.reports.unshift(Object.assign({ id: rid }, data));
+      if (window.wlNotifyGuides) window.wlNotifyGuides({ kind: "tool", text: first(name) + " says " + t.n + (level === "out" ? " is out" : " is running low") + (note ? ": " + note.slice(0, 80) : ""), link: "/guides/tools/#desk" });
+      openItem(id); var m = $("#ddmsg"); if (m) { m.className = "note ok"; m.textContent = "Thanks. The guides see it on their restock list."; }
+    } catch (e) { btn.disabled = false; msg.className = "note bad"; msg.textContent = e.message; }
+  }
+  // Guides: put a reported item on the restock list (its level becomes low or out) or dismiss the reports.
+  async function settleReports(id, how, btn) {
+    var t = byId[id], reps = reportsFor(id), now = Date.now(), W = reps.map(function (x) { return { path: "toolReports/" + x.id, del: true }; });
+    if (how === "list") {
+      var level = reps.some(function (x) { return x.level === "out"; }) ? "out" : "low";
+      W.unshift({ path: "toolInventory/" + id, data: { stock: level, have: level === "out" ? 0 : 1, counted: true, updated: now, by: me() }, merge: true });
+    }
+    btn.disabled = true;
+    try {
+      await commit(W);
+      if (how === "list") S.inv[id] = Object.assign(S.inv[id] || {}, W[0].data);
+      dropReports(id);
+      S.msg = how === "list" ? t.n + " is on the restock list as " + (S.inv[id].stock === "out" ? "out." : "running low.") : "Dismissed the reports for " + t.n + ".";
+      draw();
     } catch (e) { btn.disabled = false; alert(e.message); }
   }
 
@@ -479,7 +537,7 @@
   function gtabs(v) {
     var req = S.loans.filter(function (l) { return l.status === "requested"; }).length, late = S.loans.filter(function (l) { return l.status === "out" && l.due < today(); }).length, rtoday = resvToday().length;
     var a = function (id, label, n) { return '<a href="#' + id + '"' + (v === id ? ' aria-current="page"' : "") + ">" + label + (n ? '<span class="n">' + n + "</span>" : "") + "</a>"; };
-    return '<nav class="gtabs" aria-label="Tool Library">' + a("desk", "Desk", req + late + rtoday) + a("catalog", "Catalog") + a("inventory", "Inventory") + a("badges", "Badges") + a("shop", "Shopping list") + "</nav>";
+    return '<nav class="gtabs" aria-label="Tool Library">' + a("desk", "Desk", req + late + rtoday + reportedItems().length) + a("catalog", "Catalog") + a("inventory", "Inventory") + a("badges", "Badges") + a("shop", "Shopping list") + "</nav>";
   }
   function deskSummary() {
     var out = S.loans.filter(function (l) { return l.status === "out"; }), late = out.filter(function (l) { return l.due < today(); });
@@ -488,6 +546,8 @@
       '<p class="sub">Inventory: ' + counted + " of " + T.TOOLS.length + ' items counted</p><div class="bar"><i style="width:' + Math.round(100 * counted / T.TOOLS.length) + '%"></i></div>' +
       '<p class="sub"><a href="#inventory">Count what we have</a> · <a href="#shop">What to buy</a>' + (S.loans.some(function (l) { return l.status === "wish"; }) ? ' · <b><a href="#shop">' + S.loans.filter(function (l) { return l.status === "wish"; }).length + " student requests</a></b>" : "") + '</p><button type="button" class="ghost sm" data-additem>Add a tool or material</button></div>';
   }
+  // Items with open "running low" reports, most recent first.
+  var reportedItems = function () { var seen = {}; return S.reports.filter(function (x) { if (seen[x.item] || !byId[x.item]) return false; seen[x.item] = 1; return true; }).map(function (x) { return x.item; }); };
   // Reservations still waiting to be handed over that start before the end of today.
   var resvToday = function () { return S.loans.filter(function (l) { return liveResv(l) && l.start < endOfToday(); }); };
   // A reservation is due back on the day its last block ends (one that ends at midnight is due the day before).
@@ -516,6 +576,14 @@
     return (S.msg ? '<p class="note ok" role="status">' + esc(S.msg) + "</p>" : "") + '<div class="cols">' +
       section("Asked for", req, give, "No requests right now.") +
       section("Out now", out, back, "Nothing checked out.") +
+      (function () {
+        var ids = reportedItems(); if (!ids.length) return "";
+        return '<section class="panel"><h2>Running low (' + ids.length + ')</h2><p class="sub">Students said these are low or out.</p><ul class="loans">' + ids.map(function (id) {
+          var t = byId[id], rp = reportsFor(id);
+          return '<li><span class="em">' + t.e + '</span><span class="t"><b>' + esc(t.n) + "</b><small>" + rp.map(reportTxt).join("; ") + "</small></span>" +
+            '<button class="ghost sm" data-relist="' + id + '">Add to restock list</button><button class="ghost sm" data-redismiss="' + id + '">Dismiss</button></li>';
+        }).join("") + "</ul></section>";
+      })() +
       section("Reserved", resv, give, "No reservations coming up. Students reserve from each item's sheet, in 4-hour blocks.") +
       (missed.length ? section("Reservations nobody picked up", missed, function (l) { return '<button class="ghost sm" data-expire="' + l.id + '">Clear</button>'; }, "") : "") +
       section("Waiting in line", wait, function (l) { return stock(byId[l.item] || {}).free > 0 ? give(l) : '<button class="ghost sm" data-decline="' + l.id + '">Remove</button>'; }, "Nobody in line.") +
@@ -633,14 +701,14 @@
   // ---------- Guides: shopping list ----------
   function shop() {
     var wishes = {}; S.loans.filter(function (l) { return l.status === "wish"; }).forEach(function (l) { (wishes[l.item] = wishes[l.item] || []).push(l); });
-    var rows = T.TOOLS.map(function (t) { var s = stock(t), buy = t.k === "material" ? (s.stock === "low" || s.stock === "out" || (!s.have && !S.inv[t.id]) ? 1 : 0) : Math.max(0, t.want - s.have); return { t: t, s: s, buy: buy, w: wishes[t.id] || [] }; }).filter(function (r) { return r.buy > 0 || r.w.length; })
-      .sort(function (a, b) { return b.w.length - a.w.length || Object.keys(T.CATS).indexOf(a.t.c) - Object.keys(T.CATS).indexOf(b.t.c); });
+    var rows = T.TOOLS.map(function (t) { var s = stock(t), rp = reportsFor(t.id), buy = t.k === "material" ? (s.stock === "low" || s.stock === "out" || rp.length || (!s.have && !S.inv[t.id]) ? 1 : 0) : Math.max(0, t.want - s.have); return { t: t, s: s, buy: buy, w: wishes[t.id] || [], rp: rp }; }).filter(function (r) { return r.buy > 0 || r.w.length; })
+      .sort(function (a, b) { return (b.w.length + b.rp.length) - (a.w.length + a.rp.length) || Object.keys(T.CATS).indexOf(a.t.c) - Object.keys(T.CATS).indexOf(b.t.c); });
     var news = S.loans.filter(function (l) { return l.status === "wish" && l.item === "new"; });
-    var text = news.map(function (l) { return "New request: " + l.n + " (from " + first(l.name) + ")"; }).concat(rows.map(function (r) { return (r.t.k === "material" ? "Restock: " : r.buy + " × ") + r.t.n + (r.w.length ? " (asked for by " + r.w.length + ")" : ""); })).join("\n");
+    var text = news.map(function (l) { return "New request: " + l.n + " (from " + first(l.name) + ")"; }).concat(rows.map(function (r) { return (r.t.k === "material" ? "Restock: " : r.buy + " × ") + r.t.n + (r.w.length ? " (asked for by " + r.w.length + ")" : "") + (r.rp.length ? " (reported " + (r.rp.some(function (x) { return x.level === "out"; }) ? "out" : "low") + ")" : ""); })).join("\n");
     return '<section class="panel" style="margin:12px 0"><h2>What to buy</h2><p class="sub">Everything below what a school our size should have, by what we\'ve counted. Items students asked for come first. Count first (Inventory), so we don\'t buy what we already own.</p><button class="ghost" data-copy>Copy the list</button> <span class="note" id="copied"></span><textarea id="shoptext" hidden>' + esc(text) + "</textarea></section>" +
       '<section class="panel" style="margin:12px 0"><h2>New things students asked for (' + news.length + ')</h2>' + (news.length ? '<p class="sub">Not in the catalog yet. Add one to the catalog (with how many we have, if any) and the student is told when it\'s in.</p><ul class="loans">' + news.map(function (l) { return loanRow(l, '<button class="ghost sm" data-additem-from="' + l.id + '">Add to catalog</button><button class="ghost sm" data-decline="' + l.id + '">Not now</button>'); }).join("") + "</ul>" : '<p class="sub">None right now. Students ask from the Catalog with "Can\'t find it? Ask for it."</p>') + "</section>" +
-      '<div class="tblw"><table class="tbl"><thead><tr><th>Item</th><th>Have</th><th>Aim for</th><th>Buy</th><th>Students asking</th></tr></thead><tbody>' + rows.map(function (r) {
-        return "<tr><td>" + r.t.e + " " + esc(r.t.n) + "</td><td>" + (r.t.k === "material" ? esc({ ok: "In stock", low: "Low", out: "Out" }[r.s.stock] || "None") : r.s.have + (r.s.counted ? "" : " ?")) + "</td><td>" + (r.t.k === "material" ? "" : r.t.want) + "</td><td><b>" + (r.t.k === "material" ? "Restock" : r.buy) + "</b></td><td>" + (r.w.length ? r.w.map(function (l) { return esc(first(l.name)) + (l.note ? ": " + esc(l.note) : ""); }).join("; ") : "") + "</td></tr>";
+      '<div class="tblw"><table class="tbl"><thead><tr><th>Item</th><th>Have</th><th>Aim for</th><th>Buy</th><th>Asked for / reported</th></tr></thead><tbody>' + rows.map(function (r) {
+        return "<tr><td>" + r.t.e + " " + esc(r.t.n) + "</td><td>" + (r.t.k === "material" ? esc({ ok: "In stock", low: "Low", out: "Out" }[r.s.stock] || "None") : r.s.have + (r.s.counted ? "" : " ?")) + "</td><td>" + (r.t.k === "material" ? "" : r.t.want) + "</td><td><b>" + (r.t.k === "material" ? "Restock" : r.buy) + "</b></td><td>" + [r.w.length ? r.w.map(function (l) { return esc(first(l.name)) + (l.note ? ": " + esc(l.note) : ""); }).join("; ") : "", r.rp.length ? "Reported: " + r.rp.map(reportTxt).join("; ") : ""].filter(Boolean).join("<br>") + "</td></tr>";
       }).join("") + "</tbody></table></div><p class=\"note\">? means not counted yet.</p>";
   }
 
@@ -669,6 +737,9 @@
     if (d.given) { closeLoan(d.given, "done", b); return; }
     if (d.expire) { closeLoan(d.expire, "done", b); return; }
     if (d.reserve) { reserve(d.reserve, b); return; }
+    if (d.report) { report(d.report, b); return; }
+    if (d.relist) { settleReports(d.relist, "list", b); return; }
+    if (d.redismiss) { settleReports(d.redismiss, "dismiss", b); return; }
     if (d.decline) { closeLoan(d.decline, "declined", b); return; }
     if (d.badgeFrom) { badgeFrom(d.badgeFrom, b); return; }
     if (d.checkout !== undefined) { checkout(b); return; }
