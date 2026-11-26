@@ -246,7 +246,50 @@ VIEWS.coach = sec => {
 
 /* ---------------- weekly 1:1s ---------------- */
 // How to run the weekly one-on-one, with this week's count from the session notebook (Coaching, in Students). Sources at the bottom of the view.
-const NOTES_TEMPLATE = "Wins since last week:\nLast week's commitment (done, partly, not yet):\nThis week's goal (in their words):\nIf-then plan (If ___, then I will ___):\nWhat I'll do to help:\nWatch for / follow up next week:\n";
+// Typed 1:1 notes are a short form (every field optional), saved as labeled lines so the AI review, "Before you sit
+// down" and the session list read them like any notes. Recorded and recapped sessions keep one free notes box.
+const NOTE_FIELDS = [
+  { k: "start", label: "How their week went", hint: "What they brought up first, in their words. What went well?", rows: 2 },
+  { k: "last", label: "Last week's commitment", hint: "What got in the way, or what helped?", choice: ["Done", "Partly", "Not yet", "None set"], rows: 2 },
+  { k: "goal", label: "This week's goal", hint: "In their words. They pick it; you hold the bar.", rows: 2 },
+  { k: "plan", label: "If-then plan", pair: ["If…", "then I will…"] },
+  { k: "help", label: "What I'll do to help", hint: "Your part this week.", rows: 2 },
+  { k: "feedback", label: "Feedback I gave", hint: "Anything hard you named, and how they took it.", rows: 2 },
+  { k: "watch", label: "Watch for / follow up next week", hint: "Something to check on or ask about.", rows: 2 },
+  { k: "next", label: "Next 1:1", hint: "For example: Tuesday after lunch", input: true },
+  { k: "other", label: "Anything else", hint: "Open notes: what they said, how they seemed, ideas, questions for yourself.", rows: 4 }
+];
+// The form: returns { el, text() } where text() is the labeled notes (empty if nothing was filled in).
+function notesForm() {
+  const vals = {}, el = h("div", { class: "nform" }, [h("p", { class: "small dim wide", text: "Every field is optional. Fill in what you can during the 1:1 or right after; you can fix it all before saving." })]);
+  NOTE_FIELDS.forEach(f => {
+    const id = "nf-" + f.k, box = h("div", { class: "nf" + (f.k === "other" ? " wide" : "") });
+    box.appendChild(h("label", { for: id, class: "nfl", text: f.label }));
+    if (f.choice) {
+      const chips = h("div", { class: "chips", role: "group", "aria-label": f.label });
+      f.choice.forEach(c => chips.appendChild(h("button", { type: "button", class: "chip", "aria-pressed": "false", text: c, onclick: () => { vals[f.k + "-c"] = vals[f.k + "-c"] === c ? "" : c; chips.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.textContent === vals[f.k + "-c"]))); } })));
+      box.appendChild(chips);
+    }
+    if (f.pair) {
+      const a = h("input", { type: "text", id, maxlength: 200, placeholder: "If… (for example: I get stuck on a math problem)" }), b = h("input", { type: "text", id: id + "b", maxlength: 200, placeholder: "then I will… (for example: try one more way, then ask a friend)", "aria-label": "then I will" });
+      vals[f.k] = () => { const x = a.value.trim(), y = b.value.trim(); return x || y ? "If " + x.replace(/^if\s+/i, "") + ", then I will " + y.replace(/^then\s+(i\s+will\s+)?/i, "") : ""; };
+      box.append(a, b);
+    } else {
+      const t = f.input ? h("input", { type: "text", id, maxlength: 120, placeholder: f.hint }) : h("textarea", { id, rows: f.rows || 2, maxlength: 3000, placeholder: f.hint });
+      if (f.choice) t.setAttribute("aria-label", f.label + ": details");
+      vals[f.k] = () => t.value.trim();
+      box.appendChild(t);
+    }
+    el.appendChild(box);
+  });
+  const text = () => NOTE_FIELDS.map(f => {
+    const v = vals[f.k](), c = vals[f.k + "-c"] || "";
+    if (!v && !c) return "";
+    if (f.k === "other") return f.label + ":\n" + v;
+    return f.label + ": " + (c && v ? c + ". " + v.charAt(0).toUpperCase() + v.slice(1) : c || v);
+  }).filter(Boolean).join("\n");
+  return { el, text };
+}
 VIEWS.oneonone = async sec => {
   head(sec, "Weekly <span>1:1s</span>", "Every student gets a one-on-one coaching session with their guide every week. Here's how to make it count.");
   const tally = h("div");
@@ -266,8 +309,8 @@ VIEWS.oneonone = async sec => {
   ].map(([b, t]) => h("div", null, [h("b", { text: b }), t]))) ]));
   sec.appendChild(h("div", { class: "grid g2" }, [
     card("", [h("h3", { text: "Record, or take notes" }), h("p", { class: "dim", text: "Recording turns the conversation into text (audio is never saved). It's only allowed once a parent's written consent is marked on the student's page and the student says it's okay that day." }),
-      h("p", { class: "dim", text: "No consent, or you'd rather not? Choose “Take notes (no recording)” and type as you go, or speak a short recap on your own afterward. Notes start from this template:" }),
-      h("pre", { class: "small", style: "white-space:pre-wrap;margin:0", text: NOTES_TEMPLATE })]),
+      h("p", { class: "dim", text: "No consent, or you'd rather not? Choose “Take notes (no recording)” and fill in a short form as you go, or speak a short recap on your own afterward. Every field is optional:" }),
+      ul(NOTE_FIELDS.map(f => f.label))]),
     card("", [h("h3", { text: "Let the AI coach you" }), h("p", { class: "dim", text: "Any session, recorded or typed, can get feedback: a summary, what they committed to, how your coaching scored on standards, support and autonomy, and tips and one thing to try next time. Saved a session without it? Open it and choose “Get feedback and tips.”" }),
       h("p", { class: "dim", text: "You were in the room. Where the AI's read and yours disagree, trust yours. If anything suggests a child isn't safe, stop coaching and follow the Mental Health Crisis Policy." })])
   ]));
@@ -390,13 +433,13 @@ function sessLive(sec) {
   const nudges = D.NUDGES.map(n => [new RegExp(n[0], "i"), n[1], n[2]]);
   sec.appendChild(h("button", { class: "chip", text: "← Back to " + k.name, onclick: () => { if (recording) return; live.on = false; go("student"); } }));
   head(sec, "Session with " + esc(k.name));
-  const modeChips = h("div", { class: "chips" }), gateBox = h("div"), okBox = h("input", { type: "checkbox", id: "okb" }), btn = h("button", { class: "recbtn", text: "Record" }), time = h("div", { class: "clock", text: "00:00" }), liveBox = h("div", { class: "live", "aria-live": "off" }), notes = h("textarea", { id: "snotes", placeholder: "Anything you want to remember that the transcript won't catch." }), status = h("p", { class: "small" }), tipOut = h("div"), nudgeOut = h("div");
-  const drawMode = () => { modeChips.innerHTML = ""; [["talk", "Record the conversation"], ["recap", "Speak a recap afterward"], ["notes", "Take notes (no recording)"]].forEach(([m, t]) => modeChips.appendChild(h("button", { class: "chip", "aria-pressed": String(mode === m), text: t, onclick: () => { if (recording) return; mode = m; if (m === "notes" && !notes.value.trim()) notes.value = NOTES_TEMPLATE; drawMode(); } })));
+  const modeChips = h("div", { class: "chips" }), gateBox = h("div"), okBox = h("input", { type: "checkbox", id: "okb" }), btn = h("button", { class: "recbtn", text: "Record" }), time = h("div", { class: "clock", text: "00:00" }), liveBox = h("div", { class: "live", "aria-live": "off" }), notes = h("textarea", { id: "snotes", placeholder: "Anything you want to remember that the transcript won't catch." }), form = notesForm(), notesWrap = h("label", { for: "snotes" }, ["Your notes", notes]), status = h("p", { class: "small" }), tipOut = h("div"), nudgeOut = h("div");
+  const drawMode = () => { modeChips.innerHTML = ""; [["talk", "Record the conversation"], ["recap", "Speak a recap afterward"], ["notes", "Take notes (no recording)"]].forEach(([m, t]) => modeChips.appendChild(h("button", { class: "chip", "aria-pressed": String(mode === m), text: t, onclick: () => { if (recording) return; mode = m; drawMode(); } })));
     gateBox.innerHTML = ""; let can = true;
     if (mode === "talk") { if (!SR) { can = false; gateBox.appendChild(h("p", { class: "nope", text: "This browser can't transcribe speech. Open the site in Chrome, or use typed notes." })); } else if (!k.consent) { can = false; gateBox.appendChild(h("p", { class: "nope", text: "Recording is locked for " + k.name + " until parent consent is marked on their page. You can speak a recap afterward or type notes." })); } else { gateBox.append(h("div", { class: "say", text: "Say something like: “I'd like to record this as text so I can get better at coaching you. It's for me to learn from. It's fine to say no.”" }), h("label", { class: "check", for: "okb", style: "margin-top:10px" }, [okBox, h("span", { text: k.name + " knows I'm recording and said it's okay." })])); can = okBox.checked; } }
     if (mode === "recap") { if (!SR) { can = false; gateBox.appendChild(h("p", { class: "nope", text: "This browser can't transcribe speech. Open the site in Chrome, or type your recap below." })); } else gateBox.appendChild(h("p", { class: "dim", text: "After the session, on your own, talk through what happened for a minute or two: what you discussed, what they committed to, where you got stuck." })); }
     if (mode === "notes") { can = false; gateBox.appendChild(h("p", { class: "dim", text: "Nothing is recorded. Type as you go or right after, then finish. AI feedback works on notes too." })); }
-    btn.disabled = !can && !recording; btn.style.display = mode === "notes" ? "none" : ""; time.style.display = liveBox.style.display = mode === "notes" ? "none" : ""; };
+    btn.disabled = !can && !recording; btn.style.display = mode === "notes" ? "none" : ""; time.style.display = liveBox.style.display = mode === "notes" ? "none" : ""; notesWrap.style.display = mode === "notes" ? "none" : ""; form.el.style.display = mode === "notes" ? "" : "none"; };
   okBox.onchange = drawMode;
   const drawLive = interim => { liveBox.textContent = lines.slice(-8).map(l => l.x).join("\n"); if (interim) liveBox.appendChild(h("em", { text: (lines.length ? "\n" : "") + interim })); liveBox.scrollTop = liveBox.scrollHeight; };
   const addLine = x => { if (!x) return; lines.push({ t: secs, x }); if (mode === "talk") for (const n of nudges) if (n[0].test(x) && lastNudge !== n[1]) { lastNudge = n[1]; nudgeOut.innerHTML = ""; nudgeOut.appendChild(h("div", { class: "nudge" }, [h("b", { text: "Heard " + n[1] + ". " }), n[2]])); break; } };
@@ -408,25 +451,25 @@ function sessLive(sec) {
     recording = true; live.on = true; btn.classList.add("on"); btn.textContent = "Pause"; status.textContent = "Listening. Audio is turned into text by Chrome's speech service and is not saved."; timer = setInterval(() => { secs++; time.textContent = clock(secs); }, 1000); drawMode(); };
   const stop = () => { recording = false; clearInterval(timer); btn.classList.remove("on"); btn.textContent = lines.length ? "Resume" : "Record"; try { rec && rec.stop(); } catch (err) { } };
   btn.onclick = () => recording ? (stop(), status.textContent = "Paused.") : start();
-  sec.append(card("", [modeChips, gateBox, h("div", { class: "rec" }, [btn, time]), liveBox, status, h("label", { for: "snotes" }, ["Your notes", notes])]));
+  sec.append(card("", [modeChips, gateBox, h("div", { class: "rec" }, [btn, time]), liveBox, status, notesWrap, form.el]));
   // tip dock
   const stuck = h("div", { class: "chips" }), stuckOut = h("div");
   D.STUCK.forEach(s => stuck.appendChild(h("button", { class: "chip", text: s[0], onclick: () => { stuckOut.innerHTML = ""; stuckOut.appendChild(ul(s[1])); } })));
   const tipBtn = h("button", { class: "btn ghost", text: "Suggest my next line", onclick: async () => { const recent = lines.map(l => l.x).join("\n").slice(-1800); if (recent.length < 80) { tipOut.textContent = "Keep going a little longer first."; return; } tipBtn.disabled = true; tipOut.textContent = "Thinking…"; try { tipOut.textContent = ""; tipOut.appendChild(h("div", { class: "say", style: "white-space:pre-wrap", text: await ai([{ role: "user", content: "Student age band: " + (k.band || "") + "\n\nTranscript so far:\n" + recent }], { system: D.TIP_PROMPT, tier: "quick", max: 120 }) })); } catch (e) { tipOut.textContent = aiErr(e); } tipBtn.disabled = false; } });
   sec.appendChild(h("div", { class: "tipdock" }, [h("b", { text: "Stuck? Tap one." }), stuck, stuckOut, nudgeOut, h("div", { class: "row" }, [tipBtn]), tipOut]));
-  sec.appendChild(h("div", { class: "row" }, [h("button", { class: "btn", text: "Finish session", onclick: () => { if (recording) stop(); live.on = false; const text = lines.map(l => "[" + clock(l.t) + "] " + l.x).join("\n"); if (!text && (!notes.value.trim() || notes.value.trim() === NOTES_TEMPLATE.trim())) { status.textContent = "Nothing to save yet."; return; } go("review", { session: { studentId: k.id, studentName: k.name, at: Date.now(), mins: Math.max(1, Math.round(secs / 60)), mode, transcript: text, notes: notes.value.trim() } }); } }), h("button", { class: "btn ghost", text: "Discard", onclick: () => { if (recording) stop(); live.on = false; go("student"); } })]));
-  if (mode === "notes" && !notes.value.trim()) notes.value = NOTES_TEMPLATE;
+  sec.appendChild(h("div", { class: "row" }, [h("button", { class: "btn", text: "Finish session", onclick: () => { if (recording) stop(); live.on = false; const text = lines.map(l => "[" + clock(l.t) + "] " + l.x).join("\n"), nt = mode === "notes" ? form.text() : notes.value.trim(); if (!text && !nt) { status.textContent = "Nothing to save yet. Fill in any field, even just one."; return; } go("review", { session: { studentId: k.id, studentName: k.name, at: Date.now(), mins: Math.max(1, Math.round(secs / 60)), mode, transcript: text, notes: nt } }); } }), h("button", { class: "btn ghost", text: "Discard", onclick: () => { if (recording) stop(); live.on = false; go("student"); } })]));
   drawMode();
 }
 function sessReview(sec) {
   const s = sess.session, k = sess.student;
-  head(sec, "Wrap up with " + esc(k.name), "Fix anything the transcript got wrong, then save. Nothing has been stored yet.");
+  head(sec, "Wrap up with " + esc(k.name), (s.mode === "notes" && !s.transcript ? "Your notes, put together. Fix anything, then save." : "Fix anything the transcript got wrong, then save.") + " Nothing has been stored yet.");
   const tr = h("textarea", { id: "rtr", style: "min-height:220px" }), nt = h("textarea", { id: "rnt" }), status = h("p", { class: "small" }); tr.value = s.transcript; nt.value = s.notes;
   const save = async withAI => { s.transcript = tr.value.trim().slice(0, 60000); s.notes = nt.value.trim().slice(0, 8000); status.textContent = withAI ? "Reviewing the session…" : "Saving…"; btnA.disabled = btnB.disabled = true;
     if (withAI) { try { s.analysis = await analyze(s, k); } catch (e) { status.textContent = (e.message === "format" ? "The review came back unreadable." : aiErr(e)) + " You can save without it and review later."; btnA.disabled = btnB.disabled = false; return; } }
     try { const ref = await addDoc(sessCol(), s); sess.sessions.unshift({ id: ref.id, ...s }); go("view", { session: sess.sessions[0] }); } catch (e) { status.textContent = "Couldn't save. Check your connection and try again."; btnA.disabled = btnB.disabled = false; } };
   const btnA = h("button", { class: "btn", text: "Save and get feedback", onclick: () => save(true) }), btnB = h("button", { class: "btn ghost", text: "Save without AI", onclick: () => save(false) });
-  sec.append(card("", [h("label", { for: "rtr" }, ["Transcript (" + (s.mins || 0) + " min)", tr]), h("label", { for: "rnt" }, ["Your notes", nt]), h("p", { class: "small", text: "The transcript has no speaker labels and will contain mistakes. The feedback is only as good as this text." }), h("div", { class: "row" }, [btnA, btnB, h("button", { class: "btn ghost", text: "Discard", onclick: () => go("student") })]), status]));
+  const typed = s.mode === "notes" && !s.transcript; nt.style.minHeight = typed ? "260px" : "";
+  sec.append(card("", [typed ? "" : h("label", { for: "rtr" }, ["Transcript (" + (s.mins || 0) + " min)", tr]), h("label", { for: "rnt" }, ["Your notes", nt]), h("p", { class: "small", text: typed ? "Check your notes, then save. The feedback is only as good as what's written here." : "The transcript has no speaker labels and will contain mistakes. The feedback is only as good as this text." }), h("div", { class: "row" }, [btnA, btnB, h("button", { class: "btn ghost", text: "Discard", onclick: () => go("student") })]), status]));
 }
 // Takeaways for the student (and, if the guide leaves it on, their parents): what you talked about and what they said
 // they'd do, edited by the guide before it goes. Firestore coachShare/{session id} = { sid, name, band, family: [student
