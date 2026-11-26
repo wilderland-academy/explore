@@ -149,9 +149,18 @@
   var fmt = function (s) { var p = String(s).split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); };
   function weekStart() { var d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); }
 
+  // Whose list belongs on this page: a student's on the Students site (including a tester viewing as the test student),
+  // a guide's only on the Guides site. A guide looking at student or parent pages sees no to-dos there.
+  function site() { var b = document.querySelector(".wlbar[data-wlnav]"); return b ? b.getAttribute("data-wlnav") : ""; }
+  function fits() {
+    if (!role) return false;
+    if (role.role === "student") return site() !== "guides" && site() !== "parents";
+    if (role.role === "staff") return site() === "guides";
+    return false;
+  }
   // ---------- loading ----------
   async function load(force) {
-    if (!role || !user() || !(role.role === "student" || role.role === "staff") || busy) return;
+    if (!role || !user() || !fits() || busy) return;
     if (!force && tasks && Date.now() - last < 120000) return;
     busy = true; var my = ++seq;
     try {
@@ -177,7 +186,7 @@
   }
   function paint() {
     var s = document.querySelector(".wlbar-tasks");
-    var show = role && (role.role === "student" || role.role === "staff") && user();
+    var show = role && fits() && user();
     if (s) {
       if (!show) s.innerHTML = "";
       else {

@@ -23,6 +23,25 @@
   var FIELD_GUIDES = ["april@wilderland.academy", "scott@wilderland.academy", "chelse@wilderland.academy"];
   window.WLPeople = { TESTERS: TESTERS, STAFF_BANDS: STAFF_BANDS, TEST: TEST, FIELD_GUIDES: FIELD_GUIDES, BANDS: ["K–1", "2–4", "5–8"] };
   window.wlCoaches = function (email) { email = String(email || "").toLowerCase(); return FIELD_GUIDES.indexOf(email) >= 0 || TESTERS.indexOf(email) >= 0; };
+  // Phones: the bar's pop-up panels (notifications 🔔, to-dos ✓, the account menu) hang from buttons that aren't at the
+  // screen's right edge, so anchored to their button they ran off the left side. Under 640px they open across the
+  // screen just below the bar (--wlpop-top, kept in step with where the bar is) and scroll inside if they're long.
+  (function () {
+    var st = document.createElement("style");
+    st.textContent = "@media (max-width:640px){.wltk-menu,.wlbell-menu,.wla .menu{position:fixed!important;left:8px!important;right:8px!important;width:auto!important;min-width:0!important;max-width:none!important;top:var(--wlpop-top,72px)!important;max-height:calc(100vh - var(--wlpop-top,72px) - 16px)!important;max-height:calc(100dvh - var(--wlpop-top,72px) - 16px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;z-index:1000!important;box-sizing:border-box}}";
+    document.head.appendChild(st);
+    var queued = false;
+    var place = function () {
+      queued = false;
+      var b = document.querySelector(".wlbar"); if (!b) return;
+      var y = Math.max(0, b.getBoundingClientRect().bottom) + 8;
+      document.documentElement.style.setProperty("--wlpop-top", Math.round(y) + "px");
+    };
+    var soon = function () { if (!queued) { queued = true; requestAnimationFrame(place); } };
+    document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".wlbar")) place(); }, true);
+    addEventListener("scroll", soon, { passive: true }); addEventListener("resize", soon);
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", place); else place();
+  })();
   // Embedded: a page shown inside another one (?embed=1 in an iframe), like a student's Life Skills record and Coaching
   // notebook inside their page in Students. No top bar or page menus (html.wl-embed; each page hides its own), links to
   // other pages open in the whole window, and the page tells its host how tall it is so the frame fits it.
