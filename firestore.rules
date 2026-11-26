@@ -307,7 +307,7 @@ service cloud.firestore {
       allow read: if school() || tester();
       allow write: if staffSchool();
     }
-    // Loans: a student asks (requested / waiting / wish) and can cancel their own ask; guides hand out and check in.
+    // Loans: a student asks (requested / waiting / wish; kind 'new' with item 'new' is something not in the catalog) and can cancel their own ask; guides hand out and check in.
     // Testers: only test loans.
     match /toolLoans/{id} {
       allow read: if staffSchool() || (school() && resource.data.email == me()) || (tester() && resource.data.test == true);
@@ -315,7 +315,7 @@ service cloud.firestore {
         || (school() && request.resource.data.email == me() && !('test' in request.resource.data)
           && request.resource.data.keys().hasOnly(['item', 'n', 'kind', 'email', 'sid', 'name', 'band', 'status', 'at', 'when', 'amt', 'note'])
           && request.resource.data.status in ['requested', 'waiting', 'wish']
-          && request.resource.data.kind in ['borrow', 'book', 'material', 'badge', 'wish']
+          && request.resource.data.kind in ['borrow', 'book', 'material', 'badge', 'wish', 'new']
           && request.resource.data.item is string && request.resource.data.item.size() <= 40
           && request.resource.data.n is string && request.resource.data.n.size() <= 100
           && request.resource.data.name is string && request.resource.data.name.size() <= 60
