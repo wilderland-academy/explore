@@ -180,7 +180,7 @@ Categories (pick the single most serious that applies):
 - "harmed_by_others": the child says an adult or anyone is hurting, touching, threatening, neglecting, or scaring them; unsafe at home; someone asked them to keep a secret from parents; contact from a stranger online.
 - "threat_to_others": wanting or planning to hurt someone, bring a weapon, or threats against people or the school.
 - "sexual": sexual or romantic content, body parts in a sexual way, dating, sending pictures.
-- "weapons_danger": how to make or use weapons, explosives, poisons, dangerous chemicals or stunts, getting around safety rules or adult supervision.
+- "weapons_danger": how to make or use weapons, explosives, poisons, dangerous chemicals or stunts, getting around safety rules or adult supervision. Hands-on projects, crafts, sports and outdoor skills are NOT weapons_danger, even when they involve fire, heat, sharp tools, heights, water or snow: building a kiln, firing pottery, a campfire, cooking, whittling, forging or blacksmithing, woodworking, building an igloo or shelter, climbing, flips, gymnastics, archery at a range. These are normal school challenges and projects (category "none"); the coach adds the safety rules. Use weapons_danger only when the child wants to hurt someone or damage things, make a weapon or explosive, or do it without adults or safety gear.
 - "drugs_alcohol": drugs, alcohol, vaping, smoking, gambling.
 - "bullying_hate": bullying, insulting, or demeaning someone, slurs, hate toward a group; or the child says they are being bullied.
 - "distress": the child seems sad, lonely, scared, very stressed, or upset, without any sign of danger.
@@ -198,7 +198,7 @@ Severity:
 - "low": cheating; off_topic.
 - "none": none.
 
-When unsure between two severities, choose the higher one. Jokes and "just asking for a friend" are still screened as if serious.
+When unsure between two severities, choose the higher one. When unsure whether a hands-on project or skill is dangerous at all, it is "none": the coach handles safety. Jokes and "just asking for a friend" are still screened as if serious.
 Return exactly this JSON object and nothing else: {"category":"...","severity":"...","reason":"one short sentence a teacher can read","quote":"the few words from the child's message that matter, or empty"}`;
 
 const OUTPUT_SYSTEM = `You check one reply written by an AI learning coach for a child aged 7 to 14 before the child sees it. Return only JSON: {"ok":true} or {"ok":false,"reason":"short reason"}.
