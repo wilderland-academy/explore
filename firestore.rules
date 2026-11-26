@@ -154,9 +154,9 @@ service cloud.firestore {
     function lsParent(sid) { return verified() && me() in lsStudent(sid).parents; }
     function testStudent(sid) { return tester() && lsStudent(sid).test == true; }
     // Families' and guides' own saved choices (/auth.js ACCT): At Home, Our Approach and the Challenges plan on the
-    // Parents site; reps, if-then plan, self-check and streak in the Field Guide. Each person reads and writes only theirs.
+    // Parents site; reps, if-then plan, self-check and streak in the Field Guide; which staff alerts they've seen (/notify.js). Each person reads and writes only theirs.
     match /accounts/{uid}/sites/{site} {
-      allow read, write: if verified() && request.auth.uid == uid && site in ['parents', 'fieldguide'];
+      allow read, write: if verified() && request.auth.uid == uid && site in ['parents', 'fieldguide', 'alerts'];
     }
     // Camp Store rewards guides add (/store/). A reward is for named students (to: their school emails) or for everyone in
     // some grade bands (open: true). Students can read only open rewards and ones naming them; staff read and manage all.
