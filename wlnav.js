@@ -291,7 +291,8 @@
   window.wlK1Student = k1Student;
   function tabLink(t, cls) {
     if (tabHidden(t.id)) return "";
-    if (key === "students" && t.id === "store" && k1Student()) return "";
+    // The Tool Library is Upper Campus only (grades 2–8) too. Guides on both campuses still get it.
+    if (key === "students" && (t.id === "store" || t.id === "tools") && k1Student()) return "";
     return '<a href="' + t.href + '"' + (cls ? ' class="' + cls.trim() + '"' : "") + ' data-wl-tab="' + t.id + '"' + (t.id === cur ? ' aria-current="page"' : "") + (t.id === "roster" ? ' data-wl-alerts' : "") + ">" + esc(t.id === "children" ? kidsLabel() : t.label) + "</a>";
   }
   var tabsHtml = function () { return site.tabs.map(function (t) {

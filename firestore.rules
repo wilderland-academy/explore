@@ -310,12 +310,14 @@ service cloud.firestore {
     // Loans: a student asks (requested / waiting / wish; kind 'new' with item 'new' is something not in the catalog) or
     // reserves a future time (kind 'reserve', status 'reserved', start/end in ms, in 4-hour blocks, up to 90 days out)
     // and can cancel their own ask or reservation; guides hand out and check in.
-    // Testers: only test loans.
+    // Testers: only test loans. The library is Upper Campus only, so a loan or report marked K–1 is refused (the page
+    // hides the library from K–1 students; this is the backstop).
     match /toolLoans/{id} {
       allow read: if staffSchool() || (school() && resource.data.email == me()) || (tester() && resource.data.test == true);
       allow create: if staffSchool() || (tester() && request.resource.data.test == true)
         || (school() && request.resource.data.email == me() && !('test' in request.resource.data)
           && request.resource.data.keys().hasOnly(['item', 'n', 'kind', 'email', 'sid', 'name', 'band', 'status', 'at', 'when', 'amt', 'note', 'start', 'end', 'qty'])
+          && request.resource.data.band != 'K–1'
           && request.resource.data.status in ['requested', 'waiting', 'wish', 'reserved']
           && request.resource.data.kind in ['borrow', 'book', 'material', 'badge', 'wish', 'new', 'reserve']
           && ((request.resource.data.kind == 'reserve') == (request.resource.data.status == 'reserved'))
@@ -372,7 +374,7 @@ service cloud.firestore {
           && request.resource.data.item is string && request.resource.data.item.size() <= 40
           && request.resource.data.n is string && request.resource.data.n.size() <= 80
           && request.resource.data.name is string && request.resource.data.name.size() <= 60
-          && request.resource.data.band is string && request.resource.data.band.size() <= 10
+          && request.resource.data.band is string && request.resource.data.band.size() <= 10 && request.resource.data.band != 'K–1'
           && request.resource.data.level in ['low', 'out']
           && request.resource.data.note is string && request.resource.data.note.size() <= 200
           && request.resource.data.at is int);

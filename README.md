@@ -38,7 +38,7 @@ The old `/families/` addresses forward to `/parents/` (`families/*/index.html`),
 ## Pages added Nov 16, 2026
 - `/` landing page: image cards for Books, Challenges, Projects, Treebeard Library, Basecamp, Camp Store and the Suggestion Box (`img/`).
 - `/store/`: Camp Store, shown only after school sign-in. 176 products in `store/products.js`, grouped into 14 interest categories (price in dollars; blazes = price × 2), one photo each in `store/img/<id>.jpg` (480×480, white background). Wishlist and blaze count live in localStorage key `wl-store` and sync through `auth.js`. The sign-in gate hides the page; the product list itself is not secret.
-- `/tools/` (students) and `/guides/tools/` (guides): the Tool & Materials Library, both built from `_includes/tools.html`. The catalog is `tools/catalog.js` (244 tools, machines and materials in 18 categories, each with access level, starting grade and loan type; `have` is what we know we own, `want` what a project school our size should have). Logic in `tools/app.js`. Firestore: `toolInventory/{item}` (what guides counted; overrides the catalog's `have`), `toolLoans` (requests and checkouts, like a book library: a student asks, a guide hands it out and checks it back in), `toolBadges/{sid}` (tools a student was taught), `toolItems/{id}` (tools and materials guides added from the page; merged into the catalog). `toolHolds/{loan id}` (a reservation's place on the calendar, no names; see below). `toolReports/{id}` ("running low" reports on materials). Students can request anything, including things not in the catalog (`toolLoans` kind `new`); guides add those to the catalog and mark items stocked from each item's sheet, and the students who asked are told. Rules are in `firestore.rules`. The guides' Shopping list tab is everything below `want` after counting.
+- `/tools/` (students) and `/guides/tools/` (guides): the Tool & Materials Library, both built from `_includes/tools.html`. The catalog is `tools/catalog.js` (247 tools, machines and materials in 18 categories, each with access level, starting grade and loan type; `have` is what we know we own, `want` what a project school our size should have). Logic in `tools/app.js`. Firestore: `toolInventory/{item}` (what guides counted; overrides the catalog's `have`), `toolLoans` (requests and checkouts, like a book library: a student asks, a guide hands it out and checks it back in), `toolBadges/{sid}` (tools a student was taught), `toolItems/{id}` (tools and materials guides added from the page; merged into the catalog). `toolHolds/{loan id}` (a reservation's place on the calendar, no names; see below). `toolReports/{id}` ("running low" reports on materials). Students can request anything, including things not in the catalog (`toolLoans` kind `new`); guides add those to the catalog and mark items stocked from each item's sheet, and the students who asked are told. Rules are in `firestore.rules`. The guides' Shopping list tab is everything below `want` after counting.
 - `/suggest/`: Suggestion Box on Firestore collection `suggestions`, readable only by signed-in school accounts. Rules are in `firestore.rules` (paste into Firebase console → Firestore → Rules). Admin emails are listed in both `firestore.rules` and `suggest/index.html`.
 
 ## Sign-in gate
@@ -632,3 +632,16 @@ the `PAGES` list at the top of `/search.js`.
   closes them. The Shopping list counts reported items as Restock, sorts them up with student requests, and says who reported.
 - **Tested:** rules in the Firestore emulator (37 cases, 10 new for reports) and the page in jsdom (47 cases, 13 new).
 - **Publish `firestore.rules`** in the Firebase console, or reports fail with "Not allowed".
+
+## Tool Library: Upper Campus only; iPhone, DSLR and speaker (Nov 26, 2026)
+- **Upper Campus students (grades 2–8) only.** Guides on both campuses still see and run it.
+  - No catalog item is K–1 any more (the 89 that were became 2–4), and the guide's item editor offers "All of Upper Campus (2–8)"
+    or "5th grade and up". A guide-added item saved as K–1 earlier reads as 2–4.
+  - K–1 students get no Tools tab (`wlK1Student()` in `/wlnav.js`, same as the Store) and no Tool Library card on the
+    Students home (`data-not-k1`). If one opens `/tools/` anyway, they see "The Tool Library opens in 2nd grade" and nothing loads.
+  - The Desk's "Check out to a student" list and the Badges list leave out K–1 students.
+  - `firestore.rules` refuses a student loan, reservation or running-low report marked K–1 (backstop; guides aren't limited).
+- **New media items:** School iPhone (badge, 2nd grade and up), DSLR camera (badge, 5th grade and up) and Bluetooth speaker
+  (anyone, 2nd grade and up). "Projector and speaker" is now just Projector, and its note points to the speaker.
+- **Tested:** rules in the Firestore emulator (42 cases, 5 new) and the page in jsdom (51 cases, 5 new).
+- **Publish `firestore.rules`** in the Firebase console to turn on the K–1 backstop. The page changes work without it.
