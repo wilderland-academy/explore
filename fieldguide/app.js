@@ -82,7 +82,8 @@ function pager(sec, list, id) {
 }
 
 addEventListener("hashchange", route);
-const head = (sec, title, lede) => { sec.appendChild(h("h1", { html: title })); if (lede) sec.appendChild(h("p", { class: "lede", text: lede })); };
+// Framed inside Students (?embed=1), the host page owns the title, so headings here step down a level.
+const head = (sec, title, lede) => { sec.appendChild(h(window.wlEmbed ? "h2" : "h1", { html: title })); if (lede) sec.appendChild(h("p", { class: "lede", text: lede })); };
 const card = (cls, kids) => h("div", { class: "card " + (cls || "") }, kids);
 
 /* ---------------- map ---------------- */
@@ -331,7 +332,7 @@ async function analyze(s, k) {
 }
 
 VIEWS.sessions = async sec => {
-  if (sess.students === null) { head(sec, "The <span>session</span> room"); const p = h("p", { class: "dim", text: "Opening your notebook…" }); sec.appendChild(p); try { await loadSess(); } catch (e) { p.textContent = "Your session notebook isn't available yet. The database rules need updating first (see Admin)."; return; } sec.innerHTML = ""; }
+  if (sess.students === null) { if (!EMBED_SID) head(sec, "The <span>session</span> room"); const p = h("p", { class: "dim", text: "Opening your notebook…" }); sec.appendChild(p); try { await loadSess(); } catch (e) { p.textContent = "Your session notebook isn't available yet. The database rules need updating first (see Admin)."; return; } sec.innerHTML = ""; }
   // Inside a student's Coaching tab: always that student (the list of everyone isn't shown there).
   if (EMBED_SID && !EMBED_ALL && sess.screen === "list") {
     const k = sess.students.find(x => x.sid === EMBED_SID);
@@ -341,7 +342,8 @@ VIEWS.sessions = async sec => {
   ({ list: sessList, student: sessStudent, live: sessLive, review: sessReview, view: sessView })[sess.screen](sec);
 };
 function sessList(sec) {
-  head(sec, "The <span>session</span> room", "Your weekly one-on-ones: record or take notes, get feedback, and walk into the next one knowing where you left off.");
+  // In Students' Coaching tab, the tab's own intro says what this is.
+  if (!EMBED_SID) head(sec, "The <span>session</span> room", "Your weekly one-on-ones: record or take notes, get feedback, and walk into the next one knowing where you left off.");
   const b = sess.band || myBandKey(), kids = shownKids(), due = kids.filter(k => !doneThisWeek(k.id));
   sec.appendChild(card("M-edge", [h("p", { text: kids.length ? `This week: ${kids.length - due.length} of ${kids.length} done.` + (due.length ? ` Due: ${due.map(k => k.name.split(" ")[0]).slice(0, 12).join(", ")}${due.length > 12 ? "…" : ""}.` : " Everyone's had their 1:1.") : "No students here yet." }),
     h("p", { class: "small", text: "Every student, every week. " }, [h("a", EMBED_SID ? { href: "/fieldguide/#oneonone", target: "_top", text: "How to run a great 1:1" } : { href: "#oneonone", text: "How to run a great 1:1" })])]));
@@ -357,7 +359,7 @@ function sessList(sec) {
 function sessStudent(sec) {
   const k = sess.student, mine = sess.sessions.filter(s => s.studentId === k.id);
   if (!EMBED_SID || EMBED_ALL) { sec.appendChild(h("button", { class: "chip", text: "← All students", onclick: () => go("list") })); head(sec, esc(k.name), k.band); }
-  else head(sec, "Coaching <span>sessions</span>", "Your private 1:1 notebook for " + k.name.split(" ")[0] + ". Only you can see it.");
+  else sec.appendChild(h("p", { class: "lede", text: "Your private 1:1 notebook for " + k.name.split(" ")[0] + ". Only you can see it." }));
   const last = mine[0];
   sec.appendChild(h("div", { class: "row" }, [h("button", { class: "btn", text: doneThisWeek(k.id) ? "Start another session" : "Start this week's session", onclick: () => go("live") }), h("span", { class: "small", text: doneThisWeek(k.id) ? "This week's 1:1 is done." : last ? "Last 1:1 was " + Math.round((Date.now() - last.at) / 864e5) + " days ago." : "No 1:1s yet." })]));
   if (last) {
