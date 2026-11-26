@@ -275,6 +275,20 @@ service cloud.firestore {
         && request.resource.data.at is int;
       allow delete: if staffSchool() || (tester() && resource.data.test == true);
     }
+    // ---- 1:1 takeaways a Field Guide shares (/fieldguide/ session view) ----
+    // family: the student's and (if the guide chose) their parents' emails. Only they and staff read it. The session
+    // notebook itself stays private to the guide (mentor/{uid}).
+    match /coachShare/{id} {
+      allow read: if staffSchool() || (verified() && me() in resource.data.family) || (tester() && resource.data.test == true);
+      allow create, update: if (staffSchool() || (tester() && request.resource.data.test == true))
+        && request.resource.data.keys().hasOnly(['sid', 'name', 'band', 'family', 'talked', 'actions', 'by', 'byName', 'at', 'sessionAt', 'test'])
+        && request.resource.data.sid is string
+        && request.resource.data.family is list && request.resource.data.family.size() <= 8
+        && request.resource.data.talked is list && request.resource.data.talked.size() <= 12
+        && request.resource.data.actions is list && request.resource.data.actions.size() <= 12
+        && request.resource.data.at is int;
+      allow delete: if staffSchool();
+    }
     // ---- Behavior incidents (/guides/roster/: each student's page and Coaching tab) ----
     // Staff only: facts, tier and whether the restore is signed off. Never readable by students or parents.
     match /behaviorLog/{id} {

@@ -302,7 +302,8 @@
       (tester && !hasPill() ? '<div class="wlbar-test"><button type="button" class="wlbar-testbtn' + (view ? " on" : "") + '" aria-haspopup="true" aria-expanded="false" title="See the site as a test guide, student or parent"><span aria-hidden="true">🧪</span><span class="wlbar-test-t">' + (view ? "Test " + view.as : "Test view") + "</span></button>" + '<div class="wlbar-menu wlbar-testmenu" hidden>' + testMenu() + "</div></div>" : "") +
       // Notifications (🔔, /notify.js) for signed-in students and guides.
       // To-dos (✓, /tasks.js): things to do, beside the notifications, which are things to look at.
-      (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-tasks"></span><span class="wlbar-bell"></span>') +
+      // Parents' pages have no account chip here, but parents get the 🔔 for their children's progress.
+      (bar.getAttribute("data-auth") === "off" ? (key === "parents" ? '<span class="wlbar-bell"></span>' : "") : '<span class="wlbar-tasks"></span><span class="wlbar-bell"></span>') +
       (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-auth" data-wl-auth></span>') +
       // Phones: the site's sections are in this menu instead of a row that scrolls sideways.
       (tabs ? '<button type="button" class="wlbar-burger" aria-haspopup="true" aria-expanded="false" aria-controls="wlbar-drawer" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>' : "") +

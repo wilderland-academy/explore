@@ -516,7 +516,7 @@ async function saveGoal(f) {
     const id = newId(), data = { sid: p.sid, email: key(p.school || ""), goal: JSON.stringify(g), by: S.me, byName: myName(), at: Date.now(), ...(S.test ? { test: true } : {}) };
     await commit([{ set: "guideGoals/" + id, data, create: true }]);
     S.guideGoals.push({ id, ...data });
-    if (p.school && window.wlNotify) window.wlNotify([p.school], { kind: "goal", text: `${myName()} set a goal with you: ${g.label}`, link: "/goals/" });
+    if (window.wlNotifyFamily) window.wlNotifyFamily({ student: p.school || "", sid: p.sid, kind: "goal", text: p.school ? `${myName()} set a goal with you: ${g.label}` : "", link: "/goals/", parentText: `{name} set a goal with ${myName()}: ${g.label}` });
     S.flash = "Goal added. It shows on their My goals page."; route();
   } catch (x) { btn.disabled = false; alert(x.status === 403 ? "Couldn't save: the database rules for goals aren't published yet. Tell Alex." : x.message); }
 }
@@ -582,7 +582,8 @@ async function decideIdea(id, ok, t) {
     ws.push({ set: "incentives/" + id, data: dec, merge: true });
     await commit(ws);
     Object.assign(x, dec);
-    if (window.wlNotify) window.wlNotify([x.email], { kind: ok ? "reward" : "reply", text: ok ? `${myName()} approved your reward idea: ${x.n} (${b} blazes). It's in your Camp Store.` : `${myName()} answered your reward idea: ${x.n}${note ? ". " + note : ""}`, link: "/store/#idea" });
+    if (window.wlNotifyFamily) window.wlNotifyFamily({ student: x.email, sid: x.sid, kind: ok ? "reward" : "reply", text: ok ? `${myName()} approved your reward idea: ${x.n} (${b} blazes). It's in your Camp Store.` : `${myName()} answered your reward idea: ${x.n}${note ? ". " + note : ""}`, link: "/store/#idea",
+      parentText: ok ? `{name}'s reward idea was approved: ${x.n} (${b} blazes). To earn it: ${x.earn}` : "" });
     S.flash = ok ? "Approved. It's in their Camp Store now." : "Declined."; route();
     if (window.wlTasks) window.wlTasks.refresh();
   } catch (e) { t.disabled = false; alert(e.status === 403 ? "Couldn't save: only the Field Guide for this band can decide, and the database rules must be published." : e.message); }

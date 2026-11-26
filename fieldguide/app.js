@@ -428,6 +428,44 @@ function sessReview(sec) {
   const btnA = h("button", { class: "btn", text: "Save and get feedback", onclick: () => save(true) }), btnB = h("button", { class: "btn ghost", text: "Save without AI", onclick: () => save(false) });
   sec.append(card("", [h("label", { for: "rtr" }, ["Transcript (" + (s.mins || 0) + " min)", tr]), h("label", { for: "rnt" }, ["Your notes", nt]), h("p", { class: "small", text: "The transcript has no speaker labels and will contain mistakes. The feedback is only as good as this text." }), h("div", { class: "row" }, [btnA, btnB, h("button", { class: "btn ghost", text: "Discard", onclick: () => go("student") })]), status]));
 }
+// Takeaways for the student (and, if the guide leaves it on, their parents): what you talked about and what they said
+// they'd do, edited by the guide before it goes. Firestore coachShare/{session id} = { sid, name, band, family: [student
+// and parent emails who may read it], talked: [], actions: [], by, byName, at, sessionAt, test? }. The student sees it on
+// My goals (/goals/#oneonone), parents on their child's profile; both get a notification. The notebook stays private.
+function shareCard(s, k, a) {
+  const first = String(k.name || "the student").split(" ")[0];
+  const talked = h("textarea", { rows: 4 }), acts = h("textarea", { rows: 4 }), fam = h("input", { type: "checkbox" });
+  talked.value = (s.shareTalked || a.discussed || []).map(String).join("\n");
+  acts.value = (s.shareActions || a.commitments || []).map(String).join("\n");
+  fam.checked = s.shareParents !== false;
+  const st = h("p", { class: "small" }), btn = h("button", { class: "btn", text: s.shared ? "Send the changes to " + first : "Send to " + first });
+  const lines = t => t.value.split("\n").map(x => x.replace(/^[-•*\s]+/, "").trim()).filter(Boolean).slice(0, 12).map(x => x.slice(0, 300));
+  btn.onclick = async () => {
+    btn.disabled = true; st.textContent = "Sending…";
+    try {
+      const rec = await getDoc(doc(db, "lsStudents", k.sid)), r = rec.exists() ? rec.data() : {};
+      const email = String(r.email || "").toLowerCase(), parents = (r.parents || []).map(e => String(e).toLowerCase());
+      const family = [email].concat(fam.checked ? parents : []).filter(Boolean).slice(0, 8);
+      if (!family.length) { st.textContent = first + " doesn't sign in and has no parents linked yet, so there's no one to send this to."; btn.disabled = false; return; }
+      const byName = testView() ? "Test Guide" : String(user.displayName || user.email.split("@")[0]).split(" ")[0];
+      const T = lines(talked), A = lines(acts);
+      await setDoc(doc(db, "coachShare", s.id), { sid: k.sid, name: String(r.name || k.name || "").slice(0, 60), band: r.band || "", family, talked: T, actions: A, by: String(user.email || "").toLowerCase(), byName, at: Date.now(), sessionAt: s.at || Date.now(), ...(testView() ? { test: true } : {}) });
+      const again = !!s.shared;
+      Object.assign(s, { shared: Date.now(), shareTalked: T, shareActions: A, shareParents: fam.checked });
+      await updateDoc(doc(sessCol(), s.id), { shared: s.shared, shareTalked: T, shareActions: A, shareParents: fam.checked });
+      if (!again && window.wlNotify) {
+        if (email) window.wlNotify([email], { kind: "coach", text: `Your takeaways from your 1:1 with ${byName} are ready`, link: "/goals/#oneonone" });
+        if (fam.checked && parents.length) window.wlNotify(parents, { kind: "coach", text: `${first}'s takeaways from their 1:1 with ${byName} are ready`, link: "/parents/lifeskills/#c=" + k.sid });
+      }
+      st.textContent = again ? "Updated." : "Sent. " + first + (fam.checked && parents.length ? " and their parents" : "") + " will see it.";
+      btn.textContent = "Send the changes to " + first; btn.disabled = false;
+    } catch (e) { st.textContent = e && /permission/i.test(e.message || e.code || "") ? "Couldn't send: the database rules need publishing first. Tell Alex." : "Couldn't send. Try again."; btn.disabled = false; }
+  };
+  return card("P-edge", [h("h2", { text: "Share takeaways with " + first }),
+    h("p", { class: "small", text: s.shared ? "Sent " + fmtDate(s.shared) + ". Change anything and send again to update it." : "Edit these in " + first + "'s words before you send. Leave out anything they told you in confidence. Your notes, transcript and coaching feedback are never shared." }),
+    h("label", null, ["What you talked about (one per line)", talked]), h("label", null, ["What " + first + " said they'd do (one per line)", acts]),
+    h("label", { class: "chk" }, [fam, " Their parents see it too"]), h("div", { class: "row" }, [btn]), st]);
+}
 function sessView(sec) {
   const s = sess.session, k = sess.students.find(x => x.id === s.studentId) || sess.student, a = s.analysis;
   sec.appendChild(h("button", { class: "chip", text: "← Back to " + (k ? k.name : "students"), onclick: () => k ? go("student", { student: k }) : go("list") }));
@@ -436,6 +474,7 @@ function sessView(sec) {
     if (a.safety) sec.appendChild(card("E-edge", [h("h3", { text: "Please read first" }), h("p", { text: String(a.safety) })]));
     sec.appendChild(card("", [h("h2", { text: "What happened" }), h("p", { text: String(a.summary || "") }), a.discussed && a.discussed.length ? h("div", null, [h("h3", { text: "Discussed" }), ul(a.discussed.map(String))]) : null, a.commitments && a.commitments.length ? h("div", null, [h("h3", { text: s.studentName + " said they would" }), ul(a.commitments.map(String))]) : null]));
     sec.appendChild(card("M-edge", [h("h2", { text: "For next time" }), ul((a.nextTime || []).map(String))]));
+    if (k && k.sid) sec.appendChild(shareCard(s, k, a));
     const sc = [clamp4(a.standards), clamp4(a.support), clamp4(a.autonomy)];
     const fb2 = card("", [h("h2", { text: "Your coaching" }), meter("Standards", sc[0]), meter("Support", sc[1]), meter("Autonomy", sc[2])]);
     if (typeof a.talk === "number") fb2.appendChild(h("p", { class: "small", text: "Rough guess at your share of the talking: " + Math.round(a.talk) + "%." }));

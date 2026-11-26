@@ -576,7 +576,8 @@ function record(sid, opts = {}) {
           h("p", { class: "muted" }, [h("b", { style: { color: "var(--ink)" }, text: `${done} of 8 skills met. ` }), missingSkills.length === 8 ? "No passes yet this year." : missingSkills.length ? "Not started yet: " + missingSkills.join(", ") + "." : "Every life skill has a pass this year."]), skillsList]),
         h("div", { class: "panel" }, [h("h2", { class: "h", text: s.band === "K–1" ? "This year" : sum.rank ? "Rank: " + sum.rank : "On the trail" }), rankLine, s.band === "K–1" ? h("p", { class: "big", text: String(sum.year) }) : trackBar(sid)])
       ]),
-      goalsPanel(sid, opts)
+      goalsPanel(sid, opts),
+      opts.parent ? oneOnOnePanel(sid) : null
     ])),
     h("section", { class: "band tint" }, h("div", { class: "wrap stack" }, [
       h("h2", { class: "h", text: "Working on" }), workingList(sid, opts.self),
@@ -594,6 +595,26 @@ function record(sid, opts = {}) {
   ]);
 }
 
+// Takeaways their Field Guide shared with the family after a 1:1 (coachShare, written from /fieldguide/): what they
+// talked about and what the child said they'd do. Parents read only the ones shared with them (firestore.rules).
+function oneOnOnePanel(sid) {
+  const s = S.students[sid], name = firstName(s.name), box = h("div", { class: "panel" }, [h("h2", { class: "h", text: "From 1:1s with their Field Guide" }), h("p", { class: "muted", text: "Loading…" })]);
+  (async () => {
+    try {
+      const snap = await getDocs(query(collection(db, "coachShare"), where("family", "array-contains", S.email), ...(S.test ? [where("test", "==", true)] : [])));
+      const xs = []; snap.forEach(d => { const x = d.data(); if (x.sid === sid && !!x.test === !!S.test) xs.push(x); });
+      xs.sort((a, b) => (b.sessionAt || b.at || 0) - (a.sessionAt || a.at || 0));
+      const day = ms => new Date(ms).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      box.replaceChildren(h("h2", { class: "h", text: "From 1:1s with their Field Guide" }));
+      if (!xs.length) { box.appendChild(h("p", { class: "muted", text: `Nothing shared yet. After ${name}'s weekly 1:1, their Field Guide can share what they talked about and what ${name} said they'd do.` })); return; }
+      xs.slice(0, 3).forEach((x, i) => box.append(...[
+        h("p", { class: "small muted", style: i ? { marginTop: "12px" } : {}, text: `With ${x.byName || "their guide"}, ${day(x.sessionAt || x.at)}` }),
+        (x.actions || []).length ? h("div", {}, [h("b", { text: `What ${name} said they'd do` }), h("ul", {}, x.actions.map(t => h("li", { text: t })))]) : null,
+        (x.talked || []).length ? h("div", {}, [h("b", { text: "What they talked about" }), h("ul", {}, x.talked.map(t => h("li", { text: t })))]) : null].filter(Boolean)));
+    } catch (e) { box.replaceChildren(h("h2", { class: "h", text: "From 1:1s with their Field Guide" }), h("p", { class: "muted", text: "Couldn't load these right now." })); }
+  })();
+  return box;
+}
 // The goals a student set on /goals/ (S.goals[sid]): current ones by week, month and school year, with progress, and
 // the last few finished or past. Shown to guides, parents and the student on the student's record.
 const GSPAN = { week: "This week", month: "This month", year: "This school year" };
@@ -632,9 +653,13 @@ function goalsPanel(sid, opts) {
 
 // A notification for the student (/notify.js) when a guide records a pass or a not yet.
 function tellPass(sid, cid, result, o) {
-  const s = S.students[sid]; if (!s || !s.email || !window.wlNotify) return;
-  const t = result === "pass" ? `You passed “${chTitle(cid)}”. Nice work!` : `Not yet on “${chTitle(cid)}”.` + (o.missing ? ` Missing: ${o.missing.trim().slice(0, 80)}.` : "") + (o.practice ? ` Practice: ${o.practice.trim().slice(0, 80)}.` : "");
-  window.wlNotify([s.email], { kind: result === "pass" ? "pass" : "notyet", text: t, link: "/challenges/#progress" });
+  const s = S.students[sid]; if (!s || !window.wlNotify) return;
+  const more = (o.missing ? ` Missing: ${o.missing.trim().slice(0, 80)}.` : "") + (o.practice ? ` Practice: ${o.practice.trim().slice(0, 80)}.` : "");
+  const t = result === "pass" ? `You passed “${chTitle(cid)}”. Nice work!` : `Not yet on “${chTitle(cid)}”.` + more;
+  // The student (if they sign in) and their linked parents.
+  const p = result === "pass" ? `${firstName(s.name)} passed “${chTitle(cid)}”.` : `${firstName(s.name)} got a not yet on “${chTitle(cid)}”, so there's more to practice.` + (o.practice ? ` Practice: ${o.practice.trim().slice(0, 80)}.` : "");
+  if (window.wlNotifyFamily) window.wlNotifyFamily({ student: s.email || "", sid, kind: result === "pass" ? "pass" : "notyet", text: s.email ? t : "", link: "/challenges/#progress", parentText: p });
+  else if (s.email) window.wlNotify([s.email], { kind: result === "pass" ? "pass" : "notyet", text: t, link: "/challenges/#progress" });
 }
 // Families: how to support it at home. The child's next Labs (with the guides' notes for home) and challenges they can
 // pass off at home: what they're working on first, then the life skills furthest from what's expected this year.

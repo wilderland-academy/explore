@@ -224,6 +224,7 @@ async function setWorking(cid, on) {
       const n = r.test ? "Test S." : String((u && (u.displayName || u.email.split("@")[0])) || "A student").trim().split(/\s+/)[0];
       const c = ((window.WL || {}).ch || []).find(x => x.id === cid);
       window.wlNotifyGuides({ kind: "working", text: `${n} started working on “${c ? c.t : cid}”`, link: "/guides/lifeskills/#s=" + C.sid });
+      if (window.wlNotifyParents) window.wlNotifyParents({ kind: "working", text: `${n} started working on “${c ? c.t : cid}”` });
     }
   }
   catch (e) { console.warn("Progress:", e); C.board.working = was; drawProgress(); drawCrew(); setStatus(); alertLine("That didn't save. Try again in a moment."); }

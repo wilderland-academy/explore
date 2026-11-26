@@ -578,7 +578,10 @@ function thCard(x, redraw) {
   const tell = f => { if (!x.email || !window.wlNotify) return; const nm = myName(), it = "“" + x.text.slice(0, 100) + "”";
     const t = f.status === "agenda" ? `${nm} put your Town Hall item on the agenda${f.meeting ? " for " + f.meeting : ""}: ${it}` : f.status === "declined" ? `${nm} answered your Town Hall item: ${it}`
       : f.status === "discussed" ? `Town Hall decided on your item: ${it}` : f.note ? `${nm} replied to your Town Hall item: ${it}` : "";
-    if (t) window.wlNotify([x.email], { kind: f.status === "agenda" ? "accepted" : "townhall", text: t, link: "/suggest/" }); };
+    if (!t) return;
+    // Put on an agenda: the family hears too (the item's words stay out of it; Town Hall items can be about other students).
+    if (f.status === "agenda" && window.wlNotifyFamily) window.wlNotifyFamily({ student: x.email, kind: "accepted", text: t, link: "/suggest/", parentText: `{name}'s Town Hall item is on the agenda${f.meeting ? " for " + f.meeting : ""}.` });
+    else window.wlNotify([x.email], { kind: f.status === "agenda" ? "accepted" : "townhall", text: t, link: "/suggest/" }); };
   const upd = async (fields, agendaFields) => { try { await updateDoc(doc(db, "townhall", x.id), Object.assign({ reviewedBy: me(), reviewedName: myName(), reviewedAt: Date.now() }, fields)); tell(fields); if (agendaFields && x.agendaId) await updateDoc(doc(db, "townhallAgenda", x.agendaId), agendaFields); Object.assign(x, fields); toast("Saved."); redraw(); } catch (e) { toast("Couldn't save. The database rules may not be published yet."); } };
   if (x.status === "new" || x.status === "declined") acts.appendChild(h("button", { class: "btn", text: "Put on an agenda", onclick: () => {
     form.innerHTML = ""; const date = h("input", { type: "date" }), title = h("input", { type: "text", maxlength: 160, value: x.kind === "people" ? "" : x.text.slice(0, 160) });

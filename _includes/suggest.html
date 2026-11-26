@@ -267,7 +267,7 @@ document.addEventListener("click",async e=>{
     if(d.flag){const on=(s.flags||[]).includes(user.uid);if(!on&&!confirm("Flag this idea as inappropriate? A guide will look at it."))return;await updateDoc(ref,{flags:on?arrayRemove(user.uid):arrayUnion(user.uid)});toast(on?"Flag removed.":"Flagged. Thanks for looking out.");await load();return}
     if(d.del){if(!confirm("Delete this idea for good?"))return;await deleteDoc(ref);await load();return}
     if(d.acc){const nm=guideName();await updateDoc(ref,{status:"accepted",acceptedBy:(user.email||"").toLowerCase(),acceptedName:nm,acceptedAt:Date.now()});
-      if(s.email&&window.wlNotify)window.wlNotify([s.email],{kind:"accepted",text:`${nm} accepted your idea: “${s.text.slice(0,140)}”`,link:"/suggest/"});await load();return}
+      if(s.email&&window.wlNotifyFamily)window.wlNotifyFamily({student:s.email,kind:"accepted",text:`${nm} accepted your idea: “${s.text.slice(0,140)}”`,link:"/suggest/",parentText:`{name}'s idea on the Suggestion Wall was accepted by ${nm}: “${s.text.slice(0,120)}”`});else if(s.email&&window.wlNotify)window.wlNotify([s.email],{kind:"accepted",text:`${nm} accepted your idea: “${s.text.slice(0,140)}”`,link:"/suggest/"});await load();return}
     if(d.arch){await updateDoc(ref,{status:"archived"});await load();return}
     if(d.open){await updateDoc(ref,{status:"open"});await load();return}
     if(d.clear){await updateDoc(ref,{flags:[]});await load();return}

@@ -9,6 +9,10 @@
 //   window.wlNotify(["kid@wilderland.academy"], { kind: "pass", text: "You passed …", link: "/challenges/#c=EN-03.2" })
 //   window.wlNotifyGuides({ kind: "save", text: "Ava saved a challenge: …", link: "/guides/lifeskills/#s=<sid>" })
 //       (a student's own guides: the ones named on their tracker record, otherwise their band's guides)
+//   window.wlNotifyParents({ kind: "goal", text: "Ava set a goal: …" })   (from a student's page: their linked parents)
+//   window.wlNotifyFamily({ student: "ava@…", sid, kind: "pass", text: "You passed …", link, parentText: "Ava passed …" })
+//       (from a guide's page: the student, and every parent linked to them on the Student Roster)
+// Parents get the bell too (Parents site), for their children's progress. Parents never send.
 (function () {
   if (window.wlNotify) return;
   var FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
@@ -58,6 +62,43 @@
     return (guidesCache = out);
   };
   window.wlNotifyGuides = async function (n) { window.wlNotify(await window.wlMyGuides(), n); };
+  // A student's own linked parents (their tracker record, which they can read), for their progress.
+  var parentsCache = null;
+  async function myParents() {
+    var r = role || {};
+    if (r.role !== "student") return [];
+    if (isTest()) return [(window.WLPeople || {}).TEST && window.WLPeople.TEST.parent].filter(Boolean);
+    if (parentsCache) return parentsCache;
+    try {
+      if (r.sid) {
+        var d = await fetch(FS + "/lsStudents/" + r.sid, { headers: { Authorization: "Bearer " + await token() } });
+        if (d.ok) return (parentsCache = (val(((await d.json()).fields || {}).parents) || []).map(function (e) { return String(e).toLowerCase(); }));
+      }
+    } catch (e) { }
+    return [];
+  }
+  var parentLink = function (sid) { return "/parents/lifeskills/" + (sid ? "#c=" + sid : ""); };
+  window.wlNotifyParents = async function (n) {
+    var ps = await myParents(); if (!ps.length) return;
+    window.wlNotify(ps, { kind: n.kind, text: n.text, link: n.link || parentLink((role || {}).sid), fromName: n.fromName });
+  };
+  // From a guide's page: the student and their linked parents. parentText says it to a parent ("Ava passed …").
+  window.wlNotifyFamily = async function (n) {
+    try {
+      var em = String(n.student || "").toLowerCase(), sid = n.sid || "", parents = [], name = "";
+      if (em || sid) {
+        var H = { Authorization: "Bearer " + await token(), "Content-Type": "application/json" }, rec = null;
+        if (sid) { var d = await fetch(FS + "/lsStudents/" + sid, { headers: H }); if (d.ok) rec = await d.json(); }
+        else {
+          var q = await fetch(FS + ":runQuery", { method: "POST", headers: H, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "lsStudents" }], where: { fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: str(em) } }, limit: 1 } }) });
+          if (q.ok) { var x = (await q.json()).filter(function (y) { return y.document; })[0]; if (x) { rec = x.document; sid = rec.name.split("/").pop(); } }
+        }
+        if (rec) { var f = rec.fields || {}; parents = (val(f.parents) || []).map(function (e) { return String(e).toLowerCase(); }); name = String(val(f.name) || "").split(/\s+/)[0]; if (!em) em = String(val(f.email) || "").toLowerCase(); }
+      }
+      if (em && n.text) window.wlNotify([em], { kind: n.kind, text: n.text, link: n.link });
+      if (parents.length && n.parentText) window.wlNotify(parents, { kind: n.kind, text: n.parentText.replace(/\{name\}/g, name || "Your child"), link: n.parentLink || parentLink(sid) });
+    } catch (e) { console.warn("Notify family:", e); }
+  };
 
   // ---------- the bell ----------
   var bell = null;
@@ -66,10 +107,10 @@
     var m = Math.round((Date.now() - ms) / 60000);
     return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : m < 2880 ? "yesterday" : new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
-  var ICON = { pass: "✅", notyet: "🔁", reward: "🎁", accepted: "🌟", reply: "💬", townhall: "🏛️", vote: "👍", save: "🔖", goal: "🎯", book: "📚", project: "💡", store: "🛒", idea: "🗳️", working: "🧭", note: "🔔" };
+  var ICON = { coach: "📝", pass: "✅", notyet: "🔁", reward: "🎁", accepted: "🌟", reply: "💬", townhall: "🏛️", vote: "👍", save: "🔖", goal: "🎯", book: "📚", project: "💡", store: "🛒", idea: "🗳️", working: "🧭", note: "🔔" };
   function draw() {
     var s = slot(); if (!s) return;
-    var show = role && (role.role === "student" || role.role === "staff") && user();
+    var show = role && (role.role === "student" || role.role === "staff" || role.role === "parent") && user();
     if (!show) { s.innerHTML = ""; return; }
     var unread = notes.filter(function (n) { return !n.read; }).length;
     s.innerHTML = '<button type="button" class="wlbell" aria-haspopup="true" aria-expanded="' + open + '" aria-label="Notifications' + (unread ? ", " + unread + " new" : "") + '" title="Notifications">' +
@@ -79,10 +120,12 @@
         (notes.length ? "<ul>" + notes.slice(0, 40).map(function (n) {
           return '<li class="' + (n.read ? "" : "new") + '"><a href="' + esc(n.link || "#") + '" data-wlbell-id="' + esc(n.id) + '"><span class="i" aria-hidden="true">' + (ICON[n.kind] || "🔔") + '</span><span class="t">' + esc(n.text) +
             '<small>' + esc(n.fromName ? n.fromName + " · " : "") + ago(n.at || 0) + "</small></span></a></li>";
-        }).join("") + "</ul>" : '<p class="wlbell-empty">' + (role.role === "staff" ? "Nothing yet. You'll hear here when your students pass challenges, save things, set goals or post ideas." : "Nothing yet. You'll hear here when you pass a challenge, get a reward, or an idea of yours is accepted.") + "</p>") + "</div>" : "");
+        }).join("") + "</ul>" : '<p class="wlbell-empty">' + (role.role === "staff" ? "Nothing yet. You'll hear here when your students pass challenges, save things, set goals or post ideas."
+          : role.role === "parent" ? "Nothing yet. You'll hear here when your child passes a challenge, sets or finishes a goal, saves something new, has a reward idea approved, has an idea accepted, or gets takeaways from a 1:1 with their Field Guide."
+          : "Nothing yet. You'll hear here when a guide checks a challenge you showed them, approves your reward idea or shares takeaways from your 1:1, and when someone votes for or accepts your Suggestion Wall idea or puts your Town Hall item on the agenda.") + "</p>") + "</div>" : "");
   }
   async function load() {
-    if (!role || !user() || !(role.role === "student" || role.role === "staff")) { notes = []; draw(); return; }
+    if (!role || !user() || !(role.role === "student" || role.role === "staff" || role.role === "parent")) { notes = []; draw(); return; }
     try {
       var where = { fieldFilter: { field: { fieldPath: "to" }, op: "EQUAL", value: str(me()) } };
       if (isTest()) where = { compositeFilter: { op: "AND", filters: [where, { fieldFilter: { field: { fieldPath: "test" }, op: "EQUAL", value: { booleanValue: true } } }] } };
@@ -114,7 +157,7 @@
   });
   addEventListener("keydown", function (e) { if (e.key === "Escape" && open) { open = false; draw(); } });
   function start(r) {
-    role = r || null; guidesCache = null;
+    role = r || null; guidesCache = null; parentsCache = null;
     clearInterval(timer);
     var wait = 0, go = function () { if (user() || wait++ > 40) { load(); timer = setInterval(load, 120000); } else setTimeout(go, 250); };
     go();
