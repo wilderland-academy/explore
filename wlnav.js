@@ -128,6 +128,9 @@
       { id: "goals", label: "Goals", href: "/goals/" },
       { id: "projects", label: "Projects", href: "/projects/" },
       { id: "coach", label: "Mr. Fox", href: "/coach/" },
+      // Our Code: the seven principles, the tiers and send-home, Freedom Levels (and the student's own), a calm plan,
+      // and the Student Court with Peace Talks and "tell a guide" (/code/, /court/; data in /court/rules.js).
+      { id: "code", label: "Our Code", href: "/code/" },
       { id: "store", label: "Store", href: "/store/" },
       // The Tool & Materials Library: borrow tools and ask for materials (/_includes/tools.html, tools/app.js).
       { id: "tools", label: "Tools", href: "/tools/" },

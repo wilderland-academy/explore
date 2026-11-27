@@ -15,7 +15,7 @@ const ADMINS = ["alex@wilderland.academy", "sarah@wilderland.academy", "shanan@w
 const BANDS = ["K–1", "2–4", "5–8"];
 const SEV = ["none", "low", "medium", "high", "urgent"];
 const CAT = {
-  self_harm: "Self-harm or suicide", harmed_by_others: "May be unsafe or harmed", threat_to_others: "Threat to others", sexual: "Sexual content",
+  student_report: "A student asked a guide for help (Student Court › Tell a guide)", self_harm: "Self-harm or suicide", harmed_by_others: "May be unsafe or harmed", threat_to_others: "Threat to others", sexual: "Sexual content",
   weapons_danger: "Weapons or dangerous activity", drugs_alcohol: "Drugs or alcohol", bullying_hate: "Bullying or hate", distress: "Upset or struggling",
   personal_info: "Shared personal details", manipulation: "Tried to get around the rules", cheating: "Asked AI to do the work", profanity: "Rude language",
   off_topic: "Off topic", tampering: "Log tampering", coach_reply_held_back: "Coach reply held back", coach_glitch: "Coach reply came out broken (technical)", risky_project: "Project that needs an adult there", academic_use: "Used the coach for academics", academic_interest: "Wants to try the academics coach", none: "None"
@@ -26,6 +26,7 @@ const CAT = {
 const PROTOCOL = {
   self_harm: ["Check in with the student in person today. If they may be in danger right now, stay with them and call 911.", "Tell an admin (Shanan) and the student's parents today.", "Point them to SafeUT (app, chat or call) and 988 (call or text), available 24/7.", "Do not leave it to the AI. Write what you did in the note below."],
   harmed_by_others: ["Utah law: anyone who has reason to believe a child is abused or neglected must report immediately to DCFS (1-855-323-3237, 24/7) or law enforcement. Telling an admin does not replace your own report.", "If the child is in danger now, call 911.", "Don't question the child in depth or contact the person involved. Listen, stay calm, thank them, and report.", "Tell an admin (Shanan), then write what you did in the note below."],
+  student_report: ["Find the student today and talk with them privately. They chose to tell a guide.", "If anyone may be in danger, keep everyone safe first and tell an admin (Shanan) now.", "If it's confirmed, follow the Tier 3 response in the Behavior Guide (incident report, parent conversation, send-home rule).", "Write what you did in the note below."],
   threat_to_others: ["Treat it as real until a guide has talked with the student.", "Tell an admin (Shanan) now. If anyone may be in danger, call 911.", "Write what you did in the note below."]
 };
 const $ = s => document.querySelector(s);
