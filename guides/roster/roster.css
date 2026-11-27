@@ -20,8 +20,8 @@ a{color:var(--green)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .chip{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 13px;font:600 14px var(--body);cursor:pointer;color:var(--ink)}
 .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
-.in{border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:var(--sheet);min-width:240px}
-.btn{border:0;border-radius:10px;background:#d5f367;color:#0b2b20;font:700 14.5px var(--body);padding:9px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.in{border:1.5px solid var(--line);border-radius:12px;padding:9px 12px;font:inherit;background:var(--sheet);min-width:240px}
+.btn{border:0;border-radius:999px;background:#d5f367;color:#0b2b20;font:600 14.5px var(--body);padding:9px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .btn.ghost{background:#ece5d9}
 .btn:disabled{opacity:.5;cursor:default}
 .list{display:flex;flex-direction:column;gap:12px}
@@ -31,7 +31,7 @@ a{color:var(--green)}
 .sev{display:inline-flex;align-items:center;font:700 11.5px var(--body);letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:3px 9px}
 .sev.urgent{background:var(--urgent-bg);color:var(--urgent)} .sev.high{background:var(--high-bg);color:var(--high)} .sev.medium{background:var(--medium-bg);color:var(--medium)} .sev.low{background:var(--low-bg);color:var(--low)} .sev.none{background:var(--low-bg);color:var(--low)}
 .quote{border-left:3px solid var(--line);padding:2px 0 2px 12px;color:var(--ink);font-style:italic}
-.protocol{background:var(--urgent-bg);border-radius:10px;padding:12px 14px;font-size:14.5px}
+.protocol{background:var(--urgent-bg);border-radius:12px;padding:12px 14px;font-size:14.5px}
 .protocol b{display:block;margin-bottom:4px;color:var(--urgent)}
 .protocol ol{margin:6px 0 0;padding-left:20px}
 .meta{font-size:13.5px;color:var(--dim)}
@@ -45,14 +45,14 @@ a{color:var(--green)}
 .items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .items li{font-size:14.5px}
 .convo{display:flex;flex-direction:column;gap:10px;max-width:760px}
-.bub{padding:10px 13px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;max-width:88%;font-size:15px}
+.bub{padding:10px 13px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-width:88%;font-size:15px}
 .bub.student{align-self:flex-end;background:#e6efe9;border:1px solid #cfe0d5}
 .bub.coach{align-self:flex-start;background:var(--sheet);border:1px solid var(--line)}
 .bub .who{display:block;font-size:12px;font-weight:700;color:var(--dim);margin-bottom:3px}
 .bub.flag{outline:2px solid var(--high)}
 .bub.flag.urgent{outline-color:var(--urgent)}
 .empty{background:var(--sheet);border:1px dashed var(--line);border-radius:12px;padding:16px;color:var(--dim)}
-textarea.note{width:100%;min-height:60px;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:14.5px}
+textarea.note{width:100%;min-height:60px;border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;font:inherit;font-size:14.5px}
 .crumb{font-size:14px}
 /* Student Roster additions */
 .tblwrap{overflow-x:auto;border-radius:12px}
@@ -65,7 +65,7 @@ textarea.note{width:100%;min-height:60px;border:1.5px solid var(--line);border-r
 .btn.danger{background:none;color:var(--urgent);text-decoration:underline}
 .note{font-size:14px;color:var(--dim);min-height:20px}
 .note.err{color:var(--urgent)}
-.flash{background:#e6efe9;border-radius:10px;padding:10px 14px;font-weight:600}
+.flash{background:#e6efe9;border-radius:12px;padding:10px 14px;font-weight:600}
 a.wl-ch{color:var(--green)}
 @media (max-width:640px){.in{min-width:0;width:100%}}
 .form label.chk{flex-direction:row;align-items:flex-start;gap:10px;font-weight:600}
@@ -79,7 +79,7 @@ a.wl-ch{color:var(--green)}
 #info .si-conf{font-size:14px;color:var(--dim);display:flex;gap:8px;align-items:center}
 #info .si-search{display:flex;gap:10px;flex-wrap:wrap;align-items:center;position:sticky;top:58px;z-index:5;background:var(--paper);padding:8px 0}
 #info .si-search input{flex:1;min-width:220px;font:17px var(--body);padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
-#info .si-search input:focus{outline:2px solid var(--g);outline-offset:1px}
+#info .si-search input:focus{outline:2px solid var(--g);outline-offset:2px}
 #info .si-chips{display:flex;gap:6px;flex-wrap:wrap}
 #info .si-chips button{font:600 13.5px var(--body);border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:7px 12px;cursor:pointer}
 #info .si-chips button[aria-pressed=true]{background:var(--g);border-color:var(--g);color:#fff}
@@ -89,14 +89,14 @@ a.wl-ch{color:var(--green)}
 #info .si-row[aria-current=true]{border-color:var(--g);box-shadow:0 0 0 2px var(--g) inset}
 #info .si-row b{font-size:16px}#info .si-row .si-meta{font-size:13px;color:var(--dim)}
 #info .si-flags{display:flex;gap:5px;flex-wrap:wrap}
-#info .si-f{font:700 11px var(--body);letter-spacing:.04em;text-transform:uppercase;border-radius:99px;padding:3px 8px;background:#ece5d8;color:var(--ink)}
+#info .si-f{font:700 11px var(--body);letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:3px 8px;background:#ece5d8;color:var(--ink)}
 #info .si-f.si-red{background:#fbe3e1;color:var(--red)}#info .si-f.si-amber{background:#fdf0d5;color:var(--amber)}#info .si-f.si-ok{background:#e4f2e8;color:var(--ok)}#info .si-f.si-blue{background:#e3ecf7;color:#1d4e89}
-#info .si-card{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+#info .si-card{background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
 #info .si-detail{position:sticky;top:130px;max-height:calc(100vh - 150px);overflow:auto}
 #info .si-sec{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:12px}
 #info .si-sec ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:3px}
-#info .si-alert{border-left:4px solid var(--red);background:#fdf1f0;padding:10px 12px;border-radius:8px}
-#info .si-warn{border-left:4px solid #c99a1e;background:#fff8e6;padding:10px 12px;border-radius:8px}
+#info .si-alert{border-left:4px solid var(--red);background:#fdf1f0;padding:10px 12px;border-radius:12px}
+#info .si-warn{border-left:4px solid #c99a1e;background:#fff8e6;padding:10px 12px;border-radius:12px}
 #info .si-kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 12px;font-size:15px}#info .si-kv dt{color:var(--dim)}#info .si-kv dd{margin:0}
 #info .si-notices{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
 #info a{color:var(--g)}
@@ -108,13 +108,13 @@ a.wl-ch{color:var(--green)}
 
 /* A student's Life Skills and Coaching tabs: those pages, framed (?embed=1), sized to their content by /wlnav.js. */
 .stabs{border-bottom:0;padding-bottom:0}
-iframe.embed{display:block;width:100%;min-height:420px;height:70vh;border:1px solid var(--line);border-radius:16px;background:#fff}
+iframe.embed{display:block;width:100%;min-height:420px;height:70vh;border:1px solid var(--line);border-radius:18px;background:#fff}
 .tab-intro{margin:0;max-width:820px}
 iframe.embed.dark{background:#08140f;border-color:#28493d}
 /* Goals, behavior, reward ideas and the 1:1 snapshot (Nov 25, 2026) */
-.gform,.bform{display:flex;flex-direction:column;gap:10px;background:#f6f1e7;border:1px solid var(--line);border-radius:10px;padding:12px}
+.gform,.bform{display:flex;flex-direction:column;gap:10px;background:#f6f1e7;border:1px solid var(--line);border-radius:12px;padding:12px}
 .gform label,.bform label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--dim)}
-.gform input,.gform select,.bform input,.bform select,.bform textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--sheet);border:1.5px solid var(--line);border-radius:9px;padding:8px 10px}
+.gform input,.gform select,.bform input,.bform select,.bform textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--sheet);border:1.5px solid var(--line);border-radius:12px;padding:8px 10px}
 .gform [hidden]{display:none}
 .gtag{font:700 11px var(--body);letter-spacing:.04em;text-transform:uppercase;color:var(--green)}
 .snap{display:flex;flex-direction:column;gap:10px}

@@ -118,7 +118,7 @@
     if (!show) { s.innerHTML = ""; return; }
     var unread = notes.filter(function (n) { return !n.read; }).length;
     s.innerHTML = '<button type="button" class="wlbell" aria-haspopup="true" aria-expanded="' + open + '" aria-label="Notifications' + (unread ? ", " + unread + " new" : "") + '" title="Notifications">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>' +
       (unread ? '<span class="wlbell-n">' + (unread > 99 ? "99+" : unread) + "</span>" : "") + "</button>" +
       (open ? '<div class="wlbell-menu" role="dialog" aria-label="Notifications"><div class="wlbell-h"><b>Notifications</b>' + (unread ? '<button type="button" data-wlbell-all>Mark all read</button>' : "") + "</div>" +
         (notes.length ? "<ul>" + notes.slice(0, 40).map(function (n) {
@@ -236,10 +236,10 @@
     ".wlbell{position:relative;display:grid;place-items:center;width:36px;height:36px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;cursor:pointer}" +
     ".wlbell svg{width:18px;height:18px}.wlbell:hover{background:rgba(255,255,255,.08)}" +
     ".wlbell-n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#d5f367;color:#0b2b20;font:700 11px/18px Inter,system-ui,sans-serif;text-align:center}" +
-    ".wlbell-menu{position:absolute;right:0;top:calc(100% + 8px);width:min(380px,92vw);max-height:70vh;overflow:auto;background:#0f231c;color:#f6f8ea;border:1px solid #28493d;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.45);z-index:80;font:400 14px/1.4 Inter,system-ui,sans-serif}" +
+    ".wlbell-menu{position:absolute;right:0;top:calc(100% + 8px);width:min(380px,92vw);max-height:70vh;overflow:auto;background:#0f231c;color:#f6f8ea;border:1px solid #28493d;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.45);z-index:80;font:400 14px/1.4 Inter,system-ui,sans-serif}" +
     ".wlbell-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #28493d;position:sticky;top:0;background:#0f231c}" +
     ".wlbell-h button{background:none;border:0;color:#d5f367;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}" +
-    ".wlbell-menu ul{list-style:none;margin:0;padding:6px}.wlbell-menu li a{display:flex;gap:10px;padding:10px;border-radius:10px;color:inherit;text-decoration:none}" +
+    ".wlbell-menu ul{list-style:none;margin:0;padding:6px}.wlbell-menu li a{display:flex;gap:10px;padding:10px;border-radius:8px;color:inherit;text-decoration:none}" +
     ".wlbell-menu li a:hover{background:rgba(255,255,255,.06)}.wlbell-menu li.new a{background:rgba(213,243,103,.08)}" +
     ".wlbell-menu .i{font-size:18px;line-height:1.2}.wlbell-menu .t{display:flex;flex-direction:column;gap:3px}.wlbell-menu small{color:#a9bbb0;font-size:12px}" +
     ".wlbell-empty{padding:16px 14px;color:#a9bbb0;margin:0}";

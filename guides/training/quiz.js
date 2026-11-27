@@ -86,19 +86,19 @@ const CSS = `
 .wlq .wlq-q{font-size:19px;font-weight:600;line-height:1.4;margin:0}
 .wlq .wlq-ctx{opacity:.8;margin:0}
 .wlq .wlq-opts{display:flex;flex-direction:column;gap:8px}
-.wlq .wlq-opts button{text-align:left;font:inherit;color:inherit;background:transparent;border:1.5px solid color-mix(in srgb,currentColor 22%,transparent);border-radius:10px;padding:11px 14px;cursor:pointer;line-height:1.4}
+.wlq .wlq-opts button{text-align:left;font:inherit;color:inherit;background:transparent;border:1.5px solid color-mix(in srgb,currentColor 22%,transparent);border-radius:12px;padding:11px 14px;cursor:pointer;line-height:1.4}
 .wlq .wlq-opts button:hover:not(:disabled){border-color:color-mix(in srgb,currentColor 55%,transparent)}
 .wlq .wlq-opts button:disabled{cursor:default}
 .wlq .wlq-opts button.right{border-color:#00a34a;background:rgba(0,180,81,.13)}
 .wlq .wlq-opts button.wrong{border-color:#d4373d;background:rgba(229,72,77,.12)}
-.wlq .wlq-why{margin:0;padding:10px 14px;border-radius:10px;background:color-mix(in srgb,currentColor 6%,transparent)}
+.wlq .wlq-why{margin:0;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,currentColor 6%,transparent)}
 .wlq .wlq-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .wlq .wlq-btn{font:600 15px Inter,system-ui,sans-serif;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;background:#00b451;color:#05170f;text-decoration:none;display:inline-block}
 .wlq .wlq-btn.ghost{background:transparent;color:inherit;border:1.5px solid color-mix(in srgb,currentColor 30%,transparent)}
 .wlq .wlq-btn:disabled{opacity:.55;cursor:default}
 .wlq .wlq-big{font-size:34px;font-weight:700;margin:0}
 .wlq .wlq-dim{opacity:.75;margin:0}
-.wlq .wlq-bar{height:6px;border-radius:99px;background:color-mix(in srgb,currentColor 12%,transparent);overflow:hidden}
+.wlq .wlq-bar{height:6px;border-radius:999px;background:color-mix(in srgb,currentColor 12%,transparent);overflow:hidden}
 .wlq .wlq-bar i{display:block;height:100%;background:#00b451;transition:width .2s}
 .wlq .wlq-src{font-size:14px;opacity:.8;margin:0;font-style:italic}`;
 function css() { if (document.getElementById("wlq-css")) return; const s = document.createElement("style"); s.id = "wlq-css"; s.textContent = CSS; document.head.appendChild(s); }

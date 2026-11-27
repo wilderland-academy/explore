@@ -22,17 +22,17 @@ h1,h2{font-family:"Uncut Sans",Inter,sans-serif;font-weight:700;letter-spacing:-
 .hero p{color:#c9d6cc;font-size:17px;max-width:58ch;margin:10px 0 0}
 .top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0 0}
 .top label{font-size:14px;color:var(--dim);display:flex;gap:8px;align-items:center}
-select,input[type=text],input[type=number],input[type=date]{font:inherit;font-size:15px;color:var(--paper);background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%;color-scheme:dark}
+select,input[type=text],input[type=number],input[type=date]{font:inherit;font-size:15px;color:var(--paper);background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px;width:100%;color-scheme:dark}
 .top select{width:auto}
-select:focus,input:focus{outline:2px solid var(--lamp);outline-offset:1px;border-color:transparent}
+select:focus,input:focus{outline:2px solid var(--lamp);outline-offset:2px;border-color:transparent}
 .box{background:var(--shelf);border:1px solid var(--line);border-radius:18px;padding:16px 20px;margin:18px 0}
 .need{border-color:rgba(240,192,128,.55)}
 .need.met{border-color:rgba(213,243,103,.45)}
 .need p{margin:0 0 10px}
 .needs{display:flex;gap:10px;flex-wrap:wrap}
 .needs .ok{font-weight:600;color:var(--lamp);padding:10px 4px}
-.btn{font:600 14.5px/1 Inter,sans-serif;color:#0b2b20;background:var(--lamp);border:0;border-radius:10px;padding:12px 16px;cursor:pointer}
-.ghost{font:600 13px/1 Inter,sans-serif;color:var(--paper);background:transparent;border:1px solid var(--line);border-radius:9px;padding:8px 11px;cursor:pointer}
+.btn{font:600 14.5px/1 Inter,sans-serif;color:#0b2b20;background:var(--lamp);border:0;border-radius:999px;padding:12px 16px;cursor:pointer}
+.ghost{font:600 13px/1 Inter,sans-serif;color:var(--paper);background:transparent;border:1px solid var(--line);border-radius:999px;padding:8px 11px;cursor:pointer}
 .ghost:hover{border-color:var(--dim)}
 .filters{display:flex;gap:6px;flex-wrap:wrap;margin:22px 0 4px}
 .filters button{font:600 13.5px/1 Inter,sans-serif;color:var(--dim);background:var(--shelf);border:1px solid var(--line);border-radius:999px;padding:9px 13px;cursor:pointer}
@@ -42,7 +42,7 @@ select:focus,input:focus{outline:2px solid var(--lamp);outline-offset:1px;border
 .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .sh h2{font-size:21px}
 .glist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.goal{background:var(--shelf);border:1px solid var(--line);border-left:4px solid var(--neon);border-radius:14px;padding:13px 16px}
+.goal{background:var(--shelf);border:1px solid var(--line);border-left:4px solid var(--neon);border-radius:12px;padding:13px 16px}
 .goal[data-area=life]{border-left-color:var(--lamp)}
 .goal[data-area=acad]{border-left-color:#7cc6f0}
 .goal[data-area=store]{border-left-color:#ffb454}
@@ -53,15 +53,15 @@ select:focus,input:focus{outline:2px solid var(--lamp);outline-offset:1px;border
 .tag{font:600 11px/1.6 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase}
 .gt{margin:6px 0 4px;font-size:17px;font-weight:600;line-height:1.35}
 .why{margin:0 0 6px;font-size:14px;color:#c9d6cc}
-.bar{height:8px;background:var(--shelf2);border-radius:99px;overflow:hidden;margin:8px 0 4px}
-.bar i{display:block;height:100%;background:var(--lamp);border-radius:99px}
+.bar{height:8px;background:var(--shelf2);border-radius:999px;overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:var(--lamp);border-radius:999px}
 .at{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .at input{width:90px;padding:6px 8px}
 .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .acts .x{margin-left:auto;color:var(--dim)}
 .small{font-size:13.5px;margin:4px 0 0}
 .dim{color:var(--dim)}
-.empty{color:var(--dim);margin:0;padding:14px 16px;border:1px dashed var(--line);border-radius:14px;font-size:14.5px}
+.empty{color:var(--dim);margin:0;padding:14px 16px;border:1px dashed var(--line);border-radius:12px;font-size:14.5px}
 details{margin-top:28px}
 summary{cursor:pointer;color:var(--dim);font-weight:600;margin-bottom:10px}
 #form{border-color:var(--lamp);display:grid;gap:12px}
@@ -88,13 +88,13 @@ summary{cursor:pointer;color:var(--dim);font-weight:600;margin-bottom:10px}
 .box.need.met{border-left-color:rgba(213,243,103,.5)}
 .need .ey{font:700 11px/1 Inter,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
 .need p{font-size:15px;color:#c9d6cc}
-.needs .ok{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13.5px;color:var(--lamp);padding:5px 11px;border-radius:99px;background:rgba(213,243,103,.1)}
+.needs .ok{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13.5px;color:var(--lamp);padding:5px 11px;border-radius:999px;background:rgba(213,243,103,.1)}
 /* The form: a light sheet with numbered steps, so it reads as the thing to fill in. */
 #form{background:var(--paper);color:var(--ink);border:0;box-shadow:0 0 0 3px rgba(213,243,103,.55),0 18px 40px rgba(0,0,0,.35);gap:16px;padding:20px 22px}
 #form .fh h2{color:var(--ink)}
 #form .fsub{margin:-8px 0 0;color:#4a5d52;font-size:14px}
 #form .step{display:flex;align-items:center;gap:8px;font:700 14px/1.2 Inter,sans-serif;color:var(--ink);margin:2px 0 -4px}
-#form .step i{font-style:normal;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:99px;background:var(--ink);color:var(--lamp);font-size:12px}
+#form .step i{font-style:normal;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--ink);color:var(--lamp);font-size:12px}
 #form label{color:#4a5d52}
 #form select,#form input[type=text],#form input[type=number],#form input[type=date]{background:#fff;color:var(--ink);border:1.5px solid #c5d0c0;color-scheme:light}
 #form .areas button{background:#fff;color:var(--ink);border:1.5px solid #c5d0c0;box-shadow:0 1px 0 rgba(0,0,0,.06)}
@@ -109,7 +109,7 @@ summary{cursor:pointer;color:var(--dim);font-weight:600;margin-bottom:10px}
 .by{font:600 11px/1.6 Inter,sans-serif;color:var(--neon);letter-spacing:.02em}
 @media (max-width:760px){.hero{grid-template-columns:1fr}.gartw{height:160px;order:-1}}
 .oo h2{font-size:19px;margin-bottom:4px}.oo .meta{color:var(--dim);font-size:13px;margin:0 0 8px}.oo h3{font:700 12px/1 Inter,sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin:12px 0 6px}
-.oo .prep textarea{width:100%;box-sizing:border-box;font:inherit;font-size:15px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.18);color:inherit;margin:6px 0 8px}.oo .prep .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px}.oo .prep .row .meta{margin:0}.oo .qs{margin-top:4px}.oo .qs summary{cursor:pointer;font-size:14px}.oo .ck{margin:0;font-weight:600}
+.oo .prep textarea{width:100%;box-sizing:border-box;font:inherit;font-size:15px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.18);color:inherit;margin:6px 0 8px}.oo .prep .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px}.oo .prep .row .meta{margin:0}.oo .qs{margin-top:4px}.oo .qs summary{cursor:pointer;font-size:14px}.oo .ck{margin:0;font-weight:600}
 .oo ul{margin:0;padding-left:20px;display:grid;gap:4px}.oo .acts li{color:var(--lamp)}.oo .acts li span{color:var(--paper)}.oo details{margin-top:12px}
 </style>
 </head>
