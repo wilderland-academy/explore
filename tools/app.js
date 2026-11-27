@@ -19,14 +19,20 @@
 //                            Any student (or guide) files one from a material's sheet; guides see them on the Desk and
 //                            the Shopping list, and they close when a guide restocks the item, adds it to the restock
 //                            list, or dismisses them. A student reads only their own.
-//   toolBadges/{sid}         { items: [item ids], by, at }: tools a student was taught and signed off on.
+//   toolBadges/{sid}         { certs: { cert id: { at, by, byName } }, items (older per-tool badges, still honored),
+//                            by, at }: the safety certifications a student passed. Guides write it.
+//   toolConfig/certs         { map: { tool id: cert id | "open" | "guide" | "staff" }, custom: { cert id: { n, e, rules,
+//                            check } } }: guides' changes to which tools each certification covers, and certifications
+//                            they added. The built-in certifications are in /tools/certs.js.
+//   No tool is limited by grade. A tool that needs a certification can be borrowed by any Upper Campus student who has
+//   passed it (rules, quiz, a guide's check-off). Students ask for a check-off with a toolLoans request of kind "cert"
+//   (item = the cert id).
 // Like a book library: a student asks, a guide hands it over (that's the checkout) and checks it back in.
 (function () {
   var FS = "https://firestore.googleapis.com/v1/projects/wilderland-df15e/databases/(default)/documents";
   var T = window.WLTools, SITE = document.body.dataset.site === "guides" ? "guides" : "students";
   // The library is Upper Campus only (grades 2–8). K–1 students don't see it; guides on both campuses do.
-  var BANDS = ["2–4", "5–8"];
-  var S = { role: null, inv: {}, loans: [], holds: [], reports: [], badges: {}, kids: [], q: "", cat: "all", f: "", view: "", band: "All", kid: "", dirty: {}, msg: "" };
+    var S = { role: null, inv: {}, loans: [], holds: [], reports: [], badges: {}, certs: {}, cfg: { map: {}, custom: {} }, quiz: {}, kids: [], cert: "", q: "", cat: "all", f: "", view: "", band: "All", kid: "", dirty: {}, msg: "" };
   var $ = function (q) { return document.querySelector(q); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var byId = {}; T.TOOLS.forEach(function (t) { byId[t.id] = t; });
@@ -34,7 +40,7 @@
   // Items guides added (toolItems/{id}): same shape as the catalog's. Merged in, replacing an earlier copy.
   function addCustom(d) {
     if (!d || !d.n || !T.CATS[d.c]) return;
-    var t = { id: d.id, n: d.n, c: d.c, k: ["tool", "machine", "material"].indexOf(d.k) >= 0 ? d.k : "tool", have: 0, want: Number(d.want) || 0, a: T.ACCESS[d.a] ? d.a : "open", b: BANDS.indexOf(d.b) >= 0 ? d.b : "2–4", loan: T.LOAN[d.loan] ? d.loan : "day", e: d.e || "🧰", d: d.d || "", m: d.m || "", tip: d.tip || "", custom: true };
+    var t = { id: d.id, n: d.n, c: d.c, k: ["tool", "machine", "material"].indexOf(d.k) >= 0 ? d.k : "tool", have: 0, want: Number(d.want) || 0, a: T.ACCESS[d.a] ? d.a : "open", cert: d.cert || "", a0: T.ACCESS[d.a] ? d.a : "open", cert0: d.cert || "", loan: T.LOAN[d.loan] ? d.loan : "day", e: d.e || "🧰", d: d.d || "", m: d.m || "", tip: d.tip || "", custom: true };
     var i = T.TOOLS.findIndex(function (x) { return x.id === t.id; });
     if (i >= 0) T.TOOLS[i] = t; else T.TOOLS.push(t);
     byId[t.id] = t;
@@ -106,6 +112,7 @@
     if (typeof v === "boolean") return { booleanValue: v };
     if (typeof v === "number") return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
     if (Array.isArray(v)) return { arrayValue: { values: v.map(enc) } };
+    if (typeof v === "object") return { mapValue: { fields: fields(v) } };
     return { stringValue: String(v) };
   }
   var fields = function (o) { var f = {}; Object.keys(o).forEach(function (k) { f[k] = enc(o[k]); }); return f; };
@@ -153,19 +160,39 @@
     if (t.k === "machine") return s.free > 0 ? '<span class="av ok">Ready to book</span>' : '<span class="av out">In use</span>';
     return s.free > 0 ? '<span class="av ok">' + (s.have > 1 ? s.free + " of " + s.have + " on the shelf" : "On the shelf") + "</span>" : '<span class="av out">All out' + (s.broken && s.broken >= s.have ? " (being fixed)" : "") + "</span>";
   }
-  var accessPill = function (t) { return '<span class="pill p-' + t.a + '">' + esc(T.ACCESS[t.a][0]) + "</span>"; };
-  var bandOk = function (t, band) { return BANDS.indexOf(band || "5–8") >= BANDS.indexOf(t.b); };
-  var gradesFrom = function (t) { return t.b === "5–8" ? "grades 5 and up" : "grades 2 and up"; };
+  var accessPill = function (t) { return t.a === "badge" && !guide() && S.role && S.role.role === "student" && certOk(t) ? '<span class="pill p-out">You\'re certified</span>' : '<span class="pill p-' + t.a + '">' + esc(T.ACCESS[t.a][0]) + "</span>"; };
+  // ---------- certifications ----------
+  // CERT: the built-in certifications plus any a guide added. applyCerts() sets each tool's cert (and access, when a
+  // guide moved it) from certs.js, then the custom items' own cert, then the guides' map.
+  var CERT = {};
+  var ORIG = {}; T.TOOLS.forEach(function (t) { ORIG[t.id] = t.a; });
+  function applyCerts() {
+    CERT = {}; Object.keys(T.CERTS || {}).forEach(function (k) { CERT[k] = T.CERTS[k]; });
+    Object.keys(S.cfg.custom || {}).forEach(function (k) { var c = S.cfg.custom[k]; if (c && c.n) CERT[k] = { n: c.n, e: c.e || "🛡️", rules: c.rules || [], check: c.check || [], quiz: [], custom: true }; });
+    T.TOOLS.forEach(function (t) { if (!t.custom) { t.cert = ""; if (ORIG[t.id]) t.a = ORIG[t.id]; } else { t.a = t.a0 || t.a; t.cert = CERT[t.cert0] ? t.cert0 : ""; } });
+    Object.keys(T.CERTS || {}).forEach(function (k) { (T.CERTS[k].tools || []).forEach(function (id) { if (byId[id] && !byId[id].custom) byId[id].cert = k; }); });
+    var m = S.cfg.map || {};
+    Object.keys(m).forEach(function (id) { var t = byId[id], v = m[id]; if (!t) return; if (CERT[v]) { t.cert = v; t.a = "badge"; } else if (T.ACCESS[v] && v !== "badge") { t.a = v; t.cert = ""; } });
+  }
+  var certTools = function (cid) { return T.TOOLS.filter(function (t) { return t.a === "badge" && t.cert === cid; }); };
+  var certsOf = function (sid) { return (sid && S.certs[sid]) || {}; };
+  var mySid = function () { return S.role && S.role.sid; };
+  // Has this student passed the certification this tool needs? (An older per-tool badge still counts for that tool.)
+  var certOk = function (t, sid) { sid = sid || mySid(); if (t.a !== "badge") return true; return !!(t.cert && certsOf(sid)[t.cert]) || (S.badges[sid] || []).indexOf(t.id) >= 0; };
+  var canUse = function (t) { return t.a === "open" || (t.a === "badge" && certOk(t)); };
+  var pendingCert = function (cid) { return S.loans.find(function (l) { return l.kind === "cert" && l.item === cid && l.status === "requested"; }); };
+  try { S.quiz = JSON.parse(localStorage.getItem("wl-tool-quiz") || "{}") || {}; } catch (e) { S.quiz = {}; }
+  var passQuiz = function (cid) { S.quiz[cid] = Date.now(); try { localStorage.setItem("wl-tool-quiz", JSON.stringify(S.quiz)); } catch (e) { } };
   var k1 = function () { return SITE === "students" && S.role && S.role.role === "student" && S.role.band === "K–1"; };
   var upper = function (s) { return s.band !== "K–1"; };
-  var myBadges = function () { var sid = S.role && S.role.sid; return (sid && S.badges[sid]) || []; };
-
+  
   // ---------- loading ----------
   async function load() {
     if (!S.role || !user()) return;
     if (k1()) { S.loaded = true; draw(); return; }
     var none = function () { return []; };
     var inv = list("toolInventory").catch(none), items = list("toolItems").catch(none), holds = list("toolHolds").catch(none);
+    var cfg = fetch(FS + "/toolConfig/certs", { headers: { Authorization: "Bearer " + await tok() } }).then(function (r) { return r.ok ? r.json().then(doc) : null; }).catch(function () { return null; });
     var loans = Promise.resolve([]), badgesP = Promise.resolve([]), kids = Promise.resolve(null), reps = Promise.resolve([]);
     if (guide()) {
       loans = list("toolLoans").catch(function () { return isTest() ? query("toolLoans", eq("test", true)).catch(none) : []; });
@@ -178,15 +205,16 @@
       reps = query("toolReports", eq("email", em)).catch(none);
       badgesP = S.role.sid ? fetch(FS + "/toolBadges/" + S.role.sid, { headers: { Authorization: "Bearer " + await tok() } }).then(function (r) { return r.ok ? r.json().then(function (d) { return [doc(d)]; }) : []; }).catch(none) : Promise.resolve([]);
     }
-    var got = await Promise.all([inv, items, holds, loans, badgesP, kids, reps]);
+    var got = await Promise.all([inv, items, holds, loans, badgesP, kids, reps, cfg]);
     S.inv = {}; got[0].forEach(function (d) { S.inv[d.id] = d; });
     got[1].forEach(addCustom);
+    S.cfg = { map: (got[7] && got[7].map) || {}, custom: (got[7] && got[7].custom) || {} }; applyCerts();
     // Holds that have ended don't block anything. Test holds only count in test views, and real ones only outside them.
     var now = Date.now();
     S.holds = (got[2] || []).filter(function (h) { return !!h.test === isTest() && (h.end || 0) > now; });
     S.loans = (got[3] || []).filter(function (l) { return !!l.test === isTest(); }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
     S.reports = (got[6] || []).filter(function (x) { return !!x.test === isTest(); }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
-    S.badges = {}; (got[4] || []).forEach(function (d) { S.badges[d.id] = d.items || []; });
+    S.badges = {}; S.certs = {}; (got[4] || []).forEach(function (d) { S.badges[d.id] = d.items || []; S.certs[d.id] = d.certs || {}; });
     if (got[5]) S.kids = got[5].filter(function (s) { return !s.archived && !!s.test === isTest(); }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
     S.loaded = true; draw();
   }
@@ -199,8 +227,17 @@
     S.view = v;
     $("#side").innerHTML = guide() ? deskSummary() : myTools();
     $("#gtabs").innerHTML = guide() ? gtabs(v) : "";
-    $("#view").innerHTML = v === "desk" ? desk() : v === "inventory" ? inventory() : v === "badges" ? badges() : v === "shop" ? shop() : catalog();
+    setTimeout(chipState, 0);
+    $("#view").innerHTML = v === "desk" ? desk() : v === "inventory" ? inventory() : v === "certs" || v === "badges" ? certsView() : v === "shop" ? shop() : catalog();
   }
+  // The category chips scroll sideways: show arrows and a fade on whichever side has more.
+  function chipState() {
+    var w = document.querySelector(".chipwrap"), c = w && w.querySelector(".chips"); if (!c) return;
+    var set = function () { w.classList.toggle("at-start", c.scrollLeft <= 2); w.classList.toggle("at-end", c.scrollLeft + c.clientWidth >= c.scrollWidth - 2); w.classList.toggle("fits", c.scrollWidth <= c.clientWidth + 2); };
+    if (!c._wl) { c._wl = 1; c.addEventListener("scroll", set, { passive: true }); var on = c.querySelector(".on"); if (on && on.offsetLeft + on.offsetWidth > c.clientWidth) c.scrollLeft = on.offsetLeft - 40; }
+    set();
+  }
+  addEventListener("resize", function () { chipState(); });
   function myTools() {
     var rank = function (l) { return l.status === "out" ? (l.due < today() ? 0 : 1) : l.status === "reserved" ? 2 : 3; };
     var mine = S.loans.filter(function (l) { return ["requested", "waiting", "out", "wish"].indexOf(l.status) >= 0 || liveResv(l); })
@@ -212,7 +249,11 @@
       return '<li class="' + (late ? "late" : "") + '"><span class="em">' + t.e + '</span><span class="t"><b>' + esc(t.n || l.n) + "</b><small>" + sub + "</small></span>" + st + (["requested", "waiting", "wish", "reserved"].indexOf(l.status) >= 0 ? ' <button class="ghost sm" data-cancel="' + l.id + '">Cancel</button>' : "") + "</li>";
     };
     return '<div class="panel"><h2>My tools</h2>' + (mine.length ? '<ul class="loans">' + mine.map(li).join("") + "</ul>" : '<p class="sub">Nothing borrowed. Find what your project needs below and ask for it.</p>') +
-      (myBadges().length ? '<p class="sub" style="margin-top:12px">Your badges: ' + myBadges().map(function (id) { return byId[id] ? byId[id].e + " " + esc(byId[id].n) : ""; }).filter(Boolean).join(", ") + "</p>" : "") + "</div>";
+      (function () {
+        var mine = Object.keys(CERT).filter(function (k) { return certsOf(mySid())[k]; }), wait = S.loans.filter(function (l) { return l.kind === "cert" && l.status === "requested" && CERT[l.item]; });
+        return '<div class="certmine"><h3>Safety certifications</h3><p class="sub">' + (mine.length ? "You're certified for: " + mine.map(function (k) { return CERT[k].e + " " + esc(CERT[k].n); }).join(", ") + "." : "One certification covers a group of similar tools. Learn the rules, take the quiz, then show a guide.") +
+          (wait.length ? " Waiting for a check-off: " + wait.map(function (l) { return esc(CERT[l.item].n); }).join(", ") + "." : "") + '</p><button type="button" class="ghost sm" data-certlist>See all certifications</button></div>';
+      })() + "</div>";
   }
   function filtered() {
     var q = S.q.trim().toLowerCase(), band = S.role && S.role.band;
@@ -222,22 +263,21 @@
       if (S.f === "ch" && !(t.ch && t.ch.length)) return false;
       var s = stock(t);
       if (S.f === "shelf" && !(t.k === "material" ? s.stock && s.stock !== "out" && (s.have || S.inv[t.id]) : s.free > 0)) return false;
-      if (S.f === "mine" && !(t.a === "open" || (t.a === "badge" && myBadges().indexOf(t.id) >= 0)) ) return false;
-      if (S.f === "mine" && band && !bandOk(t, band)) return false;
+      if (S.f === "mine" && !canUse(t)) return false;
       if (S.f === "need" && !(t.k !== "material" && s.have < t.want)) return false;
       return true;
     });
   }
   function catalog() {
     var xs = filtered(), stu = !guide();
-    var cats = '<div class="chips" role="group" aria-label="Kind of tool"><button type="button" data-cat="all" class="' + (S.cat === "all" ? "on" : "") + '">Everything</button>' + Object.keys(T.CATS).map(function (k) { return '<button type="button" data-cat="' + k + '" class="' + (S.cat === k ? "on" : "") + '">' + T.CATS[k][1] + " " + esc(T.CATS[k][0]) + "</button>"; }).join("") + "</div>";
+    var cats = '<div class="chipwrap at-start"><button type="button" class="cs l" data-scroll="-1" aria-label="Scroll categories left" tabindex="-1">‹</button><div class="chips" role="group" aria-label="Kind of tool"><button type="button" data-cat="all" class="' + (S.cat === "all" ? "on" : "") + '">Everything</button>' + Object.keys(T.CATS).map(function (k) { return '<button type="button" data-cat="' + k + '" class="' + (S.cat === k ? "on" : "") + '">' + T.CATS[k][1] + " " + esc(T.CATS[k][0]) + "</button>"; }).join("") + "</div><button type=\"button\" class=\"cs r\" data-scroll=\"1\" aria-label=\"Scroll categories right\" tabindex=\"-1\">›</button></div>";
     var tg = '<div class="tg" role="group" aria-label="Show">' + [["", "All"], ["shelf", "On the shelf now"]].concat(stu ? [["mine", "I can borrow"]] : [["need", "Need more"]]).concat([["ch", "For a challenge"]]).map(function (x) { return '<button type="button" data-f="' + x[0] + '" class="' + (S.f === x[0] ? "on" : "") + '">' + x[1] + "</button>"; }).join("") + "</div>";
     return '<div class="ctrl"><div class="in"><input type="search" id="q" placeholder="Search tools, materials or a challenge (like NL-25.3)" value="' + esc(S.q) + '" autocomplete="off">' + tg + cats + "</div></div>" +
       '<div class="newbar"><p class="count">' + xs.length + " of " + T.TOOLS.length + " tools and materials</p>" + (stu ? '<button type="button" class="ghost sm" data-newreq>Can\'t find it? Ask for it</button>' : '<button type="button" class="go sm" data-additem>Add a tool or material</button>') + "</div>" +
       (!xs.length && stu ? '<section class="panel" style="margin-top:10px"><h2>Nothing matches' + (S.q ? " “" + esc(S.q) + "”" : "") + '</h2><p class="sub">If your project needs something we don\'t have, ask for it. Guides see every request and decide what to get.</p><button type="button" class="go" data-newreq>Ask for it</button></section>' : "") +
       '<div class="grid">' + xs.map(function (t) {
         var s = stock(t);
-        return '<button type="button" class="tc' + (!s.have && t.k !== "material" ? " need" : "") + '" data-open="' + t.id + '"><span class="top"><span class="em" aria-hidden="true">' + t.e + '</span><span><h3>' + esc(t.n) + "</h3>" + (t.m && t.m !== t.n ? '<p class="m">' + esc(T.CATS[t.c][0]) + "</p>" : '<p class="m">' + esc(T.CATS[t.c][0]) + "</p>") + '</span></span><p class="d">' + esc(t.d) + '</p><span class="st">' + availHtml(t) + " " + accessPill(t) + (t.b !== "K–1" ? ' <span class="pill" style="background:var(--shelf2);color:var(--dim)">' + (t.b === "2–4" ? "2nd+" : "5th+") + "</span>" : "") + "</span></button>";
+        return '<button type="button" class="tc' + (!s.have && t.k !== "material" ? " need" : "") + '" data-open="' + t.id + '"><span class="top"><span class="em" aria-hidden="true">' + t.e + '</span><span><h3>' + esc(t.n) + "</h3>" + (t.m && t.m !== t.n ? '<p class="m">' + esc(T.CATS[t.c][0]) + "</p>" : '<p class="m">' + esc(T.CATS[t.c][0]) + "</p>") + '</span></span><p class="d">' + esc(t.d) + '</p><span class="st">' + availHtml(t) + " " + accessPill(t) + "</span></button>";
       }).join("") + "</div>";
   }
   // The detail sheet, with what this student (or guide) can do.
@@ -248,16 +288,15 @@
     if (!guide()) {
       var mineNow = active[0];
       if (mineNow) act = '<p class="note ok">' + (mineNow.status === "out" ? "You have this one. Bring it back by " + (mineNow.due === today() ? "the end of today" : fmt(mineNow.due)) + "." : mineNow.status === "wish" ? "You asked us to get this one." : "You asked for this. A guide will hand it to you.") + "</p>";
-      else if (band && !bandOk(t, band)) act = '<p class="note">This one is for ' + gradesFrom(t) + ". Ask a guide what you could use instead.</p>";
       else if (t.k === "material" ? (!s.have && !S.inv[t.id]) || s.stock === "out" : !s.have) act = '<p class="note">' + (t.k === "material" ? (s.stock === "out" ? "We're out of this right now." : "We don't stock this yet.") : "Not in the library yet.") + ' If your project needs it, tell us: it moves up the shopping list.</p><label>What would you use it for?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="wish" data-id="' + id + '">Request it</button>';
       else if (t.k === "material") act = '<label>How much do you need, and for what?<input id="ddamt" maxlength="120" placeholder="For example: 2 boards for my birdhouse"></label><button class="go" data-ask="material" data-id="' + id + '">Ask for it</button>';
       else if (t.a === "staff") act = '<p class="note">Guides run this one. Tell us your project and a guide will plan it with you.</p><label>Your project<input id="ddnote" maxlength="200"></label><button class="go" data-ask="borrow" data-id="' + id + '">Ask a guide</button>';
-      else if (t.a === "badge" && myBadges().indexOf(id) < 0) act = '<p class="note">You need this tool\'s badge first: a guide shows you how and watches you use it safely.</p><button class="go" data-ask="badge" data-id="' + id + '">I want to learn it</button>';
+      else if (t.a === "badge" && !certOk(t)) act = certNeed(t);
       // Machines stay put, so students reserve a time instead of borrowing them now.
       else if (t.loan === "place") act = '<p class="note">Reserve a time below.' + (t.a === "guide" ? " A guide will be there the whole time." : "") + "</p>";
       else act = (s.free > 0 ? "" : '<p class="note">All of them are out right now. Get in line and you\'re next, or reserve one for later.</p>') + '<label>What\'s it for?<input id="ddnote" maxlength="200"></label><button class="go" data-ask="' + (s.free > 0 ? "borrow" : "wait") + '" data-id="' + id + '">' + (s.free > 0 ? "Borrow it now" : "Get in line") + "</button>" + (t.a === "guide" ? '<p class="note">A guide will be with you while you use it.</p>' : "");
       if (canReserve(t, s, band)) act += reserveForm(t);
-      if (t.k === "material" && S.inv[t.id] && (!band || bandOk(t, band))) act += reportForm(t);
+      if (t.k === "material" && S.inv[t.id]) act += reportForm(t);
     } else {
       act = active.length ? '<p class="note"><b>Right now:</b> ' + active.map(function (l) { return esc(first(l.name)) + " (" + ({ out: "has it, due " + fmt(l.due), requested: "asked", waiting: "in line", wish: "asked us to get it" })[l.status] + ")"; }).join(", ") + '</p>' : "";
       var rs = S.loans.filter(function (l) { return l.item === id && liveResv(l); }).sort(function (a, b) { return a.start - b.start; });
@@ -269,16 +308,15 @@
     }
     dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + t.e + "</span><h2>" + esc(t.n) + '</h2><button class="x" data-close aria-label="Close">✕</button></div><p>' + esc(t.d) + "</p>" +
       (t.tip ? '<p class="tip">⚠️ ' + esc(t.tip) + "</p>" : "") +
-      "<dl><dt>Status</dt><dd>" + availHtml(t) + "</dd><dt>Who</dt><dd>" + accessPill(t) + " " + esc(T.ACCESS[t.a][1]) + "</dd><dt>Grades</dt><dd>" + (t.b === "5–8" ? "5th grade and up" : "2nd grade and up (all of Upper Campus)") + "</dd><dt>Loan</dt><dd>" + esc(T.LOAN[t.loan]) + "</dd>" + (t.m ? "<dt>Model</dt><dd>" + esc(t.m) + "</dd>" : "") +
+      "<dl><dt>Status</dt><dd>" + availHtml(t) + "</dd><dt>Who</dt><dd>" + accessPill(t) + " " + esc(T.ACCESS[t.a][1]) + "</dd>" + (t.a === "badge" ? "<dt>Certification</dt><dd>" + (t.cert && CERT[t.cert] ? '<button type="button" class="linkish" data-cert="' + t.cert + '">' + CERT[t.cert].e + " " + esc(CERT[t.cert].n) + "</button>" : "Ask a guide") + "</dd>" : "") + "</dd><dt>Loan</dt><dd>" + esc(T.LOAN[t.loan]) + "</dd>" + (t.m ? "<dt>Model</dt><dd>" + esc(t.m) + "</dd>" : "") +
       (t.ch && t.ch.length ? "<dt>Challenges</dt><dd>" + t.ch.map(function (c) { return '<a href="' + (SITE === "guides" ? "/guides/challenges/" : "/challenges/") + "#c=" + encodeURIComponent(c) + '">' + esc(c) + "</a>"; }).join(", ") + "</dd>" : "") + (s.loc ? "<dt>Where</dt><dd>" + esc(s.loc) + "</dd>" : "") + "</dl>" +
       '<div class="act">' + act + '</div><p class="note" id="ddmsg" role="status"></p></div>';
     if (!dd.open) dd.showModal();
     var rb = dd.querySelector("[data-reserve]"); if (rb) showFree(rb.dataset.reserve);
   }
-  // Can this student reserve this item? The same checks as borrowing it now: their grade, its badge, and that we have one.
+  // Can this student reserve this item? The same checks as borrowing it now: its certification, and that we have one.
   function canReserve(t, s, band) {
-    if (band && !bandOk(t, band)) return false;
-    if (t.a === "staff" || (t.a === "badge" && myBadges().indexOf(t.id) < 0)) return false;
+    if (t.a === "staff" || !certOk(t)) return false;
     if (t.k === "material") return !!(s.have || S.inv[t.id]) && s.stock !== "out";
     return s.have - s.broken > 0;
   }
@@ -421,7 +459,7 @@
   var EMOJI = { digital: "🖨️", wood: "🪚", carve: "🔪", clay: "🏺", fiber: "🧵", elec: "🔌", nature: "🔭", garden: "🌱", camp: "🏕️", kitchen: "🍳", art: "🎨", media: "📷", measure: "📏", bike: "🚲", safety: "🦺", play: "🤸", learn: "📋", mat: "📦" };
   function itemForm(id, from) {
     var t = id ? byId[id] : null, req = from ? S.loans.find(function (l) { return l.id === from; }) : null;
-    var v = t || { n: req ? req.n : "", c: "wood", k: req && req.amt === "material" ? "material" : "tool", a: "open", b: "2–4", loan: "day", e: "", d: "", m: "", tip: "", want: 1 };
+    var v = t || { n: req ? req.n : "", c: "wood", k: req && req.amt === "material" ? "material" : "tool", a: "open", cert: "", loan: "day", e: "", d: "", m: "", tip: "", want: 1 };
     var sel = function (idn, opts, cur) { return '<select id="' + idn + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === cur ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select>"; };
     var dd = $("#dd");
     dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + (v.e || "🧰") + "</span><h2>" + (t ? "Edit " + esc(t.n) : "Add a tool or material") + '</h2><button class="x" data-close aria-label="Close">✕</button></div>' +
@@ -431,7 +469,7 @@
       "<label>Kind" + sel("it-k", [["tool", "Tool (borrow it)"], ["machine", "Machine (book a time)"], ["material", "Material (used up)"]], v.k) + "</label>" +
       "<label>Category" + sel("it-c", Object.keys(T.CATS).map(function (k) { return [k, T.CATS[k][1] + " " + T.CATS[k][0]]; }), v.c) + "</label>" +
       "<label>Who can use it" + sel("it-a", Object.keys(T.ACCESS).map(function (k) { return [k, T.ACCESS[k][0]]; }), v.a) + "</label>" +
-      "<label>Grades" + sel("it-b", [["2–4", "All of Upper Campus (2–8)"], ["5–8", "5th grade and up"]], v.b) + "</label>" +
+      "<label>Certification (if it needs one)" + sel("it-cert", [["", "None"]].concat(Object.keys(CERT).map(function (k) { return [k, CERT[k].e + " " + CERT[k].n]; })), v.cert || "") + "</label>" +
       "<label>Loan" + sel("it-loan", Object.keys(T.LOAN).map(function (k) { return [k, T.LOAN[k]]; }), v.loan) + "</label>" +
       '<label>Icon (an emoji)<input id="it-e" maxlength="4" value="' + esc(v.e) + '" placeholder="' + (EMOJI[v.c] || "🧰") + '"></label>' +
       (t ? "" : '<label>How many we have now<input type="number" id="it-have" min="0" max="999" value="' + (req ? 0 : 1) + '"></label>') +
@@ -450,7 +488,7 @@
     var n = val("it-n"); if (!n) { msg.className = "note bad"; msg.textContent = "Give it a name."; return; }
     var dup = !id && T.TOOLS.find(function (t) { return t.n.toLowerCase() === n.toLowerCase(); });
     if (dup) { msg.className = "note bad"; msg.innerHTML = "That's already in the catalog. <button class=\"ghost sm\" data-open=\"" + dup.id + "\">Open it</button>"; return; }
-    var c = val("it-c"), d = { n: n.slice(0, 100), c: c, k: val("it-k"), a: val("it-a"), b: val("it-b"), loan: val("it-loan"), e: val("it-e") || EMOJI[c] || "🧰", d: val("it-d").slice(0, 300), m: val("it-m").slice(0, 80), tip: val("it-tip").slice(0, 200), want: Math.max(0, Math.min(999, Math.round(Number(val("it-want")) || 0))), by: me(), at: Date.now() };
+    var c = val("it-c"), d = { n: n.slice(0, 100), c: c, k: val("it-k"), a: val("it-cert") ? "badge" : val("it-a") === "badge" ? "open" : val("it-a"), cert: val("it-cert"), loan: val("it-loan"), e: val("it-e") || EMOJI[c] || "🧰", d: val("it-d").slice(0, 300), m: val("it-m").slice(0, 80), tip: val("it-tip").slice(0, 200), want: Math.max(0, Math.min(999, Math.round(Number(val("it-want")) || 0))), by: me(), at: Date.now() };
     if (d.k === "material") d.loan = "take";
     var nid = id || "x-" + slug(n) + "-" + newId().slice(0, 5), have = id ? null : Math.max(0, Math.min(999, Math.round(Number(val("it-have")) || 0)));
     var req = from ? S.loans.find(function (l) { return l.id === from; }) : null, now = Date.now();
@@ -540,9 +578,9 @@
 
   // ---------- Guides: the desk ----------
   function gtabs(v) {
-    var req = S.loans.filter(function (l) { return l.status === "requested"; }).length, late = S.loans.filter(function (l) { return l.status === "out" && l.due < today(); }).length, rtoday = resvToday().length;
+    var req = S.loans.filter(function (l) { return l.status === "requested" && l.kind !== "cert"; }).length, late = S.loans.filter(function (l) { return l.status === "out" && l.due < today(); }).length, rtoday = resvToday().length;
     var a = function (id, label, n) { return '<a href="#' + id + '"' + (v === id ? ' aria-current="page"' : "") + ">" + label + (n ? '<span class="n">' + n + "</span>" : "") + "</a>"; };
-    return '<nav class="gtabs" aria-label="Tool Library">' + a("desk", "Desk", req + late + rtoday + reportedItems().length) + a("catalog", "Catalog") + a("inventory", "Inventory") + a("badges", "Badges") + a("shop", "Shopping list") + "</nav>";
+    return '<nav class="gtabs" aria-label="Tool Library">' + a("desk", "Desk", req + late + rtoday + reportedItems().length) + a("catalog", "Catalog") + a("inventory", "Inventory") + a("certs", "Certifications", S.loans.filter(function (l) { return l.kind === "cert" && l.status === "requested"; }).length) + a("shop", "Shopping list") + "</nav>";
   }
   function deskSummary() {
     var out = S.loans.filter(function (l) { return l.status === "out"; }), late = out.filter(function (l) { return l.due < today(); });
@@ -558,18 +596,24 @@
   // A reservation is due back on the day its last block ends (one that ends at midnight is due the day before).
   var dueFor = function (t, l) { return l && isResv(l) && l.end ? iso(new Date(l.end - 1)) : l && l.kind === "book" && l.when ? l.when.split(" ")[0] : t && t.loan === "week" ? plusDays(7) : today(); };
   function loanRow(l, actions) {
-    var t = byId[l.item] || { e: "🧰", n: l.n }, late = l.status === "out" && l.due < today();
-    var kind = { borrow: "Borrow", book: "Booking", reserve: "Reserved" + ((l.qty || 1) > 1 ? " × " + l.qty : ""), material: "Materials", badge: "Wants its badge", wish: "Asked us to get it", "new": "New request" + (l.amt === "material" ? " (material)" : "") }[l.kind] || "";
+    var t = byId[l.item] || (l.kind === "cert" && CERT[l.item]) || { e: "🧰", n: l.n }, late = l.status === "out" && l.due < today();
+    var kind = { borrow: "Borrow", book: "Booking", reserve: "Reserved" + ((l.qty || 1) > 1 ? " × " + l.qty : ""), material: "Materials", badge: "Wants its badge", cert: "Ready for a check-off", wish: "Asked us to get it", "new": "New request" + (l.amt === "material" ? " (material)" : "") }[l.kind] || "";
     return '<li class="' + (late ? "late" : "") + '"><span class="em">' + t.e + '</span><span class="t"><b>' + esc(l.name) + "</b> · " + esc(t.n || l.n) + "<small>" + esc(kind) + (isResv(l) ? " · " + esc(spanTxt(l.start, l.end)) : l.when ? " · " + esc(whenTxt(l.when)) : "") + (l.amt && l.kind !== "new" ? " · " + esc(l.amt) : "") + (l.note ? " · “" + esc(l.note) + "”" : "") + (l.status === "out" ? " · " + (late ? "was due " : "due ") + esc(fmt(l.due)) : "") + "</small></span>" + actions + "</li>";
   }
   function desk() {
-    var req = S.loans.filter(function (l) { return l.status === "requested"; }), wait = S.loans.filter(function (l) { return l.status === "waiting"; });
+    var req = S.loans.filter(function (l) { return l.status === "requested" && l.kind !== "cert"; }), wait = S.loans.filter(function (l) { return l.status === "waiting"; });
     var out = S.loans.filter(function (l) { return l.status === "out"; }).sort(function (a, b) { return String(a.due).localeCompare(String(b.due)); });
     var resv = S.loans.filter(liveResv).sort(function (a, b) { return a.start - b.start; });
     var missed = S.loans.filter(function (l) { return isResv(l) && l.status === "reserved" && (l.end || 0) <= Date.now(); });
     var give = function (l) {
       var t = byId[l.item];
+      if (t && t.a === "badge" && l.kind !== "cert" && !certOk(t, l.sid)) return '<span class="pill p-late" title="This student hasn\'t passed ' + esc(CERT[t.cert] ? CERT[t.cert].n : "this tool's certification") + '">Not certified</span> ' + give2(l);
+      return give2(l);
+    };
+    var give2 = function (l) {
+      var t = byId[l.item];
       if (l.kind === "badge") return '<button class="ghost sm" data-badge-from="' + l.id + '">Taught: give badge</button><button class="ghost sm" data-decline="' + l.id + '">Not now</button>';
+      if (l.kind === "cert") return '<button class="ghost sm" data-checkoff="' + esc(l.item) + '">Check off</button>';
       if (l.kind === "material" || (isResv(l) && t && t.k === "material")) return '<button class="ghost sm" data-given="' + l.id + '">Given</button><button class="ghost sm" data-decline="' + l.id + '">' + (isResv(l) ? "Cancel it" : "Not now") + "</button>";
       if (isResv(l)) return '<input type="date" value="' + dueFor(t, l) + '" id="due-' + l.id + '" aria-label="Due"><button class="ghost sm" data-hand="' + l.id + '">Hand it out</button><button class="ghost sm" data-decline="' + l.id + '">Cancel it</button>';
       return '<input type="date" value="' + dueFor(t, l) + '" id="due-' + l.id + '" aria-label="Due"><button class="ghost sm" data-hand="' + l.id + '">Hand it out</button><button class="ghost sm" data-decline="' + l.id + '">Not now</button>';
@@ -578,7 +622,7 @@
     var section = function (h, xs, act, empty) { return '<section class="panel"><h2>' + h + " (" + xs.length + ")</h2>" + (xs.length ? '<ul class="loans">' + xs.map(function (l) { return loanRow(l, act(l)); }).join("") + "</ul>" : '<p class="sub">' + empty + "</p>") + "</section>"; };
     var kidOpts = S.kids.filter(upper).map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + " (" + esc(s.band) + ")</option>"; }).join("");
     var itemOpts = T.TOOLS.filter(function (t) { return t.k !== "material" && stock(t).have > 0; }).map(function (t) { return '<option value="' + t.id + '">' + esc(t.n) + "</option>"; }).join("");
-    return (S.msg ? '<p class="note ok" role="status">' + esc(S.msg) + "</p>" : "") + '<div class="cols">' +
+    return (S.msg ? '<p class="note ok" role="status">' + esc(S.msg) + "</p>" : "") + certQueue() + '<div class="cols">' +
       section("Asked for", req, give, "No requests right now.") +
       section("Out now", out, back, "Nothing checked out.") +
       (function () {
@@ -638,6 +682,7 @@
     var sid = $("#co-kid").value, id = $("#co-item").value, due = $("#co-due").value || today();
     if (!sid || !id) { alert("Pick a student and a tool."); return; }
     var s = S.kids.find(function (k) { return k.id === sid; }), t = byId[id], now = Date.now(), lid = newId(), nm = myName();
+    if (t.a === "badge" && !certOk(t, sid) && !confirm(s.name + " hasn't passed the " + (CERT[t.cert] ? CERT[t.cert].n : "") + " certification. Check it out anyway (only if you'll be right there)?")) return;
     var data = { item: id, n: t.n, kind: "borrow", email: String(s.email || "").toLowerCase(), sid: sid, name: s.name || "", band: s.band || "", status: "out", at: now, when: "", amt: "", note: "", due: due, out: now, by: me(), byName: nm };
     if (isTest()) data.test = true;
     btn.disabled = true;
@@ -677,22 +722,198 @@
     catch (e) { btn.disabled = false; alert(e.message); }
   }
 
-  // ---------- Guides: badges ----------
-  function badges() {
-    var kids = S.kids.filter(upper).filter(function (s) { return S.band === "All" || s.band === S.band; });
-    var bt = T.TOOLS.filter(function (t) { return t.a === "badge"; });
-    var cur = S.kid && S.kids.find(function (k) { return k.id === S.kid; });
-    var has = cur ? (S.badges[cur.id] || []) : [];
-    var learners = S.loans.filter(function (l) { return l.kind === "badge" && l.status === "requested"; });
-    return '<div class="cols"><section class="panel"><h2>Give a badge</h2><p class="sub">A badge means you taught the student this tool and watched them use it safely. With it, they can borrow the tool without asking each time.</p>' +
-      '<div class="tg" style="margin-bottom:8px">' + ["All"].concat(BANDS).map(function (b) { return '<button data-band="' + b + '" class="' + (S.band === b ? "on" : "") + '">' + (b === "All" ? "All bands" : b) + "</button>"; }).join("") + "</div>" +
-      '<select id="bk"><option value="">Pick a student…</option>' + kids.map(function (s) { return '<option value="' + esc(s.id) + '"' + (S.kid === s.id ? " selected" : "") + ">" + esc(s.name) + " (" + esc(s.band) + ") · " + (S.badges[s.id] || []).length + " badges</option>"; }).join("") + "</select>" +
-      (cur ? '<div style="display:grid;gap:6px;margin-top:12px">' + bt.map(function (t) { var ok = bandOk(t, cur.band); return '<label style="display:flex;gap:8px;align-items:center;font-size:14px' + (ok ? "" : ";opacity:.5") + '"><input type="checkbox" data-bdg="' + t.id + '"' + (has.indexOf(t.id) >= 0 ? " checked" : "") + (ok ? "" : " disabled") + "> " + t.e + " " + esc(t.n) + (ok ? "" : " <small>(" + gradesFrom(t) + ")</small>") + "</label>"; }).join("") + '<button class="go" data-save-badges>Save ' + esc(first(cur.name)) + "'s badges</button></div>" : "") + "</section>" +
-      '<section class="panel"><h2>Want to learn (' + learners.length + ")</h2>" + (learners.length ? '<ul class="loans">' + learners.map(function (l) { return loanRow(l, '<button class="ghost sm" data-badge-from="' + l.id + '">Taught: give badge</button>'); }).join("") + "</ul>" : '<p class="sub">No one is waiting to learn a tool.</p>') + "</section></div>";
+  // ---------- certifications: students ----------
+  // On a tool's sheet, when the student isn't certified for it yet.
+  function certNeed(t) {
+    var c = CERT[t.cert];
+    if (!c) return '<p class="note">This one needs a guide to check you off first. Ask a guide.</p>';
+    var others = certTools(t.cert).filter(function (x) { return x.id !== t.id; });
+    var p = pendingCert(t.cert);
+    return '<p class="note">To borrow this on your own, pass the <b>' + c.e + " " + esc(c.n) + "</b> certification" + (others.length ? ". It also covers " + others.map(function (x) { return esc(x.n); }).join(", ") : "") + ". " +
+      (p ? "You've asked for your check-off: a guide will watch you and sign you off." : "Learn the safety rules, take a short quiz, then show a guide.") + '</p><button class="go" data-cert="' + t.cert + '">' + (p ? "See my certification" : "Start the certification") + "</button>";
   }
+  // Every certification and where this student stands.
+  function openCertList() {
+    var dd = $("#dd"), sid = mySid();
+    dd.innerHTML = '<div class="b"><div class="h"><span class="em">🛡️</span><h2>Safety certifications</h2><button class="x" data-close aria-label="Close">✕</button></div>' +
+      '<p class="sub">No tool here is for “older kids only.” Each certification covers a group of similar tools: learn its safety rules, pass the quiz, and show a guide you can use them safely. Then you can borrow every tool in the group on your own.</p>' +
+      '<div class="clist">' + Object.keys(CERT).map(function (k) {
+        var c = CERT[k], done = certsOf(sid)[k], p = pendingCert(k), ts = certTools(k);
+        return '<button type="button" class="crow" data-cert="' + k + '"><span class="em">' + c.e + '</span><span class="t"><b>' + esc(c.n) + "</b><small>" + esc(ts.map(function (x) { return x.n; }).join(", ") || "No tools yet") + "</small></span>" +
+          (done ? '<span class="pill p-out">Certified</span>' : p ? '<span class="pill p-wait">Check-off asked</span>' : S.quiz[k] ? '<span class="pill p-wait">Quiz passed</span>' : "") + "</button>";
+      }).join("") + "</div></div>";
+    if (!dd.open) dd.showModal();
+  }
+  // One certification: the rules, the quiz, and asking for a check-off.
+  function openCert(cid) {
+    var c = CERT[cid]; if (!c) return;
+    if (guide()) { openCheck(cid); return; }
+    var dd = $("#dd"), done = certsOf(mySid())[cid], p = pendingCert(cid), ts = certTools(cid), quizOk = !c.quiz.length || S.quiz[cid];
+    var step = function (n, h, body) { return '<div class="cstep"><h3><i>' + n + "</i> " + h + "</h3>" + body + "</div>"; };
+    dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + c.e + "</span><h2>" + esc(c.n) + '</h2><button class="x" data-close aria-label="Close">✕</button></div>' +
+      '<p class="sub">Covers: ' + (ts.map(function (x) { return x.e + " " + esc(x.n); }).join(", ") || "no tools yet") + "</p>" +
+      (done ? '<p class="note ok">You\'re certified' + (done.byName ? " (checked off by " + esc(done.byName) + (done.at ? ", " + fmt(iso(new Date(done.at))) : "") + ")" : "") + ". You can borrow all of these on your own. Keep following the rules: a guide can take a certification back if it isn't used safely.</p>" : "") +
+      step(1, "The safety rules", '<ol class="rules">' + c.rules.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ol>") +
+      (c.quiz.length ? step(2, "Quiz", quizOk && !S.retake ? '<p class="note ok">Passed. <button type="button" class="linkish" data-retake="' + cid + '">Take it again</button></p>' :
+        c.quiz.map(function (q, i) { return '<fieldset class="q"><legend>' + esc(q[0]) + "</legend>" + q[1].map(function (a, j) { return '<label><input type="radio" name="q' + i + '" value="' + j + '"> ' + esc(a) + "</label>"; }).join("") + '<p class="why" id="why' + i + '"></p></fieldset>'; }).join("") +
+        '<button class="go" data-quiz="' + cid + '">Check my answers</button>') : "") +
+      step(c.quiz.length ? 3 : 2, "Show a guide", '<p class="sub">A guide watches you do each of these, then signs you off. Guides often check off a few students at once, so you might do it with friends.</p><ul class="check">' + c.check.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>" +
+        (done ? "" : p ? '<p class="note ok">You asked for your check-off. A guide will find you.</p><button class="ghost sm" data-cancel="' + p.id + '">Cancel my request</button>'
+          : quizOk ? (c.quiz.length ? "" : '<label class="agree"><input type="checkbox" id="agree"> I read the rules and I\'ll follow them.</label>') + '<button class="go" data-certask="' + cid + '">I\'m ready for my check-off</button>' : '<p class="note">Pass the quiz first.</p>')) +
+      '<p class="note" id="ddmsg" role="status"></p></div>';
+    S.retake = false;
+    if (!dd.open) dd.showModal();
+  }
+  function gradeQuiz(cid, btn) {
+    var c = CERT[cid], right = 0;
+    c.quiz.forEach(function (q, i) {
+      var pick = document.querySelector('input[name="q' + i + '"]:checked'), el = $("#why" + i), ok = pick && +pick.value === q[2];
+      if (ok) right++;
+      el.className = "why " + (ok ? "ok" : "bad"); el.textContent = !pick ? "Pick an answer." : ok ? "Right. " + q[3] : "Not quite. " + q[3];
+    });
+    var msg = $("#ddmsg");
+    if (right === c.quiz.length) { passQuiz(cid); openCert(cid); var m = $("#ddmsg"); if (m) { m.className = "note ok"; m.textContent = "All right! Now ask a guide for your check-off."; } }
+    else { msg.className = "note bad"; msg.textContent = right + " of " + c.quiz.length + " right. Read the rules again and try once more."; }
+  }
+  async function certAsk(cid, btn) {
+    var c = CERT[cid], r = S.role, msg = $("#ddmsg"), ag = $("#agree");
+    if (ag && !ag.checked) { msg.className = "note bad"; msg.textContent = "Check the box to say you read the rules."; return; }
+    btn.disabled = true;
+    try {
+      var name = isTest() ? "Test Student" : String((user() && user().displayName) || String(r.email).split("@")[0]);
+      var data = { item: cid, n: c.n.slice(0, 100), kind: "cert", email: String(r.email || "").toLowerCase(), sid: r.sid || "", name: name.slice(0, 60), band: r.band || "", status: "requested", at: Date.now(), when: "", amt: "", note: c.quiz.length ? "Passed the quiz" : "Read the rules" };
+      if (isTest()) data.test = true;
+      var lid = newId(); await commit([{ path: "toolLoans/" + lid, data: data, create: true }]);
+      S.loans.unshift(Object.assign({ id: lid }, data));
+      if (window.wlNotifyGuides) window.wlNotifyGuides({ kind: "tool", text: first(name) + " is ready for a " + c.n + " check-off", link: "/guides/tools/#certs" });
+      draw(); openCert(cid);
+      if (window.wlTasks) window.wlTasks.refresh();
+    } catch (e) { btn.disabled = false; msg.className = "note bad"; msg.textContent = e.message; }
+  }
+
+  // ---------- certifications: guides ----------
+  var waitingFor = function (cid) { return S.loans.filter(function (l) { return l.kind === "cert" && l.status === "requested" && l.item === cid; }); };
+  // The Desk's strip of students waiting, grouped by certification, so one check-off session covers them all.
+  function certQueue() {
+    var ids = Object.keys(CERT).filter(function (k) { return waitingFor(k).length; });
+    if (!ids.length) return "";
+    return '<section class="panel" style="margin:12px 0"><h2>Ready for a check-off</h2><p class="sub">They read the rules and passed the quiz. Watch each one do the check-off list, then sign them off together.</p><div class="clist">' +
+      ids.map(function (k) { var w = waitingFor(k); return '<button type="button" class="crow" data-checkoff="' + k + '"><span class="em">' + CERT[k].e + '</span><span class="t"><b>' + esc(CERT[k].n) + "</b><small>" + w.map(function (l) { return esc(first(l.name)); }).join(", ") + '</small></span><span class="pill p-wait">' + w.length + " waiting</span></button>"; }).join("") + "</div></section>";
+  }
+  function certsView() {
+    var cur = S.kid && S.kids.find(function (k) { return k.id === S.kid; }), have = cur ? certsOf(cur.id) : {};
+    var loose = T.TOOLS.filter(function (t) { return t.a === "badge" && !CERT[t.cert]; });
+    return (S.msg ? '<p class="note ok" role="status">' + esc(S.msg) + "</p>" : "") + certQueue() +
+      '<section class="panel" style="margin:12px 0"><h2>Certifications</h2><p class="sub">No tool is limited by grade. A tool that needs a certification can be borrowed by any student who passed it: they read the rules, pass the quiz on their own, then you watch them do the check-off list. One certification covers a group of similar tools, so a student is checked off once for all of them. Move tools between groups, or add a new group, with “Tools”.</p>' +
+      '<div class="clist">' + Object.keys(CERT).map(function (k) {
+        var c = CERT[k], n = Object.keys(S.certs).filter(function (sid) { return S.certs[sid][k]; }).length, w = waitingFor(k).length;
+        return '<div class="crow"><span class="em">' + c.e + '</span><span class="t"><b>' + esc(c.n) + "</b><small>" + esc(certTools(k).map(function (x) { return x.n; }).join(", ") || "No tools yet") + " · " + n + " certified" + (w ? " · " + w + " waiting" : "") + '</small></span><button class="ghost sm" data-checkoff="' + k + '">Check off</button><button class="ghost sm" data-certtools="' + k + '">Tools</button></div>';
+      }).join("") + "</div>" +
+      (loose.length ? '<p class="note bad" style="margin-top:10px">These need a certification but aren\'t in a group yet, so students can\'t get certified for them: ' + loose.map(function (t) { return esc(t.n); }).join(", ") + ". Add each to a group with “Tools”.</p>" : "") +
+      '<button class="ghost sm" style="margin-top:10px" data-newcert>Add a certification</button></section>' +
+      '<section class="panel" style="margin:12px 0"><h2>One student</h2><p class="sub">See or change a student\'s certifications. Take one away if a tool isn\'t used safely; they can earn it back.</p>' +
+      '<select id="bk"><option value="">Pick a student…</option>' + S.kids.filter(upper).map(function (s) { return '<option value="' + esc(s.id) + '"' + (S.kid === s.id ? " selected" : "") + ">" + esc(s.name) + " (" + esc(s.band) + ") · " + Object.keys(certsOf(s.id)).length + "</option>"; }).join("") + "</select>" +
+      (cur ? '<div class="ckgrid">' + Object.keys(CERT).map(function (k) { return '<label><input type="checkbox" data-scert="' + k + '"' + (have[k] ? " checked" : "") + "> " + CERT[k].e + " " + esc(CERT[k].n) + (have[k] && have[k].byName ? ' <small>(' + esc(have[k].byName) + ")</small>" : "") + "</label>"; }).join("") + '</div><button class="go sm" data-savescert>Save</button>' : "") + "</section>";
+  }
+  // The check-off sheet: what to watch for, and who to sign off (the students who asked, plus any others you watched).
+  function openCheck(cid) {
+    var c = CERT[cid]; if (!c) return;
+    var dd = $("#dd"), w = waitingFor(cid), wsid = w.map(function (l) { return l.sid; });
+    var others = S.kids.filter(upper).filter(function (s) { return wsid.indexOf(s.id) < 0 && !certsOf(s.id)[cid]; });
+    var certified = S.kids.filter(function (s) { return certsOf(s.id)[cid]; });
+    dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + c.e + "</span><h2>Check off: " + esc(c.n) + '</h2><button class="x" data-close aria-label="Close">✕</button></div>' +
+      '<p class="sub">Covers ' + (certTools(cid).map(function (x) { return esc(x.n); }).join(", ") || "no tools yet") + '. <button type="button" class="linkish" data-certtools="' + cid + '">Change tools</button></p>' +
+      '<div class="cstep"><h3>Watch them do</h3><ul class="check">' + c.check.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + '</ul><details><summary class="sub">The safety rules they learned</summary><ol class="rules">' + c.rules.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ol></details></div>" +
+      '<div class="cstep"><h3>Sign off</h3>' +
+      (w.length ? '<p class="sub">Asked for a check-off (' + (c.quiz.length ? "quiz passed" : "read the rules") + "):</p>" + w.map(function (l) { return '<div class="who"><label><input type="checkbox" data-co="' + esc(l.sid) + '" data-lid="' + l.id + '" checked> ' + esc(l.name) + '</label><button class="ghost sm" data-notyet="' + l.id + '">Not yet</button></div>'; }).join("") : '<p class="sub">Nobody has asked yet.</p>') +
+      (others.length ? '<details' + (w.length ? "" : " open") + '><summary class="sub">Add students you taught in person (a Lab or a group lesson)</summary><div class="ckgrid">' + others.map(function (s) { return '<label><input type="checkbox" data-co="' + esc(s.id) + '"> ' + esc(s.name) + " <small>" + esc(s.band) + "</small></label>"; }).join("") + "</div></details>" : "") +
+      '<button class="go" data-certify="' + cid + '">Certify the checked students</button></div>' +
+      (certified.length ? '<p class="sub">Already certified: ' + certified.map(function (s) { return esc(s.name); }).join(", ") + ".</p>" : "") +
+      '<p class="note" id="ddmsg" role="status"></p></div>';
+    if (!dd.open) dd.showModal();
+  }
+  async function certify(cid, btn) {
+    var boxes = [].slice.call(document.querySelectorAll("[data-co]:checked")), msg = $("#ddmsg");
+    if (!boxes.length) { msg.className = "note bad"; msg.textContent = "Check at least one student."; return; }
+    var now = Date.now(), nm = myName(), W = [], sids = [], lids = [];
+    boxes.forEach(function (b) {
+      var sid = b.dataset.co; if (!sid || sids.indexOf(sid) >= 0) return; sids.push(sid); if (b.dataset.lid) lids.push(b.dataset.lid);
+      var m = Object.assign({}, certsOf(sid)); m[cid] = { at: now, by: me(), byName: nm };
+      W.push({ path: "toolBadges/" + sid, data: { certs: m, by: me(), at: now }, merge: true });
+    });
+    lids.forEach(function (lid) { W.push({ path: "toolLoans/" + lid, data: { status: "done", closed: now, by: me(), byName: nm }, merge: true }); });
+    if (!W.length) { msg.className = "note bad"; msg.textContent = "Those students have no roster record to save the certification on."; return; }
+    btn.disabled = true;
+    try {
+      await commit(W);
+      sids.forEach(function (sid) { S.certs[sid] = Object.assign({}, certsOf(sid)); S.certs[sid][cid] = { at: now, by: me(), byName: nm }; });
+      lids.forEach(function (lid) { var l = S.loans.find(function (x) { return x.id === lid; }); if (l) l.status = "done"; });
+      var emails = sids.map(function (sid) { var k = S.kids.find(function (x) { return x.id === sid; }); return k && k.email; }).filter(Boolean);
+      if (window.wlNotify && emails.length) window.wlNotify(emails, { kind: "tool", text: "You're certified: " + CERT[cid].n + ". You can borrow " + (certTools(cid).length > 1 ? "all of those tools" : "it") + " on your own now.", link: "/tools/" });
+      S.msg = sids.length + (sids.length > 1 ? " students are" : " student is") + " certified for " + CERT[cid].n + ".";
+      $("#dd").close(); draw(); refreshTasks();
+    } catch (e) { btn.disabled = false; msg.className = "note bad"; msg.textContent = e.message; }
+  }
+  async function notYet(lid, btn) {
+    var l = S.loans.find(function (x) { return x.id === lid; }); if (!l) return;
+    var why = prompt("What should " + first(l.name) + " practice first? (They'll see this.)") ; if (why === null) return;
+    btn.disabled = true;
+    try {
+      await commit([{ path: "toolLoans/" + lid, data: { status: "declined", gnote: why.slice(0, 200), closed: Date.now(), by: me(), byName: myName() }, merge: true }]);
+      l.status = "declined";
+      if (window.wlNotify && l.email) window.wlNotify([l.email], { kind: "tool", text: "Not yet for " + l.n + (why ? ": " + why.slice(0, 160) : "") + ". Practice and ask again.", link: "/tools/" });
+      openCheck(l.item); draw(); refreshTasks();
+    } catch (e) { btn.disabled = false; alert(e.message); }
+  }
+  async function saveStudentCerts(btn) {
+    var sid = S.kid, old = certsOf(sid), m = {}, now = Date.now();
+    [].forEach.call(document.querySelectorAll("[data-scert]"), function (x) { if (x.checked) m[x.dataset.scert] = old[x.dataset.scert] || { at: now, by: me(), byName: myName() }; });
+    btn.disabled = true;
+    try { await commit([{ path: "toolBadges/" + sid, data: { certs: m, by: me(), at: now }, merge: true }]); S.certs[sid] = m; S.msg = "Certifications saved."; draw(); }
+    catch (e) { btn.disabled = false; alert(e.message); }
+  }
+  // Which tools a certification covers. Each tool can be in one group; moving it out makes it open, guide-only or
+  // guide-run instead. Saved for everyone in toolConfig/certs.
+  function openCertTools(cid) {
+    var c = CERT[cid], dd = $("#dd");
+    var opts = function (cur) { return [["open", "Anyone (no certification)"], ["guide", "Only with a guide there"], ["staff", "Guides use it"]].concat(Object.keys(CERT).map(function (k) { return [k, CERT[k].e + " " + CERT[k].n]; })).map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === cur ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join(""); };
+    var ts = certTools(cid), rest = T.TOOLS.filter(function (t) { return t.cert !== cid; }).sort(function (a, b) { return a.n.localeCompare(b.n); });
+    dd.innerHTML = '<div class="b"><div class="h"><span class="em">' + c.e + "</span><h2>Tools in " + esc(c.n) + '</h2><button class="x" data-close aria-label="Close">✕</button></div>' +
+      '<p class="sub">Students certified for ' + esc(c.n) + " can borrow every tool here. Add a similar tool and everyone already certified can borrow it too, with no new check-off.</p>" +
+      (ts.length ? '<ul class="loans">' + ts.map(function (t) { return '<li><span class="em">' + t.e + '</span><span class="t"><b>' + esc(t.n) + '</b></span><select data-move="' + t.id + '" aria-label="Move ' + esc(t.n) + '">' + opts(cid) + "</select></li>"; }).join("") + "</ul>" : '<p class="sub">No tools yet.</p>') +
+      '<div class="act" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><select id="addtool" style="flex:1 1 240px"><option value="">Add a tool…</option>' + rest.map(function (t) { return '<option value="' + t.id + '">' + t.e + " " + esc(t.n) + (t.cert && CERT[t.cert] ? " (now in " + esc(CERT[t.cert].n) + ")" : t.a !== "open" ? " (" + esc(T.ACCESS[t.a][0]) + ")" : "") + "</option>"; }).join("") + '</select><button class="go sm" data-addtool="' + cid + '">Add</button></div>' +
+      '<button class="go" style="margin-top:12px" data-savemoves="' + cid + '">Save changes</button> <button class="ghost" data-checkoff="' + cid + '">Back to check-off</button><p class="note" id="ddmsg" role="status"></p></div>';
+    if (!dd.open) dd.showModal();
+  }
+  async function saveMap(changes, btn, then) {
+    var m = Object.assign({}, S.cfg.map); Object.keys(changes).forEach(function (id) { m[id] = changes[id]; });
+    btn.disabled = true;
+    try { await commit([{ path: "toolConfig/certs", data: { map: m, updated: Date.now(), by: me() }, merge: true }]); S.cfg.map = m; applyCerts(); S.msg = "Saved."; draw(); then(); }
+    catch (e) { btn.disabled = false; var msg = $("#ddmsg"); if (msg) { msg.className = "note bad"; msg.textContent = e.message; } }
+  }
+  function openNewCert() {
+    var dd = $("#dd");
+    dd.innerHTML = '<div class="b"><div class="h"><span class="em">🛡️</span><h2>Add a certification</h2><button class="x" data-close aria-label="Close">✕</button></div>' +
+      '<p class="sub">For a group of similar tools that need the same safety rules. Students read the rules and agree to them (there\'s no quiz for groups you add), then you check them off.</p><div class="form">' +
+      '<label class="wide">Name<input id="nc-n" maxlength="60" placeholder="For example: Kitchen knives"></label><label>Icon (an emoji)<input id="nc-e" maxlength="4" placeholder="🛡️"></label><span></span>' +
+      '<label class="wide">Safety rules, one per line<textarea id="nc-r" rows="5" maxlength="1500"></textarea></label>' +
+      '<label class="wide">What the guide watches them do, one per line<textarea id="nc-c" rows="4" maxlength="1000"></textarea></label></div>' +
+      '<button class="go" data-savecert>Add it, then choose its tools</button><p class="note" id="ddmsg" role="status"></p></div>';
+    if (!dd.open) dd.showModal();
+  }
+  async function saveNewCert(btn) {
+    var v = function (x) { return ($("#" + x).value || "").trim(); }, lines = function (x) { return v(x).split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 12); }, msg = $("#ddmsg");
+    var n = v("nc-n"), rules = lines("nc-r"), check = lines("nc-c");
+    if (!n || !rules.length || !check.length) { msg.className = "note bad"; msg.textContent = "Give it a name, at least one rule and at least one thing to watch."; return; }
+    var id = "c-" + slug(n), custom = Object.assign({}, S.cfg.custom); custom[id] = { n: n.slice(0, 60), e: v("nc-e") || "🛡️", rules: rules, check: check };
+    btn.disabled = true;
+    try { await commit([{ path: "toolConfig/certs", data: { custom: custom, updated: Date.now(), by: me() }, merge: true }]); S.cfg.custom = custom; applyCerts(); draw(); openCertTools(id); }
+    catch (e) { btn.disabled = false; msg.className = "note bad"; msg.textContent = e.message; }
+  }
+  // Older per-tool badge requests from before certifications.
   async function saveBadges(sid, items, btn) {
     if (btn) btn.disabled = true;
-    try { await commit([{ path: "toolBadges/" + sid, data: { items: items, by: me(), at: Date.now() } }]); S.badges[sid] = items; S.msg = "Badges saved."; draw(); }
+    try { await commit([{ path: "toolBadges/" + sid, data: { items: items, by: me(), at: Date.now() }, merge: true }]); S.badges[sid] = items; S.msg = "Badge saved."; draw(); }
     catch (e) { if (btn) btn.disabled = false; alert(e.message); }
   }
   async function badgeFrom(lid, btn) {
@@ -700,7 +921,24 @@
     var items = (S.badges[l.sid] || []).slice(); if (items.indexOf(l.item) < 0) items.push(l.item);
     await saveBadges(l.sid, items, btn);
     await closeLoan(lid, "done", btn).catch(function () { });
-    if (window.wlNotify && l.email) window.wlNotify([l.email], { kind: "tool", text: "You earned the " + l.n + " badge. You can borrow it now.", link: "/tools/" });
+    if (window.wlNotify && l.email) window.wlNotify([l.email], { kind: "tool", text: "You can borrow " + l.n + " on your own now.", link: "/tools/" });
+  }
+  function certClick(d, b) {
+    if (d.certlist !== undefined) { openCertList(); return true; }
+    if (d.cert) { openCert(d.cert); return true; }
+    if (d.retake) { S.retake = true; openCert(d.retake); return true; }
+    if (d.quiz) { gradeQuiz(d.quiz, b); return true; }
+    if (d.certask) { certAsk(d.certask, b); return true; }
+    if (d.checkoff) { openCheck(d.checkoff); return true; }
+    if (d.certify) { certify(d.certify, b); return true; }
+    if (d.notyet) { notYet(d.notyet, b); return true; }
+    if (d.savescert !== undefined) { saveStudentCerts(b); return true; }
+    if (d.certtools) { openCertTools(d.certtools); return true; }
+    if (d.addtool) { var id = $("#addtool").value; if (!id) return true; var ch = {}; ch[id] = d.addtool; saveMap(ch, b, function () { openCertTools(d.addtool); }); return true; }
+    if (d.savemoves) { var ch2 = {}; [].forEach.call(document.querySelectorAll("[data-move]"), function (s) { if (s.value !== d.savemoves) ch2[s.dataset.move] = s.value; }); if (!Object.keys(ch2).length) { $("#dd").close(); return true; } saveMap(ch2, b, function () { openCertTools(d.savemoves); }); return true; }
+    if (d.newcert !== undefined) { openNewCert(); return true; }
+    if (d.savecert !== undefined) { saveNewCert(b); return true; }
+    return false;
   }
 
   // ---------- Guides: shopping list ----------
@@ -730,9 +968,9 @@
   document.addEventListener("click", function (e) {
     var b = e.target.closest("button,a"); if (!b) { if (e.target === $("#dd")) $("#dd").close(); return; }
     var d = b.dataset;
+    if (d.scroll) { var cw = document.querySelector(".chipwrap .chips"); if (cw) cw.scrollBy({ left: +d.scroll * cw.clientWidth * 0.7, behavior: "smooth" }); return; }
     if (d.cat) { S.cat = d.cat; draw(); return; }
     if (d.f !== undefined && b.closest(".tg") && !b.closest("tr")) { S.f = d.f; draw(); return; }
-    if (d.band) { S.band = d.band; draw(); return; }
     if (d.open) { openItem(d.open); return; }
     if (d.close !== undefined) { $("#dd").close(); return; }
     if (d.ask) { ask(d.ask, d.id, b); return; }
@@ -747,9 +985,9 @@
     if (d.redismiss) { settleReports(d.redismiss, "dismiss", b); return; }
     if (d.decline) { closeLoan(d.decline, "declined", b); return; }
     if (d.badgeFrom) { badgeFrom(d.badgeFrom, b); return; }
+    if (certClick(d, b)) return;
     if (d.checkout !== undefined) { checkout(b); return; }
     if (d.save) { saveRow(d.save, b); return; }
-    if (d.saveBadges !== undefined) { var items = [].map.call(document.querySelectorAll("[data-bdg]:checked"), function (x) { return x.dataset.bdg; }); saveBadges(S.kid, items, b); return; }
     if (d.newreq !== undefined) { newReqForm(); return; }
     if (d.sendnew !== undefined) { sendNew(b); return; }
     if (d.additem !== undefined) { itemForm(null); return; }

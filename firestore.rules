@@ -337,7 +337,7 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['item', 'n', 'kind', 'email', 'sid', 'name', 'band', 'status', 'at', 'when', 'amt', 'note', 'start', 'end', 'qty'])
           && request.resource.data.band != 'K–1'
           && request.resource.data.status in ['requested', 'waiting', 'wish', 'reserved']
-          && request.resource.data.kind in ['borrow', 'book', 'material', 'badge', 'wish', 'new', 'reserve']
+          && request.resource.data.kind in ['borrow', 'book', 'material', 'badge', 'cert', 'wish', 'new', 'reserve']
           && ((request.resource.data.kind == 'reserve') == (request.resource.data.status == 'reserved'))
           && (request.resource.data.kind != 'reserve' || toolResvOk(request.resource.data))
           && request.resource.data.item is string && request.resource.data.item.size() <= 40
@@ -399,6 +399,17 @@ service cloud.firestore {
       allow update, delete: if staffSchool() || (tester() && resource.data.test == true);
     }
     // Badges: the tools a guide taught a student and signed off on. The student (and guides) can read them.
+    // Items guides added to the catalog, and the guides' settings for safety certifications (which tools each one covers,
+    // and certifications they added). Everyone at school reads them; guides write them.
+    match /toolItems/{id} {
+      allow read: if school() || tester();
+      allow write: if staffSchool();
+    }
+    match /toolConfig/{id} {
+      allow read: if school() || tester();
+      allow write: if staffSchool();
+    }
+    // A student's safety certifications ({ certs: { cert id: { at, by, byName } }, items: older per-tool badges }).
     match /toolBadges/{sid} {
       allow read: if staffSchool() || lsSelf(sid) || testStudent(sid);
       allow write: if staffSchool();

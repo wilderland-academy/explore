@@ -9,6 +9,7 @@
 <link rel="icon" href="/books/f/icon.png">
 <link rel="stylesheet" href="/wl.css">
 <style>
+[hidden]{display:none!important}
 @font-face{font-family:"Uncut Sans";src:url(/books/f/us-700.woff2) format("woff2");font-weight:700;font-display:swap}
 @font-face{font-family:"Inter";src:url(/books/f/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
 *{box-sizing:border-box}
@@ -35,7 +36,7 @@ button,input,select,textarea{font:inherit}
 .loans li{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;background:rgba(8,20,15,.5);font-size:14px}
 .loans li .em{font-size:20px}.loans li .t{flex:1;min-width:0}.loans li small{display:block;color:var(--dim);font-size:12.5px}
 .loans li.late small{color:var(--bad)}
-.newbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.newbar .count{margin:0}
+.newbar{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap;margin:22px 0 18px}.newbar .count{margin:0}.ctrl+.newbar{padding:0 2px}
 .stock{margin-top:12px;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;display:grid;gap:8px}.stock h3{margin:0;font-size:15px}
 .resv{margin-top:6px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:grid;gap:8px;background:rgba(8,20,15,.35)}.resv h3{margin:0;font-size:15px}.resv .form{margin:0}
 .dd dd a{color:var(--neon)}
@@ -50,9 +51,16 @@ button,input,select,textarea{font:inherit}
 .ctrl{position:sticky;top:0;z-index:5;background:rgba(8,20,15,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 0;margin-top:10px}
 .ctrl .in{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .ctrl input[type=search]{flex:1 1 200px;color:var(--paper);background:var(--shelf);border:1px solid var(--line);border-radius:999px;padding:9px 14px}
-.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 100%}
+.chipwrap{position:relative;flex:1 1 100%;min-width:0;background:var(--shelf2);border:1px solid var(--line);border-radius:14px;padding:6px}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 44px,#000 calc(100% - 44px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 44px,#000 calc(100% - 44px),transparent 100%)}
+.chipwrap.at-start .chips{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent 100%);mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent 100%)}
+.chipwrap.at-end .chips{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 56px);mask-image:linear-gradient(90deg,transparent 0,#000 56px)}
+.chipwrap.at-start.at-end .chips,.chipwrap.fits .chips{-webkit-mask-image:none;mask-image:none}
+.chipwrap .cs{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--ink);color:var(--paper);font:700 20px/1 Inter,sans-serif;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+.chipwrap .cs.l{left:4px}.chipwrap .cs.r{right:4px}.chipwrap.at-start .cs.l,.chipwrap.at-end .cs.r,.chipwrap.fits .cs{display:none}
+@media (hover:none){.chipwrap .cs{display:none}}
 .chips::-webkit-scrollbar{display:none}
-.chips button,.tg button{flex:none;font:600 13px/1 Inter,sans-serif;color:var(--dim);background:var(--shelf);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.chips button,.tg button{flex:none;font:600 13px/1 Inter,sans-serif;color:var(--dim);background:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;white-space:nowrap}
 .chips button.on,.tg button.on{color:#0b2b20;background:var(--lamp);border-color:var(--lamp)}
 .tg{display:flex;gap:6px;flex-wrap:wrap}
 .count{color:var(--dim);font-size:13px;margin:14px 0 6px}
@@ -94,6 +102,17 @@ dialog.dd::backdrop{background:rgba(0,0,0,.6)}
 .tblw{overflow-x:auto;margin:8px 0 30px}
 .bar{height:8px;border-radius:8px;background:var(--shelf2);overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--lamp)}
 @media (max-width:760px){.hero,.cols{grid-template-columns:1fr}}
+.certmine{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.certmine h3{font-size:15px;margin-bottom:4px}
+.clist{display:grid;gap:8px}.crow{display:flex;align-items:center;gap:10px;text-align:left;width:100%;padding:10px 12px;border-radius:12px;background:rgba(8,20,15,.5);border:1px solid var(--line);color:inherit;font:inherit;font-size:14px}
+button.crow{cursor:pointer}button.crow:hover{border-color:var(--lamp)}.crow .em{font-size:22px}.crow .t{flex:1;min-width:0}.crow small{display:block;color:var(--dim);font-size:12.5px}
+.cstep{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(8,20,15,.35)}.cstep h3{font-size:15px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.cstep h3 i{font-style:normal;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--lamp);color:#0b2b20;font-size:12px}
+ol.rules,ul.check{margin:0;padding-left:20px;display:grid;gap:5px;font-size:14.5px}
+fieldset.q{border:1px solid var(--line);border-radius:10px;margin:8px 0;padding:8px 12px}fieldset.q legend{font-weight:600;font-size:14.5px;padding:0 4px}fieldset.q label{display:flex;gap:8px;font-size:14px;padding:3px 0;cursor:pointer}
+.why{margin:4px 0 0;font-size:13px}.why.ok{color:var(--lamp)}.why.bad{color:var(--bad)}
+.linkish{background:none;border:0;padding:0;color:var(--neon);text-decoration:underline;cursor:pointer;font:inherit}
+.ckgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px;margin:10px 0}.ckgrid label,.who label,.agree{display:flex;gap:8px;align-items:center;font-size:14px}.ckgrid small{color:var(--dim)}
+.who{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0}.agree{margin:8px 0}
 </style>
 </head>
 <body data-gated class="wl-pending" data-site="{{ include.site }}">
@@ -135,14 +154,14 @@ dialog.dd::backdrop{background:rgba(0,0,0,.6)}
   <div>
 {% if include.site == "guides" %}
     <h1>The Tool Library, <span>at the desk</span></h1>
-    <p>Hand out and check in tools, hand over reservations when they start, keep the inventory honest, give tool badges, and see what to buy next. Students borrow and reserve on <a href="/tools/">their side</a>.</p>
+    <p>Hand out and check in tools, hand over reservations when they start, keep the inventory honest, check off safety certifications, and see what to buy next. Students borrow and reserve on <a href="/tools/">their side</a>.</p>
 {% else %}
     <h1>Borrow what your <span>project needs</span></h1>
     <p>Like the book library, but for tools and materials. Find it, ask for it, a guide hands it to you, and you bring it back clean. Need it later? Reserve it in 4-hour blocks. Open to Upper Campus, grades 2–8.</p>
 {% endif %}
     <ul class="how">
       <li><b>Anyone</b>: any student can borrow it.</li>
-      <li><b>Badge</b>: a guide shows you how and signs you off once. Then it's yours to borrow.</li>
+      <li><b>Certification</b>: learn the safety rules, pass a short quiz, and show a guide. One certification covers a group of similar tools, and then they're yours to borrow. No tool is “for older kids only.”</li>
       <li><b>With a guide</b>: you use it with a guide right there.</li>
       <li><b>Guides use it</b>: a guide runs it, and you plan the project and help.</li>
     </ul>
@@ -155,6 +174,7 @@ dialog.dd::backdrop{background:rgba(0,0,0,.6)}
 </main>
 <dialog class="dd" id="dd"></dialog>
 <script src="/tools/catalog.js"></script>
+<script src="/tools/certs.js"></script>
 <script src="/tools/app.js"></script>
 <script type="module" src="/auth.js" data-site="tools"></script>
 </body>
