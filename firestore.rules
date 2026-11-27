@@ -472,6 +472,82 @@ service cloud.firestore {
       allow read: if staffSchool();
     }
 
+    // ---------- Our Code and Student Court (/code/, /court/, staff desk /guides/court/) ----------
+    // A student sees their own Freedom Levels (a query on lsId == their tracker id). Nobody else's.
+    match /flStudents/{id} {
+      allow read: if lsSelf(resource.data.lsId) || testStudent(resource.data.lsId);
+    }
+    // A student's calm plan: the student writes it; they, their guides and their parents read it.
+    match /calmPlans/{sid} {
+      allow read: if staffSchool() || lsSelf(sid) || lsParent(sid) || testStudent(sid);
+      allow create, update: if (lsSelf(sid) || testStudent(sid))
+        && request.resource.data.keys().hasOnly(['signs', 'helps', 'extra', 'words', 'place', 'adults', 'updated', 'by', 'name', 'band', 'test'])
+        && request.resource.data.signs is string && request.resource.data.signs.size() <= 500
+        && request.resource.data.adults is string && request.resource.data.adults.size() <= 500
+        && request.resource.data.helps is list && request.resource.data.helps.size() <= 12
+        && request.resource.data.extra is string && request.resource.data.extra.size() <= 120
+        && request.resource.data.words is string && request.resource.data.words.size() <= 120
+        && request.resource.data.place is string && request.resource.data.place.size() <= 120
+        && (!('test' in request.resource.data) || tester());
+      allow delete: if staffSchool();
+    }
+    // Student judges and clerks, appointed by staff for a term. Anyone at school can see who serves.
+    match /courtRoles/{email} {
+      allow read: if school() || tester();
+      allow write: if staffSchool() || (tester() && request.resource.data.test == true);
+    }
+    function courtRole() { return get(/databases/$(database)/documents/courtRoles/$(me())).data; }
+    function judgeFor(band) {
+      return school() && exists(/databases/$(database)/documents/courtRoles/$(me()))
+        && courtRole().active == true && band in courtRole().bands && courtRole().get('test', false) == false;
+    }
+    // Complaints. The filer sees theirs; the other student sees a case only once a judge has set a court day; judges
+    // and clerks see their band's cases (and may not act on a case they're part of); staff see and manage everything.
+    match /courtCases/{id} {
+      function d() { return request.resource.data; }
+      function changed() { return d().diff(resource.data).affectedKeys(); }
+      function filer() { return school() && resource.data.byEmail == me(); }
+      function shownTo() { return resource.data.status in ['scheduled', 'restoring', 'not_upheld', 'closed']; }
+      function against() { return lsSelf(resource.data.againstSid) && shownTo(); }
+      function textOk() {
+        return d().what is string && d().what.size() <= 1200 && d().felt is string && d().felt.size() <= 300
+          && d().need is string && d().need.size() <= 300 && d().myPart is string && d().myPart.size() <= 600
+          && d().ask is string && d().ask.size() <= 300 && d().tried in ['peace', 'waived'] && d().waivedBy is string && d().waivedBy.size() <= 60;
+      }
+      allow read: if staffSchool() || filer() || against() || judgeFor(resource.data.band) || (tester() && resource.data.test == true);
+      // Filing: in your own name, against one classmate in the tracker, after a Peace Talk (or a guide's waiver), with
+      // the honesty pledge. Starts with the judge.
+      allow create: if ((school() && d().byEmail == me() && lsSelf(d().bySid) && lsStudent(d().bySid).band == d().band && !('test' in d()))
+          || (tester() && d().test == true))
+        && d().keys().hasOnly(['bySid', 'byEmail', 'byName', 'band', 'againstSid', 'againstName', 'cat', 'tier', 'what', 'felt', 'need', 'myPart', 'ask', 'tried', 'waivedBy', 'pledge', 'status', 'created', 'updated', 'test'])
+        && d().status == 'filed' && d().pledge == true && d().band in ['2–4', '5–8'] && d().tier in [1, 2]
+        && d().againstSid is string && d().againstSid != d().bySid && exists(/databases/$(database)/documents/lsStudents/$(d().againstSid))
+        && d().byName is string && d().byName.size() <= 40 && d().againstName is string && d().againstName.size() <= 40
+        && d().cat is string && d().cat.size() <= 20 && textOk();
+      // The filer withdraws, or fixes and refiles a complaint the judge sent back.
+      allow update: if filer() && resource.data.status in ['filed', 'returned', 'scheduled']
+        && d().status == 'withdrawn' && changed().hasOnly(['status', 'updated']);
+      allow update: if filer() && resource.data.status == 'returned' && d().status == 'filed'
+        && changed().hasOnly(['status', 'updated', 'cat', 'tier', 'what', 'felt', 'need', 'myPart', 'ask', 'tried', 'waivedBy']) && d().tier in [1, 2] && textOk();
+      // The other student tells their side before court day, and says when they've made it right.
+      allow update: if against() && resource.data.status == 'scheduled' && changed().hasOnly(['response', 'respondedAt', 'updated'])
+        && d().response is string && d().response.size() <= 1200;
+      allow update: if against() && resource.data.status == 'restoring' && changed().hasOnly(['doneAt', 'updated']);
+      // Either side asks staff to look again, once, after a finding.
+      allow update: if (filer() || against()) && resource.data.status in ['restoring', 'not_upheld', 'closed'] && !('appealStatus' in resource.data)
+        && changed().hasOnly(['appeal', 'appealBy', 'appealAt', 'appealStatus', 'updated']) && d().appealStatus == 'open'
+        && d().appeal is string && d().appeal.size() <= 600 && d().appealBy == me();
+      // A judge or clerk for the band, who isn't part of the case: accept and set a court day, send it back, pass it to a
+      // guide, then record the finding. Only guides close a case (by signing off the repair).
+      allow update: if judgeFor(resource.data.band) && resource.data.byEmail != me() && !lsSelf(resource.data.againstSid)
+        && ((resource.data.status == 'filed' && d().status in ['scheduled', 'returned', 'referred'])
+            || (resource.data.status == 'scheduled' && d().status in ['scheduled', 'restoring', 'not_upheld', 'referred']))
+        && changed().hasOnly(['status', 'judgeEmail', 'judgeName', 'courtDay', 'note', 'finding', 'findingNote', 'tier', 'restore', 'restoreText', 'due', 'root', 'repeat', 'heardAt', 'updated'])
+        && d().judgeEmail == me();
+      allow update: if staffSchool() || (tester() && resource.data.test == true);
+      allow delete: if isAdmin() || (tester() && resource.data.test == true);
+    }
+
     // Stories guides share with all staff.
     match /mentorStories/{id} {
       allow read: if isStaff();

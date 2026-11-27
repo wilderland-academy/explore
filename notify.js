@@ -111,7 +111,7 @@
     var m = Math.round((Date.now() - ms) / 60000);
     return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : m < 2880 ? "yesterday" : new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
-  var ICON = { alert: "⚠️", urgent: "🚨", tech: "🛠️", coach: "📝", pass: "✅", notyet: "🔁", reward: "🎁", accepted: "🌟", reply: "💬", townhall: "🏛️", vote: "👍", save: "🔖", goal: "🎯", book: "📚", project: "💡", store: "🛒", idea: "🗳️", working: "🧭", note: "🔔" };
+  var ICON = { alert: "⚠️", urgent: "🚨", tech: "🛠️", coach: "📝", pass: "✅", notyet: "🔁", reward: "🎁", accepted: "🌟", reply: "💬", townhall: "🏛️", vote: "👍", save: "🔖", goal: "🎯", book: "📚", project: "💡", store: "🛒", idea: "🗳️", working: "🧭", court: "⚖️", note: "🔔" };
   function draw() {
     var s = slot(); if (!s) return;
     var show = role && (role.role === "student" || role.role === "staff" || role.role === "parent") && user();
@@ -129,7 +129,7 @@
           : "Nothing yet. You'll hear here when a guide checks a challenge you showed them, approves your reward idea or shares takeaways from your Summit Session, and when someone votes for or accepts your Suggestion Wall idea or puts your Town Hall item on the agenda.") + "</p>") + "</div>" : "");
   }
   // ---------- Mr. Fox alerts, for staff ----------
-  var ALERT_CAT = { self_harm: "self-harm or suicide", harmed_by_others: "may be unsafe or harmed", threat_to_others: "threat to others", sexual: "sexual content",
+  var ALERT_CAT = { student_report: "a student asked a guide for help", self_harm: "self-harm or suicide", harmed_by_others: "may be unsafe or harmed", threat_to_others: "threat to others", sexual: "sexual content",
     weapons_danger: "weapons or dangerous activity", drugs_alcohol: "drugs or alcohol", bullying_hate: "bullying or hate", distress: "upset or struggling",
     personal_info: "shared personal details", manipulation: "tried to get around the rules", cheating: "asked AI to do the work", profanity: "rude language",
     off_topic: "off topic", tampering: "log tampering", coach_reply_held_back: "coach reply held back", coach_glitch: "a coach reply came out broken (technical)", risky_project: "a project that needs an adult there",
