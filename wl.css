@@ -14,7 +14,7 @@
 .wlbar .wlbar-switch{position:relative;flex:none;margin-left:-8px}
 .wlbar .wlbar-switch>button.wlbar-site{display:inline-flex;align-items:center;gap:5px;background:none;border:0;border-right:1px solid rgba(255,255,255,.22);cursor:pointer;padding:6px 8px 6px 0;border-radius:0;min-height:36px}
 .wlbar .wlbar-switch>button.wlbar-site:hover .wlbar-caret,.wlbar .wlbar-switch>button[aria-expanded="true"] .wlbar-caret{background:rgba(255,255,255,.14)}
-.wlbar .wlbar-caret{width:18px;height:18px;padding:3px;border-radius:5px;flex:none;color:#d5f367;transition:background .15s}
+.wlbar .wlbar-caret{width:18px;height:18px;padding:3px;border-radius:6px;flex:none;color:#d5f367;transition:background .15s}
 .wlbar .wlbar-switch>button:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 .wlbar .wlbar-menu{position:absolute;left:0;top:calc(100% + 6px);min-width:190px;background:#0f231c;border:1px solid #28493d;border-radius:12px;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:60}
 .wlbar .wlbar-menu[hidden]{display:none}
@@ -34,7 +34,7 @@
 @media (max-width:1500px){.wlbar .wlbar-sites a{padding:0 9px}}
 .wlbar .wlbar-sites a.wlbar-ext::before{content:"";position:absolute;left:-6px;top:9px;bottom:9px;border-left:1px solid rgba(255,255,255,.25)}
 .wlbar .wlbar-out{width:11px;height:11px;flex:none;opacity:.85}
-.wlbar .wlbar-badge{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;margin-left:6px;border-radius:999px;background:#e9a23b;color:#1d1300;font-size:11.5px;font-weight:800}
+.wlbar .wlbar-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:999px;background:#ffb454;color:#2a1700;font:700 11px/18px Inter,system-ui,sans-serif}
 .wlbar .wlbar-badge.urgent{background:#ff6b5b;color:#fff}
 .wlbar .wlbar-auth{margin-left:auto;display:flex;align-items:center;flex:none}
 /* The Guide Mentor button (Guides site). Sits at the right, before the sign-in chip. */
@@ -63,7 +63,7 @@
 .wlbar .wlbar-testbtn:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 .wlbar .wlbar-testmenu{left:auto;right:0;min-width:230px}
 .wlbar .wlbar-testbands{display:flex;gap:6px;padding:2px 8px 8px}
-.wlbar .wlbar-testbands button{flex:1;min-height:34px;border-radius:8px;border:1px solid #28493d;background:none;color:#f6f8ea;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer}
+.wlbar .wlbar-testbands button{flex:1;min-height:34px;border-radius:999px;border:1px solid #28493d;background:none;color:#f6f8ea;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer}
 .wlbar .wlbar-testbands button[aria-pressed=true]{background:#d5f367;color:#0b2b20;border-color:#d5f367}
 .wlbar .wlbar-menu p.wlbar-testnote{text-transform:none;letter-spacing:0;font-weight:400;font-size:12.5px;line-height:1.4;margin-top:4px}
 .wlbar .wlbar-banner{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:8px 20px;background:#f3c84b;color:#2b1d00;font:500 14px/1.4 Inter,system-ui,sans-serif}
@@ -109,7 +109,7 @@ body[data-gated].wl-pending .wl-wait{display:block}
 @media (max-width:980px){.wlbar .wlbar-search kbd{display:none}}
 
 /* Phones: the site's sections go in the ☰ menu (no sideways scrolling). */
-.wlbar .wlbar-burger{display:none;flex:none;width:40px;height:40px;margin-left:4px;border:0;border-radius:10px;background:none;color:#f6f8ea;cursor:pointer;place-items:center}
+.wlbar .wlbar-burger{display:none;flex:none;width:40px;height:40px;margin-left:4px;border:0;border-radius:999px;background:none;color:#f6f8ea;cursor:pointer;place-items:center}
 .wlbar .wlbar-burger svg{width:24px;height:24px}
 .wlbar .wlbar-burger[aria-expanded="true"]{background:rgba(255,255,255,.12)}
 .wlbar .wlbar-burger:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
@@ -138,7 +138,7 @@ body[data-gated].wl-pending .wl-wait{display:block}
 .wl-testsec a[aria-current]{font-weight:700}
 .wl-testsec a[aria-current]::after{content:"\2713";font-weight:700}
 .wl-testsec .wlbar-testbands{display:flex;gap:6px;padding:2px 8px 4px}
-.wl-testsec .wlbar-testbands button{flex:1;min-height:34px;border-radius:8px;border:1px solid rgba(127,127,127,.45);background:none;color:inherit;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer}
+.wl-testsec .wlbar-testbands button{flex:1;min-height:34px;border-radius:999px;border:1px solid rgba(127,127,127,.45);background:none;color:inherit;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer}
 .wl-testsec .wlbar-testbands button[aria-pressed=true]{background:#d5f367;color:#0b2b20;border-color:#d5f367}
 .wlbar .wlbar-testmenu .wl-testsec{margin:0;padding:0;border:0}
 
@@ -152,7 +152,7 @@ body[data-gated].wl-pending .wl-wait{display:block}
   .wl-secbtn[aria-expanded="true"] .wlbar-caret{transform:rotate(180deg)}
   nav.wl-collapsible{display:none!important}
   nav.wl-collapsible.open{display:flex!important;flex-direction:column;flex-wrap:nowrap!important;gap:4px!important;overflow:visible!important;order:4;width:100%;margin:6px 0 0!important}
-  nav.wl-collapsible.open a,nav.wl-collapsible.open button{display:flex;align-items:center;min-height:44px;white-space:normal;border-radius:10px}
+  nav.wl-collapsible.open a,nav.wl-collapsible.open button{display:flex;align-items:center;min-height:44px;white-space:normal;border-radius:8px}
 }
 
 /* ---------- Section menus on the left (Mentor Mindset, Behavior, At Home, Our Approach) ----------
@@ -218,3 +218,9 @@ header.nav.wlsub .nav-links a[aria-current="page"]{color:#121213;background:#d5f
   .wlbar .wlbar-switch>button.wlbar-site{max-width:100%;min-width:0;overflow:hidden}
 }
 @media (max-width:400px){.wlbar .wlbar-mentor{display:none}}
+
+/* ---------- Icons (design system, Nov 27, 2026) ----------
+   Every interface icon draws the same 1.75px line with round caps, whatever size it is shown at. Icons drawn in page
+   scripts (search, to-dos, notifications) and the bar's own are covered here; a page's own icon gets class "wl-ico".
+   Illustrations are not icons and keep their own line weights. */
+.wlbar svg:not(.wlbar-logo) *,.wltk svg *,.wlbell svg *,.wls svg *,.wl-secbtn svg *,svg.wl-ico *{vector-effect:non-scaling-stroke;stroke-width:1.75px;stroke-linecap:round;stroke-linejoin:round}

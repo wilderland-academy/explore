@@ -50,7 +50,7 @@ html.wgm-docked body{margin-right:var(--wgm-w);transition:margin-right .25s ease
 .wgm-head button{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:20px;line-height:1;flex:none}
 .wgm-head button:focus-visible,.wgm button:focus-visible,.wgm textarea:focus-visible{outline:2px solid #d5f367;outline-offset:2px}
 .wgm-log{flex:1;overflow-y:auto;padding:16px 14px 8px;display:flex;flex-direction:column;gap:12px}
-.wgm-m{max-width:92%;padding:10px 13px;border-radius:16px;overflow-wrap:anywhere}
+.wgm-m{max-width:92%;padding:10px 13px;border-radius:18px;overflow-wrap:anywhere}
 .wgm-m.ai{background:#fff;border:1px solid #e1e7d6;border-bottom-left-radius:5px;align-self:flex-start;position:relative;margin-left:30px}
 .wgm-m.ai::before{content:"🐲";position:absolute;left:-30px;bottom:0;font-size:20px;line-height:1}
 .wgm-m.me{background:#0f3d2e;color:#fff;border-bottom-right-radius:5px;align-self:flex-end;white-space:pre-wrap}
@@ -58,7 +58,7 @@ html.wgm-docked body{margin-right:var(--wgm-w);transition:margin-right .25s ease
 .wgm-m p{margin:0 0 8px}.wgm-m p:last-child{margin:0}
 .wgm-m ul,.wgm-m ol{margin:0 0 8px;padding-left:20px}
 .wgm-m h4{margin:8px 0 4px;font-size:15px}
-.wgm-intro{background:#fff;border:1px solid #e1e7d6;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;font-size:14.5px}
+.wgm-intro{background:#fff;border:1px solid #e1e7d6;border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;font-size:14.5px}
 .wgm-intro b{font-size:16px}
 .wgm-chips{display:flex;flex-wrap:wrap;gap:8px}
 .wgm-chip{border:1.5px solid #0f3d2e;background:#fff;color:#0f3d2e;border-radius:999px;padding:7px 12px;font:600 13.5px/1.25 inherit;cursor:pointer;text-align:left}
@@ -66,8 +66,8 @@ html.wgm-docked body{margin-right:var(--wgm-w);transition:margin-right .25s ease
 .wgm-typing{align-self:flex-start;color:#5c6b62;font-size:14px;margin-left:30px}
 .wgm-foot{border-top:1px solid #e1e7d6;padding:10px 12px 12px;background:#fff}
 .wgm-row{display:flex;gap:8px;align-items:flex-end}
-.wgm textarea{flex:1;resize:none;min-height:46px;max-height:180px;border:1.5px solid #cfd8c4;border-radius:14px;padding:11px 12px;font:inherit;color:inherit;background:#fff}
-.wgm-send{height:46px;min-width:64px;border:0;border-radius:14px;background:#d5f367;color:#0b2b20;font:700 15px inherit;cursor:pointer;padding:0 14px}
+.wgm textarea{flex:1;resize:none;min-height:46px;max-height:180px;border:1.5px solid #cfd8c4;border-radius:12px;padding:11px 12px;font:inherit;color:inherit;background:#fff}
+.wgm-send{height:46px;min-width:64px;border:0;border-radius:999px;background:#d5f367;color:#0b2b20;font:600 15px inherit;cursor:pointer;padding:0 14px}
 .wgm-send:disabled{opacity:.5}
 .wgm-hint{margin:6px 2px 0;font-size:12px;color:#5c6b62}
 .wgm-hint a,.wgm-hint button{color:#0f3d2e;background:none;border:0;padding:0;font:inherit;text-decoration:underline;cursor:pointer}

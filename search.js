@@ -234,15 +234,15 @@ function results(q) {
 // ---------- the dialog ----------
 const CSS = `
 .wls-back{position:fixed;inset:0;z-index:200;background:rgba(5,20,15,.55);display:flex;justify-content:center;align-items:flex-start;padding:10vh 16px 16px;font:400 15px/1.4 Inter,"Uncut Sans",system-ui,sans-serif}
-.wls{width:min(640px,100%);max-height:76vh;display:flex;flex-direction:column;background:#fff;color:#121213;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden}
+.wls{width:min(640px,100%);max-height:76vh;display:flex;flex-direction:column;background:#fff;color:#121213;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden}
 .wls-top{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #e4e7e2}
 .wls-top svg{width:20px;height:20px;flex:none;color:#4d4d51}
 .wls-top input{flex:1;min-width:0;border:0;outline:0;font:500 18px/1.3 inherit;font-family:inherit;color:#121213;background:none}
-.wls-top kbd,.wls-foot kbd{font:600 12px/1 ui-monospace,Menlo,monospace;border:1px solid #c9c9c9;border-bottom-width:2px;border-radius:5px;padding:3px 6px;color:#4d4d51;background:#fafafa}
+.wls-top kbd,.wls-foot kbd{font:600 12px/1 ui-monospace,Menlo,monospace;border:1px solid #c9c9c9;border-bottom-width:2px;border-radius:6px;padding:3px 6px;color:#4d4d51;background:#fafafa}
 .wls-x{border:0;background:none;font:600 14px inherit;font-family:inherit;color:#015640;cursor:pointer;padding:6px}
 .wls-list{overflow-y:auto;padding:6px 8px 10px;overscroll-behavior:contain}
 .wls-h{margin:12px 8px 4px;font:700 11.5px/1 Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6b6b70}
-.wls-i{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:10px;color:inherit;text-decoration:none;cursor:pointer}
+.wls-i{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:12px;color:inherit;text-decoration:none;cursor:pointer}
 .wls-i[aria-selected=true]{background:#eef6e0}
 .wls-i i{flex:none;width:6px;align-self:stretch;border-radius:3px;background:#015640}
 .wls-i b{font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -306,7 +306,7 @@ export function open() {
   back = document.createElement("div"); back.className = "wls-back";
   const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   back.innerHTML = `<div class="wls" role="dialog" aria-modal="true" aria-label="Search Explore">
-    <div class="wls-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <div class="wls-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input type="search" placeholder="Search pages, challenges, books${kind() === "staff" ? ", students, the handbook" : ""}…" aria-label="Search" role="combobox" aria-expanded="true" aria-controls="wls-list" autocomplete="off" spellcheck="false">
       <kbd>esc</kbd><button class="wls-x" type="button" aria-label="Close search">Close</button></div>
     <div class="wls-list" id="wls-list" role="listbox"></div>

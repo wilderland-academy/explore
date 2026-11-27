@@ -19,24 +19,24 @@
   .vp{max-width:760px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:22px}
   .modes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .modes span{font-weight:600;margin-right:4px}
-  .mode{min-height:44px;padding:6px 16px;border-radius:8px;border:2px solid transparent;background:var(--chip);color:#121213;cursor:pointer;font-weight:600}
+  .mode{min-height:44px;padding:6px 16px;border-radius:999px;border:2px solid transparent;background:var(--chip);color:#121213;cursor:pointer;font-weight:600}
   .mode:hover{border-color:var(--green)}
   .mode[aria-pressed="true"]{background:var(--green);color:#fff}
   .mode-note{color:var(--muted);font-size:15px;flex-basis:100%}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:18px}
   .prog{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:0;border-radius:0;background:none;font-size:inherit}
   .prog b{font-size:24px;letter-spacing:-.02em}
   .dots{display:flex;gap:6px}
   .dots i{width:14px;height:14px;border-radius:50%;background:var(--line);display:block}
   .dots i.done{background:var(--green)}
   .dots i.now{background:var(--green-2)}
-  .play{align-self:flex-start;display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:10px 24px;border-radius:8px;border:0;background:var(--lime);color:#121213;font-weight:700;font-size:22px;letter-spacing:-.01em;cursor:pointer}
+  .play{align-self:flex-start;display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:10px 24px;border-radius:999px;border:0;background:var(--lime);color:#121213;font-weight:600;font-size:22px;letter-spacing:-.01em;cursor:pointer}
   .play:hover{background:#C9EA4F}
   .play svg{width:26px;height:26px}
   .play[data-state="playing"]{background:var(--green);color:#fff}
   .q{font-weight:600}
   .feelings{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-  .feel{min-height:56px;border-radius:8px;border:2px solid var(--line);background:var(--paper);color:var(--ink);font-size:20px;font-weight:600;cursor:pointer}
+  .feel{min-height:56px;border-radius:12px;border:2px solid var(--line);background:var(--paper);color:var(--ink);font-size:20px;font-weight:600;cursor:pointer}
   .feel:hover:not(:disabled){border-color:var(--green)}
   .feel[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
   .feel.right{background:var(--lime-tint);border-color:var(--green);color:var(--ink)}
@@ -44,14 +44,14 @@
   .say{min-height:28px;font-size:19px;font-weight:600}
   .say.yes{color:var(--green)}
   .say.no{color:#9A4A0B}
-  .next{align-self:flex-end;min-height:48px;padding:8px 22px;border-radius:8px;border:0;background:var(--lime);color:#121213;font-weight:600;font-size:18px;letter-spacing:.02em;cursor:pointer}
+  .next{align-self:flex-end;min-height:48px;padding:8px 22px;border-radius:999px;border:0;background:var(--lime);color:#121213;font-weight:600;font-size:18px;letter-spacing:.02em;cursor:pointer}
   .next:disabled{opacity:.4;cursor:default}
   .score{font-weight:700;letter-spacing:-.04em;font-size:clamp(56px,12vw,88px);line-height:1;color:var(--green)}
   .verdict{font-size:20px;font-weight:600}
   .review{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-  .review li{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--paper);border:1px solid var(--line)}
+  .review li{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border-radius:8px;background:var(--paper);border:1px solid var(--line)}
   .review li.miss{border-color:#E2B48F;background:#FBF1E8}
-  .review button{min-height:40px;padding:4px 12px;border-radius:8px;border:0;background:var(--chip);color:#121213;cursor:pointer;font-weight:600}
+  .review button{min-height:40px;padding:4px 12px;border-radius:999px;border:0;background:var(--chip);color:#121213;cursor:pointer;font-weight:600}
   .review .n{font-weight:700;min-width:58px}
   .actions{display:flex;gap:10px;flex-wrap:wrap}
   .vp-tips{display:flex;flex-direction:column;gap:8px}

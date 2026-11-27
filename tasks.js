@@ -198,7 +198,7 @@
   window.wlTasks = { refresh: function () { return load(true); }, get list() { return tasks; } };
 
   // ---------- drawing ----------
-  var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12.2 2.8 2.8L16.5 9"/></svg>';
+  var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12.2 2.8 2.8L16.5 9"/></svg>';
   function openCount() { return (tasks || []).filter(function (t) { return !t.done && !t.optional; }).length; }
   function item(t) {
     return '<li class="' + (t.done ? "done" : t.optional ? "opt" : "") + '"><a href="' + esc(t.link) + '"><span class="wltk-box" aria-hidden="true">' + (t.done ? "✓" : "") + '</span><span class="wltk-t"><b>' + esc(t.title) + (t.optional && !t.done ? ' <em>Optional</em>' : "") + "</b><small>" + esc(t.detail || "") + "</small></span></a></li>";
@@ -253,14 +253,14 @@
     ".wltk{position:relative;display:grid;place-items:center;width:36px;height:36px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;cursor:pointer}" +
     ".wltk svg{width:19px;height:19px}.wltk:hover{background:rgba(255,255,255,.08)}" +
     ".wltk-n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ffb454;color:#2a1700;font:700 11px/18px Inter,system-ui,sans-serif;text-align:center}" +
-    ".wltk-menu{position:absolute;right:0;top:calc(100% + 8px);width:min(380px,92vw);max-height:70vh;overflow:auto;background:#0f231c;color:#f6f8ea;border:1px solid #28493d;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.45);z-index:80;font:400 14px/1.4 Inter,system-ui,sans-serif;text-align:left}" +
+    ".wltk-menu{position:absolute;right:0;top:calc(100% + 8px);width:min(380px,92vw);max-height:70vh;overflow:auto;background:#0f231c;color:#f6f8ea;border:1px solid #28493d;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.45);z-index:80;font:400 14px/1.4 Inter,system-ui,sans-serif;text-align:left}" +
     ".wltk-h{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-bottom:1px solid #28493d;position:sticky;top:0;background:#0f231c}.wltk-h small{color:#a9bbb0;font-size:12px}" +
     ".wltk-menu ul,.wltk-card ul{list-style:none;margin:0;padding:6px;display:flex;flex-direction:column;gap:2px}" +
-    ".wltk-menu li a,.wltk-card li a{display:flex;gap:11px;align-items:flex-start;padding:10px;border-radius:10px;color:inherit;text-decoration:none}" +
+    ".wltk-menu li a,.wltk-card li a{display:flex;gap:11px;align-items:flex-start;padding:10px;border-radius:8px;color:inherit;text-decoration:none}" +
     ".wltk-menu li a:hover{background:rgba(255,255,255,.06)}" +
     ".wltk-box{flex:none;display:grid;place-items:center;width:20px;height:20px;margin-top:1px;border-radius:6px;border:2px solid #ffb454;font:700 13px/1 Inter,sans-serif;color:#0b2b20}" +
     "li.done .wltk-box{background:#d5f367;border-color:#d5f367}li.opt .wltk-box{border-style:dashed;border-color:#a9bbb0}" +
-    ".wltk-t{display:flex;flex-direction:column;gap:3px}.wltk-t small{color:#a9bbb0;font-size:12.5px}.wltk-t em{font-style:normal;font:700 10px/1 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#a9bbb0;border:1px solid #3a5a4d;border-radius:99px;padding:2px 6px;margin-left:4px;vertical-align:2px}" +
+    ".wltk-t{display:flex;flex-direction:column;gap:3px}.wltk-t small{color:#a9bbb0;font-size:12.5px}.wltk-t em{font-style:normal;font:700 10px/1 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#a9bbb0;border:1px solid #3a5a4d;border-radius:999px;padding:2px 6px;margin-left:4px;vertical-align:2px}" +
     "li.done .wltk-t b{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.35);opacity:.7}" +
     ".wltk-sub{margin:6px 16px 0;font:700 11px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#a9bbb0}.wltk-empty{padding:14px 16px;margin:0;color:#a9bbb0}" +
     // The list on a home page ([data-wl-tasks]); each page sets --wltk-bg, --wltk-ink, --wltk-line, --wltk-dim.

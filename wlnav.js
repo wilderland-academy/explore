@@ -169,7 +169,7 @@
   };
   // "wlbar-logo", not the old "wlbar-mark": an old cached wl.css hid .wlbar-mark on desktop.
   var MARK = '<svg class="wlbar-logo" viewBox="1000 490 1880 640" aria-hidden="true"><path d="M1655.83 862.635L1420.76 517L1023 1103.58H1458.91L1655.83 862.635Z" fill="white"/><path d="M2851.08 1104.71L2453.14 517.773L2055.38 1104.35L2851.08 1104.71Z" fill="#D5F367"/><path d="M2124.74 867.294L1936.99 637.184L1555.82 1104.3H1964.82L2124.74 867.294Z" fill="#00B451"/></svg>';
-  var ARROW = '<svg class="wlbar-out" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2h6v6M10 2 3 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var ARROW = '<svg class="wlbar-out" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2h6v6M10 2 3 9" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
 
   var bar = (document.currentScript && document.currentScript.previousElementSibling && document.currentScript.previousElementSibling.matches("[data-wlnav]"))
@@ -314,7 +314,7 @@
   // This only steers the screen. What is private (records, coaching history) is protected by the Firestore rules.
   var SWITCH = { staff: ["students", "guides", "parents"], parent: ["parents", "students"] };
   var MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-  var CARET = '<svg class="wlbar-caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var CARET = '<svg class="wlbar-caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var role = null;
 
   function draw() {
@@ -336,7 +336,7 @@
         // Tabs that don't fit on this screen fold into "More" (fit() below). Never the current page's tab.
         '<div class="wlbar-more" hidden><button type="button" aria-haspopup="true" aria-expanded="false">More' + CARET + '</button><div class="wlbar-menu" hidden></div></div>' : "") +
       // Search (⌘K / Ctrl+K, or "/"), for everyone: /search.js, loaded on first use.
-      '<button type="button" class="wlbar-search" data-wl-search aria-label="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')" title="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="wlbar-search-t">Search</span><kbd>' + (MAC ? "⌘K" : "Ctrl K") + "</kbd></button>" +
+      '<button type="button" class="wlbar-search" data-wl-search aria-label="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')" title="Search (' + (MAC ? "⌘K" : "Ctrl+K") + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="wlbar-search-t">Search</span><kbd>' + (MAC ? "⌘K" : "Ctrl K") + "</kbd></button>" +
       // Trail Partner (🐲) is one click away on every staff page.
       (key === "guides" && !stepHidden("partner") ? '<button type="button" class="wlbar-mentor" data-wl-mentor aria-label="Open Trail Partner" title="Trail Partner: ask anything about your work"><span aria-hidden="true">🐲</span><span class="wlbar-mentor-t">Trail Partner</span></button>' : "") +
       // Test view lives in the account menu. Only pages with no account menu (the Parents pages, the front door) show
@@ -348,7 +348,7 @@
       (bar.getAttribute("data-auth") === "off" ? (key === "parents" ? '<span class="wlbar-bell"></span>' : "") : '<span class="wlbar-tasks"></span><span class="wlbar-bell"></span>') +
       (bar.getAttribute("data-auth") === "off" ? "" : '<span class="wlbar-auth" data-wl-auth></span>') +
       // Phones: the site's sections are in this menu instead of a row that scrolls sideways.
-      (tabs ? '<button type="button" class="wlbar-burger" aria-haspopup="true" aria-expanded="false" aria-controls="wlbar-drawer" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>' : "") +
+      (tabs ? '<button type="button" class="wlbar-burger" aria-haspopup="true" aria-expanded="false" aria-controls="wlbar-drawer" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>' : "") +
       "</div>" + (tabs ? '<nav class="wlbar-drawer" id="wlbar-drawer" aria-label="' + esc(site.name) + ' menu" hidden>' + drawer(opts) + "</nav>" : "") + banner();
     // Keep the sign-in chip if it was already mounted.
     var slot = bar.querySelector(".wlbar-auth");
@@ -629,9 +629,9 @@
     if (!leaving) {
       leaving = document.createElement("dialog"); leaving.className = "wl-leave";
       var st = document.createElement("style");
-      st.textContent = ".wl-leave{max-width:min(440px,92vw);border:0;border-radius:16px;padding:22px 22px 18px;font:400 15px/1.5 Inter,system-ui,sans-serif;color:#121213;box-shadow:0 20px 50px rgba(0,0,0,.35)}" +
+      st.textContent = ".wl-leave{max-width:min(440px,92vw);border:0;border-radius:18px;padding:22px 22px 18px;font:400 15px/1.5 Inter,system-ui,sans-serif;color:#121213;box-shadow:0 20px 50px rgba(0,0,0,.35)}" +
         ".wl-leave::backdrop{background:rgba(0,0,0,.45)}.wl-leave h2{font:700 20px/1.25 'Uncut Sans',Inter,sans-serif;margin:0 0 6px;color:#01412f}.wl-leave p{margin:0 0 16px;color:#454545}" +
-        ".wl-leave .r{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.wl-leave button{font:600 14px/1 Inter,system-ui,sans-serif;border-radius:10px;padding:11px 14px;cursor:pointer;border:1px solid #d6d6d0;background:#fff;color:#121213}" +
+        ".wl-leave .r{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.wl-leave button{font:600 14px/1 Inter,system-ui,sans-serif;border-radius:999px;padding:11px 14px;cursor:pointer;border:1px solid #d6d6d0;background:#fff;color:#121213}" +
         ".wl-leave button.go{background:#01412f;border-color:#01412f;color:#fff}";
       document.head.appendChild(st); document.body.appendChild(leaving);
     }
