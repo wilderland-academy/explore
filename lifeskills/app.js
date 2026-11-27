@@ -595,24 +595,24 @@ function record(sid, opts = {}) {
   ]);
 }
 
-// Takeaways their Field Guide shared with the family after a 1:1 (coachShare, written from /fieldguide/): what they
+// Takeaways their Field Guide shared with the family after a Summit Session (coachShare, written from /fieldguide/): what they
 // talked about and what the child said they'd do. Parents read only the ones shared with them (firestore.rules).
 function oneOnOnePanel(sid) {
-  const s = S.students[sid], name = firstName(s.name), box = h("div", { class: "panel" }, [h("h2", { class: "h", text: "From 1:1s with their Field Guide" }), h("p", { class: "muted", text: "Loading…" })]);
+  const s = S.students[sid], name = firstName(s.name), box = h("div", { class: "panel" }, [h("h2", { class: "h", text: "From Summit Sessions with their Field Guide" }), h("p", { class: "muted", text: "Loading…" })]);
   (async () => {
     try {
       const snap = await getDocs(query(collection(db, "coachShare"), where("family", "array-contains", S.email), ...(S.test ? [where("test", "==", true)] : [])));
       const xs = []; snap.forEach(d => { const x = d.data(); if (x.sid === sid && !!x.test === !!S.test) xs.push(x); });
       xs.sort((a, b) => (b.sessionAt || b.at || 0) - (a.sessionAt || a.at || 0));
       const day = ms => new Date(ms).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-      box.replaceChildren(h("h2", { class: "h", text: "From 1:1s with their Field Guide" }));
-      if (!xs.length) { box.appendChild(h("p", { class: "muted", text: `Nothing shared yet. After ${name}'s weekly 1:1, their Field Guide can share what they talked about and what ${name} said they'd do.` })); return; }
+      box.replaceChildren(h("h2", { class: "h", text: "From Summit Sessions with their Field Guide" }));
+      if (!xs.length) { box.appendChild(h("p", { class: "muted", text: `Nothing shared yet. After ${name}'s weekly Summit Session (their one-on-one with their Field Guide), their Field Guide can share what they talked about and what ${name} said they'd do.` })); return; }
       xs.slice(0, 3).forEach((x, i) => box.append(...[
         h("p", { class: "small muted", style: i ? { marginTop: "12px" } : {}, text: `With ${x.byName || "their guide"}, ${day(x.sessionAt || x.at)}` }),
         (x.actions || []).length ? h("div", {}, [h("b", { text: `What ${name} said they'd do` }), h("ul", {}, x.actions.map(t => h("li", { text: t })))]) : null,
         x.checkIn ? h("div", {}, [h("b", { text: "When their guide will check in" }), h("p", { text: x.checkIn })]) : null,
         (x.talked || []).length ? h("div", {}, [h("b", { text: "What they talked about" }), h("ul", {}, x.talked.map(t => h("li", { text: t })))]) : null].filter(Boolean)));
-    } catch (e) { box.replaceChildren(h("h2", { class: "h", text: "From 1:1s with their Field Guide" }), h("p", { class: "muted", text: "Couldn't load these right now." })); }
+    } catch (e) { box.replaceChildren(h("h2", { class: "h", text: "From Summit Sessions with their Field Guide" }), h("p", { class: "muted", text: "Couldn't load these right now." })); }
   })();
   return box;
 }
@@ -641,7 +641,7 @@ function goalsPanel(sid, opts) {
         line || g.why ? h("div", { class: "small muted", text: [line, g.why ? "Why: " + g.why : ""].filter(Boolean).join(". ") }) : null]), h("span")]);
   };
   const missing = [cur.some(g => g.area === "life") ? "" : "Life Skills", cur.some(g => g.area === "acad") ? "" : "academic"].filter(Boolean);
-  const intro = opts.staff ? `What ${name} set on the Goals page. Look at them together at the weekly 1:1.` : opts.parent ? `${name} sets these at school on the Goals page and reviews them with their guide each week.` : "From your Goals page.";
+  const intro = opts.staff ? `What ${name} set on the Goals page. Look at them together at the weekly Summit Session.` : opts.parent ? `${name} sets these at school on the Goals page and reviews them with their guide each week.` : "From your Goals page.";
   return h("div", { class: "panel stack" }, [
     h("h2", { class: "h", text: "Goals" }), h("p", { class: "small muted", text: intro }),
     missing.length ? h("p", { class: "small", style: { color: "#9C3F2A", fontWeight: "600" }, text: `No current ${missing.join(" or ")} goal. Every student is expected to keep one of each going.` }) : null,

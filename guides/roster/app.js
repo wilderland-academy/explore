@@ -248,7 +248,7 @@ function vRoster() {
     .sort((a, b) => (BANDS.indexOf(a.band) + 1 || 9) - (BANDS.indexOf(b.band) + 1 || 9) || (a.name || a.email).localeCompare(b.name || b.email));
   const nParents = new Set(S.ls.flatMap(x => (x.parents || []).map(key))).size;
   const guideNames = g => emails(g).map(x => x.split("@")[0].replace(/^./, c => c.toUpperCase())).join(", ");
-  return page("roster", `${S.ls.length} students and ${nParents} linked parent${nParents === 1 ? "" : "s"}. Open a student for their parents, Mr. Fox conversations, alerts, saved sparks and books, and their Life Skills record${S.coach ? " and your coaching sessions" : ""}.`) +
+  return page("roster", `${S.ls.length} students and ${nParents} linked parent${nParents === 1 ? "" : "s"}. Open a student for their parents, Mr. Fox conversations, alerts, saved sparks and books, and their Life Skills record${S.coach ? " and your Summit Sessions" : ""}.`) +
     (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") +
     `<div class="row">${["All", ...BANDS].map(b => `<button class="chip" type="button" data-band="${b}" aria-pressed="${S.band === b}">${b === "All" ? "All bands" : "Grades " + b}</button>`).join("")}<input class="in" type="search" id="q" placeholder="Find a student, parent or guide" value="${esc(S.q)}"><a class="btn" href="#add" style="margin-left:auto">Add a student</a></div>` +
     (show.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>Grades</th><th>Parents</th><th>Field Guide</th><th class="num">AI chats</th><th class="num">Open alerts</th><th>Last AI use</th><th></th></tr></thead><tbody>${show.map(p => {
@@ -396,7 +396,7 @@ function vChats() {
     (rows.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>About</th><th class="num">Messages</th><th>Flag</th><th>Last</th><th></th></tr></thead><tbody>${rows.slice(0, 400).map(chatRow).join("")}</tbody></table></div>` : `<p class="empty">No conversations match.</p>`);
 }
 // A student's page has up to three tabs, all on this page: Profile (#s=), Life Skills (#ls=: their record from the
-// Life Skills tracker) and, for Field Guides (wlCoaches in /wlnav.js), Coaching (#coach=: their private 1:1 session
+// Life Skills tracker) and, for Field Guides (wlCoaches in /wlnav.js), Coaching (#coach=: their private Summit Session
 // notebook from the Mentor Mindset Field Guide). The last two are those pages shown in a frame with ?embed=1.
 function studentTabs(p, k, cur) {
   if (!p.sid) return "";
@@ -419,7 +419,7 @@ async function vStudent(k, tab = "s") {
     const top = `<p class="crumb"><a href="#roster">← Roster</a></p>` + head(esc(p.name || p.email), `${p.band ? "Grades " + esc(p.band) + (p.grade ? ", grade " + esc(p.grade) : "") : ""}`) + studentTabs(p, k, tab);
     return top + (tab === "ls"
       ? embedFrame(`/guides/lifeskills/?embed=1#s=${encodeURIComponent(p.sid)}`, "Life Skills record")
-      : (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") + await snapshot(p) + `<h2 style="margin-top:6px">Session notebook</h2>` + embedFrame(`/fieldguide/?embed=1&sid=${encodeURIComponent(p.sid)}#sessions`, "Coaching sessions", { mic: true }));
+      : (S.flash ? `<p class="flash" role="status">${esc(S.flash)}</p>` : "") + await snapshot(p) + `<h2 style="margin-top:6px">Session notebook</h2>` + embedFrame(`/fieldguide/?embed=1&sid=${encodeURIComponent(p.sid)}#sessions`, "Summit Sessions", { mic: true }));
   }
   const allowed = S.admin || S.myBands.includes(p.band);
   const books = allowed && (p.saved.length || p.want.length || (p.nope || []).length) ? await bookTitles() : {};
@@ -513,7 +513,7 @@ function goalForm(sid) {
     <label class="gt">The goal, in their words<input name="text" maxlength="140" placeholder="For example: Math Academy, 300 XP"></label>
     <label class="gb" hidden>Blazes it costs<input name="b" type="number" min="1" max="5000"></label>
     <label>Why it matters to them (optional)<input name="why" maxlength="140"></label>
-    <p class="small muted">Set it together at your 1:1, in their words. It goes on their My goals page, marked as set with you.</p>
+    <p class="small muted">Set it together at your Summit Session, in their words. It goes on their My goals page, marked as set with you.</p>
     <div class="row"><button class="btn" type="submit">Add the goal</button><button class="btn ghost" type="button" data-goal-x="${esc(sid)}">Cancel</button></div></form>`;
 }
 function goalFormSync(f) {
@@ -627,9 +627,9 @@ async function lsCard(p) {
     <p class="small">${total} credit${total === 1 ? "" : "s"} passed · ${met} of ${skills.length} life skills at the expected 2</p>
     <table class="tbl lsg"><thead><tr><th>Life skill</th><th class="num">Passed</th><th class="num">Not yet</th><th class="num">Saved</th></tr></thead><tbody>${skills.map(s => `<tr><td>${esc(s.n)}</td><td class="num">${pass[s.k] || 0}${(pass[s.k] || 0) >= 2 ? " ✓" : ""}</td><td class="num">${ny[s.k] || ""}</td><td class="num">${saved[s.k] || ""}</td></tr>`).join("")}</tbody></table></section>`;
 }
-// Everything a Field Guide needs at a 1:1, above the session notebook.
+// Everything a Field Guide needs at a Summit Session, above the session notebook.
 async function snapshot(p) {
-  return `<div class="snap"><p class="eyebrow">Before your 1:1</p><div class="grid2">${goalsCard(p)}${await lsCard(p)}${behCard(p)}
+  return `<div class="snap"><p class="eyebrow">Before your Summit Session</p><div class="grid2">${goalsCard(p)}${await lsCard(p)}${behCard(p)}
     <section class="card"><h3>Academics</h3><p class="muted small">Coming from Basecamp and Treebeard. Once they're connected, ${esc(firstName(p.name))}'s app progress and books finished this year show here.</p>
     ${(S.ideas || []).filter(x => x.sid === p.sid).length ? `<h3 style="margin-top:8px">Reward ideas</h3><ul class="items">${S.ideas.filter(x => x.sid === p.sid).slice(0, 4).map(x => `<li>${esc(x.n)} <span class="meta">· ${esc(x.b)} blazes · ${esc(x.status)}</span></li>`).join("")}</ul>` : ""}</section></div></div>`;
 }
@@ -640,7 +640,7 @@ function vGoals() {
   const rows = bandKids().filter(s => s.band !== "K–1").map(s => { const p = S.people[pkey(s)] || { sid: s.id }, { cur } = goalsOf(p); return { s, p, cur, life: cur.some(g => g.area === "life"), acad: cur.some(g => g.area === "acad") }; })
     .sort((a, b) => (a.life && a.acad) - (b.life && b.acad) || String(a.s.name).localeCompare(String(b.s.name)));
   const miss = rows.filter(r => !r.life || !r.acad).length;
-  return page("goals", "Every student keeps a Life Skills goal and an academic goal going. Set one together at their 1:1: open a student and use “Set a goal with them”.") + bandChips() +
+  return page("goals", "Every student keeps a Life Skills goal and an academic goal going. Set one together at their Summit Session: open a student and use “Set a goal with them”.") + bandChips() +
     `<p>${miss ? `<b>${miss}</b> of ${rows.length} students are missing a Life Skills or academic goal.` : `All ${rows.length} students have both.`}</p>` +
     `<div class="tblwrap"><table class="tbl"><thead><tr><th>Student</th><th>Band</th><th>Life Skills</th><th>Academic</th><th>Current goals</th></tr></thead><tbody>${rows.map(r => `<tr><td><a href="#coach=${encodeURIComponent(pkey(r.s))}">${esc(r.s.name)}</a></td><td>${esc(r.s.band)}</td><td>${r.life ? "✓" : "<b style='color:var(--urgent)'>✗</b>"}</td><td>${r.acad ? "✓" : "<b style='color:var(--urgent)'>✗</b>"}</td><td class="small">${r.cur.map(g => esc(goalLabel(g))).slice(0, 3).join("; ") || "<span class='muted'>None</span>"}</td></tr>`).join("")}</tbody></table></div>` +
     `<p class="small muted">K–1 students don't sign in, so their goals are set together on paper.</p>`;
@@ -685,10 +685,10 @@ async function route() {
     else if (v === "goals") app.innerHTML = vGoals();
     else if (v === "rewards") app.innerHTML = vRewards();
     else if (v === "behavior") app.innerHTML = vBehavior();
-    // Everyone's Life Skills and (Field Guides) everyone's 1:1 coaching, one tab away. Each student's page still has
+    // Everyone's Life Skills and (Field Guides) everyone's Summit Sessions, one tab away. Each student's page still has
     // its own Life Skills and Coaching tabs; these are the whole-class views of the same pages.
     else if (v === "lifeskills") app.innerHTML = page("lifeskills", "Every student's Life Skills record. Open a name to see their milestones.") + embedFrame("/guides/lifeskills/?embed=1", "Life Skills");
-    else if (v === "coaching" && S.coach) app.innerHTML = page("coaching", "Your weekly 1:1s with every student: who's done this week, and each student's session notes.") + embedFrame("/fieldguide/?embed=1&sid=all#sessions", "Coaching sessions", { mic: true });
+    else if (v === "coaching" && S.coach) app.innerHTML = page("coaching", "Your Summit Sessions with every student: who's done this week, and each student's session notes.") + embedFrame("/fieldguide/?embed=1&sid=all#sessions", "Summit Sessions", { mic: true });
     // The old "Students and what they saved" tab is now the roster.
     else app.innerHTML = vRoster();
   } catch (e) { app.innerHTML = `<p class="empty">Couldn't load this: ${esc(e.message)}</p>`; }

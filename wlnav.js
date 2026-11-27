@@ -18,7 +18,7 @@
   var STAFF_BANDS = { "chelse@wilderland.academy": "K–1", "jessica@wilderland.academy": "K–1", "shanan@wilderland.academy": "2–4",
     "april@wilderland.academy": "2–4", "scott@wilderland.academy": "5–8", "sarah@wilderland.academy": "5–8" };
   var TEST = { sid: "test-student", name: "Test Student", student: "test.student@wilderland.academy", guide: "test.guide@wilderland.academy", parent: "test.parent@example.com" };
-  //   FIELD_GUIDES: the guides who run weekly 1:1 coaching sessions. They get a Coaching tab on each student's page in
+  //   FIELD_GUIDES: the guides who run Summit Sessions. They get a Coaching tab on each student's page in
   //     Students (/guides/roster/), which opens their private session notebook for that student. Testers see it too.
   var FIELD_GUIDES = ["april@wilderland.academy", "scott@wilderland.academy", "chelse@wilderland.academy"];
   window.WLPeople = { TESTERS: TESTERS, STAFF_BANDS: STAFF_BANDS, TEST: TEST, FIELD_GUIDES: FIELD_GUIDES, BANDS: ["K–1", "2–4", "5–8"] };
@@ -137,7 +137,7 @@
       // The one-way onboarding journey through everything below (/guides/onboarding/).
       { id: "onboarding", label: "Onboarding", href: "/guides/onboarding/" },
       { id: "mentor", label: "Mentor Mindset", href: "/fieldguide/" },
-      // 1:1 coaching sessions are on each student's page in Students (the Coaching tab, Field Guides only), not here.
+      // Summit Sessions are on each student's page in Students (the Coaching tab, Field Guides only), not here.
       { id: "behavior", label: "Behavior", href: "/behavior/" },
       // Challenges, the Labs schedule and the Lab builder live inside Life Skills (its sub-menu: /lifeskills/subnav.js).
       { id: "lifeskills", label: "Life Skills", href: "/guides/lifeskills/" },
